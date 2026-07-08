@@ -1,0 +1,6 @@
+﻿log_id,ts,source,phase_or_layer,query,hits,new_records,note
+Q-00001,2026-07-08T09:37:00,Gallica,F-set,"""Corée""",76278,47,
+Q-00002,2026-07-08T09:37:04,Gallica,F-set,"""Coréens""",11395,38,
+Q-00003,2026-07-08T09:37:10,Gallica,F-set,"""la Corée""",76278,12,
+Q-00004,2026-07-08T09:37:14,Gallica,F-set,"""Séoul""",4471,29,
+Q-00005,2026-07-08T09:37:18,Gallica,F-set,"""Tchosen""",2202,33,

@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한국 관련 영상자료 마스터 쿼리 코퍼스 v1.0 — 600+ 전수 발굴 검색 체계</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f2044;--navy2:#1a3260;--ink:#1e2530;--sub:#5a6472;--gold:#c8a24a;--gold-l:#f5ead0;--red:#b93c46;--red-l:#fbeaec;--blue:#2f6db4;--blue-l:#e8f1fb;--green:#2e8b64;--green-l:#e6f4ee;--line:#e3e7ee;--bg:#f5f6f9;--card:#fff;--shadow:0 1px 3px rgba(15,32,68,.07),0 6px 18px rgba(15,32,68,.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{font-family:'Noto Sans KR',-apple-system,'Malgun Gothic',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+.hero{background:linear-gradient(135deg,#0c1a38,#16305e 55%,#1f3f7a);color:#fff;padding:52px 24px 44px}
+.hero-in{max-width:1080px;margin:0 auto}
+.hero .tag{display:inline-block;background:rgba(200,162,74,.18);border:1px solid rgba(200,162,74,.55);color:#ecd9a8;font-size:12.5px;padding:5px 14px;border-radius:99px;margin-bottom:14px}
+.hero h1{font-size:clamp(24px,3.5vw,34px);font-weight:900;line-height:1.35}
+.hero h1 .accent{color:var(--gold)}
+.hero .desc{color:#c6d2e8;font-size:14.5px;max-width:820px;margin-top:10px}
+.hero-stats{max-width:1080px;margin:26px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:11px}
+.hstat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:13px 8px;text-align:center}
+.hstat .n{display:block;font-size:23px;font-weight:900;color:var(--gold)}
+.hstat .l{font-size:11.5px;color:#b9c7e0}
+nav{position:sticky;top:0;z-index:100;background:rgba(15,32,68,.97);box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.nav-in{max-width:1200px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:9px 16px}
+.nav-in a{flex-shrink:0;color:#c3cfe6;font-size:12.5px;padding:6px 11px;border-radius:7px;white-space:nowrap}
+.nav-in a:hover{background:rgba(255,255,255,.1);color:#fff;text-decoration:none}
+main{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:32px 34px;margin-top:26px}
+.sec-head{display:flex;align-items:flex-start;gap:16px;border-bottom:2px solid var(--navy);padding-bottom:14px;margin-bottom:20px}
+.sec-num{flex-shrink:0;width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--navy),var(--navy2));color:var(--gold);font-weight:900;font-size:17px;display:flex;align-items:center;justify-content:center}
+.sec-head h2{font-size:20px;font-weight:900;color:var(--navy);line-height:1.4}
+.sec-head h2 .en{font-size:12.5px;font-weight:400;color:var(--sub);margin-left:8px}
+.sec-sub{font-size:13px;color:var(--sub);margin-top:2px}
+.sec h3{font-size:16px;color:var(--navy);margin:24px 0 10px;font-weight:700}
+.sec h3:first-of-type{margin-top:0}
+.sec p{margin-bottom:10px}
+.sec ul{margin:8px 0 12px 22px}
+.sec ul li{margin-bottom:5px}
+.tbl{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.tbl th{background:var(--navy);color:#fff;padding:8px 11px;text-align:left;font-weight:600;white-space:nowrap}
+.tbl td{padding:7px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:nth-child(even) td{background:#f8fafc}
+.tbl tr:hover td{background:var(--gold-l)}
+.code{background:#101828;color:#c9e3ff;border-radius:10px;padding:16px 18px;font-family:'Consolas','D2Coding',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;margin:12px 0;white-space:pre}
+.note{border-radius:10px;padding:13px 17px;margin:13px 0;font-size:13.5px;border:1px solid}
+.note-gold{background:var(--gold-l);border-color:#e2cf9a}
+.note-red{background:var(--red-l);border-color:#eec3c8}
+.note-blue{background:var(--blue-l);border-color:#bcd6f0}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--gold-l);color:#8a6a1e;border:1px solid #e2cf9a}
+.steps{counter-reset:st;list-style:none;margin:12px 0}
+.steps li{counter-increment:st;position:relative;padding:11px 15px 11px 50px;background:#fbfcfe;border:1px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:13.5px}
+.steps li::before{content:counter(st);position:absolute;left:13px;top:11px;width:25px;height:25px;border-radius:8px;background:var(--navy);color:var(--gold);font-weight:900;font-size:12.5px;display:flex;align-items:center;justify-content:center}
+footer{background:var(--navy);color:#9fb2d4;text-align:center;padding:28px 20px;font-size:12.5px;margin-top:44px}
+footer b{color:var(--gold)}
+@media print{nav{display:none}.sec{box-shadow:none;break-inside:avoid-page}body{background:#fff}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-in">
+    <span class="tag">🔍 Master Query Corpus v1.1 · 2026.07 · 보고서 §07 확장판 + 송창기(2026) 검증 프레임워크(44그룹·1,943항목·F1 0.931) 통합</span>
+    <h1>한국 관련 영상자료 <span class="accent">마스터 쿼리 코퍼스</span></h1>
+    <p class="desc">1910–1960 한국 관련 영상·시청각 자료를 전 세계 아카이브에서 <b>누락 없이</b> 발굴하기 위한 전수 검색 체계. 지명 40+ 표기군 × 시대 6기 × 사건·전투 60+ × 인물 40+ × 부대·참전국 30+ × 뉴스릴 시리즈 25+ × 주제 12군 × 10개 언어 — 총 600개 이상의 실행 가능 쿼리.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat"><span class="n">600+</span><span class="l">실행 쿼리</span></div>
+    <div class="hstat"><span class="n">40+</span><span class="l">지명 표기군</span></div>
+    <div class="hstat"><span class="n">60+</span><span class="l">사건·전투</span></div>
+    <div class="hstat"><span class="n">40+</span><span class="l">인물</span></div>
+    <div class="hstat"><span class="n">28</span><span class="l">참전·지원국</span></div>
+    <div class="hstat"><span class="n">25+</span><span class="l">뉴스릴 시리즈</span></div>
+    <div class="hstat"><span class="n">10</span><span class="l">언어</span></div>
+  </div>
+</header>
+
+<nav><div class="nav-in">
+  <a href="#howto">사용법</a>
+  <a href="#gazetteer">지명사전</a>
+  <a href="#era">시대별</a>
+  <a href="#battles">사건·전투</a>
+  <a href="#people">인물</a>
+  <a href="#units">부대·참전국</a>
+  <a href="#newsreels">뉴스릴</a>
+  <a href="#topics">주제별</a>
+  <a href="#rg">RG·식별자</a>
+  <a href="#sources">소스별 문법</a>
+  <a href="#multilang">다국어</a>
+  <a href="#coverage">커버리지</a>
+  <a href="#paper">논문통합</a>
+</div></nav>
+
+<main>
+
+<section class="sec" id="howto">
+  <div class="sec-head">
+    <span class="sec-num">01</span>
+    <div>
+      <h2>사용법 &amp; 실행 시퀀스 <span class="en">How to Use This Corpus</span></h2>
+      <p class="sec-sub">600+ 쿼리를 어떤 순서로, 어디에, 어떻게 투입하는가</p>
+    </div>
+  </div>
+  <h3>실행 원칙 5칙</h3>
+  <ul>
+    <li><b>① 소스별 3중 투입</b> — 모든 쿼리는 최소 3곳에 투입: NARA 카탈로그(Moving Images 필터) → archive.org → 대상별 아카이브(본 보고서 §11~17). 같은 쿼리라도 소스마다 색인이 달라 히트가 다르다.</li>
+    <li><b>② 변형 병렬</b> — 지명·인명은 §02 사전의 <b>모든 표기를 OR로 병렬</b>. 카탈로그가 OR 미지원이면 표기별로 각각 실행.</li>
+    <li><b>③ 넓게→좁게</b> — RG 전수 스캔(§09)과 광역 쿼리로 모수를 확보한 뒤 사건·인물 쿼리로 정밀 타격. 좁은 쿼리부터 시작하면 색인 표기가 다른 자료를 영영 놓친다.</li>
+    <li><b>④ 0건 ≠ 부재</b> — 온라인 0건은 '미전산화'로 기록하고 현장·대행 조사 목록(보고서 §27 Phase 1)으로 이월. NARA 카드 카탈로그 750만 장의 대부분이 미전산화 상태다.</li>
+    <li><b>⑤ 전 쿼리 로그</b> — 실행일·소스·히트 수·신규 등록 수를 §12 로그 서식에 기록. 로그 없는 검색은 재현 불가이므로 '수행 안 한 것'으로 간주.</li>
+  </ul>
+  <h3>권장 실행 시퀀스 (총 6주 배분 예)</h3>
+  <table class="tbl">
+    <thead><tr><th>주차</th><th>투입 세트</th><th>목적</th></tr></thead>
+    <tbody>
+      <tr><td>1주</td><td>§09 RG·식별자 전수 스캔 + §10 archive.org 컬렉션 스캔</td><td>키워드 무관 모수 확보 (색인 누락 회피)</td></tr>
+      <tr><td>2주</td><td>§02 지명 사전 × NARA·archive.org (표기군별 전 변형)</td><td>지리 축 커버리지 100%</td></tr>
+      <tr><td>3주</td><td>§03 시대별 SET A~F 전 쿼리</td><td>시간 축 커버리지 100%</td></tr>
+      <tr><td>4주</td><td>§04 사건·전투 + §05 인물</td><td>정밀 타격 — 특정 영상 발굴</td></tr>
+      <tr><td>5주</td><td>§06 부대·참전국 (해당국 아카이브 교차) + §07 뉴스릴 시리즈</td><td>주체 축 + 시리즈 축</td></tr>
+      <tr><td>6주</td><td>§08 주제별 + §11 다국어 (JACAR·Bundesarchiv·INA 등)</td><td>비군사 사료 + 비영어권 발굴</td></tr>
+    </tbody>
+  </table>
+  <div class="note note-gold"><b>💡 표기 규약</b> — 아래 쿼리에서 <code>( OR )</code>는 카탈로그의 불리언 지원 시 그대로, 미지원 시 괄호 안 각 항을 개별 실행. <code>..</code>은 연도 범위(지원 카탈로그: NARA 고급검색의 date range로 대체). 따옴표는 정확 구문.</div>
+</section>
+
+<section class="sec" id="gazetteer">
+  <div class="sec-head">
+    <span class="sec-num">02</span>
+    <div>
+      <h2>지명 사전 완전판 <span class="en">Complete Gazetteer — 40+ 표기군</span></h2>
+      <p class="sec-sub">도시·강·산·고지 — 일제기 일본식 로마자(1910–45 자료) / 미군식(1945–60 자료) / 구미 구식 표기 전체</p>
+    </div>
+  </div>
+  <div class="note note-red"><b>⚠️ 왜 결정적인가</b> — 1945년 이전 자료는 거의 전부 일본식 로마자(Keijo, Jinsen…)로, 한국전쟁기 자료는 미군식(Taegu, Inchon…)으로 색인되어 있다. 현대 표기(Seoul, Busan, Daegu)만 쓰면 <b>전전(戰前) 자료의 대부분과 전시 자료의 상당수를 구조적으로 놓친다.</b> 일본식 표기는 참고용 병행 검색어이며, 히트 시 반드시 내용으로 재확인할 것.</div>
+  <h3>남한 주요 도시</h3>
+  <table class="tbl">
+    <thead><tr><th>지명</th><th>현대</th><th>미군식(1945–60)</th><th>일제기 일본식</th><th>구식·기타</th></tr></thead>
+    <tbody>
+      <tr><td>서울</td><td>Seoul</td><td>Seoul</td><td><b>Keijo</b></td><td>Kyongsong · Gyeongseong · Hanyang</td></tr>
+      <tr><td>인천</td><td>Incheon</td><td><b>Inchon</b></td><td><b>Jinsen</b></td><td>Chemulpo(개항기)</td></tr>
+      <tr><td>부산</td><td>Busan</td><td><b>Pusan</b></td><td><b>Fusan</b></td><td>—</td></tr>
+      <tr><td>대구</td><td>Daegu</td><td><b>Taegu</b></td><td>Taikyu</td><td>—</td></tr>
+      <tr><td>대전</td><td>Daejeon</td><td><b>Taejon</b></td><td>Taiden</td><td>—</td></tr>
+      <tr><td>광주</td><td>Gwangju</td><td><b>Kwangju</b></td><td>Koshu</td><td>—</td></tr>
+      <tr><td>전주</td><td>Jeonju</td><td>Chonju</td><td>Zenshu</td><td>—</td></tr>
+      <tr><td>목포</td><td>Mokpo</td><td>Mokpo</td><td>Moppo</td><td>—</td></tr>
+      <tr><td>군산</td><td>Gunsan</td><td>Kunsan</td><td>Gunzan</td><td>—</td></tr>
+      <tr><td>여수</td><td>Yeosu</td><td><b>Yosu</b></td><td>Reisui</td><td>—</td></tr>
+      <tr><td>순천</td><td>Suncheon</td><td><b>Sunchon</b></td><td>Junten</td><td>—</td></tr>
+      <tr><td>수원</td><td>Suwon</td><td>Suwon</td><td>Suigen</td><td>—</td></tr>
+      <tr><td>춘천</td><td>Chuncheon</td><td>Chunchon</td><td>Shunsen</td><td>—</td></tr>
+      <tr><td>강릉</td><td>Gangneung</td><td>Kangnung</td><td>Koryo(참고)</td><td>—</td></tr>
+      <tr><td>포항</td><td>Pohang</td><td>Pohang(-dong)</td><td>Hoko(참고)</td><td>—</td></tr>
+      <tr><td>울산</td><td>Ulsan</td><td>Ulsan</td><td>Urusan</td><td>—</td></tr>
+      <tr><td>마산</td><td>Masan</td><td>Masan</td><td>Masan</td><td>—</td></tr>
+      <tr><td>진해</td><td>Jinhae</td><td>Chinhae</td><td>Chinkai</td><td>—</td></tr>
+      <tr><td>제주</td><td>Jeju</td><td><b>Cheju(-do)</b></td><td>Saishu</td><td><b>Quelpart</b>(구미 고지도·해군)</td></tr>
+      <tr><td>거제</td><td>Geoje</td><td><b>Koje(-do)</b></td><td>Kyosai(참고)</td><td>포로수용소 자료 다수</td></tr>
+      <tr><td>문산</td><td>Munsan</td><td><b>Munsan(-ni)</b></td><td>—</td><td>187공수 강하·정전 왕래</td></tr>
+      <tr><td>오산</td><td>Osan</td><td><b>Osan</b></td><td>—</td><td>Task Force Smith</td></tr>
+      <tr><td>평택</td><td>Pyeongtaek</td><td>Pyongtaek</td><td>Heitaku(참고)</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <h3>북한 주요 도시 (해방 직후 소련군·한국전쟁 북진 자료)</h3>
+  <table class="tbl">
+    <thead><tr><th>지명</th><th>현대</th><th>미군식</th><th>일제기 일본식</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>평양</td><td>Pyongyang</td><td>Pyongyang</td><td><b>Heijo</b></td><td>Pyeng Yang(선교사 문헌)</td></tr>
+      <tr><td>원산</td><td>Wonsan</td><td>Wonsan</td><td><b>Genzan</b></td><td>1950 상륙·기뢰 소해 자료</td></tr>
+      <tr><td>흥남</td><td>Hungnam</td><td><b>Hungnam</b></td><td>Konan</td><td>1950.12 철수 작전</td></tr>
+      <tr><td>함흥</td><td>Hamhung</td><td>Hamhung</td><td>Kanko</td><td>—</td></tr>
+      <tr><td>청진</td><td>Chongjin</td><td>Chongjin</td><td>Seishin</td><td>1945 소련군 상륙</td></tr>
+      <tr><td>나진</td><td>Rajin</td><td>Najin</td><td>Rashin</td><td>1945 소련군 상륙</td></tr>
+      <tr><td>성진</td><td>Songjin</td><td>Songjin</td><td>Joshin</td><td>—</td></tr>
+      <tr><td>신의주</td><td>Sinuiju</td><td>Sinuiju</td><td>Shingishu</td><td>압록강 국경</td></tr>
+      <tr><td>진남포</td><td>Nampo</td><td>Chinnampo</td><td>Chinnampo</td><td>1950 철수</td></tr>
+      <tr><td>해주</td><td>Haeju</td><td>Haeju</td><td>Kaishu</td><td>—</td></tr>
+      <tr><td>개성</td><td>Kaesong</td><td><b>Kaesong</b></td><td>Kaijo</td><td>정전회담 초기 장소</td></tr>
+      <tr><td>나남(청진)</td><td>Ranam</td><td>Ranam</td><td><b>Ranan</b></td><td>일본군 19사단 주둔지 — 전전 군사영상</td></tr>
+    </tbody>
+  </table>
+  <h3>강·산·지형 (전투 색인의 실제 키)</h3>
+  <table class="tbl">
+    <thead><tr><th>지형</th><th>검색 표기</th><th>맥락</th></tr></thead>
+    <tbody>
+      <tr><td>압록강</td><td><b>Yalu (River)</b> · Amnok</td><td>1950 북진·중공군 개입·수풍댐</td></tr>
+      <tr><td>두만강</td><td><b>Tumen (River)</b></td><td>소련 국경</td></tr>
+      <tr><td>한강</td><td><b>Han River</b></td><td>교량 폭파·도하 작전</td></tr>
+      <tr><td>낙동강</td><td><b>Naktong (River)</b></td><td>부산 교두보 방어선</td></tr>
+      <tr><td>임진강</td><td><b>Imjin (River)</b></td><td>1951 글로스터 전투</td></tr>
+      <tr><td>대동강</td><td><b>Taedong</b></td><td>평양 점령 자료</td></tr>
+      <tr><td>청천강</td><td><b>Chongchon</b></td><td>1950.11 중공군 공세</td></tr>
+      <tr><td>금강산</td><td><b>Diamond Mountains</b> · Kumgang · Kongo</td><td>전전 관광·홍보 영상의 단골</td></tr>
+      <tr><td>백두산</td><td>Paektu · Hakuto(참고) · Mt. Paektu</td><td>전전 다큐</td></tr>
+      <tr><td>수풍댐</td><td><b>Suiho Dam</b> · Supung</td><td>1952 폭격 작전(공군 영상)</td></tr>
+      <tr><td>38선</td><td><b>38th parallel</b> · thirty-eighth parallel</td><td>분단 표준 색인어</td></tr>
+      <tr><td>휴전선 고지</td><td>§04 전투명 참조 (Heartbreak·Pork Chop…)</td><td>1951–53 고지전은 지명 아닌 <b>별명</b>으로 색인</td></tr>
+    </tbody>
+  </table>
+  <div class="code"># 지명 사전 일괄 실행 쿼리 (NARA·archive.org 공용 — 표기군 단위)
+(Seoul OR Keijo OR Kyongsong) film
+(Inchon OR Incheon OR Jinsen OR Chemulpo)
+(Pusan OR Busan OR Fusan)
+(Taegu OR Daegu OR Taikyu)
+(Taejon OR Daejeon OR Taiden)
+(Kwangju OR Gwangju OR Koshu) Korea
+(Pyongyang OR Heijo)
+(Wonsan OR Genzan)
+(Hungnam OR Konan) evacuation
+(Chongjin OR Seishin OR Najin OR Rashin) 1945
+(Cheju OR Quelpart OR Saishu)
+(Koje OR "Koje-do") prisoners
+(Kaesong OR Kaijo)
+"Han River" Korea / "Naktong" / "Imjin" / "Yalu" / "Chongchon"
+"Diamond Mountains" OR Kumgang
+"Suiho" OR "Supung" dam
+"38th parallel"</div>
+</section>
+
+<section class="sec" id="era">
+  <div class="sec-head">
+    <span class="sec-num">03</span>
+    <div>
+      <h2>시대별 쿼리 전집 <span class="en">Chronological Query Sets — 1910~1960</span></h2>
+      <p class="sec-sub">6개 시대 세트 × 세부 국면 — 보고서 v6.3 SET A~F의 완전 확장</p>
+    </div>
+  </div>
+
+  <h3>SET A. 1910–1945 일제강점기·독립운동 (확장판)</h3>
+  <pre class="code"># A-1. 총독부·식민 통치 (노획 필름 RG 242 + 일본 뉴스릴)
+("Chosen" OR "Tyosen" OR "Keijo") newsreel
+"Government-General" (Chosen OR Korea)
+"Chosen Sotokufu" OR "Governor-General" Korea
+(Chosen OR Korea) (exposition OR exhibition) 1929 1940    # 조선박람회
+(Keijo OR Chosen) (street OR city OR views)               # 도시 풍경
+Chosen (railway OR railroad)                              # 조선철도(만철 연계)
+(Chosen OR Korea) (rice OR agriculture OR farm) Japan
+Chosen (mining OR gold OR coal)                           # 광산·자원 수탈
+(Chosen OR Korea) "volunteer" soldier Japan               # 지원병 제도 선전
+Korean (conscription OR draft) Japan 1943 1944            # 징병
+Korean (laborers OR workers) (Japan OR Manchuria)         # 노무 동원
+"comfort" Korea Japan 1944                                # 위안부 관련(존재 확인용, 신중 해석)
+Chosen (shrine OR Shinto)                                 # 신사참배 강요
+(Keijo OR Chosen) (school OR students OR education)
+
+# A-2. 독립운동·임시정부
+"March First" OR "Mansei" Korea 1919
+"Samil" OR "Sam-il" Korea
+Korean (independence OR uprising) 1919..1926
+"June Tenth" Korea 1926                                    # 6.10 만세
+Kwangju students (1929 OR 1930)                            # 광주학생운동
+"Korean Provisional Government" (Shanghai OR Chungking)
+"Kim Koo" OR "Kim Ku" Chungking
+"Korean Volunteer Corps" OR "Korean Volunteers" China
+"Korean Restoration Army" OR "Kwangbok" OR "Liberation Army"
+Korean (exiles OR patriots) (China OR Hawaii OR America)
+"Korean National Association" Hawaii                       # 재미 한인
+Sakuradamon incident 1932                                  # 이봉창 의거(일본측 뉴스)
+(Hongkew OR Hongkou) bombing Shanghai 1932                 # 윤봉길 의거
+"Cairo Conference" 1943 / "Cairo Declaration" Korea
+
+# A-3. 전시 한반도 (1937–45)
+(Chosen OR Korea) (air raid OR defense) 1944 1945
+(Chosen OR Korea) Japan (war effort OR mobilization)
+Korean kamikaze OR "special attack" Korean                 # 조선인 특공대원
+B-29 (Chosen OR Korea) 1945                                # 한반도 상공 작전
+(Konan OR Hungnam) (chemical OR nitrogen OR factory)       # 흥남 질소비료(전략폭격 조사)
+"United States Strategic Bombing Survey" Korea             # USSBS 조사단</pre>
+
+  <h3>SET B. 1945–1946 해방·항복·양군 진주 (확장판)</h3>
+  <pre class="code"># B-1. 항복·해방의 순간
+Korea liberation (1945 OR "August 1945")
+"V-J Day" Korea / "Victory Japan" Korean
+"Japanese surrender" (Seoul OR Keijo OR Korea)
+"surrender ceremony" Seoul "September 9"                   # 총독부 항복 조인식
+(Missouri OR "Tokyo Bay") surrender September 1945
+"General Order Number One" Korea                           # 일반명령 1호(분할 점령 근거)
+Korea (celebration OR crowds OR flags) 1945
+
+# B-2. 미군 진주 (남한)
+"XXIV Corps" (Korea OR Inchon OR Jinsen)
+"7th Infantry Division" Korea 1945
+"6th Infantry Division" Korea / "40th Infantry Division" Korea
+"Operation Blacklist" (Korea OR Forty)
+(Inchon OR Jinsen) landing "September 1945"
+American troops (Seoul OR Keijo) (enter OR arrival) 1945
+(disarmament OR surrender) Japanese troops Korea
+Japanese (repatriation OR evacuation) (Korea OR Fusan) 1945..1946   # 일본인 송환
+Korean (repatriation OR return) (Japan OR Fusan OR Pusan)           # 귀환 동포
+"LST" (Pusan OR Fusan OR Korea) 1945 1946                  # 수송선 자료
+
+# B-3. 소련군 진주 (북한)
+(Russian OR Soviet) (Korea OR "North Korea") 1945
+Soviet (troops OR army) (Heijo OR Pyongyang OR Genzan OR Wonsan)
+Red Army (Seishin OR Chongjin OR Rashin OR Najin) 1945
+Soviet Korea (liberation OR occupation) 1945 1946
+"25th Army" Soviet Korea                                   # 치스차코프 25군
+Chistiakov Korea                                           # 소련 사령관</pre>
+
+  <h3>SET C. 1945–1948 미군정기 (확장판)</h3>
+  <pre class="code"># C-1. 군정 통치·행정
+USAMGIK OR "military government in Korea" OR "American Military Government"
+"Hodge" Korea / "Archer Lerch" Korea / "Archibald Arnold" Korea    # 군정 수뇌
+Korea (trusteeship OR "joint commission") 1946 1947
+"Moscow Conference" Korea December 1945
+"Soviet-American" OR "US-USSR" commission Korea
+"South Korean Interim" (government OR legislature)          # 남조선과도정부·입법의원
+Korea (election OR voting) 1946 1947                        # 과도입법의원 선거
+"Cheju" OR "Cheju-do" (1948 OR uprising OR incident)        # 제주 4.3
+(Yosu OR Sunchon) (rebellion OR mutiny OR revolt) 1948      # 여순 사건
+"Taegu" (riot OR uprising) (1946 OR October)                # 대구 10월 항쟁
+Korea (strike OR labor unrest) 1946 1947
+
+# C-2. 치안·군 창설
+"Korean Constabulary" OR "constabulary" Korea
+"National Police" Korea / Korea police training
+"Coast Guard" Korea 1946..1948
+KMAG OR "Military Advisory Group" Korea                     # 군사고문단(개편 전 PMAG 포함)
+
+# C-3. 사회·경제·구호
+Korea (rice OR food OR famine OR ration) 1946..1948
+Korea (cholera OR typhus OR DDT OR vaccination)
+Korea (refugees OR displaced persons) (38th OR north)
+UNRRA Korea                                                 # 유엔구제부흥사업국
+Korea (school OR university OR literacy) 1946..1948
+Korea (currency OR bank OR economy) military government
+GARIOA Korea                                                # 점령지역 구호 원조
+Korea (housing OR reconstruction) 1946..1948
+
+# C-4. 38선·남북 왕래
+"38th parallel" (guard OR crossing OR barrier OR sign)
+Korea (border OR boundary) Soviet American zone
+(refugees OR escapees) (north OR Soviet zone) Korea</pre>
+
+  <h3>SET D. 1948–1950 정부수립·분단 고착 (확장판)</h3>
+  <pre class="code">UNTCOK OR "UN Temporary Commission on Korea"
+Korea election "May 10" 1948 / Korea "general election" 1948
+"National Assembly" Korea 1948 (opening OR first)
+"Republic of Korea" (proclamation OR inauguration OR ceremony) 1948
+"Syngman Rhee" (inauguration OR president) 1948
+Korea independence ceremony "August 15" 1948               # 정부 수립 선포식
+MacArthur Seoul "August 1948"                              # 맥아더 방한
+"Democratic People's Republic" 1948 1949                   # 북한 정권 수립
+"Kim Il Sung" (1946..1950)
+North Korea (parade OR army OR anniversary) 1948 1949
+American troops (withdrawal OR leave) Korea 1948 1949      # 주한미군 철수
+"Korean Aid" bill OR ECA Korea 1949 1950                   # 대한 원조
+Korea (guerrilla OR partisan) 1948..1950                   # 빨치산 토벌
+(Ongjin OR Kaesong OR border) (clash OR fighting) 1949     # 38선 충돌
+"Kim Koo" (assassination OR funeral) 1949                  # 김구 서거·국민장</pre>
+
+  <h3>SET E. 1950–1953 한국전쟁 — 국면·월 단위 (확장판)</h3>
+  <pre class="code"># E-1. 개전~부산 교두보 (1950.6~9)
+Korea invasion "June 1950" / "North Korean" (attack OR invasion)
+"Task Force Smith" OR (Osan 1950)                          # 최초 지상전
+(Taejon OR Taiden) (battle OR fall) 1950 / "General Dean"  # 대전 전투·딘 소장
+"Pusan Perimeter" OR "Naktong" (line OR bulge OR battle)
+(Tabu-dong OR Waegwan OR "Bowling Alley") 1950             # 다부동
+Korea (evacuation OR refugees) (south OR Pusan) 1950
+"United Nations" (resolution OR council) Korea June 1950   # 안보리 결의
+
+# E-2. 인천~북진 (1950.9~11)
+"Inchon landing" OR "Operation Chromite"
+(Wolmi OR "Wolmi-do") 1950                                 # 월미도
+Seoul (recapture OR liberation) "September 1950"
+"Government House" Seoul flag 1950                         # 중앙청 태극기 게양
+(Wonsan OR Genzan) (landing OR mines OR sweeping) 1950
+Pyongyang (capture OR fall) "October 1950"
+"187th" (airborne OR RCT) (Sukchon OR Sunchon OR Korea)    # 공수 강하
+(Yalu OR Chosan OR Hyesanjin) 1950 November                # 압록강 도달
+
+# E-3. 중공군 개입~1.4 후퇴 (1950.11~1951.1)
+"Chinese Communist" (intervention OR offensive) Korea
+(Unsan OR Kunu-ri OR "Chongchon") 1950                     # 운산·군우리
+("Chosin" OR "Changjin") Reservoir
+"Hungnam evacuation" OR (Hungnam December 1950)            # 흥남 철수
+"Meredith Victory" OR "Christmas cargo"                    # 피난민 수송선
+Seoul (fall OR evacuation) "January 1951"                  # 1.4 후퇴
+"bug out" Korea 1950 1951
+
+# E-4. 재반격~고착 (1951)
+(Wonju OR "Chipyong-ni" OR Chipyong) 1951
+"Operation Thunderbolt" OR "Operation Killer" OR "Operation Ripper"
+"Operation Courageous" OR "Operation Tomahawk" OR (Munsan airborne 1951)
+Seoul recapture "March 1951"
+"Chinese spring offensive" 1951 / "April offensive" Korea
+(Imjin OR "Gloster" OR Gloucestershire) 1951               # 임진강·글로스터 고지
+(Kapyong OR "Ka-pyong") 1951                               # 가평 전투(호주·캐나다)
+MacArthur (dismissal OR relieved OR farewell) 1951
+"Van Fleet" Korea 1951
+
+# E-5. 고지전·항공전 (1951.7~1953)
+"Heartbreak Ridge" / "Bloody Ridge" / "Punchbowl" Korea
+"Old Baldy" / "Pork Chop Hill" / "T-Bone Hill" Korea
+"White Horse" (hill OR mountain) Korea                     # 백마고지
+"Triangle Hill" OR "Sniper Ridge" 1952                     # 상감령(중국측 上甘嶺)
+"Outpost Harry" OR "Kelly Hill" Korea
+(MiG OR "MiG Alley") Korea / F-86 Sabre Korea              # 공중전
+B-29 Korea (bombing OR raid) / "Operation Strangle" Korea
+"Suiho" OR "Sui-ho" dam (attack OR raid) 1952              # 수풍댐 폭격
+Pyongyang (air raid OR bombing) 1952
+napalm Korea / helicopter (evacuation OR MASH) Korea
+"hospital ship" Korea (Repose OR Haven OR Consolation OR Jutlandia)
+
+# E-6. 정전 협상·포로 (1951.7~1953.7)
+(Kaesong OR Panmunjom OR Panmunjon) (truce OR armistice OR negotiations)
+"Operation Little Switch" 1953 / "Operation Big Switch" 1953
+(Koje OR "Koje-do") (prisoners OR POW OR riot OR Dodd) 1952
+"Freedom Village" Korea 1953                               # 포로 귀환촌
+Rhee (release OR anti-communist) prisoners "June 1953"     # 반공포로 석방
+armistice (signing OR signed) Korea "July 1953"
+"demilitarized zone" OR DMZ Korea 1953
+NNSC OR "Neutral Nations" Korea 1953..1956
+"Operation Glory" Korea                                    # 전사자 유해 교환
+
+# E-7. 전시 후방·민간
+Korea (orphans OR orphanage OR children) 1950..1953
+Korea (Christmas OR Thanksgiving) troops                   # 위문·명절 영상
+USO Korea / "Bob Hope" Korea                               # 위문 공연
+"Marilyn Monroe" Korea 1954                                # 먼로 위문공연
+"Cardinal Spellman" Korea                                  # 스펠먼 추기경 성탄 방문
+Eisenhower Korea (visit OR trip) (1952 OR December)        # 아이젠하워 방한
+Korea (propaganda OR leaflet OR loudspeaker)               # 심리전
+"Ethiopian" OR "Turkish" OR "Greek" (troops OR soldiers) Korea</pre>
+
+  <h3>SET F. 1953–1960 전후 재건·원조 (확장판)</h3>
+  <pre class="code">UNKRA (Korea OR reconstruction)
+"Armed Forces Assistance to Korea" OR AFAK
+FOA OR ICA Korea (aid OR assistance) 1954..1960            # 미 대외원조 기관
+Korea (reconstruction OR rebuilding) 1953..1960
+Korea (housing OR apartments OR refugees resettlement) 1954..1960
+Korea (school OR classroom OR education) rebuilt
+Korea (factory OR industry OR cement OR glass) 1954..1960  # 문경시멘트 등 원조 공장
+Korea (orphan OR adoption) (Holt OR American families)     # 홀트 해외입양
+"Syngman Rhee" (Washington OR Congress OR visit) 1954      # 이승만 방미
+Korea (election OR political) 1956 1960
+Korea "April revolution" OR "student revolution" 1960      # 4.19
+"Geneva Conference" Korea 1954                             # 제네바 정치회담
+"military demarcation" OR DMZ Korea 1954..1960
+"Operation Gopherville"? Korea                             # (검증 필요 표기 예시 — 실행 전 존재 확인)</pre>
+  <div class="note note-red"><b>⚠️ 마지막 행처럼 물음표를 단 쿼리는 '존재 미확인 작전명' 자리표시자다.</b> 실행 전 반드시 웹에서 작전명 실재 여부를 확인하고, 미확인 항목은 로그에 '검증 필요'로 표기할 것. 확인된 작전명만 대장에 등록한다.</div>
+</section>
+
+<section class="sec" id="battles">
+  <div class="sec-head">
+    <span class="sec-num">04</span>
+    <div>
+      <h2>사건·전투·작전명 색인 <span class="en">Events, Battles &amp; Operation Codenames</span></h2>
+      <p class="sec-sub">영상은 사건명·작전명·고지 별명으로 색인된다 — 60+ 검색 키 총정리</p>
+    </div>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>연도</th><th>사건·전투</th><th>핵심 검색 키 (그대로 투입)</th></tr></thead>
+    <tbody>
+      <tr><td>1919</td><td>3.1 운동</td><td>"March First" · Mansei · Samil 1919</td></tr>
+      <tr><td>1926</td><td>6.10 만세 / 순종 인산</td><td>"June Tenth" Korea · Sunjong funeral</td></tr>
+      <tr><td>1929</td><td>광주학생운동</td><td>Kwangju students 1929</td></tr>
+      <tr><td>1932</td><td>이봉창·윤봉길 의거</td><td>Sakuradamon incident · Hongkew Park bombing Shanghai</td></tr>
+      <tr><td>1936</td><td>손기정 베를린 마라톤 우승</td><td>"Son Kitei" OR "Sohn Kee-chung" marathon Berlin 1936</td></tr>
+      <tr><td>1943</td><td>카이로 회담</td><td>"Cairo Conference" · "Cairo Declaration"</td></tr>
+      <tr><td>1945</td><td>얄타·포츠담 (한국 조항)</td><td>Yalta Korea · "Potsdam Declaration"</td></tr>
+      <tr><td>1945.8</td><td>히로시마 조선인 피폭</td><td>Korean (victims OR survivors) Hiroshima</td></tr>
+      <tr><td>1945.9.9</td><td>조선총독부 항복 조인</td><td>surrender ceremony Seoul "September 9" 1945</td></tr>
+      <tr><td>1945.12</td><td>모스크바 3상회의·신탁 파동</td><td>"Moscow Conference" 1945 · trusteeship Korea protest</td></tr>
+      <tr><td>1946.10</td><td>대구 10월 항쟁</td><td>Taegu (riot OR uprising) October 1946</td></tr>
+      <tr><td>1947</td><td>미소공위 결렬·UN 이관</td><td>"Joint Commission" Korea 1947 · Korea question "United Nations" 1947</td></tr>
+      <tr><td>1948.4</td><td>제주 4.3 / 남북협상</td><td>Cheju uprising 1948 · Kim Koo Pyongyang April 1948</td></tr>
+      <tr><td>1948.5</td><td>5.10 총선거</td><td>Korea election "May 1948" · UNTCOK observers</td></tr>
+      <tr><td>1948.8/9</td><td>대한민국·북한 정권 수립</td><td>"Republic of Korea" proclamation · "Democratic People's Republic" 1948</td></tr>
+      <tr><td>1948.10</td><td>여순 사건</td><td>(Yosu OR Sunchon) rebellion 1948</td></tr>
+      <tr><td>1949.6</td><td>김구 암살·국민장</td><td>"Kim Koo" (assassination OR funeral) 1949</td></tr>
+      <tr><td>1950.6~7</td><td>개전·오산·대전</td><td>"Task Force Smith" · Taejon battle · "General Dean" captured</td></tr>
+      <tr><td>1950.8~9</td><td>낙동강 방어선</td><td>"Pusan Perimeter" · Naktong Bulge · "Bowling Alley" · Tabu-dong</td></tr>
+      <tr><td>1950.9</td><td>인천상륙·서울수복</td><td>"Operation Chromite" · Wolmi-do · Seoul recapture September</td></tr>
+      <tr><td>1950.10</td><td>평양 점령·공수 강하</td><td>Pyongyang capture · 187th Airborne (Sukchon OR Sunchon)</td></tr>
+      <tr><td>1950.11~12</td><td>중공군·장진호·흥남</td><td>Unsan · "Kunu-ri" · "Chosin Reservoir" · "Hungnam evacuation" · "Meredith Victory"</td></tr>
+      <tr><td>1951.1~4</td><td>1.4후퇴·재반격</td><td>Seoul fall January 1951 · Chipyong-ni · Operations Thunderbolt/Killer/Ripper/Courageous/Tomahawk</td></tr>
+      <tr><td>1951.4</td><td>임진강·가평</td><td>Imjin River battle · Gloster Hill · Kapyong</td></tr>
+      <tr><td>1951.8~10</td><td>피의 능선·단장의 능선</td><td>"Bloody Ridge" · "Heartbreak Ridge" · Punchbowl</td></tr>
+      <tr><td>1952</td><td>고지전·수풍댐·거제 폭동</td><td>"Old Baldy" · "White Horse" · "Triangle Hill" · "Sniper Ridge" · Suiho Dam raid · Koje-do riot "General Dodd"</td></tr>
+      <tr><td>1953.3~7</td><td>폭찹힐·정전 조인</td><td>"Pork Chop Hill" · "Outpost Harry" · Panmunjom armistice signing "July 27"</td></tr>
+      <tr><td>1953.4/8</td><td>포로 교환</td><td>"Little Switch" · "Big Switch" · "Freedom Village"</td></tr>
+      <tr><td>1953.6</td><td>반공포로 석방</td><td>Rhee (releases OR frees) prisoners June 1953</td></tr>
+      <tr><td>1954</td><td>제네바 회담·먼로 위문</td><td>"Geneva Conference" Korea · "Marilyn Monroe" Korea</td></tr>
+      <tr><td>1960</td><td>4.19 혁명</td><td>Korea (student OR April) (revolution OR uprising) 1960 · Rhee resign</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="sec" id="people">
+  <div class="sec-head">
+    <span class="sec-num">05</span>
+    <div>
+      <h2>인물 쿼리 전집 <span class="en">People Queries — 로마자 변형 포함 40+명</span></h2>
+      <p class="sec-sub">뉴스릴은 인물 중심으로 색인된다 — 한국·미국·국제 인사와 방문 유명인</p>
+    </div>
+  </div>
+  <pre class="code"># ━━━ 한국 정치 지도자 ━━━
+"Syngman Rhee" OR "Yi Sung-man" OR "Lee Sung Man"          # 이승만
+"Francesca" Rhee                                            # 프란체스카(의전·환영 장면)
+"Kim Koo" OR "Kim Ku" OR "Kim Gu"                           # 김구
+"Kim Kyu-sik" OR "Kimm Kiusic" OR "Kim Kiusic"              # 김규식
+"Lyuh Woon-hyung" OR "Yo Un-hyong" OR "Yuh Woon Hyung"      # 여운형
+"Cho Man-sik" OR "Jo Man-sik"                               # 조만식
+"Kim Song-su" OR "Kim Sung-soo"                             # 김성수
+"Shin Ik-hui" OR "Shin Ikhee" OR "P.H. Shinicky"            # 신익희(외신 표기 주의)
+"Chang Myon" OR "John M. Chang" OR "John Myun Chang"        # 장면
+"Cho Byong-ok" OR "Chough Pyung-ok"                         # 조병옥
+"Louise Yim" OR "Im Yong-sin"                               # 임영신
+"Ben C. Limb" OR "Im Byong-jik"                             # 임병직
+"An Chang-ho" OR "Ahn Chang-ho" OR "Tosan"                  # 안창호(전전 미주)
+
+# ━━━ 한국 군·전쟁기 인물 ━━━
+"Paik Sun-yup" OR "Paek Son-yop"                            # 백선엽
+"Chung Il-kwon" OR "Chung Il Kwon"                          # 정일권
+"Son Won-il" OR "Sohn Won-yil"                              # 손원일(해군)
+"Kim Hong-il" Korea general                                 # 김홍일
+"Sohn Kee-chung" OR "Son Kitei"                             # 손기정(1936 마라톤)
+
+# ━━━ 북한 인물 ━━━
+"Kim Il Sung" OR "Kim Il-song" OR "Kim Il-sung"
+"Pak Hon-yong" OR "Pak Heun-yung"                           # 박헌영
+"Choe Yong-gon" OR "Choi Yong-kun"                          # 최용건
+"Nam Il" Korea (armistice OR Panmunjom)                     # 남일(정전회담 북측 대표)
+
+# ━━━ 미국 군·외교 (한국 관련 장면 한정 조합) ━━━
+"John R. Hodge" OR "General Hodge"                          # 하지
+"Archibald Arnold" Korea / "Archer Lerch" Korea             # 군정장관
+"William F. Dean" (Korea OR Taejon OR prisoner)             # 딘 소장
+"Walton Walker" (Korea OR Eighth Army)                      # 워커
+"Edward Almond" (Korea OR "X Corps")                        # 아몬드
+MacArthur (Korea OR Inchon OR "Wake Island")                # 맥아더(웨이크섬 회동 포함)
+"Matthew Ridgway" Korea / "James Van Fleet" Korea
+"Mark Clark" (Korea OR armistice)                           # 클라크(정전 서명)
+"Maxwell Taylor" Korea 1953
+"John Muccio" Korea                                          # 무초 대사
+"Ellis Briggs" Korea ambassador
+Truman Korea (decision OR statement) 1950
+Eisenhower Korea (visit OR pledge) 1952
+"John Foster Dulles" Korea (1950 OR 1953)                   # 덜레스(38선 시찰·상호방위조약)
+"Dean Acheson" Korea                                         # 애치슨
+
+# ━━━ 국제 인사·유명인 방한 ━━━
+"Trygve Lie" Korea                                           # 유엔 사무총장
+"Krishna Menon" Korea POW                                    # 인도 중재안
+"Chiang Kai-shek" (Cairo OR Korea)                           # 장제스
+"Pandit Nehru" Korea                                         # 네루(중립국 논의)
+"Bob Hope" Korea 1950                                        # USO
+"Marilyn Monroe" Korea February 1954
+"Cardinal Spellman" Korea Christmas
+"Billy Graham" Korea 1952                                    # 부흥 집회
+"Helen Keller" Korea 1948                                    # 헬렌 켈러 방한(존재 확인 후 등록)</pre>
+  <div class="note note-blue"><b>ℹ️ 인명 검색 3원칙</b> — ① 성(姓)만으로도 1회 검색(Rhee, Hodge, Paik) ② 외신 독자 표기(Shinicky, Kiusic, Lyuh)를 버리지 말 것 — 당대 뉴스릴 자막이 그 표기다 ③ 인물+장소/사건 조합으로 오탐 제거(예: MacArthur는 단독 검색 시 수천 건 — 반드시 Korea·Inchon과 AND).</div>
+</section>
+
+<section class="sec" id="units">
+  <div class="sec-head">
+    <span class="sec-num">06</span>
+    <div>
+      <h2>부대·참전국 쿼리 전집 <span class="en">Units &amp; UN Contingents — 28개국 완전판</span></h2>
+      <p class="sec-sub">Signal Corps 색인은 부대 기준, 참전국 자료는 자국 부대명 기준 — 보고서 §11~17 해당국 아카이브에 교차 투입</p>
+    </div>
+  </div>
+  <pre class="code"># ━━━ 미군 주요 부대 (한국 조합 필수) ━━━
+"Eighth Army" Korea / "X Corps" Korea / "I Corps" OR "IX Corps" Korea
+"1st Cavalry Division" Korea / "2nd Infantry Division" Korea
+"3rd Infantry Division" Korea / "7th Infantry Division" Korea
+"24th Infantry Division" Korea / "25th Infantry Division" Korea
+"45th Infantry Division" OR "40th Infantry Division" Korea  # 주방위군 사단
+"1st Marine Division" (Inchon OR Chosin OR Korea)
+"187th Airborne" OR "187th RCT" Korea
+"5th Air Force" Korea / "Far East Air Forces" OR FEAF Korea
+"Bomber Command" Korea B-29 / "Seventh Fleet" Korea
+"Task Force 77" Korea                                        # 항모 기동부대
+"3rd Logistical" OR "2nd Logistical" Korea                   # 군수(부산항 영상)
+KMAG OR "Korean Military Advisory Group"
+KATUSA Korea                                                 # 카투사
+"24th Infantry Regiment" Korea                               # 흑인 연대(통합 이전)
+
+# ━━━ 한국군 ━━━
+"ROK Army" OR "Republic of Korea Army"
+"ROK" (1st OR 6th OR Capital) Division
+"Korean Marine" Corps / "ROK Navy" OR "ROK Air Force"
+"Korean Service Corps" OR "A-frame" Korea                    # 지게부대
+
+# ━━━ 영연방 ━━━
+"27th British" OR "29th British" (Brigade OR Korea)
+"1st Commonwealth Division" Korea
+(Gloucestershire OR Glosters) Korea 1951
+"Royal Australian Regiment" OR 3RAR Korea / RAAF (77 OR Squadron) Korea
+"Princess Patricia" OR PPCLI Korea                           # 캐나다
+"Royal 22e" OR "Van Doos" Korea
+"New Zealand" (artillery OR Kayforce) Korea
+HMS (Belfast OR Ocean OR Triumph) Korea                      # 영 해군 함정
+HMCS Korea / HMAS Korea                                      # 캐나다·호주 함정
+
+# ━━━ 기타 참전 14개국 ━━━
+"Turkish Brigade" OR "Turkish troops" Korea                  # 터키
+"Kagnew Battalion" OR Ethiopian Korea                        # 에티오피아
+"Batallon Colombia" OR Colombian (battalion OR frigate) Korea
+PEFTOK OR "Philippine Expeditionary" Korea
+"Thai battalion" OR "Royal Thai" Korea
+"Greek battalion" OR "Sparta Battalion" Korea / RHAF Korea
+"French battalion" OR "Bataillon francais" Korea             # 몽클라르
+"Netherlands battalion" OR "Van Heutsz" Korea                # 네덜란드
+"Belgian battalion" OR "Corps Volontaires" Korea / Luxembourg Korea
+"2 Squadron" SAAF OR "South African" (pilots OR squadron) Korea
+"60th Field Ambulance" OR "Indian" (ambulance OR custodian) Korea
+"Custodian Force India" OR CFI Korea                          # 인도 포로 관리군
+
+# ━━━ 의료지원 6개국 + NNSC ━━━
+Jutlandia (hospital OR Korea)                                 # 덴마크 병원선
+"Swedish Red Cross" (Pusan OR Korea)                          # 스웨덴 야전병원
+NORMASH OR "Norwegian" MASH Korea                             # 노르웨이
+"Indian 60th" OR "parachute field ambulance" Korea
+"Italian Red Cross" (68 OR hospital) Korea                    # 이탈리아 68병원
+"German Red Cross" Korea hospital 1954                        # 서독(부산, 전후)
+NNSC OR "Neutral Nations Supervisory Commission"
+(Swiss OR Swedish) (delegation OR observers) Panmunjom
+(Polish OR Czech OR Czechoslovak) (delegation OR NNSC) Korea</pre>
+  <div class="note note-gold"><b>💡 참전국 이중 발굴법</b> — 각 부대명을 ① NARA(미군이 촬영한 참전국 부대)와 ② 해당국 아카이브(보고서 §11 국가별 목록 — IWM, AWM, LAC, 터키 TRT 등)에 <b>같은 쿼리로 이중 투입</b>. 미군 촬영분과 자국 종군 촬영분은 서로 다른 컬렉션이다.</div>
+</section>
+
+<section class="sec" id="newsreels">
+  <div class="sec-head">
+    <span class="sec-num">07</span>
+    <div>
+      <h2>뉴스릴·시리즈별 쿼리 <span class="en">Newsreel &amp; Series Queries — 25+ 시리즈</span></h2>
+      <p class="sec-sub">시리즈명 + Korea 조합이 가장 정밀한 발굴 경로 — 국가별 뉴스릴 전체</p>
+    </div>
+  </div>
+  <pre class="code"># ━━━ 미국 뉴스릴·군 시리즈 ━━━
+"Universal Newsreel" (Korea OR Seoul OR Panmunjom)          # RG 200-UN, PD
+"United News" Korea                                          # RG 208-UN (OWI)
+"Army-Navy Screen Magazine" Korea
+"Combat Bulletin" Korea                                      # 육군 주간 전황 필름
+"Staff Film Report" Korea                                    # 참모 보고 필름(주간)
+"The Big Picture" Korea                                      # 육군 TV 시리즈(1951~) 다수 한국편
+"This Is Korea" 1951                                         # John Ford 다큐
+"Why Korea" 1951                                             # Fox 아카데미 수상 다큐
+"Crusade in the Pacific" Korea                               # TV 다큐 시리즈
+"Screen News Digest" Korea
+"Fox Movietone" (Korea OR Korean)                            # 사우스캐롤라이나대 소장
+"Paramount News" Korea
+"News of the Day" Korea                                      # Hearst (UCLA)
+"Hearst Metrotone" Korea
+"March of Time" Korea                                        # 편집본 사용 제한 주의
+"This is America" Korea
+"Telenews" Korea                                             # 극장 TV 뉴스
+
+# ━━━ 일본 (JACAR·NHK·노획 RG 242) ━━━
+"Nippon News" OR "Nihon News" (Chosen OR Korea)              # 日本ニュース
+(Asahi OR Mainichi OR Yomiuri) newsreel Chosen               # 신문사 뉴스릴
+"Chosen Sotokufu" film                                       # 총독부 제작
+242-MID-J Korea OR Japan                                     # 노획 G-2 분류
+
+# ━━━ 유럽 ━━━
+"Pathe News" OR "British Pathe" Korea                        # 영국
+"Movietone News" British Korea
+"Gaumont British" Korea / "Gaumont Actualites" Coree
+"Les Actualites Francaises" Coree                            # 프랑스 INA
+"Welt im Film" Korea                                         # 독일 점령기(미영 합작)
+"Neue Deutsche Wochenschau" Korea                            # 서독
+"Der Augenzeuge" Korea                                       # 동독 DEFA — 북한 시각
+"Istituto Luce" OR "La Settimana Incom" Corea                # 이탈리아
+"Polygoon" Korea                                             # 네덜란드
+"SF Journalen" Korea                                         # 스웨덴
+
+# ━━━ 소련·중국·북한 ━━━
+(Soyuzkinozhurnal OR "Soviet newsreel") Korea
+"Novosti Dnya" Korea                                         # 소련 '오늘의 뉴스'
+"Central Documentary Film Studio" Korea Soviet               # 소련 중앙기록영화촬영소
+"Liberated China" OR "People's China" newsreel Korea         # 중국
+北韓 기록영화 → 보고서 §17 접근제한 경로로만                  # 북한 직접 접근 불가
+
+# ━━━ 한국 ━━━
+"Liberation News" OR "Haebang News" Korea                    # 해방뉴스(KOFA)
+"Taehan News" OR "Daehan News"                               # 대한뉴스(e-영상역사관)
+"Chosun Sibo" OR "Korea Sibo"                                # 조선시보
+"Liberty News" Korea USIS                                    # 리버티뉴스(주한미공보원)</pre>
+  <div class="note note-blue"><b>ℹ️ 시리즈 발굴 원칙</b> — 시리즈는 <b>호(issue) 단위 전수 목록</b>이 존재하는 경우가 많다(Universal 릴리스 시트 4,000건 카탈로그 등록). 시리즈명 히트가 나오면 개별 쿼리를 멈추고 <b>그 시리즈의 호 목록 전체를 입수해 한국 관련 호를 체계 선별</b>하는 것이 누락 방지에 유리하다.</div>
+</section>
+
+<section class="sec" id="topics">
+  <div class="sec-head">
+    <span class="sec-num">08</span>
+    <div>
+      <h2>주제별 쿼리 — 비군사 사료 <span class="en">Thematic Queries — Social &amp; Cultural</span></h2>
+      <p class="sec-sub">전쟁·정치 밖의 한국 영상 — 사회사·생활사·문화사 연구의 원천 12개 주제군</p>
+    </div>
+  </div>
+  <pre class="code"># ━━━ T1. 도시·거리 풍경 ━━━
+(Seoul OR Keijo) (street OR market OR views OR daily life)
+Korea (village OR rural OR countryside) 1945..1955
+(Namdaemun OR "South Gate") Seoul                            # 남대문
+"Capitol building" OR "Government House" Seoul               # 중앙청
+
+# ━━━ T2. 농업·어업·생활 ━━━
+Korea (farmer OR rice planting OR harvest OR irrigation)
+Korea (fishing OR fishermen OR boats)
+Korea (ox OR oxcart OR A-frame OR jige)                      # 지게·달구지
+Korea (kimchi OR food OR cooking OR market women)
+
+# ━━━ T3. 산업·교통 ━━━
+Korea (railway OR locomotive OR station) / "Seoul station"
+Korea (port OR harbor) (Pusan OR Inchon)
+Korea (textile OR mill OR factory OR mining) 1945..1960
+Korea (electricity OR power plant OR dam)
+
+# ━━━ T4. 교육·아동 ━━━
+Korea (school OR classroom OR students OR literacy)
+Korea (children OR playground OR games)
+Korea (university OR college) (Seoul OR national)
+"war orphans" Korea / Korea orphanage (GI OR adopted)
+
+# ━━━ T5. 보건·위생 ━━━
+Korea (hospital OR clinic OR nurses OR doctors)
+Korea (DDT OR delousing OR vaccination OR cholera OR typhus)
+Korea (leprosy OR tuberculosis) mission
+
+# ━━━ T6. 종교 ━━━
+Korea (church OR Christian OR missionary) 1945..1960
+Korea (Buddhist OR temple OR monks)
+Korea (Catholic OR cathedral) (Seoul OR Myongdong)
+(Presbyterian OR Methodist) mission Korea                     # 선교부 자체 필름(보고서 §15)
+
+# ━━━ T7. 문화재·관광 (전전 홍보영상 다수) ━━━
+(Kyongbok OR Gyeongbok OR Changdok) palace
+Korea (temple OR pagoda OR heritage)
+"Diamond Mountains" OR Kumgang (tour OR scenic)
+Korea (dance OR kisaeng OR costume OR hanbok)                # 무용·복식
+
+# ━━━ T8. 스포츠 ━━━
+"Son Kitei" OR "Sohn Kee-chung" 1936                          # 베를린 마라톤
+Korea (Olympics OR olympic team) (1948 OR London)             # 첫 태극기 올림픽
+Korea (boxing OR wrestling OR soccer) 1945..1960
+"Suh Yun-bok" OR Korean marathon Boston 1947                  # 서윤복 보스턴 우승
+
+# ━━━ T9. 여성·가족 ━━━
+Korean women (voting OR working OR training)
+Korea (wedding OR funeral OR ceremony) traditional
+"war widows" Korea
+
+# ━━━ T10. 미군-민간 접촉 ━━━
+GI Korea (children OR village OR friendship)
+Korea (interpreter OR houseboy) American
+"Armed Forces aid" Korea (school OR orphanage)                # AFAK 민사 지원
+
+# ━━━ T11. 재외 한인 ━━━
+Korean (Hawaii OR California OR America) (community OR parade) 1919..1950
+Korean (Manchuria OR Manchukuo) settlers
+Koreans Japan (Osaka OR repatriation)                         # 재일 조선인
+
+# ━━━ T12. 심리전·선전 (양측) ━━━
+Korea (leaflet OR loudspeaker OR propaganda) 1950..1953
+"Voice of America" Korean / "Voice of the UN Command"
+(Radio Pyongyang OR "Seoul City Sue")                         # 북측 방송 관련 보도</pre>
+</section>
+
+<section class="sec" id="rg">
+  <div class="sec-head">
+    <span class="sec-num">09</span>
+    <div>
+      <h2>RG·식별자 정밀 스캔 <span class="en">Record Group &amp; Identifier Sweeps</span></h2>
+      <p class="sec-sub">키워드에 의존하지 않는 전수 스캔 — 색인 누락 자료까지 포착하는 최후의 안전망</p>
+    </div>
+  </div>
+  <pre class="code"># ━━━ NARA API v2 — RG 단위 전수 스캔 (Moving Images 전체 페이지네이션) ━━━
+# 파라미터명은 Swagger(catalog.archives.gov/api/v2/api-docs/)에서 최종 확인
+recordGroupNumber=111   # Signal Corps — 최대 모수
+recordGroupNumber=242   # 노획 외국 기록
+recordGroupNumber=208   # OWI
+recordGroupNumber=200   # 기증 컬렉션(Universal, Ford, Harmon)
+recordGroupNumber=306   # USIA
+recordGroupNumber=342   # 공군
+recordGroupNumber=428   # 해군
+recordGroupNumber=127   # 해병대
+recordGroupNumber=226   # OSS
+recordGroupNumber=331   # SCAP
+recordGroupNumber=319 / 338 / 554                            # 육군참모부·부대·극동사
+# → 각 RG 결과에서 title/scope에 한국 키워드(§02~08) 후처리 필터링
+
+# ━━━ 시리즈 식별자 프리픽스 (NARA 카탈로그 q= 직접 투입) ━━━
+111-ADC   # Army Depository Copy — 한국 관련 최다
+111-LC    # Library Copy
+111-CCK   # 주한미군 촬영(1958–81)
+111-M     # 초기 시리즈
+208-UN    # United News 호별
+242-MID / 242-MID-J / 242-GN / 242-UFA                        # 노획 필름 시리즈
+200-UN    # Universal 릴리스
+306-LSS   # USIA Library Stock Shot
+342-USAF  # 공군 필름
+428-NPC   # 해군 사진센터
+30-N? / 80-G?                                                 # (사진 RG — 영상 아님, 참고)
+
+# ━━━ archive.org 식별자 스캔 ━━━
+identifier:111-adc*                                           # A/V Geeks 업로드 릴
+identifier:gov.archives.arc.*                                 # NARA ARC 미러
+identifier:gov.archives.li.*                                  # Local ID 미러
+identifier:USAF-*  AND korea                                  # 공군 필름
+identifier:milita* AND korea                                  # 군 컬렉션 변형
+
+# ━━━ 온라인 열람분 한정 고속 스캔 ━━━
+q=Korea&typeOfMaterials=Moving%20Images&availableOnline=true
+q=Korean&typeOfMaterials=Moving%20Images&availableOnline=true
+q=Chosen&typeOfMaterials=Moving%20Images                      # 전전 자료
+q=Keijo&typeOfMaterials=Moving%20Images</pre>
+  <div class="note note-red"><b>🚨 전수 스캔의 함정</b> — RG 111 전체는 수만 건이므로 결과를 CSV로 받아 <b>후처리 필터</b>(제목·scope에 §02 지명 사전 매칭)를 코드로 돌릴 것(보고서 §31-5 스크립트 변형). 눈으로 훑는 방식은 수천 건에서 반드시 누락을 만든다.</div>
+</section>
+
+<section class="sec" id="sources">
+  <div class="sec-head">
+    <span class="sec-num">10</span>
+    <div>
+      <h2>소스별 검색 문법 <span class="en">Source-Specific Syntax — 8개 플랫폼</span></h2>
+      <p class="sec-sub">같은 쿼리도 플랫폼 문법에 맞춰야 작동한다</p>
+    </div>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>플랫폼</th><th>문법·필터</th><th>투입 예</th></tr></thead>
+    <tbody>
+      <tr><td><b>NARA Catalog</b><br>catalog.archives.gov</td><td>고급검색: Type of Materials=Moving Images · Date range · Record Group 필터. 불리언 OR/AND 지원</td><td><code>("Chosen" OR "Keijo") newsreel</code> + RG 242 필터</td></tr>
+      <tr><td><b>NARA API v2</b></td><td><code>q, recordGroupNumber, typeOfMaterials, availableOnline, limit, page</code> — §09 참조</td><td>보고서 §31-5 스크립트</td></tr>
+      <tr><td><b>archive.org</b><br>advancedsearch</td><td><code>mediatype: collection: identifier: title: date:[A TO B] addeddate:</code> 필드 검색 + AND/OR</td><td><code>mediatype:movies AND (korea OR keijo) AND date:[1930-01-01 TO 1955-12-31]</code></td></tr>
+      <tr><td><b>ia CLI</b></td><td>archive.org과 동일 문법, <code>--itemlist</code>로 대량 목록화</td><td>보고서 §31-6</td></tr>
+      <tr><td><b>YouTube</b></td><td><code>intitle:</code> 연산자, 채널 내 검색(NARA·AP·British Pathé·Periscope 공식 채널), 필터=길이/연도</td><td><code>intitle:korea 1945 newsreel</code> · 채널: US National Archives</td></tr>
+      <tr><td><b>Europeana</b></td><td><code>TYPE:VIDEO</code> 필터 + 다국어 키워드(§11) — 유럽 아카이브 연합 검색</td><td><code>Corée guerre TYPE:VIDEO</code></td></tr>
+      <tr><td><b>JACAR</b></td><td>일본어 키워드 필수(§11) · 자료군(외무성·방위성) 필터 · 연대 지정</td><td><code>朝鮮 映画</code> · <code>京城</code> + 1930~1945</td></tr>
+      <tr><td><b>British Pathé / IWM / Getty / AP</b></td><td>사이트 내 검색은 단순 키워드 — 표기 변형을 개별 투입. IWM은 컬렉션 필터(Film) 사용</td><td>Korea → Korean War → Keijo → Chosen 순 반복</td></tr>
+    </tbody>
+  </table>
+  <pre class="code"># ━━━ 구글 사이트 한정 검색 (카탈로그 자체 검색이 빈약한 아카이브 보완) ━━━
+site:catalog.archives.gov "Keijo"
+site:archive.org "111-adc" korea
+site:britishpathe.com (korea OR korean) 1945
+site:film.iwmcollections.org.uk korea                          # IWM 필름 카탈로그
+site:collections.ushmm.org korea                               # 홀로코스트박물관(의외의 아시아 필름)
+site:ina.fr coree
+site:filmarchives-online.eu korea                              # 유럽 필름아카이브 연합
+site:kmdb.or.kr 해방 뉴스</pre>
+</section>
+
+<section class="sec" id="multilang">
+  <div class="sec-head">
+    <span class="sec-num">11</span>
+    <div>
+      <h2>다국어 쿼리 코퍼스 <span class="en">Multilingual Corpus — 10개 언어</span></h2>
+      <p class="sec-sub">비영어권 아카이브는 자국어 키워드 없이는 열리지 않는다 — 언어별 완전 세트</p>
+    </div>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>언어 (대상 아카이브)</th><th>핵심 키워드 세트</th></tr></thead>
+    <tbody>
+      <tr><td><b>일본어</b><br>(JACAR·NHK·국립영화아카이브)</td><td>朝鮮(조선) · 京城(경성) · 平壌 · 釜山 · 仁川 · 朝鮮総督府(총독부) · 日本ニュース 朝鮮 · 朝鮮軍(주둔군) · 志願兵(지원병) · 徴用(징용) · 引揚げ(귀환) · 復員(복원) · 朝鮮博覧会 · 金剛山 · 三一運動 · 朝鮮戦争(한국전쟁) · 板門店 · 三十八度線</td></tr>
+      <tr><td><b>러시아어</b><br>(RGAKFD·Net-Film)</td><td>Корея(한국) · Северная Корея(북한) · Сеул · Пхеньян(평양) · освобождение Кореи(한국 해방) · корейская война(한국전쟁) · 38-я параллель · Ким Ир Сен(김일성) · перемирие(정전) · советские войска в Корее(주한 소련군)</td></tr>
+      <tr><td><b>중국어 간·번체</b><br>(중국·대만 아카이브)</td><td>朝鮮/朝鮮半島 · 韓國/南朝鮮 · 大韓民國臨時政府(임정) · 光復軍 · 金九(김구) · 開羅會議(카이로) · 抗美援朝(항미원조) · 志願軍 · 板門店 · 上甘嶺(상감령=Triangle Hill) · 停戰談判(정전회담) · 仁川登陸</td></tr>
+      <tr><td><b>독일어</b><br>(Bundesarchiv·DEFA)</td><td>Korea · Koreakrieg(한국전쟁) · Welt im Film Korea · Der Augenzeuge Korea · Wochenschau Korea · Panmunjom Waffenstillstand(정전) · Seoul · Landung von Inchon</td></tr>
+      <tr><td><b>프랑스어</b><br>(INA·Gaumont-Pathé·ECPAD)</td><td>Corée · guerre de Corée · Séoul · bataillon français de Corée(프랑스 대대) · Panmunjom armistice · débarquement d'Inchon · prisonniers de guerre Corée</td></tr>
+      <tr><td><b>이탈리아어</b> (Istituto Luce)</td><td>Corea · guerra di Corea · Seul · armistizio di Panmunjom · ospedale 68 Corea(적십자 68병원)</td></tr>
+      <tr><td><b>스페인어</b> (콜롬비아 RTVC 등)</td><td>Corea · guerra de Corea · Batallón Colombia · fragata Almirante Padilla(콜롬비아 함정) · Seúl</td></tr>
+      <tr><td><b>네덜란드어</b> (Beeld en Geluid·NIOD)</td><td>Korea · Korea-oorlog · Van Heutsz bataljon · Polygoon Korea</td></tr>
+      <tr><td><b>터키어</b> (TRT·국방부)</td><td>Kore(한국) · Kore Savaşı(한국전쟁) · Kore Tugayı(한국여단) · Kunuri(군우리 — 터키의 상징 전투) · şehit(전사자)</td></tr>
+      <tr><td><b>스웨덴·노르웨이·덴마크어</b></td><td>Korea · Koreakriget(스웨덴) · Koreakrigen(노르웨이) · NORMASH · Jutlandia(덴마크 병원선) · fältsjukhus Pusan(부산 야전병원)</td></tr>
+    </tbody>
+  </table>
+  <div class="note note-gold"><b>💡 번역 검색의 순서</b> — ① 자국어 '한국전쟁' 단어로 광역 검색 → ② 자국 부대명(터키여단, 프랑스대대…)으로 정밀 검색 → ③ 자국의 상징 전투(터키=Kunuri, 영국=Imjin, 호주·캐나다=Kapyong, 콜롬비아=Old Baldy)로 최종 확인. 참전국은 예외 없이 자국의 상징 전투 영상을 자국 아카이브에 보존하고 있다.</div>
+</section>
+
+<section class="sec" id="coverage">
+  <div class="sec-head">
+    <span class="sec-num">12</span>
+    <div>
+      <h2>커버리지 매트릭스 &amp; 검색 로그 <span class="en">Coverage Matrix &amp; Search Log</span></h2>
+      <p class="sec-sub">"모조리, 하나도 빼놓지 않고"를 구호가 아닌 절차로 만드는 장치</p>
+    </div>
+  </div>
+  <h3>전수 커버리지 선언 조건 (7축 완주)</h3>
+  <table class="tbl">
+    <thead><tr><th>축</th><th>세트</th><th>규모</th><th>완주 판정</th></tr></thead>
+    <tbody>
+      <tr><td>1. 지리</td><td>§02 지명 사전</td><td>40+ 표기군 · 표기 100+</td><td>표기군별 로그 존재 × 소스 3곳</td></tr>
+      <tr><td>2. 시간</td><td>§03 SET A~F</td><td>쿼리 180+</td><td>세트별 전 행 실행 기록</td></tr>
+      <tr><td>3. 사건</td><td>§04 색인표</td><td>60+ 사건·전투</td><td>행별 최소 1개 키 실행</td></tr>
+      <tr><td>4. 인물</td><td>§05</td><td>40+명 · 변형 90+</td><td>인물별 전 변형 실행</td></tr>
+      <tr><td>5. 주체</td><td>§06 부대·참전국</td><td>28개국 · 부대 60+</td><td>NARA+자국 아카이브 이중 투입</td></tr>
+      <tr><td>6. 시리즈·주제</td><td>§07~08</td><td>시리즈 25+ · 주제 12군</td><td>시리즈 히트 시 호 목록 전수화</td></tr>
+      <tr><td>7. 구조</td><td>§09 RG·식별자</td><td>RG 12 · 프리픽스 15+</td><td>RG별 전수 스캔 CSV 보관</td></tr>
+    </tbody>
+  </table>
+  <h3>검색 로그 표준 서식 (스프레드시트 열)</h3>
+  <pre class="code">log_id | 실행일 | 축(1~7) | 쿼리 원문 | 소스(NARA/IA/기타) | 히트 수 | 신규 등록 수 | 재실행 예정일 | 비고
+Q-0001 | 2026-07-08 | 1 | (Seoul OR Keijo OR Kyongsong) film | NARA | 214 | 12 | 2026-10-08 | Keijo 히트 41건 전전 자료
+Q-0002 | 2026-07-08 | 1 | 동일 | archive.org | 88 | 7 | 2026-10-08 | avgeeks 신규 3건 포함</pre>
+  <h3>운용 규칙</h3>
+  <ul>
+    <li><b>분기 재실행</b> — 전 축을 분기 1회 재실행(아카이브는 계속 신규 등록된다 — A/V Geeks 주간 업로드가 대표 사례). 재실행 시 히트 수 증가분만 검토하면 되므로 2회차부터는 1주 내 완주 가능.</li>
+    <li><b>신규 키 편입</b> — 발굴 과정에서 만난 새 표기·부대명·작전명은 즉시 본 코퍼스에 행으로 추가(버전 0.1 증가). 코퍼스 자체가 성장하는 문서다.</li>
+    <li><b>미검증 키 격리</b> — 존재가 불확실한 작전명·인명은 '검증 필요' 표시 후 확인 전 대장 등록 금지(§03 SET F 말미 규칙).</li>
+    <li><b>중복 판정</b> — 신규 히트는 보고서 §28 스키마의 local_id → naid → 제목+연도 3중 대조 후 등록.</li>
+  </ul>
+  <div class="note note-blue"><b>ℹ️ 본 코퍼스와 보고서의 관계</b> — 실행 절차·비용·권리 판단은 「종합 보고서 v6.3」 §25~32를, 검색 자체는 본 코퍼스를 따른다. 코퍼스의 로그 서식은 보고서 §29-③(진본성 원칙)의 검색 버전이다.</div>
+</section>
+
+
+<section class="sec" id="paper">
+  <div class="sec-head">
+    <span class="sec-num">13</span>
+    <div>
+      <h2>논문 프레임워크 통합 <span class="en">Integration — Song (2026) AI-based Discovery Methodology</span></h2>
+      <p class="sec-sub">송창기, 「해외 소재 한국 관련 기록물의 AI 기반 체계적 발굴 및 의미 추출 방법론 연구」(국가기록원, 2026, 논문 v20) + 동반 저장소 korea-records-keywords v1.0.0 — 검증된 학술 프레임워크를 본 코퍼스에 정합</p>
+    </div>
+  </div>
+
+  <h3>📐 1. 이론적 기초 — 구조적 부정합(Structural Mismatch) 3차원</h3>
+  <p>논문의 핵심 명제: 해외 아카이브의 한국 기록이 미발굴로 남는 것은 <b>단일 키워드 검색과 기록의 원 분류 논리 사이의 구조적 부정합</b> 때문이다. 부정합은 3개 차원으로 분해되며, 본 코퍼스의 각 섹션이 각 차원에 대응한다:</p>
+  <table class="tbl">
+    <thead><tr><th>부정합 차원</th><th>내용 (논문 §3.3.1)</th><th>본 코퍼스 대응</th></tr></thead>
+    <tbody>
+      <tr><td><b>언어적 (linguistic)</b></td><td>표기 변이 — Corea/Chosen/Fusan, 인명 로마자 변형, 구식 표기</td><td>§02 지명 사전 · §05 인물 변형 · §11 다국어</td></tr>
+      <tr><td><b>분류학적 (taxonomic)</b></td><td>기관의 분류 체계(RG·시리즈·부처 코드) 속에 '한국'이 숨어 있음</td><td>§09 RG·식별자 스캔 · 본 섹션 RG 교차·TNA 코드</td></tr>
+      <tr><td><b>기술 관행적 (descriptive)</b></td><td>당대 카탈로그 어휘로 기술 — 사건 별명·작전명·외교 정형구</td><td>§04 사건·전투 · §07 뉴스릴 · 본 섹션 G-17/G-18</td></tr>
+    </tbody>
+  </table>
+  <div class="note note-blue"><b>ℹ️ 검증된 성능 (논문 §5, 인용 역추적 준거 n=43)</b> — 이 프레임워크는 Recall <b>93.0%</b>(Wilson 95% CI 81.4–97.6), Precision <b>93.3%</b>(78.7–98.2), <b>F1=0.931</b>로 실증되었고, 단순 키워드 검색 대비 <b>약 2.3배</b>의 기록을 추가 수집했으며, TNA 19차 반복 개선에서 <b>미탐색 시리즈 214개</b>를 자동 발견(승격률 93.0%)했다. 본 코퍼스의 쿼리는 이 검증된 체계와 아래 크로스워크로 정합된다.</div>
+
+  <h3>🧩 2. 계층 구조 — 44그룹 1,943항목과 본 코퍼스의 크로스워크</h3>
+  <table class="tbl">
+    <thead><tr><th>논문 계층</th><th>규모</th><th>내용</th><th>본 코퍼스 크로스워크</th></tr></thead>
+    <tbody>
+      <tr><td>공통 22그룹 (G-01~22)</td><td>403 (중복 제거)</td><td>아카이브 중립 어휘층</td><td>아래 3절 대조표</td></tr>
+      <tr><td>NARA 전용 8그룹 (N-01~08)</td><td>136</td><td>미군정·부대·인물·정보기관·시리즈</td><td>§05·§06·§09 + 아래 4절</td></tr>
+      <tr><td>NARA RG 교차 매핑</td><td>28 RG × 평균 2.25 = 63 쿼리</td><td>정밀도 회복용 결합 쿼리 (Precision 90%+)</td><td>아래 4절 — §09 스캔의 정밀 버전</td></tr>
+      <tr><td>TNA 14 전략 레이어</td><td>생성 쿼리 1,222</td><td>부처 코드 × 어휘 조합 + 인용 역추적</td><td>아래 5절 — 본 코퍼스의 신규 축</td></tr>
+      <tr><td>운영 학습분</td><td>119</td><td>수집 과정에서 학습된 키워드(별도 공개 예정)</td><td>§12 '신규 키 편입' 규칙과 동일 사상</td></tr>
+      <tr><td><b>합계</b></td><td><b>1,943</b></td><td>403+136+63=정적 602 → +1,222 → +119</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>📚 3. 공통 22그룹 (G-01~G-22) — 본 코퍼스 미포함분 신규 편입</h3>
+  <table class="tbl">
+    <thead><tr><th>그룹</th><th>내용 (규모)</th><th>본 코퍼스 대응</th><th>신규 편입 키워드 (본 코퍼스에 없던 것)</th></tr></thead>
+    <tbody>
+      <tr><td>G-01 핵심 직접</td><td>Core Terms (16)</td><td>§02</td><td><b>"Hermit Kingdom" · "Land of Morning Calm"</b> — 구미 문헌의 한국 별칭</td></tr>
+      <tr><td>G-02~06 전쟁</td><td>일반·전투·작전·부대·포로 (85)</td><td>§03 SET E·§04·§06</td><td><b>"Maryang San"(마량산·호주) · "Hook"(후크고지·영연방) · Operation Rugged/Dauntless/Roundup/Commando/Ratkiller</b> · "brainwashing Korea" · "Iron Triangle"</td></tr>
+      <tr><td><b>G-07 구한말·개항기(~1910)</b></td><td>Premodern (30)</td><td><b>본 코퍼스 공백 — 전면 신규</b></td><td>"Treaty of Chemulpo" · "General Sherman incident" · <b>Shinmiyangyo</b>(신미양요) · "Port Hamilton"(거문도) · Gojong/Kojong · "Queen Min" · "Hague Conference Korea" · "Eulsa Treaty" · "An Jung-geun" · "Ito Hirobumi" · "Isabella Bird Korea" · "Appenzeller Korea"</td></tr>
+      <tr><td>G-08 일제강점기</td><td>Colonial (31)</td><td>§03 SET A</td><td>Tonghak/Donghak(동학) · "Righteous Army"(의병) · "Korea Daily News"(대한매일신보) · "Korean YMCA" · <b>Gensan</b>(원산 이표기)</td></tr>
+      <tr><td>G-09~10 해방~현대</td><td>Liberation·Postwar (49)</td><td>§03 SET B~F</td><td><b>1960년 이후 확장</b>: "Pueblo incident" · "Blue House raid 1968" · "KAL 007" · "Rangoon bombing" · Gwangju uprising · "Seoul Olympics" · "six party talks" — 수집 시기를 1960 이후로 확장할 때 즉시 사용</td></tr>
+      <tr><td>G-11~12 인물·지명</td><td>Persons·Places (61)</td><td>§02·§05</td><td>"Song Chin-u"(송진우) · 박정희~현대 지도자군 · "Korea Strait"·"Tsushima Korea"</td></tr>
+      <tr><td>G-13 경제·원조</td><td>Economy (24)</td><td>§08 T3 일부</td><td>"Colombo Plan Korea" · "Korean Five Year Plan" · "Han River miracle" — 재건·개발기 기록</td></tr>
+      <tr><td>G-14 정보·선전</td><td>Intel (10)</td><td>§08 T12</td><td>"SIGINT Korea" · "counterintelligence Korea"</td></tr>
+      <tr><td>G-15~16 인도·문화</td><td>Humanitarian·Culture (34)</td><td>§08 T4~T6</td><td>"war graves Korea" · "Severance"(세브란스) · "Ewha"(이화) · "Yonsei"</td></tr>
+      <tr><td><b>G-17 간접 키워드</b></td><td>Indirect — 'Korea' 없이 (11)</td><td><b>신규 개념</b></td><td>"Far Eastern Commission" · "Peng Dehuai"(펑더화이) · "Chinese People's Volunteer" · "containment Asia" · "Manchuria border" — <b>한국 표기가 아예 없는 문서를 잡는 축</b></td></tr>
+      <tr><td><b>G-18 외교 정형구</b></td><td>Diplomatic Formulae (19)</td><td><b>신규 개념</b></td><td>"Korean question" · "Korean problem" · "Korean situation" · "Korean affairs" — 외교문서는 사건명이 아닌 <b>정형구</b>로 기술됨(TNA FO 371·NARA RG 59의 열쇠)</td></tr>
+      <tr><td><b>G-19 Corea 복합어</b></td><td>Archaic Compounds (12)</td><td><b>신규 개념</b></td><td>"Corean treaty" · "Corean king" · "Corean customs" · "Coree" — 1900년 전후 문서 전용</td></tr>
+      <tr><td>G-20~22 시각·조약·국제기구</td><td>Visual·Treaties·IntlOrg (33)</td><td>§08·§03</td><td>"aerial photograph Korea" · "Treaty of Ganghwa"(강화도조약) · "Portsmouth Treaty Korea" · <b>UNCACK·UNCMAC</b>(민사지원사령부·군사정전위)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>🎯 4. NARA 28 RG × 키워드 교차 매핑 (63 결합 쿼리 — Phase 9 정밀도 회복)</h3>
+  <p>원리: RG 전수 스캔(§09)이 재현율을 확보한 뒤, <b>RG 필터 × 차등 배정 키워드</b>의 결합 쿼리로 정밀도 90%+를 회복한다(논문 그림 3). 본 보고서 §03의 12개 영상 RG를 넘어 <b>문서·사진 RG까지 28개</b>로 확장:</p>
+  <table class="tbl">
+    <thead><tr><th>RG</th><th>기관</th><th>교차 키워드</th></tr></thead>
+    <tbody>
+      <tr><td>59</td><td>국무부 일반 기록</td><td>Korea · Korean · <b>Corea</b> · Seoul</td></tr>
+      <tr><td>84</td><td>해외 공관 기록</td><td>Korea · Korean · Seoul · Pusan</td></tr>
+      <tr><td>127</td><td>USIA(논문 기재) — <i>주의: 영상 가이드의 RG 127은 해병대. 실행 전 RG 번호 재확인</i></td><td>Korea · Korean</td></tr>
+      <tr><td>153</td><td>법무감실 (전쟁범죄)</td><td>Korea · Korean War</td></tr>
+      <tr><td>218</td><td>합동참모본부</td><td>Korea · Korean War</td></tr>
+      <tr><td>226</td><td>OSS</td><td>Korea · Korean · Chosen</td></tr>
+      <tr><td>242</td><td>노획 외국 문서</td><td>Korea · Korean · Chosen · Corea</td></tr>
+      <tr><td>260</td><td>WWII 점령사령부(SCAP)</td><td>Korea · Korean</td></tr>
+      <tr><td>263 / 500</td><td>CIA (+추가 이관분)</td><td>Korea · Korean · North Korea</td></tr>
+      <tr><td>319</td><td>육군참모부 G-2 정보</td><td>Korea · Korean War</td></tr>
+      <tr><td>330 / 335 / 340</td><td>국방장관실·육군성</td><td>Korea · Korean War</td></tr>
+      <tr><td>332 / 333 / 349 / 554</td><td>전구·국제군사기구·FECOM·극동사 총사령부</td><td>Korea · Korean · FECOM</td></tr>
+      <tr><td>338</td><td>육군 사령부 (KMAG 포함)</td><td>Korea · Korean · <b>KMAG</b></td></tr>
+      <tr><td>342</td><td>공군 사령부</td><td>Korea · Korean War</td></tr>
+      <tr><td>389</td><td>헌병감실 — <b>포로 기록</b></td><td>Korea · <b>Korean POW</b></td></tr>
+      <tr><td>407</td><td>부관참모실 (부대 기록)</td><td>Korea · Korean War</td></tr>
+      <tr><td>469 / 523</td><td>해외원조기관(ECA)·USAID</td><td>Korea · Korean · ECA</td></tr>
+      <tr><td>490</td><td>평화봉사단</td><td>Korea</td></tr>
+      <tr><td>494 / 550</td><td>동남아 주둔군·태평양 육군</td><td>Korea · Korean</td></tr>
+      <tr><td>556</td><td>원자력위원회 해외정보</td><td>Korea · Korean</td></tr>
+    </tbody>
+  </table>
+  <pre class="code"># 실행 형태 (NARA API v2): RG 필터 × 배정 키워드 = 63개 결합 쿼리
+GET /records/search?recordGroupNumber=59&q=Corea      # 구한말 국무부 문서
+GET /records/search?recordGroupNumber=242&q=Chosen    # 노획 문서 일제기
+GET /records/search?recordGroupNumber=389&q="Korean POW"
+GET /records/search?recordGroupNumber=338&q=KMAG
+# … RG_MAP 전체는 동반 저장소 keywords/keywords_nara.py 의 RG_MAP 딕셔너리 참조</pre>
+
+  <h3>🇬🇧 5. TNA(영국 국립기록관) 14 전략 레이어 — 본 코퍼스의 신규 축</h3>
+  <p>TNA Discovery는 <b>부처 문서코드(lettercode) × 어휘 조합</b>으로 검색해야 한다. 논문의 14개 레이어(직접 3 + 코드 6 + 간접 2 + 인용 2 + 시각 1)가 1,222건의 쿼리를 생성한다:</p>
+  <table class="tbl">
+    <thead><tr><th>레이어</th><th>유형</th><th>전략</th><th>대표 쿼리</th></tr></thead>
+    <tbody>
+      <tr><td>T-01~03</td><td>direct</td><td>공통 G-01~G-10을 전문 검색에 투입 (Corea 지속 사용 보정)</td><td><code>Corea Japan</code> · <code>Corean treaty</code></td></tr>
+      <tr><td><b>T-04</b></td><td>code</td><td><b>FO 371 정치문서 — 한국 관련 최대 문서군.</b> 이중 코드 체계: 1906–19년 한국 파일은 중국 Code 10·일본 Code 23 하위 분류('분류의 정치'), 1920년~ <b>FK 등록코드</b>(FK1015 정치·FK1661 선전)</td><td><code>FO 371 Korea</code> · <code>FO 371 FK1015</code> · <code>FO 371 Code 23</code></td></tr>
+      <tr><td>T-05</td><td>code</td><td>FO 17(주중 공관)·FO 46(일본)·FO 262(주일 공사관)·FO 483(Confidential Print) × 구한말 어휘(G-19)</td><td><code>FO 17 Corea</code> · <code>FO 262 Korea</code></td></tr>
+      <tr><td>T-06</td><td>code</td><td>WO 281(<b>한국전 전쟁일지</b>)·WO 308(전사)·WO 32 × 부대 어휘</td><td><code>WO 281 Glosters</code> · <code>WO 281 war diary</code></td></tr>
+      <tr><td>T-07</td><td>code</td><td>ADM 116/1(해군)·AIR 8/20(공군) × 해공군 작전 어휘</td><td><code>ADM Korea blockade</code> · <code>HMS Triumph Korea</code></td></tr>
+      <tr><td>T-08</td><td>code</td><td>CAB 128/129(내각)·DEFE 4/5(참모총장위)·PREM 8/11(수상실) × 외교 정형구(G-18)</td><td><code>CAB 128 Korean question</code> · <code>PREM 8 Korea</code></td></tr>
+      <tr><td>T-09</td><td>code</td><td>FCO 21/51 (1967~ 현대 외교 — 한일수교·남북관계)</td><td><code>FCO 21 Korea</code></td></tr>
+      <tr><td>T-10</td><td>indirect</td><td>CO 1030(식민지부 극동)·DO 35(자치령부) — <b>홍콩·싱가포르 경유 한국 언급</b></td><td><code>CO Hong Kong Korea</code></td></tr>
+      <tr><td>T-11</td><td>indirect</td><td>G-17 간접 키워드 — Korea 표기 없는 문서</td><td><code>Far East situation 1950</code></td></tr>
+      <tr><td><b>T-12</b></td><td>citation</td><td><b>인용 역추적</b> — 공간사(Farrar-Hockley)·외교문서집(DBPO, Yasamee &amp; Hamilton 1991)·연구서(Shaw)가 인용한 참조코드 21건을 시드로 사용</td><td><code>FO 371/84053</code> · <code>WO 281/1206</code> · <code>PREM 8/1405</code></td></tr>
+      <tr><td><b>T-13</b></td><td>citation</td><td><b>시리즈 인접 확장(Adaptive Mining)</b> — 검증 시드의 piece 번호 ±15 자동 순회 → 논문에서 미탐색 시리즈 214개 발견</td><td><code>FO 371/84038 ~ 84068 순회</code></td></tr>
+      <tr><td>T-14</td><td>direct</td><td>시각·특수매체 — CN 3(사진)·WORK 10(한국전 기념물) + G-20</td><td><code>CN Korea</code> · <code>Korea maps</code></td></tr>
+    </tbody>
+  </table>
+  <pre class="code"># TNA 인용 역추적 시드 21건 (T-12 — 논문 동반 저장소 CITATION_SEEDS 그대로)
+# Farrar-Hockley, The British Part in the Korean War (1990/1995)
+FO 371/84053  FO 371/84057  FO 371/84076  FO 371/84097  FO 371/84130
+WO 281/1206   WO 281/1211   WO 281/1257
+CAB 128/17    CAB 128/18    DEFE 4/33     DEFE 4/38     PREM 8/1405
+# Yasamee & Hamilton, DBPO — Korea 1950-1951 (1991)
+FO 371/84059  FO 371/84081  FO 371/92756  FO 371/92847  CAB 129/41
+# Shaw (1999) — 영국-한국 관계사 (구한말)
+FO 17/1659    FO 262/785    FO 46/533
+
+# 실행: discovery.nationalarchives.gov.uk 에서 참조코드 직접 조회
+# → 각 시드의 ±15 인접 piece를 순회하며 한국 관련 여부 판정 (Adaptive Mining)</pre>
+
+  <h3>⚙️ 6. 방법론 이식 — 본 코퍼스 운용에 반영할 논문의 3원칙</h3>
+  <ol class="steps">
+    <li><b>재현율 → 정밀도 순차 설계 (10단계 파이프라인)</b>: 광역 주제 쿼리(Phase 1~8)로 모수를 최대화한 뒤 RG 교차 쿼리(Phase 9)로 정밀도를 회복한다 — 본 코퍼스 §01 실행 원칙 ③('넓게→좁게')의 학술 검증판. 정밀도 회복 단계 없이 광역 쿼리 결과를 그대로 대장에 넣지 말 것.</li>
+    <li><b>인용 역추적 평가</b>: 권위 있는 연구서가 인용한 기록 코드(n=43)를 준거로 시스템 재현율을 측정한다 — 본 코퍼스 §12 커버리지 완주 판정에 '기존 연구 인용 사료 재발견율' 지표를 추가할 것(본 보고서의 학술자료 §10 문헌들이 인용한 NAID가 검색에 걸리는지 확인).</li>
+    <li><b>학습 키워드의 승격 관리</b>: 수집 중 발견된 신규 어휘 119건을 별도 층으로 관리하고 검증 후 정식 편입(승격률 93.0% 실증) — §12 '신규 키 편입' 규칙에 '후보 → 검증 → 승격' 3단계를 적용할 것.</li>
+  </ol>
+
+  <h3>📖 7. 출처·재사용</h3>
+  <ul>
+    <li><b>논문</b>: 송창기(Song, Chang-Gi), "An AI-based Systematic Methodology for Discovering and Semantically Extracting Korea-related Records from Foreign Archives" — 국가기록원 기록관리교육센터, 2026, 논문 v20 (투고 2026.5.10). 성능: F1 0.931 · 2.3× 수집 증가 · 86× 속도 · USD 265/10,000건.</li>
+    <li><b>동반 저장소</b>: korea-records-keywords v1.0.0 (MIT License) — <code>keywords_common.py</code>(22그룹 403) · <code>keywords_nara.py</code>(8그룹 136 + RG_MAP 63) · <code>keywords_tna.py</code>(14레이어 생성기 1,222) · <code>verify_counts.py</code>(수치 검증 15 assert). 표준 라이브러리만 사용(Python 3.10+), 즉시 실행 가능.</li>
+    <li><b>본 코퍼스와의 관계</b>: 본 코퍼스(시청각 특화·10개 언어·플랫폼 문법)와 논문 프레임워크(문서 포괄·TNA·통계 검증)는 상호 보완 — 시청각 발굴은 본 코퍼스를, 문서 발굴과 TNA는 논문 체계를 1차 준거로 사용.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <b>한국 관련 영상자료 마스터 쿼리 코퍼스 v1.1</b> · 2026년 7월<br>
+  「글로벌 아카이브 종합 보고서」 §07 확장판 + 송창기(2026) 「AI 기반 발굴·의미 추출 방법론」(국가기록원) 및 korea-records-keywords v1.0.0(MIT) 통합 — 함께 사용하십시오.<br>
+  일본식 로마자 표기는 병행 검색용 참고 표기이며, 히트 자료는 반드시 내용으로 재확인하십시오.
+</footer>
+
+</body>
+</html>

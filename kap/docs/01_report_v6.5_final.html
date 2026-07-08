@@ -1,0 +1,2797 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한국 광복·해방·한국전쟁 영상자료 글로벌 아카이브 종합 보고서 v6.3 [완전판 + 실행·원칙·운영·쿼리뱅크]</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@600;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0f2044; --navy2:#1a3260; --ink:#1e2530; --sub:#5a6472;
+  --gold:#c8a24a; --gold-l:#f5ead0; --red:#b93c46; --red-l:#fbeaec;
+  --blue:#2f6db4; --blue-l:#e8f1fb; --green:#2e8b64; --green-l:#e6f4ee;
+  --line:#e3e7ee; --bg:#f5f6f9; --card:#ffffff;
+  --shadow:0 1px 3px rgba(15,32,68,.07),0 6px 18px rgba(15,32,68,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{font-family:'Noto Sans KR',-apple-system,'Malgun Gothic',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;font-size:15px}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ===== Hero ===== */
+.hero{background:linear-gradient(135deg,#0c1a38 0%,#16305e 55%,#1f3f7a 100%);color:#fff;padding:64px 24px 56px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 85% 15%,rgba(200,162,74,.22),transparent 55%)}
+.hero-in{max-width:1080px;margin:0 auto;position:relative;z-index:1}
+.hero .tag{display:inline-block;background:rgba(200,162,74,.18);border:1px solid rgba(200,162,74,.55);color:#ecd9a8;font-size:12.5px;font-weight:500;padding:5px 14px;border-radius:99px;margin-bottom:18px;letter-spacing:.4px}
+.hero h1{font-family:'Noto Serif KR',serif;font-size:clamp(26px,4vw,40px);font-weight:900;line-height:1.35;margin-bottom:12px}
+.hero h1 .accent{color:var(--gold)}
+.hero .sub-en{color:#9fb2d4;font-size:14px;margin-bottom:6px}
+.hero .desc{color:#c6d2e8;font-size:15px;max-width:760px;margin-top:10px}
+.hero .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.hero .meta span{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);padding:5px 13px;border-radius:8px;font-size:12.5px;color:#dbe4f4}
+
+/* Hero stats */
+.hero-stats{max-width:1080px;margin:34px auto 0;position:relative;z-index:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.hstat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:16px 10px;text-align:center;backdrop-filter:blur(4px)}
+.hstat .n{display:block;font-size:26px;font-weight:900;color:var(--gold);line-height:1.2}
+.hstat .l{font-size:12px;color:#b9c7e0;margin-top:3px;display:block}
+
+/* ===== Nav ===== */
+nav{position:sticky;top:0;z-index:100;background:rgba(15,32,68,.97);backdrop-filter:blur(8px);box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.nav-in{max-width:1200px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:9px 16px;scrollbar-width:thin}
+.nav-in a{flex-shrink:0;color:#c3cfe6;font-size:12.5px;font-weight:500;padding:6px 11px;border-radius:7px;white-space:nowrap}
+.nav-in a:hover{background:rgba(255,255,255,.1);color:#fff;text-decoration:none}
+.nav-in a.on{background:var(--gold);color:#1a2540;font-weight:700}
+
+/* ===== Layout ===== */
+main{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+
+/* ===== Section ===== */
+.sec{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:34px 36px;margin-top:28px}
+.sec-head{display:flex;align-items:flex-start;gap:16px;border-bottom:2px solid var(--navy);padding-bottom:16px;margin-bottom:24px}
+.sec-num{flex-shrink:0;width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--navy),var(--navy2));color:var(--gold);font-weight:900;font-size:18px;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
+.sec-head h2{font-size:21px;font-weight:900;color:var(--navy);line-height:1.4}
+.sec-head h2 .en{font-size:13px;font-weight:400;color:var(--sub);margin-left:8px}
+.sec-sub{font-size:13.5px;color:var(--sub);margin-top:3px}
+.sec h3{font-size:16.5px;color:var(--navy);margin:26px 0 12px;font-weight:700}
+.sec h3:first-of-type{margin-top:0}
+.sub-title{background:linear-gradient(90deg,var(--gold-l),transparent);border-left:4px solid var(--gold);padding:9px 14px;border-radius:0 8px 8px 0;font-size:16px !important}
+.sec p{margin-bottom:10px}
+.sec ul:not(.kv){margin:8px 0 12px 22px}
+.sec ul:not(.kv) li{margin-bottom:6px}
+
+/* ===== Cards ===== */
+.grid{display:grid;gap:14px;margin:14px 0}
+.cols-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.cols-3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.card{background:#fbfcfe;border:1px solid var(--line);border-left:4px solid #c7cfdc;border-radius:10px;padding:18px 20px}
+.card.pri-top{border-left-color:var(--gold);background:linear-gradient(180deg,#fffdf6,#fbfcfe)}
+.card.pri-high{border-left-color:var(--blue)}
+.card.pri-mid{border-left-color:#9aa5b5}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.card-head h3{font-size:15.5px;margin:0 !important;color:var(--navy)}
+.card p{font-size:14px;color:#39424e}
+
+/* ===== Badges ===== */
+.badge{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap;line-height:1.5}
+.b-top{background:var(--gold-l);color:#8a6a1e;border:1px solid #e2cf9a}
+.b-high{background:var(--blue-l);color:#1f5a99;border:1px solid #bcd6f0}
+.b-mid{background:#eef1f5;color:#5a6472;border:1px solid #d8dee8}
+.b-free{background:var(--green-l);color:#1f6b4a;border:1px solid #b9e0cd}
+.b-new{background:var(--red-l);color:#a12f3a;border:1px solid #eec3c8}
+.b-stream{background:#fdeeee;color:#c0392b;border:1px solid #f3c7c3}
+.b-dl{background:var(--blue-l);color:#1f5a99;border:1px solid #bcd6f0}
+
+/* ===== KV list ===== */
+.kv{list-style:none;margin:10px 0 4px}
+.kv li{padding:5px 0;border-bottom:1px dashed #e8ebf1;font-size:13.5px;color:#39424e}
+.kv li:last-child{border-bottom:none}
+.kv li b{display:inline-block;min-width:86px;color:var(--navy);font-weight:700;margin-right:6px}
+
+/* ===== Table ===== */
+.tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+.tbl th{background:var(--navy);color:#fff;padding:10px 12px;text-align:left;font-weight:600;white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:nth-child(even) td{background:#f8fafc}
+.tbl tr:hover td{background:var(--gold-l)}
+
+/* ===== Archive item ===== */
+.arch{border:1px solid var(--line);border-radius:12px;margin:12px 0;overflow:hidden;background:#fff}
+.arch[data-tier="1"]{border-color:#e2cf9a;box-shadow:0 0 0 1px #efe3c2}
+.arch-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:13px 18px;background:#f8f9fc;border-bottom:1px solid var(--line);cursor:default}
+.arch[data-tier="1"] .arch-head{background:linear-gradient(90deg,#fdf8ec,#f8f9fc)}
+.arch-no{font-weight:900;color:var(--gold);font-size:14px;min-width:34px}
+.arch-head h4{font-size:15px;font-weight:700;color:var(--navy);flex:1;min-width:200px}
+.arch-head h4 .en{display:block;font-size:12px;font-weight:400;color:var(--sub)}
+.arch-body{padding:14px 18px 16px}
+.sig{background:var(--blue-l);border-radius:8px;padding:10px 14px;font-size:13.5px;margin-top:10px}
+
+/* ===== Notes ===== */
+.note{border-radius:10px;padding:14px 18px;margin:14px 0;font-size:14px;border:1px solid}
+.note-gold{background:var(--gold-l);border-color:#e2cf9a}
+.note-red{background:var(--red-l);border-color:#eec3c8}
+.note-blue{background:var(--blue-l);border-color:#bcd6f0}
+.note-green{background:var(--green-l);border-color:#b9e0cd}
+
+/* ===== Timeline ===== */
+.tl{border-left:3px solid var(--gold);margin:16px 0 16px 8px;padding-left:0}
+.tl-item{display:flex;gap:14px;padding:9px 0 9px 18px;position:relative}
+.tl-item::before{content:"";position:absolute;left:-8px;top:17px;width:13px;height:13px;border-radius:50%;background:#fff;border:3px solid var(--gold)}
+.tl-date{flex-shrink:0;font-weight:900;color:var(--navy);min-width:92px;font-size:13.5px}
+.tl-body{font-size:14px;color:#39424e}
+
+/* ===== Code ===== */
+.code{background:#101828;color:#c9e3ff;border-radius:10px;padding:18px 20px;font-family:'Consolas','D2Coding',monospace;font-size:13px;line-height:1.75;overflow-x:auto;margin:14px 0;white-space:pre}
+
+/* ===== Steps ===== */
+.steps{counter-reset:st;list-style:none;margin:14px 0}
+.steps li{counter-increment:st;position:relative;padding:12px 16px 12px 52px;background:#fbfcfe;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;font-size:14px}
+.steps li::before{content:counter(st);position:absolute;left:14px;top:12px;width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--gold);font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center}
+
+/* ===== Stats chips ===== */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:11px;margin:16px 0}
+.stat{background:#fbfcfe;border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:10px;padding:14px 8px;text-align:center}
+.stat .n{display:block;font-size:23px;font-weight:900;color:var(--navy)}
+.stat .l{font-size:12px;color:var(--sub)}
+
+/* ===== Search ===== */
+.search-wrap{position:sticky;top:52px;z-index:90;max-width:1080px;margin:20px auto -6px;padding:0 20px}
+.search-box{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--navy);border-radius:12px;padding:10px 16px;box-shadow:var(--shadow)}
+.search-box input{flex:1;border:none;outline:none;font-size:14.5px;font-family:inherit;background:transparent}
+.search-box .cnt{font-size:12.5px;color:var(--sub);white-space:nowrap}
+
+/* ===== Footer / misc ===== */
+footer{background:var(--navy);color:#9fb2d4;text-align:center;padding:34px 20px;font-size:13px;margin-top:50px}
+footer b{color:var(--gold)}
+#topBtn{position:fixed;right:22px;bottom:22px;width:44px;height:44px;border-radius:12px;background:var(--navy);color:var(--gold);border:none;font-size:18px;cursor:pointer;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s}
+#topBtn.show{opacity:1;pointer-events:auto}
+.lnk{font-weight:700}
+mark{background:#ffe9a8;border-radius:3px;padding:0 2px}
+
+@media(max-width:640px){
+  .sec{padding:24px 18px}
+  .kv li b{display:block;min-width:0}
+  .tl-item{flex-direction:column;gap:2px}
+}
+@media print{
+  nav,.search-wrap,#topBtn{display:none}
+  .sec{box-shadow:none;break-inside:avoid-page}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-in">
+    <span class="tag">📋 v6.5 완전판 · 32개 섹션 + 별책 쿼리 코퍼스 v1.1 — 송창기(2026) 검증 프레임워크(F1 0.931) 통합</span>
+    <h1>한국 광복·해방·한국전쟁 영상자료<br><span class="accent">글로벌 아카이브 종합 보고서</span></h1>
+    <div class="sub-en">Korean Independence · Liberation · Korean War Audiovisual Archives — Definitive Integrated Survey Report v6.0</div>
+    <p class="desc">NARA(미국 국립문서기록관리청) 12개 Record Group 심층 발굴 가이드와 31개국+ 136+개 글로벌 아카이브 조사를 하나로 통합한 최종 완전판. 조사·기획·실행(로드맵·예산)까지 전 과정을 담은 단일 레퍼런스.</p>
+    <div class="meta">
+      <span>🏛️ 국가기록원 기록관리교육센터</span>
+      <span>🔍 37개 조사 세션 · 158회 웹 조사</span>
+      <span>🎯 대상 시기: 1910–1960</span>
+      <span>📅 2026년 7월 통합판</span>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat"><span class="n">136+</span><span class="l">발굴 아카이브</span></div>
+    <div class="hstat"><span class="n">31+</span><span class="l">국가</span></div>
+    <div class="hstat"><span class="n">12</span><span class="l">NARA Record Group</span></div>
+    <div class="hstat"><span class="n">16+</span><span class="l">발굴 영상</span></div>
+    <div class="hstat"><span class="n">15+</span><span class="l">무료 온라인 자원</span></div>
+    <div class="hstat"><span class="n">3.8억</span><span class="l">실행 예산(원)</span></div>
+  </div>
+</header>
+
+<nav><div class="nav-in">
+  <a href="#summary">요약</a>
+  <a href="#method">방법론</a>
+  <a href="#rg-map">RG 지도</a>
+  <a href="#streaming">스트리밍</a>
+  <a href="#download">다운로드</a>
+  <a href="#nara-system">NARA 시스템</a>
+  <a href="#strategy">검색·발굴전략</a>
+  <a href="#usamgik">USAMGIK</a>
+  <a href="#timeline">타임라인</a>
+  <a href="#access">접근경로</a>
+  <a href="#cat1">국가아카이브</a>
+  <a href="#cat2">뉴스릴·방송</a>
+  <a href="#cat3">스톡풋티지</a>
+  <a href="#cat4">대학·연구</a>
+  <a href="#cat5">선교·종교</a>
+  <a href="#cat6">국제기구</a>
+  <a href="#cat7">접근제한</a>
+  <a href="#priority">우선순위</a>
+  <a href="#free">무료자원</a>
+  <a href="#pathways">연구경로</a>
+  <a href="#findings">핵심발견</a>
+  <a href="#roadmap">로드맵</a>
+  <a href="#budget">예산</a>
+  <a href="#action">액션플랜</a>
+  <a href="#verify">검증결과</a>
+  <a href="#fieldwork">실무가이드</a>
+  <a href="#playbook">플레이북</a>
+  <a href="#datamgmt">데이터관리</a>
+  <a href="#principles">원칙·표준</a>
+  <a href="#rights-risk">권리·리스크</a>
+  <a href="#templates">템플릿</a>
+  <a href="#operations">운영규정</a>
+</div></nav>
+
+<div class="search-wrap"><div class="search-box">
+  🔎 <input id="q" type="text" placeholder="아카이브 검색 — 이름·국가·RG·키워드 (예: NARA, 뉴스릴, 스웨덴, RG 242)">
+  <span class="cnt" id="qCnt"></span>
+</div></div>
+
+<main>
+
+<section class="sec" id="summary">
+  <div class="sec-head">
+    <span class="sec-num">01</span>
+    <div>
+      <h2>연구 총괄 요약 <span class="en">Executive Summary</span></h2>
+      <p class="sec-sub">7개 선행 보고서(NARA 가이드 v1–v4 · 글로벌 조사 보고서 · 통합본 v5)를 하나로 완성한 최종판</p>
+    </div>
+  </div>
+  <p>본 보고서는 <b>한국 독립운동(1919–1945)·광복(1945)·미군정(1945–1948)·대한민국 정부수립(1948)·한국전쟁(1950–1953)·전후 재건(1953–1960)</b>과 관련된 영상·사진·기록자료를 소장한 전 세계 아카이브를 체계적으로 조사·발굴한 <b>세계 최초의 종합 조사 보고서의 최종 통합판(v6.0)</b>입니다.</p>
+  <p>37차에 걸친 조사 세션(웹 조사 158회, 참조 URL 1,344개)을 통해 <b>31개국 이상, 136+개 아카이브</b>를 발굴하고, 각 아카이브의 한국 관련 핵심 소장자료·디지털 접근 방법·연구적 의의를 상세히 기술했습니다. 동시에 <b>NARA의 한국 해방기(1945–1948) 영상 컬렉션을 12개 Record Group별로 완전 분석</b>하여 16+건의 구체적 영상을 발굴하고 온라인 접근 방법을 제공합니다.</p>
+  <div class="note note-green"><b>🎯 핵심 성과</b>
+    <ul>
+      <li>전 세계 한국 관련 영상자료 소재지를 최초로 종합 매핑 — <b>136+개 아카이브, 31개국+</b></li>
+      <li><b>22개 UN 참전국 + NNSC 4개국 + 전쟁 3당사국</b> 아카이브 완전 망라</li>
+      <li>NARA <b>12개 Record Group</b> 한국 관련 영상 상세 지도 — 7.5M 카드 카탈로그 현황 파악</li>
+      <li><b>16+건 구체적 영상 발굴</b> — archive.org 다운로드 가능 11건, 스트리밍 5건</li>
+      <li>비용 없이 즉시 활용 가능한 <b>무료 온라인 자원 15개</b> 체계적 발굴</li>
+      <li><b>USAMGIK 영화정책(1945–1948)</b> 핵심 NARA 문서 위치 정확히 특정</li>
+      <li><b>7개 대분류 · 21개 중분류 · 3단계 우선순위</b> 분류 체계 확립</li>
+      <li><b>3단계 18개월 실행 로드맵</b> 및 <b>예산 3.8억원</b> 실행 계획 수립</li>
+      <li><b>8개 연구 주제별 최적 경로</b> 가이드 제공</li>
+    </ul>
+  </div>
+  <h3>📊 핵심 통계</h3>
+  <div class="stats">
+    <div class="stat"><span class="n">136+</span><span class="l">총 발굴 아카이브</span></div>
+    <div class="stat"><span class="n">31+</span><span class="l">국가 범위</span></div>
+    <div class="stat"><span class="n">37</span><span class="l">조사 세션</span></div>
+    <div class="stat"><span class="n">158</span><span class="l">웹 검색 수행</span></div>
+    <div class="stat"><span class="n">1,344</span><span class="l">참조 URL</span></div>
+    <div class="stat"><span class="n">22</span><span class="l">UN 참전국</span></div>
+    <div class="stat"><span class="n">12</span><span class="l">NARA RG</span></div>
+    <div class="stat"><span class="n">7.5M</span><span class="l">NARA 카드 카탈로그</span></div>
+    <div class="stat"><span class="n">6,000+</span><span class="l">Universal Newsreel</span></div>
+    <div class="stat"><span class="n">13</span><span class="l">스톡 풋티지 기업</span></div>
+    <div class="stat"><span class="n">8</span><span class="l">연구 주제 경로</span></div>
+    <div class="stat"><span class="n">8+</span><span class="l">핵심 학술자료</span></div>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>구분</th><th>내용</th><th>수량</th></tr></thead>
+    <tbody>
+      <tr><td>온라인 스트리밍</td><td>NARA 카탈로그·archive.org 직접 시청</td><td>5건</td></tr>
+      <tr><td>무료 다운로드</td><td>archive.org + NARA 다운로드</td><td>11건</td></tr>
+      <tr><td>현장 방문 필요</td><td>Archives II 카드 카탈로그 열람</td><td>추정 수백~수천건</td></tr>
+      <tr><td>핵심 Record Groups</td><td>RG 111, 242, 208, 226, 306, 331, 59, 319, 338, 342, 428, 200</td><td>12개</td></tr>
+      <tr><td>유니버설 뉴스릴</td><td>1929–1967 전체 (한국 에피소드 미특정)</td><td>6,000+편</td></tr>
+      <tr><td>111-ADC 카드 카탈로그</td><td>전체 제목 (한국 섹션 미특정)</td><td>15,000개</td></tr>
+      <tr><td>전체 카드 카탈로그</td><td>Motion Picture Branch 보유</td><td>7,500,000장</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="sec" id="method">
+  <div class="sec-head">
+    <span class="sec-num">02</span>
+    <div>
+      <h2>조사 방법론 <span class="en">Research Methodology</span></h2>
+      <p class="sec-sub">37개 연속 세션 · 158회 웹 검색 · 1,344개 참조 URL — 체계적 국제 아카이브 서베이</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="n">136+</span><span class="l">조사 아카이브</span></div>
+    <div class="stat"><span class="n">31+</span><span class="l">대상 국가</span></div>
+    <div class="stat"><span class="n">37</span><span class="l">조사 세션</span></div>
+    <div class="stat"><span class="n">158</span><span class="l">웹 검색 수행</span></div>
+    <div class="stat"><span class="n">1,344</span><span class="l">참조 URL</span></div>
+    <div class="stat"><span class="n">15+</span><span class="l">무료 온라인 자원</span></div>
+  </div>
+
+  <h3 class="sub-title">📋 조사 개요 <span class="en">Overview</span></h3>
+  <p>본 보고서는 2026년 2월 27일~28일, 37개 연속 세션에 걸쳐 체계적으로 수행된 국제 아카이브 조사의 결과물입니다.
+  한국 독립운동(1919-1945), 광복·해방(1945), 미군정(1945-1948), 대한민국 정부수립(1948),
+  한국전쟁(1950-1953), 전후 재건(1953-1960) 시기의 영상·시청각 자료를 보유한 전 세계 아카이브를 대상으로 하였습니다.
+  국가기록원 기록관리교육센터가 2026년 2월 수행하였으며, 35차(37개 세션 기준)에 걸친 조사를 통해 31개국 이상, 136+개 아카이브를 발굴하였습니다.</p>
+
+  <h3 class="sub-title">🔍 7단계 조사 방법 <span class="en">7-Stage Research Method</span></h3>
+  <ol class="steps">
+    <li><b>1단계 — NARA 심층 조사 (세션 1-9)</b><br>미국 국립문서기록관리청(NARA) 카탈로그 API 검색, Record Group별 시청각 자료 분석, NAID 식별자 확인, Archive.org 다운로드 가능 필름 확인, Universal Newsreel 시스템 분석, Shot Card PDF 분석.</li>
+    <li><b>2단계 — 한국·일본 아카이브 (세션 10-12)</b><br>KOFA(한국영상자료원), KMDb VOD, KBS/MBC 아카이브, 대한민국역사박물관, e-영상역사관, NHK 전쟁증언 아카이브 조사.</li>
+    <li><b>3단계 — 유럽 뉴스릴 아카이브 (세션 13-17)</b><br>British Pathé, IWM, BFI, Gaumont-Pathé, INA France, Bundesarchiv(Welt im Film), Istituto Luce, Der Augenzeuge 등 유럽 각국 뉴스릴 컬렉션 조사.</li>
+    <li><b>4단계 — 상업·방송 아카이브 (세션 18)</b><br>AP Archive, Periscope Film, Getty Images, CriticalPast, Pond5, Footage Farm, BBC Television Newsreel, NFSA 호주 등 조사.</li>
+    <li><b>5단계 — 대학·연구기관 (세션 19-25)</b><br>Hoover Institution, MacArthur Memorial, Truman/Eisenhower Library, USC, UCLA, Harvard-Yenching, Yale Divinity, Princeton Mudd, Cornell, Georgetown, Columbia, ADST, Maryknoll, JACAR, Birmingham, IRFA, Vatican, Columban 등 조사.</li>
+    <li><b>6단계 — UN 참전국·국제기구 (세션 26-30)</b><br>22개 UN 전투참전국, 6개 의료지원국, 4개 NNSC 국가, UNC, UNTCOK, UNCURK, UNKRA, ICRC 등 조사.</li>
+    <li><b>7단계 — 접근제한·최종 분류 (세션 31-35)</b><br>대만·중국·러시아·동구권 아카이브, 북한 간접접근 경로, 136+ 아카이브 7대 분류·21 소분류 체계화, 우선순위 매트릭스, 실행 로드맵 수립.</li>
+  </ol>
+
+  <h3 class="sub-title">🌐 조사 도구 <span class="en">Research Tools</span></h3>
+  <ul class="kv">
+    <li><b>웹 검색</b> 총 158회의 체계적 웹 검색 수행 — NARA Catalog API, Archive.org, British Pathé, YouTube, 각국 국립아카이브 카탈로그</li>
+    <li><b>NARA MCP 도구</b> nara-excavation, nara-catalog, nara-research 등 전문 NARA 발굴 도구 활용</li>
+    <li><b>웹 스크래핑</b> 아카이브 웹사이트 직접 접근을 통한 컬렉션 정보 확인</li>
+    <li><b>학술 문헌 조사</b> JSTOR, Taylor & Francis, 한국학술지인용색인(KCI) 등 학술 데이터베이스 검색</li>
+    <li><b>교차 참조</b> 각 아카이브 간 소장 자료의 교차 확인 및 중복·보완 관계 분석</li>
+  </ul>
+
+  <h3 class="sub-title">📊 세션별 조사 이력 (세션 1~37) <span class="en">Session Log</span></h3>
+  <table class="tbl">
+    <thead><tr><th>세션</th><th>조사 내용</th></tr></thead>
+    <tbody>
+      <tr><td>세션 1-2</td><td>NARA 카탈로그 검색, RG 분석, NAID 식별</td></tr>
+      <tr><td>세션 3-4</td><td>HTML 가이드 v2-v3, Archive.org 필름 발견</td></tr>
+      <tr><td>세션 5</td><td>카탈로그 카드 시스템 7.5M 분석</td></tr>
+      <tr><td>세션 6</td><td>USAMGIK 영화정책, Harvard Film Archive</td></tr>
+      <tr><td>세션 7-8</td><td>Shot Card PDF, 해군 사진, Wilson Center</td></tr>
+      <tr><td>세션 9</td><td>Universal Newsreel 심층분석 (1978 화재)</td></tr>
+      <tr><td>세션 10</td><td>KOFA, KBS, 대한민국역사박물관</td></tr>
+      <tr><td>세션 11</td><td>Operation Blacklist, British Pathé</td></tr>
+      <tr><td>세션 12</td><td>Fox Movietone, AWM, NHK</td></tr>
+      <tr><td>세션 13</td><td>해방뉴스, IWM, Hearst Metrotone</td></tr>
+      <tr><td>세션 14</td><td>소련 영화, March of Time, Crusade</td></tr>
+      <tr><td>세션 15-16</td><td>BFI, Gaumont, Grinberg, NFB, USIA, INA</td></tr>
+      <tr><td>세션 17</td><td>Welt im Film 확정, CriticalPast, UN, Getty</td></tr>
+      <tr><td>세션 18</td><td>AP Archive, Periscope, BBC, NFSA, Pond5</td></tr>
+      <tr><td>세션 19</td><td>독일 뉴스릴, Hoover, MacArthur, Truman</td></tr>
+      <tr><td>세션 20</td><td>Eisenhower, NBC/LOC, ICRC, CIA, State Dept</td></tr>
+      <tr><td>세션 21</td><td>AWM, Yale, NSA-GWU, NZ, Canada, Prelinger</td></tr>
+      <tr><td>세션 21b</td><td>KWLF, Princeton, Hawaii, Smithsonian, NNSC</td></tr>
+      <tr><td>세션 22</td><td>Harvard-Yenching, ADST, 한국정부아카이브</td></tr>
+      <tr><td>세션 23</td><td>NFAJ, Prange Collection, 선교사 아카이브</td></tr>
+      <tr><td>세션 24</td><td>Yale Divinity, JACAR, Birmingham, IRFA</td></tr>
+      <tr><td>세션 25</td><td>Maryknoll, UCLA, LOC, Vatican, Columban</td></tr>
+      <tr><td>세션 26-30</td><td>22개 UN 참전국, NNSC, 국제기구</td></tr>
+      <tr><td>세션 31-34</td><td>대만, 중국, 동구권, 최종 분류</td></tr>
+      <tr><td>세션 35</td><td>실행 로드맵, 예산, 최종 보고서</td></tr>
+      <tr><td>세션 36-37</td><td>v5/v6 통합 보고서 병합, 검증 및 최종 편집</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note note-blue"><b>💡 방법론적 의의</b> 본 연구의 방법론 — AI 기반 체계적 아카이브 서베이, 다국어 검색 전략, 디지털 아카이브 교차 검증 — 은 <b>기록관리학(Records Management)</b> 분야에서 디지털 시대의 국제 아카이브 조사 방법론의 새로운 모델을 제시합니다.</div>
+</section>
+
+<section class="sec" id="rg-map">
+  <div class="sec-head">
+    <span class="sec-num">03</span>
+    <div>
+      <h2>NARA Record Group 완전 지도 <span class="en">NARA Record Group Complete Map</span></h2>
+      <p class="sec-sub">한국 해방기(1945-1948) 영상이 포함된 13개 핵심 Record Group 완전 분석</p>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card pri-top">
+      <div class="card-head"><h3>RG 111 — Records of the Office of the Chief Signal Officer</h3><span class="badge b-top">⭐ 최우선</span></div>
+      <p><strong>최대 규모 한국 영상 소장처.</strong> 미 육군통신대(Signal Corps) 영상 기록. 1945년 해방 전후 한반도 촬영 필름 다수 포함. 미군정기 남한 상황, 피난민, 서울 등 촬영. WWII·일본 점령·한국전쟁 전 전구(theater) 포함.</p>
+      <ul class="kv">
+        <li><b>규모</b> 12,000편+ / 약 450,000피트 · 111-ADC 시리즈 10,641릴 · 111-LC 시리즈 3,000릴 · 200,000 사진</li>
+        <li><b>포맷</b> 35mm 흑백 / 16mm 컬러</li>
+        <li><b>시기</b> 1917~1980s (한국 관련 1945~1953)</li>
+        <li><b>핵심 시리즈</b> 111-ADC(Army Depository Film, 미편집 촬영기록 15,000편, 한국 관련 핵심) · 111-LC(Library of Congress Transfers, 편집영상·서울 재건 등) · 111-C(Combat Films, 한국전쟁 무기·장비·전투지원) · 111-CCK(Korea Activities, 주한미군 활동 1958-1981, 카터 대통령 Camp Casey 방문 등) · 111-SC(Still Pictures, Geographic File "Korea-North"/"Korea-South" 40개 앨범)</li>
+        <li><b>온라인</b> 일부 디지털화 완료 (~5%)</li>
+      </ul>
+    </div>
+
+    <div class="card pri-top">
+      <div class="card-head"><h3>RG 242 — National Archives Collection of Foreign Records Seized</h3><span class="badge b-top">⭐ 최우선</span></div>
+      <p><strong>일본·소련 노획 필름 컬렉션.</strong> 일제강점기 한반도 촬영 일본 뉴스릴, 조선총독부 제작·홍보 영상 포함. 독립운동 탄압 관련 일본측 촬영 기록이 포함될 가능성이 가장 높은 컬렉션. 소련군 북한 진주 영상(242-MID-5237) 확인됨.</p>
+      <ul class="kv">
+        <li><b>핵심 시리즈</b> 242-MID-J(G-2 Military Intelligence Division, 일본 관련, 1937-1941, 한국 관련도 매우 높음) · 242-MID(G-2 다국적 시리즈 — 독일·그리스·인도차이나·일본·한국·폴란드 포함, 1918-1947, 한국 관련도 매우 높음) · 242-GENERAL(Foreign Countries/Sources 노획 영상, 1940-1944, 관련도 높음) · 242-MID-I("La Conquista di Nanchino" 난징 관련, 1937-1940, 참고) · 242-NPC(NBC/소련 텔레비전 뉴스릴, 1945-1947, 참고) · 242-N-MR(WWII 및 전후 활동 기타 영상, 1940-1945, 참고)</li>
+        <li><b>언어</b> 일본어, 독일어</li>
+        <li><b>검색어</b> "Chosen" newsreel · "Nihon News"/"Nihon Nyūsu"(日本ニュース) · "Nippon Eiga" Korea</li>
+        <li><b>특징</b> 저작권 무료(공공도메인) · 일부 디지털화</li>
+        <li><b>확인 영상</b> 242-MID-5237 "Miscellaneous Scenes Korean Soldiers"(북한군·남한군, T-34 전차, 서울 화재, 1945년 소련군 한국 도착·전투 장면)</li>
+      </ul>
+    </div>
+
+    <div class="card pri-high">
+      <div class="card-head"><h3>RG 208 — Records of the Office of War Information (OWI)</h3><span class="badge b-high">우선</span></div>
+      <p>전시정보국(OWI) 제작 선전·다큐 필름. 태평양전쟁 관련 한반도 다큐멘터리, 한국 관련 뉴스릴 소재. 200,000+ 사진 포함. 해방 축하, 항복 행사, V-J Day 기록. USAMGIK 정보국 관련 기록의 원천.</p>
+      <ul class="kv">
+        <li><b>규모</b> 2,100편 이상</li>
+        <li><b>핵심 시리즈</b> 208-UN(United News) — 일본 항복 관련 영상 포함, 208-UN-171B "Japanese Sign Final Surrender"(일본 항복 서명식, 온라인 시청 가능)</li>
+        <li><b>문서 위치</b> RG 208, Box 3, Entry 6A — OWI 역사가 기록(국내부, 1942-45)</li>
+        <li><b>특징</b> 선전/다큐멘터리</li>
+      </ul>
+    </div>
+
+    <div class="card pri-high">
+      <div class="card-head"><h3>RG 331 — Records of Allied Operational and Occupation Headquarters, WWII (SCAP)</h3><span class="badge b-high">우선 — 신규 확인</span></div>
+      <p><strong>연합군최고사령부(SCAP) 기록.</strong> Box 5062, Folder 15C "Motion Pictures, Sep 1946-Dec 1947"에 한국 영화 배급 정책, USAMGIK 선전영화, 한국 영화관 운영 기록 포함. Box 1020, Folder 9 "Central Motion Picture Exchange"(CMPE) 관련. USAMGIK의 한국 영화 통제 정책 원문서.</p>
+      <ul class="kv">
+        <li><b>핵심 문서</b> Box 5062, Folder 15C(영화 배급·검열 정책) · Box 1020, Folder 9(CMPE 관련)</li>
+        <li><b>내용</b> 한국 영화 배급·검열 정책, 미군정기 한국에서의 미국 영화 배급/상영 관련 핵심 자료</li>
+      </ul>
+    </div>
+
+    <div class="card pri-mid">
+      <div class="card-head"><h3>RG 226 — Records of the Office of Strategic Services (OSS)</h3><span class="badge b-mid">탐색</span></div>
+      <p>전략사무국(OSS) 제작 영상. Morale Operations Branch 제작 심리전 필름. 한국인 OSS 요원 훈련, 대일 작전 관련 영상 포함 가능. 한국 독립운동 관련 정보 보고서 및 한국 관련 정보원 활동 기록.</p>
+      <ul class="kv">
+        <li><b>핵심</b> 심리전 필름</li>
+        <li><b>관련 프로젝트</b> NAPKO Project / Eagle Project</li>
+      </ul>
+    </div>
+
+    <div class="card pri-mid">
+      <div class="card-head"><h3>RG 306 — Records of the U.S. Information Agency (USIA)</h3><span class="badge b-mid">탐색</span></div>
+      <p>미국공보처(USIA) 해외 배포용 영상 17,000편 이상. 미군정기 및 해방 이후 한국 관련 선전·홍보·교육 영상 포함. 냉전기 한국 관련 문화 영상 다수.</p>
+      <ul class="kv">
+        <li><b>규모</b> 17,000편+</li>
+        <li><b>핵심 시리즈</b> 306-LSS(Library Stock Shot) — 한국전쟁 관련 뉴스릴 스톡 영상 포함</li>
+        <li><b>특징</b> 해외 배포용 홍보 영상, 문화선전</li>
+      </ul>
+    </div>
+
+    <div class="card pri-mid">
+      <div class="card-head"><h3>RG 59 — General Records of the Department of State</h3><span class="badge b-mid">탐색</span></div>
+      <p>국무부 기록. Box 7398: 한국 영화 관련 문서(1945-49). 1947년 한국 교육·정보 조사단 보고서(한국 내 미국 영화 상영 실태) 포함. 1949년 주한미국대사관 영화산업 보고서.</p>
+      <ul class="kv">
+        <li><b>핵심 문서</b> Box 7398, Decimal File 895(한국 내정) — 1947년 교육정보 조사단 보고서 · Decimal File 895, Reel 5 "US role in Korea"</li>
+        <li><b>참조</b> Dispatch No. 247 "South Korean Motion Pictures"(1949.5.4, 주한미대사관)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>RG 127 / RG 428 — 해병대 / 해군 영상 기록 <span class="en">Marine Corps / Department of the Navy</span></h3></div>
+      <p>해병대(RG 127) 약 2,900편, 해군(RG 428) 약 13,300편·700,000+ 사진. 1945.9.8 인천 상륙(Operation Blacklist Forty), 9.9 서울 항복식 영상. USS 미주리 항복식, 인천 상륙 기록. 진주만~한국전쟁.</p>
+      <ul class="kv">
+        <li><b>핵심</b> 1945 인천 상륙 영상, Operation Blacklist Forty 관련</li>
+        <li><b>참조</b> 1945.9.9 서울 항복식, 428-NPC-19594 "Celebration of VJ Day, 08/14/1945"</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>RG 319 — Records of the Army Staff</h3></div>
+      <p>미 육군참모부 기록. 1940-1966년 사진. 한국 관련 항공사진 및 지상 사진 다수. 일부 "Official Use Only" 제한 해제.</p>
+      <ul class="kv">
+        <li><b>핵심</b> 319-CE, 항공사진</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>RG 338 — Records of U.S. Army Commands</h3></div>
+      <p>미 육군 사령부 기록. 제주 4.3 사건 관련 문서(Entry 11070, Box 68/84). USAMGIK 군사작전 기록.</p>
+      <ul class="kv">
+        <li><b>핵심 문서</b> Entry 11070, Box 68/84 — 제주 4.3 관련 미군 보고서 (NARA 및 미국 군사역사연구소[Pennsylvania] 소장)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>RG 342 — Records of U.S. Air Force Commands</h3></div>
+      <p>미 공군 기록. 342-C: 컬러 사진 시리즈(WWII~한국전쟁), 8,366+ 제목. 공군 항공영상 10,000편+. 1945년 전후 한반도 항공촬영, 인천항·서울 상공 항공사진 영상 포함.</p>
+      <ul class="kv">
+        <li><b>핵심 시리즈</b> 342-USAF, 컬러사진</li>
+        <li><b>관련 영상</b> Captured North Korea Combat Footage(USAF-20420) — 노획 북한 전투 영상, POW·위장 차량·탱크</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>RG 200 — National Archives Gift Collection (Donated Materials)</h3></div>
+      <p>개인·기관 기증 영상. <strong>유니버설 뉴스릴 전체 컬렉션</strong>(200-UN, 6,000+편, 1929-1967). NAID 513421. 한국 관련 뉴스 에피소드 다수 포함. Fox-Movietone, Hearst, Paramount 뉴스릴도 포함.</p>
+      <ul class="kv">
+        <li><b>핵심</b> Universal Newsreel 6,000+편</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="streaming">
+  <div class="sec-head">
+    <span class="sec-num">04</span>
+    <div>
+      <h2>온라인 스트리밍 가능 영상 <span class="en">Online Streaming Available</span></h2>
+      <p class="sec-sub">NARA 카탈로그에서 바로 시청 가능한 한국 해방기 영상</p>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="card-head"><h3>Appointment in Tokyo <span class="en">도쿄의 약속</span></h3><span class="badge b-stream">▶ 스트리밍</span></div>
+      <p>맥아더 장군의 코레히도르 퇴각부터 USS 미주리 항복 서명까지. 1945년 12월 공개. 한국의 해방으로 이어진 일본 항복 과정의 실제 전투 기록영상. Warner Bros. 배급. Academy Film Archive 2013년 보존.</p>
+      <ul class="kv">
+        <li><b>RG</b> RG 111 · Signal Corps · 55분 · 1945</li>
+        <li><b>접근</b> <a href="https://archive.org/details/ApptInTokyo">archive.org에서 무료 시청 →</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Korea: Crossroads of the Orient <span class="en">한국: 동양의 교차로</span></h3><span class="badge b-stream">▶ 스트리밍</span></div>
+      <p>1947년경 제작. 한국의 자연환경, 국민, 문화유산, 산업을 소개. 한국 국민의 독립과 더 나은 생활을 위한 노력 묘사.</p>
+      <ul class="kv">
+        <li><b>NAID</b> 36064(⚠️ 2026.7 검증 결과 다른 기록에 연결 — 재검증 필요) · RG 111 · ca.1947</li>
+        <li><b>접근</b> <a href="https://catalog.archives.gov/search?q=%22Crossroads%20of%20the%20Orient%22%20Korea&typeOfMaterials=Moving%20Images">NARA 카탈로그 제목 검색 →</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>The Voice of Korea <span class="en">한국의 소리</span></h3><span class="badge b-stream">▶ 스트리밍</span></div>
+      <p>해방 직후 한국의 상황과 미군정 하의 남한을 다룬 뉴스릴 형식 필름. 한국 국민들의 독립 열망과 재건 노력 기록.</p>
+      <ul class="kv">
+        <li><b>NAID</b> 23930(⚠️ 2026.7 검증 결과 다른 기록에 연결 — 재검증 필요) · RG 111 · 1945-1947</li>
+        <li><b>접근</b> <a href="https://catalog.archives.gov/search?q=%22Voice%20of%20Korea%22&typeOfMaterials=Moving%20Images">NARA 카탈로그 제목 검색 →</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Progress in Korea <span class="en">한국의 발전</span></h3><span class="badge b-stream">▶ 스트리밍</span></div>
+      <p>미군정 하의 한국 재건과 발전 과정. 교육, 농업, 산업, 보건 분야의 미국 원조 활동 기록. USAMGIK 공보부 제작 추정.</p>
+      <ul class="kv">
+        <li><b>RG</b> RG 111 · 1947-1948 · USAMGIK</li>
+        <li><b>접근</b> <a href="https://catalog.archives.gov">NARA 카탈로그 검색 →</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Universal Newsreel: Korea Issues <span class="en">유니버설 뉴스릴 한국편</span></h3><span class="badge b-stream">▶ 스트리밍</span></div>
+      <p>6,000회 이상 발행된 유니버설 뉴스릴(1929-1967) 중 한국 관련 에피소드. Vol.18(1945.8-9)에 서울 항복 관련 내용 포함 가능. 저작권·로열티 무료 공공도메인. NARA Moving Image & Sound Branch 소장.</p>
+      <ul class="kv">
+        <li><b>RG</b> RG 200 · NAID 513421 · 6,000+편</li>
+        <li><b>접근</b> <a href="https://catalog.archives.gov/search-within/513421?q=korea">유니버설 뉴스릴 한국 검색 →</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>208-UN-171B — Japanese Sign Final Surrender <span class="en">일본 항복 서명식</span></h3><span class="badge b-stream">▶ 스트리밍</span></div>
+      <p>United News(OWI) 시리즈. 1945.9.2 일본 공식 항복 서명식 뉴스릴. 온라인 시청 가능이 확인된 자료.</p>
+      <ul class="kv">
+        <li><b>RG</b> RG 208 · 208-UN · 1945</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="download">
+  <div class="sec-head">
+    <span class="sec-num">05</span>
+    <div>
+      <h2>무료 다운로드 가능 영상 <span class="en">Free Downloads Available</span></h2>
+      <p class="sec-sub">archive.org & NARA에서 무료 다운로드 가능한 한국 해방기 영상 전체 목록 (v1~v5 통합, 중복 제거)</p>
+    </div>
+  </div>
+
+  <table class="tbl">
+    <thead><tr><th>NAID / 식별자</th><th>제목 (영/한)</th><th>내용</th><th>연도</th><th>RG</th><th>접근</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>44175 / 242-MID-5237</td>
+        <td><b>Miscellaneous Scenes, Korean Soldiers</b><br>러시아·북한 군인 장면들</td>
+        <td>소련군 북한 진주 실제 영상. 북한군·남한군, T-34 전차, 서울 화재 장면, 1945년 소련군 한국 도착·전투 장면. 1945년 포항 일대 소련 군인 촬영. 일본 노획 필름.</td>
+        <td>1945</td>
+        <td>RG 242</td>
+        <td><a href="https://archive.org/details/gov.archives.arc.44175">archive.org →</a> <small>✓ 2026.7 검증</small></td>
+      </tr>
+      <tr>
+        <td>23653 / 111-ADC-9888</td>
+        <td><b>Japanese Surrender on Board USS Missouri</b><br>USS 미주리 항복 서명식</td>
+        <td>1945.9.2 도쿄만 항복 서명식 원본 기록영상. 한국 해방의 직접적 계기.</td>
+        <td>1945</td>
+        <td>RG 111</td>
+        <td><a href="https://archive.org/details/111-adc-9888">archive.org →</a> <small>✓ 2026.7 검증</small></td>
+      </tr>
+      <tr>
+        <td>— / ApptInTokyo</td>
+        <td><b>Appointment in Tokyo</b><br>도쿄의 약속</td>
+        <td>맥아더의 태평양 전쟁 전과정 다큐멘터리. 항복까지 55분 기록영상. Warner Bros. 배급. 한반도 해방 배경. Academy Film Archive 2013년 보존.</td>
+        <td>1945</td>
+        <td>RG 111</td>
+        <td><a href="https://archive.org/details/ApptInTokyo">archive.org →</a> · <a href="https://archive.org/details/appointment-in-tokyo-1945">대체링크</a></td>
+      </tr>
+      <tr>
+        <td>20315 / 111-ADC-6541</td>
+        <td><b>Refugees at Kaesong</b><br>개성의 난민들 (개성 피난민 천막촌)</td>
+        <td>38선 이남으로 유입되는 난민 텐트촌 영상. 해방 후 한반도 분단 상황 기록.</td>
+        <td>1947</td>
+        <td>RG 111</td>
+        <td><a href="https://catalog.archives.gov/id/20315">NARA →</a></td>
+      </tr>
+      <tr>
+        <td>20374 / 111-ADC-6600</td>
+        <td><b>Korea Refugees Crossing 38th</b><br>38선 월경 난민 (백청역 피난민, DDT 살포·접종)</td>
+        <td>38선을 넘는 한국 난민들. 분단 초기 남북 인구 이동 기록. 백청역 피난민 도착, DDT 살포·접종 장면.</td>
+        <td>1947</td>
+        <td>RG 111</td>
+        <td><a href="https://catalog.archives.gov/id/20374">NARA →</a></td>
+      </tr>
+      <tr>
+        <td>22366 / 111-ADC-8601</td>
+        <td><b>Han River Bridge Destroyed</b><br>한강 파괴된 다리, 눈 속 피난민</td>
+        <td>한강 파괴된 다리와 눈 속을 이동하는 피난민 기록.</td>
+        <td>1950</td>
+        <td>RG 111</td>
+        <td><a href="https://catalog.archives.gov/id/22366">NARA →</a></td>
+      </tr>
+      <tr>
+        <td>22804 / 111-ADC-9039</td>
+        <td><b>Korean War Pre-Conflict</b><br>한국전쟁 전야 (철원군 피난민, 65보병연대)</td>
+        <td>전쟁 직전 한반도 상황 기록영상. 철원군 피난민, 65보병연대 트럭 이동.</td>
+        <td>1949-1951</td>
+        <td>RG 111</td>
+        <td><a href="https://catalog.archives.gov/id/22804">NARA →</a></td>
+      </tr>
+      <tr>
+        <td>28210 / 111-LC-44092</td>
+        <td><b>Housing for Refugees in Seoul</b><br>서울 난민 주택</td>
+        <td>서울의 난민 주택 개발 및 건설 기록.</td>
+        <td>1960</td>
+        <td>RG 111</td>
+        <td><a href="https://catalog.archives.gov/id/28210">NARA →</a></td>
+      </tr>
+      <tr>
+        <td>🆕 발견 / —</td>
+        <td><b>Koreans Return to Busan from Japan</b><br>일본에서 부산 귀환 한국인 (1945.10.12)</td>
+        <td>WWII 중 이재민 한국인들의 일본→부산 귀환. Wilson Center에서 확인. RG 111 사진+영상. 국사편찬위원회 한국역사기록에서 열람 가능.</td>
+        <td>1945.10</td>
+        <td>RG 111</td>
+        <td><a href="https://archive.history.go.kr/id/AUS005_06_03V0000_736">한국역사기록 →</a></td>
+      </tr>
+      <tr>
+        <td>38955</td>
+        <td><b>Korean Farmers</b><br>한국 농민들</td>
+        <td>한국 농민들의 생활상 기록. 해방기 농촌 현실.</td>
+        <td>-</td>
+        <td>RG 111</td>
+        <td>NARA</td>
+      </tr>
+      <tr>
+        <td>40063</td>
+        <td><b>Korea Today</b><br>오늘의 한국</td>
+        <td>전쟁 직전 한반도 상황 기록영상.</td>
+        <td>-</td>
+        <td>RG 111</td>
+        <td>NARA</td>
+      </tr>
+      <tr>
+        <td>24541</td>
+        <td><b>Occupation of Korea</b><br>한국 점령</td>
+        <td>미군의 한국 점령 과정 기록.</td>
+        <td>-</td>
+        <td>RG 111</td>
+        <td>NARA</td>
+      </tr>
+      <tr>
+        <td>36077</td>
+        <td><b>Signal Corps 한국 기록</b></td>
+        <td>미 육군 통신대 한국 관련 기록영상 모음.</td>
+        <td>-</td>
+        <td>RG 111</td>
+        <td>NARA</td>
+      </tr>
+      <tr>
+        <td>5765670</td>
+        <td><b>Surrender of Japanese Forces, Korea</b><br>한국 내 일본군 항복</td>
+        <td>한반도에서의 일본군 무장해제. 1945년 일본군 항복.</td>
+        <td>1945</td>
+        <td>RG 111</td>
+        <td>NARA</td>
+      </tr>
+      <tr>
+        <td>39008</td>
+        <td><b>USAMGIK Newsreel</b><br>미군정 뉴스릴</td>
+        <td>미군정 뉴스릴. 해방 후 한국 대상 선전·공보 영상.</td>
+        <td>-</td>
+        <td>RG 111</td>
+        <td>NARA</td>
+      </tr>
+      <tr>
+        <td>CrimeofK1950</td>
+        <td><b>The Crime of Korea (1950)</b></td>
+        <td>Armed Forces Screen Report #125. Signal Corps 촬영 영상 편집. 1945년 해방 후 평화로운 한국 → 1950년 공산군 침략으로 파괴된 한국을 대비. "It was a quiet country back in 1945...the green rice paddies looked restful." 1945년 해방 직후 한국 풍경 영상 포함.</td>
+        <td>1945/1950</td>
+        <td>RG 111</td>
+        <td><a href="https://archive.org/details/CrimeofK1950">archive.org →</a></td>
+      </tr>
+      <tr>
+        <td>USAF-20420</td>
+        <td><b>Captured North Korea Combat Footage</b><br>노획 북한 전투 영상</td>
+        <td>미 공군(USAF) 소장. 노획된 북한 전투 영상. 미군/한국군 POW, 위장 트럭·탱크 이동, 후방 활동.</td>
+        <td>-</td>
+        <td>RG 342</td>
+        <td><a href="https://archive.org/details/USAF-20420">archive.org →</a></td>
+      </tr>
+      <tr>
+        <td>71812</td>
+        <td><b>Korean War Silent Newsreel (Crisis in Korea)</b></td>
+        <td>한국전쟁 배경 — 1945년 분단 과정, 남북 정부 수립, 전쟁 발발 경위.</td>
+        <td>1945-1950</td>
+        <td>-</td>
+        <td><a href="https://archive.org/details/71812CrisisInKoreaMos">archive.org →</a></td>
+      </tr>
+      <tr>
+        <td>111-ADC-8082</td>
+        <td><b>War, Suwon, Korea</b></td>
+        <td>1950.6.28-29 수원 전투 장면. Signal Corps 미편집 무성 영상.</td>
+        <td>1950</td>
+        <td>RG 111</td>
+        <td><a href="https://archive.org/details/111-adc-8082">archive.org →</a></td>
+      </tr>
+      <tr>
+        <td>ARC-39096</td>
+        <td><b>Dec.1945/Jan.1946 United Newsreel</b></td>
+        <td>패전국 처리 뉴스. 일본 POW 송환, 마셜 상하이 도착 등 전후 처리.</td>
+        <td>1945-1946</td>
+        <td>RG 208</td>
+        <td><a href="https://archive.org/details/ARC-39096">archive.org →</a></td>
+      </tr>
+      <tr>
+        <td>111-ADC-8741</td>
+        <td><b>ROK Trainees, Camp Ota, Japan</b><br>한국군 훈련병, 일본 오타 캠프</td>
+        <td>한국군 훈련병, 일본 오타 캠프. Signal Corps 영상.</td>
+        <td>-</td>
+        <td>RG 111</td>
+        <td><a href="https://archive.org/details/111-adc-8741">archive.org →</a></td>
+      </tr>
+      <tr>
+        <td>111-ADC-8085 (추정)</td>
+        <td><b>First Purple Heart of Korean Campaign, Tokyo General Hospital</b></td>
+        <td>한국전쟁 첫 퍼플하트 — 키워드 기반 추정, 추가 확인 필요.</td>
+        <td>1950</td>
+        <td>RG 111</td>
+        <td>NARA (미확인)</td>
+      </tr>
+      <tr>
+        <td>428-NPC-19594 (추정)</td>
+        <td><b>Celebration of VJ Day, 08/14/1945</b></td>
+        <td>VJ Day 축하 영상. 한국 해방 관련 — 키워드 기반 추정.</td>
+        <td>1945</td>
+        <td>RG 428</td>
+        <td>NARA (미확인)</td>
+      </tr>
+      <tr>
+        <td>— / universal_newsreels</td>
+        <td><b>Universal Newsreels 전체 컬렉션</b></td>
+        <td>1929-1967 전체. "Korea" 검색으로 한국 관련 뉴스릴 필터.</td>
+        <td>1929-1967</td>
+        <td>RG 200</td>
+        <td><a href="https://archive.org/details/universal_newsreels">컬렉션 →</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note note-gold"><b>💡 A/V Geeks 프로젝트 주목!</b> Skip Elsheimer의 A/V Geeks 프로젝트가 <b>40,000+ NARA 영상을 archive.org에 업로드</b> 중입니다(2025~ 대량 업로드 진행). 매주 새로운 한국 관련 영상이 추가될 수 있으므로, <code>archive.org/details/avgeeks</code> 및 <a href="https://archive.org/search?query=111-ADC+Korea">archive.org에서 "111-ADC Korea" 검색</a>을 정기적으로 확인하세요.</div>
+</section>
+
+<section class="sec" id="nara-system">
+  <div class="sec-head">
+    <span class="sec-num">06</span>
+    <div>
+      <h2>NARA 검색 시스템 & 카드 카탈로그 <span class="en">NARA Search System & Card Catalog</span></h2>
+      <p class="sec-sub">7.5M 카드 카탈로그와 디지털 접근 현황, Motion Picture Branch 이용 안내</p>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>7.5M 카드 카탈로그</h3>
+      <p><b>750만 장의 물리적 카드.</b> Motion Picture, Sound, and Video Branch(NWCS)가 관리하는 세계 최대 영상 카탈로그. 원본 제작기관이 작성한 카드 다수 포함. 일부만 마이크로필름/마이크로피시로 제공. 대부분 미디지털화 상태로 현장 방문만 가능. <b>자동화 변환 프로젝트 진행 중</b>(자동화율 약 1%).</p>
+      <ul class="kv">
+        <li><b>규모</b> 7,500,000 카드</li>
+        <li><b>자동화</b> ~1%</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>111-ADC / RG 18CS / 111 LC 카드 카탈로그</h3>
+      <p><b>15,000개 제목</b> 알파벳순·주제별 배열. 의회도서관(LC) 주제 체계 기반 분류. 35mm 흑백 프린트 전체 보유. WWII·일본 점령·한국전쟁 포함. 한국 관련 별도 섹션 존재 추정, 현장 열람만 가능.</p>
+      <ul class="kv">
+        <li><b>규모</b> 15,000 제목</li>
+        <li><b>접근</b> 현장방문 필수</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Archives II (College Park, MD)</h3>
+      <p>물리적 방문 필요. Special Media Archives Division(NWCS) 소재지. 영상·사진·음성 기록물 전문 관리. 연구자 열람실, 디지털화 장비 보유. 카드 카탈로그 직접 열람으로만 접근 가능한 영상 다수.</p>
+      <ul class="kv">
+        <li><b>주소</b> 8601 Adelphi Road, College Park, MD 20740 — 4층 Motion Picture Research Room</li>
+        <li><b>연락처</b> <a href="mailto:mopix@nara.gov">mopix@nara.gov</a> · ☎ 1-866-272-6272</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>DIMOC 컬렉션</h3>
+      <p>Defense Imagery Management Operations Center. 국방부 통합 영상관리 센터 기록물. 미군 각 군 미디어 콘텐츠 관리. 한국전쟁 관련 군사 사진·영상 포함. NARA 블로그 "Land of the Morning Calm"에서 한국 관련 DIMOC 영상 소개.</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">📄 NARA 공식 참고문서 (Reference Information Papers, RIP)</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>RIP 70 — Audiovisual Records in the National Archives</h3>
+      <p>NARA 전체 영상/음성 기록물 안내서. RG별 영상 컬렉션 상세 설명. Part II에 Signal Corps(111), OWI(208), OSS(226), RG 242 노획영상, USIA(306) 상세. 한국 관련 영상 발굴의 출발점.</p>
+      <ul class="kv"><li><b>링크</b> <a href="https://www.archives.gov/publications/ref-info-papers/70/part-2.html">Part II 온라인 열람</a></li></ul>
+    </div>
+    <div class="card">
+      <h3>RIP 103 — Records Relating to the Korean Conflict (Rebecca Collier)</h3>
+      <p><b>한국전쟁 관련 NARA 기록물 종합 가이드.</b> 2000년 기준 한국 관련 모든 기록 시리즈(텍스트·영상·사진·음성) 상세 기술. 극동사령부, G-2 정보, 해군 덱 로그, 국무부 기록 등 포함. 1945-1949 Decimal File(한국 내정 895) 구조 설명. 비텍스트 기록물 포함 종합 안내서.</p>
+      <ul class="kv"><li><b>링크</b> <a href="https://www.archives.gov/files/publications/ref-info-papers/rip103.pdf">PDF 다운로드(전문)</a></li></ul>
+    </div>
+    <div class="card">
+      <h3>NARA 뉴스릴 가이드 & WWII 영상 가이드</h3>
+      <p>RG 242 노획 뉴스릴 전체 시리즈 목록(242-MID, 242-MID-J, 242-GENERAL 등). 뉴스릴 연구 출발점.</p>
+      <ul class="kv">
+        <li><b>링크</b> <a href="https://www.archives.gov/research/motion-pictures/newsreels">Newsreels at NARA</a> · <a href="https://www.archives.gov/research/motion-pictures/ww2">WWII Films at NARA</a> · <a href="https://www.archives.gov/findingaid/stat/discovery/242">RG 242 Finding Aid</a></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Motion Picture Branch 이용 안내</h3>
+      <p>National Archives at College Park(Archives II) 4층 Motion Picture Research Room 방문 필요. 사전 예약 권장.</p>
+      <ul class="kv">
+        <li><b>연락처</b> <code>mopix@nara.gov</code> · ☎ 1-866-272-6272</li>
+        <li><b>안내 페이지</b> <a href="https://www.archives.gov/research/motion-pictures/catalog-film-sound-video">카드 카탈로그 안내 (750만 카드)</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub-title">📰 Universal Newsreel 시스템 (1978 화재 포함)</h3>
+  <div class="card">
+    <h3>Universal Newsreel 컬렉션 개요</h3>
+    <p>1929~1967 주 2회 제작, MCA/Universal이 1974년 미국 정부에 저작권 양도. <b>저작권 무료, 로열티 무료.</b> NARA Moving Image & Sound Branch 소장. Citizen Archivist Phil Stewart과의 협업으로 릴리스 설명 체계 완성. 편집본 ~6,000릴(극장 상영판) + 아웃테이크 ~8,500릴(미편집). 4,000건 릴리스 설명 카탈로그 등록 완료(2022.2).</p>
+    <ul class="kv">
+      <li><b>편집본</b> ~6,000릴 (극장 상영판)</li>
+      <li><b>아웃테이크</b> ~8,500릴 (미편집)</li>
+      <li><b>시기</b> 1929.7 ~ 1967.12</li>
+      <li><b>손실</b> Vol.14-17(1941-45) 대부분 1978년 질산필름 보관소 화재로 소실</li>
+    </ul>
+    <div class="note note-red"><b>⚠️ 중요 제한사항</b> — 1978년 질산필름 보관소 화재로 Vol.14~17(1941-1945) 대부분 소실. 1945년 한국 해방 관련 뉴스릴은 상당수 원본 필름이 소실되었을 수 있으나, <b>릴리스 시트(텍스트 기록)와 내레이션 스크립트</b>는 보존되어 있어 어떤 내용이 보도되었는지 확인 가능.</div>
+  </div>
+
+  <h3 class="sub-title">📊 디지털화 진행 현황 (추정)</h3>
+  <table class="tbl">
+    <thead><tr><th>구분</th><th>진행률</th></tr></thead>
+    <tbody>
+      <tr><td>RG 111 텍스트 기록 디지털화</td><td>~15%</td></tr>
+      <tr><td>111-ADC 영상 온라인 접근</td><td>~5%</td></tr>
+      <tr><td>RG 242 한국 관련 영상 디지털화</td><td>~3%</td></tr>
+      <tr><td>7.5M 카드 카탈로그 자동화</td><td>~1%</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note note-blue"><b>🇰🇷 국립중앙도서관 NARA 수집 현황 (2023년 말 기준)</b> — 총 <b>3,254,748 페이지</b> 수집 완료. 미 농무부(USDA), 외국경제청, 전시정보국(OWI) 문서. 일제강점기·한국전쟁 전후 기록. 북한 노획 문서(RG 242).</div>
+</section>
+
+<section class="sec" id="strategy">
+  <div class="sec-head">
+    <span class="sec-num">07</span>
+    <div>
+      <h2>카탈로그 검색 쿼리 & 발굴 전략 <span class="en">Catalog Search Queries & Discovery Strategy</span></h2>
+      <p class="sec-sub">한국 해방기 영상을 체계적으로 발굴하기 위한 검색 쿼리와 실행 전략</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">🔍 NARA 카탈로그 검색 쿼리 (v1 기본 + v3 심화 통합)</h3>
+  <pre class="code"># ━━━ NARA 카탈로그 검색 (catalog.archives.gov) ━━━
+# Type 필터: "Moving Images" 선택 필수
+
+# 1. 해방/항복/점령
+"Korea" "liberation" 1945
+"Japanese surrender" Korea Seoul
+"Korea" "occupation" 1945 1946
+"Operation Blacklist" Korea
+"Inchon" 1945 landing surrender
+"USAMGIK" OR "military government" Korea
+
+# 2. 독립운동
+"Korean independence"
+"Korean Provisional Government"
+"March First" Korea 1919
+"Syngman Rhee" OR "김구" OR "Kim Koo"
+
+# 3. 일제강점기 (노획 일본 필름, RG 242)
+"Chosen" newsreel
+"captured Japanese" film Korea
+"Korea" OR "Seoul" Japanese colonial
+"Nihon News" Korea OR Chosen
+"Nippon Eiga" Korea
+"242-MID" Korea
+
+# 4. OSS / 정보 작전
+"Napko Project" OR "Eagle Project"
+OSS Korea film
+OSS Korea morale operations
+
+# 5. 미군정 / 38선
+"military government" Korea Seoul
+"38th parallel" Korea
+"38th parallel" Korea film
+"USAMGIK" OR "American Military Government"
+"trusteeship" Korea 1946
+
+# 6. Signal Corps 한국 시리즈
+"111-ADC" Korea
+"111-LC" Korea
+"111-CCK" Korea
+"signal corps" Korea 1945
+
+# 7. OWI/USIA 선전 영상
+"United News" Korea
+"208-UN" Korea
+"306-LSS" Korea
+USIA Korea film
+
+# 8. Universal Newsreel
+"Universal Newsreel" Korea
+"200-UN" Korea</pre>
+
+  <h3 class="sub-title">📰 Universal Newsreel 한국 관련 검색 전략</h3>
+  <p>6,000편 편집본 + 8,500편 미편집 아웃테이크. 공공도메인. 4,000건 릴리스 설명 카탈로그 등록 완료(2022.2).</p>
+  <pre class="code"># Universal Newsreel 카탈로그 검색 쿼리
+# catalog.archives.gov → "Universal Newsreel" Korea
+
+"Universal Newsreel" Korea
+"Universal News" Korea surrender
+"Universal Newsreel" "38th parallel"
+"Universal News" Seoul occupation
+
+# archive.org Universal Newsreels 컬렉션
+archive.org/details/universal_newsreels
+# → 검색: Korea, Seoul, Japan surrender</pre>
+
+  <div class="note note-gold"><b>📚 별책: 마스터 쿼리 코퍼스</b> — 아래 쿼리 뱅크의 완전 확장판(600+ 쿼리: 지명 40+ 표기군, 사건·전투 60+, 인물 40+, 부대·참전국 28개국, 뉴스릴 시리즈 25+, 주제 12군, 10개 언어, RG 전수 스캔, 커버리지 매트릭스)이 별도 문서 <b>「09_master_query_corpus.html」</b>로 제공됩니다. 전수 발굴 실행 시에는 별책을, 요약 참조 시에는 아래 뱅크를 사용하십시오. <b>v1.1부터 송창기(2026) 논문의 검증 프레임워크(공통 22그룹·NARA 28 RG 교차 63쿼리·TNA 14레이어 1,222쿼리·인용 역추적 시드 22건)가 별책 §13에 통합되어 있습니다</b> — 구한말(~1910)·간접 키워드·외교 정형구·TNA 축은 별책 §13이 유일한 준거입니다.</div>
+
+  <h3 class="sub-title">🏦 쿼리 뱅크 (Query Bank) — 누락 없는 발굴을 위한 완전 검색 체계</h3>
+  <p>1910~50년대 자료는 <b>당대 표기</b>로 색인되어 있어 현대 표기("Korea", "Seoul", "Busan")만으로는 상당량을 놓친다. 아래 ①표기 변형 사전 → ②시대·주제별 세트 → ③인물·부대 세트 → ④API·archive.org 문법 → ⑤다국어 세트를 순서대로 조합하면 검색 각도가 지명×시기×주체의 3차원으로 확장된다.</p>
+
+  <p><b>① 표기 변형 사전 — 모든 쿼리의 기초 (일본식 로마자가 노획 필름·전전 자료의 열쇠)</b></p>
+  <table class="tbl">
+    <thead><tr><th>대상</th><th>현대 표기</th><th>구 표기·변형 (반드시 OR로 병행)</th><th>주 사용 시기·맥락</th></tr></thead>
+    <tbody>
+      <tr><td>한국</td><td>Korea</td><td><b>Chosen · Tyosen · Corea</b> · Chosun · Choson</td><td>Chosen/Tyosen=일제기 일본식, Corea=구미 구식 표기</td></tr>
+      <tr><td>서울</td><td>Seoul</td><td><b>Keijo</b> · Kyongsong · Gyeongseong</td><td>Keijo(京城)=일제기 공식 명칭 — RG 242 필수</td></tr>
+      <tr><td>인천</td><td>Incheon</td><td><b>Inchon · Jinsen · Chemulpo</b></td><td>Inchon=미군 표기(상륙작전), Jinsen=일제기, Chemulpo=개항기</td></tr>
+      <tr><td>부산</td><td>Busan</td><td><b>Pusan · Fusan</b></td><td>Pusan=미군 표기(교두보), Fusan=일제기</td></tr>
+      <tr><td>평양</td><td>Pyongyang</td><td><b>Heijo</b> · Pyeng Yang</td><td>Heijo=일제기, Pyeng Yang=선교사 문헌</td></tr>
+      <tr><td>원산</td><td>Wonsan</td><td><b>Genzan</b></td><td>Genzan=일제기 — 소련군 진주 영상 검색 시 병행</td></tr>
+      <tr><td>대구</td><td>Daegu</td><td><b>Taegu · Taikyu</b></td><td>Taegu=미군(한국전쟁), Taikyu=일제기</td></tr>
+      <tr><td>개성</td><td>Kaesong</td><td><b>Kaijo</b></td><td>정전회담 초기 장소 — Kaesong이 주 표기</td></tr>
+      <tr><td>제주</td><td>Jeju</td><td><b>Cheju · Saishu</b> · Quelpart</td><td>Cheju=미군, Saishu=일제기, Quelpart=구미 고지도</td></tr>
+      <tr><td>압록강/두만강</td><td>Amnok/Tuman</td><td><b>Yalu</b> / <b>Tumen</b></td><td>한국전쟁 자료는 Yalu River로 색인</td></tr>
+      <tr><td>판문점</td><td>Panmunjom</td><td>Panmunjon · Pan Mun Jom</td><td>철자 흔들림 잦음 — 와일드카드 불가 시 3형 병행</td></tr>
+      <tr><td>장진호</td><td>Jangjin</td><td><b>Chosin</b> · Changjin</td><td>Chosin Reservoir=미군 공식 표기</td></tr>
+      <tr><td>조선총독부</td><td>—</td><td>Government-General of Chosen · Chosen Sotokufu</td><td>총독부 제작·홍보 영상</td></tr>
+    </tbody>
+  </table>
+
+  <p><b>② 시대·주제별 쿼리 세트 (catalog.archives.gov — Moving Images 필터 적용)</b></p>
+  <pre class="code"># ━━━ SET A. 1910–1945 일제강점기·독립운동 ━━━
+("Chosen" OR "Tyosen" OR "Keijo") newsreel            # 노획 일본 뉴스릴 — 최중요
+"Government-General" Chosen                            # 조선총독부 제작·행정 영상
+("Chosen" OR Korea) (festival OR industry OR railway)  # 총독부 홍보(산업·철도·박람회)
+"March First" OR "Mansei" Korea 1919                   # 3.1운동
+"Korean Provisional Government" OR "Chungking" Korean  # 임시정부(중경)
+"Cairo Conference" 1943                                # 카이로 선언(한국 독립 조항)
+"Korean Volunteer" OR "Kwangbok" OR "Liberation Army"  # 광복군·의용대
+kamikaze Korean OR "Korean laborers" Japan             # 강제동원·징용 관련
+
+# ━━━ SET B. 1945 해방·항복·진주 ━━━
+Korea liberation 1945
+"Japanese surrender" (Seoul OR Korea OR Keijo)
+"surrender ceremony" Seoul "September 1945"            # 9.9 조선총독부 항복식
+"XXIV Corps" Korea                                     # 하지 24군단 진주
+"7th Infantry Division" (Inchon OR Jinsen) 1945
+"Operation Blacklist" Korea                            # 미군 점령 작전명
+(Russian OR Soviet) (Korea OR Genzan OR Heijo) 1945    # 소련군 북한 진주
+repatriation (Korea OR Fusan OR Pusan) Japanese 1945   # 일본인 송환·한국인 귀환
+"Welcome" Americans (Seoul OR Korea) 1945              # 환영 인파 장면
+
+# ━━━ SET C. 1945–1948 미군정 ━━━
+USAMGIK OR "military government in Korea"
+"Hodge" Korea                                          # 하지 중장
+trusteeship (Korea OR Korean) 1945 1946                # 신탁통치 파동
+"Joint Commission" Korea Soviet                        # 미소공동위원회
+"Korean Constabulary" OR "National Police" Korea       # 국방경비대·경찰
+(rice OR cholera OR refugees) Korea 1946 1947          # 사회상(식량·방역·난민)
+"Cheju" OR "Cheju-do" 1948                             # 제주 4.3
+"Yosu" OR "Sunchon" rebellion 1948                     # 여순 사건
+"38th parallel" (crossing OR refugees OR guard)
+
+# ━━━ SET D. 1948 정부수립·분단 ━━━
+UNTCOK OR "UN Temporary Commission" Korea              # 5.10 총선 감시
+election Korea "May 1948"
+"Republic of Korea" (inauguration OR proclamation) 1948
+"Syngman Rhee" inauguration                            # 이승만 취임
+"North Korea" OR "Democratic People's" 1948 1949       # 북한 정권 수립
+"American troops withdraw" Korea 1948 1949             # 미군 철수
+
+# ━━━ SET E. 1950–1953 한국전쟁 (국면별) ━━━
+Korea invasion "June 1950"                             # 개전
+"Pusan Perimeter" OR "Naktong"                         # 낙동강 방어선
+"Inchon landing" OR "Operation Chromite"               # 인천상륙
+Seoul (recapture OR liberation) "September 1950"       # 서울 수복
+("Chosin" OR "Changjin") Reservoir                     # 장진호
+(Yalu OR "Chinese Communist") Korea 1950               # 중공군 개입
+"Operation Big Switch" OR "Little Switch"              # 포로 교환
+(Panmunjom OR Kaesong) (armistice OR truce)            # 정전 협상·조인
+"Koje" OR "Koje-do" prisoners                          # 거제도 포로수용소
+(orphan OR refugees OR evacuation) Korea 1950 1951     # 민간인·흥남철수
+
+# ━━━ SET F. 1953–1960 전후 재건 ━━━
+UNKRA OR "reconstruction" Korea
+"Armed Forces aid to Korea" OR AFAK
+(housing OR school OR hospital) Korea 1954..1960
+"Syngman Rhee" (visit OR election) 1954..1960</pre>
+
+  <p><b>③ 인물·부대·조직 쿼리 세트 (횡단 검색 — 시대 세트와 교차)</b></p>
+  <pre class="code"># 인물 (표기 변형 포함)
+"Syngman Rhee" OR "Yi Sung-man"                        # 이승만
+"Kim Koo" OR "Kim Ku"                                  # 김구
+"Kim Kyu-sik" OR "Kimm Kiusic"                         # 김규식
+"Kim Il Sung" OR "Kim Il-song"                         # 김일성
+"John R. Hodge" OR "General Hodge"                     # 하지
+MacArthur (Korea OR Inchon OR Tokyo)                   # 맥아더
+(Ridgway OR "Van Fleet" OR Clark) Korea                # 역대 미8군·유엔군 사령관
+"Muccio" Korea                                         # 무초 초대 대사
+"Francesca" Rhee                                       # 프란체스카 여사(의전 장면)
+
+# 부대·조직 (Signal Corps 색인은 부대명 기준인 경우 다수)
+"XXIV Corps" / "6th Infantry Division" Korea / "40th Infantry Division" Korea
+"1st Marine Division" (Inchon OR Chosin)
+"KMAG" OR "Military Advisory Group" Korea              # 주한 미 군사고문단
+"5th Air Force" Korea / "Far East Air Forces" Korea
+"ROK Army" OR "Republic of Korea Army"
+"United Nations Command" OR UNC Korea
+NNSC OR "Neutral Nations Supervisory"                  # 중립국감독위(스위스·스웨덴 영상)
+(Turkish OR Ethiopian OR Colombian OR Thai) (brigade OR battalion) Korea  # 참전국 부대별</pre>
+
+  <p><b>④ NARA API v2 + archive.org 고급 문법 (자동화용 — §31-5 스크립트에 투입)</b></p>
+  <pre class="code"># ─── NARA API v2 (파라미터명은 Swagger에서 최종 확인: catalog.archives.gov/api/v2/api-docs/) ───
+# RG 한정 전수 스캔 (키워드 없이 RG 전체를 훑어 색인 누락까지 포착)
+GET /records/search?recordGroupNumber=111&typeOfMaterials=Moving%20Images&limit=100
+GET /records/search?recordGroupNumber=242&typeOfMaterials=Moving%20Images&limit=100
+# 시리즈 식별자 프리픽스 검색
+GET /records/search?q=111-ADC&typeOfMaterials=Moving%20Images
+GET /records/search?q=242-MID
+# 온라인 열람분만
+GET /records/search?q=Korea&typeOfMaterials=Moving%20Images&availableOnline=true
+
+# ─── archive.org 고급 검색 (advancedsearch.php / ia CLI 공용 문법) ───
+mediatype:movies AND (korea OR korean OR chosen OR keijo)
+mediatype:movies AND (seoul OR pusan OR inchon) AND date:[1945-01-01 TO 1953-12-31]
+identifier:111-adc*                                    # Signal Corps 릴 식별자 직접 스캔
+identifier:gov.archives*  AND (korea OR korean)        # NARA 미러 아이템
+collection:universal_newsreels AND (korea OR seoul OR panmunjom)
+collection:avgeeks AND (korea OR korean)
+collection:prelinger AND korea
+title:(korea OR korean) AND mediatype:movies AND addeddate:[2026-07-01 TO null]  # 신규 업로드 감시</pre>
+
+  <p><b>⑤ 다국어 검색어 세트 (각국 아카이브 — §11~17 카탈로그에 직접 투입)</b></p>
+  <table class="tbl">
+    <thead><tr><th>언어(대상 아카이브)</th><th>검색어</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>일본어 (JACAR·NHK)</td><td>朝鮮 · 京城 · 朝鮮総督府 · 引揚げ(귀환) · 日本ニュース 朝鮮</td><td>引揚げ=일본인 송환 — 해방 직후 한반도 영상 다수 동반</td></tr>
+      <tr><td>독일어 (Bundesarchiv)</td><td>Korea Wochenschau · Welt im Film Korea · Der Augenzeuge Korea</td><td>동독 Der Augenzeuge는 북한 시각 뉴스릴 포함</td></tr>
+      <tr><td>프랑스어 (INA·Gaumont-Pathé)</td><td>Corée · guerre de Corée · Séoul · Panmunjom</td><td>Actualités Françaises 한국전 보도</td></tr>
+      <tr><td>러시아어 (RGAKFD 등)</td><td>Корея · Сеул · Пхеньян · освобождение Кореи(한국 해방)</td><td>소련 뉴스릴 — 북한 진주·평양 영상의 원천</td></tr>
+      <tr><td>중국어 (대만 국사관 등)</td><td>韓國 · 朝鮮 · 大韓民國臨時政府 · 光復軍 · 抗美援朝(중국측)</td><td>임정·광복군은 대만측, 抗美援朝는 중국 전쟁 서사</td></tr>
+      <tr><td>이탈리아어 (Istituto Luce)</td><td>Corea · guerra di Corea</td><td>Luce 뉴스릴</td></tr>
+      <tr><td>스페인어 (콜롬비아 참전)</td><td>Corea · Batallón Colombia</td><td>참전국 자국 보도</td></tr>
+      <tr><td>스웨덴/노르웨이어 (NNSC·병원)</td><td>Korea (filmarkivet.se) · NORMASH</td><td>의료지원국 영상</td></tr>
+    </tbody>
+  </table>
+
+  <p><b>⑥ 오탐(False Positive) 필터링 규칙</b></p>
+  <ul>
+    <li><b>"Chosen"</b>은 영어 일반 단어와 충돌 — 반드시 <code>newsreel · Japan · film · Keijo</code> 등과 AND 조합. 단독 검색 금지.</li>
+    <li><b>"UN"</b> 계열(208-UN, 200-UN)은 시리즈 코드로만 사용 — 일반어 "un"과 혼동되는 카탈로그에서는 <code>"United News"</code>·<code>"Universal Newsreel"</code> 풀네임 병행.</li>
+    <li><b>"Korea Strait"·"Korean Air"</b> 등 무관 지리·현대 항공 결과는 연대 필터(<code>date range 1910–1960</code>)로 배제.</li>
+    <li><b>인명 로마자</b>는 아카이브마다 상이(Rhee/Ree/Li) — 0건이면 성만으로 재검색 후 눈으로 선별.</li>
+    <li>검색 결과 0건이 <b>부재의 증거가 아님</b> — NARA 카드 카탈로그 7.5M장 중 상당수 미전산화. 온라인 0건 항목은 §27 Phase 1 현장·대행 조사 목록으로 이월.</li>
+  </ul>
+
+  <p><b>⑦ 커버리지 매트릭스 — 누락 점검표 (분기 1회 전수 실행)</b></p>
+  <table class="tbl">
+    <thead><tr><th>축</th><th>점검 방법</th><th>완료 기준</th></tr></thead>
+    <tbody>
+      <tr><td><b>지명 축</b> (13개 표기군)</td><td>①표의 모든 변형을 NARA·archive.org에 각 1회 실행</td><td>표기군별 검색 로그 존재</td></tr>
+      <tr><td><b>시대 축</b> (SET A~F)</td><td>6개 세트 전 쿼리 실행 + 신규 히트만 대장 등록</td><td>세트별 실행일·건수 기록</td></tr>
+      <tr><td><b>주체 축</b> (인물·부대)</td><td>③세트 실행 — 특히 참전국 부대명은 해당국 아카이브(§11~17)에도 교차 투입</td><td>인물 9·부대군 8 커버</td></tr>
+      <tr><td><b>소스 축</b></td><td>동일 쿼리를 NARA→archive.org→각국 아카이브 순 3중 투입</td><td>소스별 히트 수 비교 기록</td></tr>
+      <tr><td><b>검색 로그</b></td><td>시트 필드: 쿼리 원문·소스·실행일·히트 수·신규 등록 수·비고</td><td>재현 가능성 확보(§29-③ 진본성 원칙의 검색 버전)</td></tr>
+    </tbody>
+  </table>
+  <div class="note note-gold"><b>💡 발굴 우선 조합 Top 5</b> (비용 0·수확 확률 최상) — ① <code>identifier:111-adc*</code> archive.org 전수 스캔(A/V Geeks 업로드분) ② <code>("Chosen" OR "Keijo") newsreel</code> NARA(노획 필름) ③ <code>recordGroupNumber=242</code> API 전수 스캔 ④ <code>collection:universal_newsreels AND (korea OR seoul)</code> ⑤ 引揚げ+朝鮮 JACAR 교차 검색.</div>
+
+  <h3 class="sub-title">📋 영상 수집 5단계 절차</h3>
+  <ol class="steps">
+    <li><b>1단계 — 온라인 검색</b><br>catalog.archives.gov에서 Moving Images 필터로 키워드 검색</li>
+    <li><b>2단계 — Finding Aid 확인</b><br>RG 111, 242 영상 시리즈 카드 카탈로그 확인</li>
+    <li><b>3단계 — 현지 열람</b><br>Archives II 4층 Motion Picture Research Room 방문</li>
+    <li><b>4단계 — 복제 요청</b><br>Reproduction Services에 디지털 복제 신청</li>
+    <li><b>5단계 — 수령·보존</b><br>보존 마스터(FFV1) + 접근 사본(H.264) 수령</li>
+  </ol>
+
+  <div class="note note-blue"><b>📍 현지 방문 정보</b> — National Archives at College Park(Archives II), 8601 Adelphi Road, College Park, MD 20740. Motion Picture Research Room: 4층. ☎ 1-866-272-6272 · <a href="mailto:mopix@nara.gov">mopix@nara.gov</a></div>
+
+  <h3 class="sub-title">💰 영상 복제 비용 (참고)</h3>
+  <table class="tbl">
+    <thead><tr><th>항목</th><th>비용(USD)</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>이미 디지털화된 영상 다운로드</td><td><b>무료</b></td><td>카탈로그에서 직접 다운로드</td></tr>
+      <tr><td>16mm 필름 → 디지털</td><td>$25~45/릴</td><td>표준 텔레시네</td></tr>
+      <tr><td>35mm 필름 → 디지털</td><td>$40~75/릴</td><td>표준 텔레시네</td></tr>
+      <tr><td>고해상도 마스터 복제</td><td>$65~150/릴</td><td>보존용 고품질</td></tr>
+      <tr><td>FOIA 요청 수수료</td><td>$25~250</td><td>기밀해제 요청시</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note note-gold"><b>💡 A/V Geeks 프로젝트 주목!</b> 2025년부터 A/V Geeks가 NARA 111-ADC 시리즈를 archive.org에 체계적으로 업로드 중입니다. 40,000+ NARA 영상 업로드 목표. 매주 새로운 영상이 추가되므로, 정기적으로 <a href="https://archive.org/search?query=111-ADC+Korea">archive.org에서 "111-ADC Korea"</a> 검색을 실행하여 새 업로드를 확인하세요.</div>
+
+  <div class="note note-red"><b>🚨 연구 공백 (Research Gaps) — 미발굴 영상 우선 탐색 대상</b>
+    <ul>
+      <li>1945.8.15 광복절 서울 거리 만세 영상 — Signal Corps 촬영 여부 불확실, 한국인 촬영 영상 존재 여부 미확인</li>
+      <li>1945.9.9 USAMGIK 수립 공식 행사 영상 — 미군정 공식 수립식 영상 미발굴</li>
+      <li>1945.10 이승만 귀국 영상 — 뉴스릴에 포함 가능성, 33년 만의 귀국 관련 영상 존재 여부 미확인</li>
+      <li>1946 미소공동위원회 영상 기록 — 미발굴</li>
+      <li>1948.5.10 총선거 영상 — UN 감시단(UNTCOK) 기록 가능성, 존재 여부 미확인</li>
+      <li>1948.8.15 정부 수립 기념식 영상 — 이승만 대통령 취임식 전체 영상 미발굴</li>
+    </ul>
+  </div>
+
+  <h3 class="sub-title">🌐 교차 검색 아카이브</h3>
+  <ul class="kv">
+    <li><b>archive.org</b> — A/V Geeks 프로젝트, Prelinger Archives 교차 검색. <code>archive.org/search?query=korea+1945</code></li>
+    <li><b>한국역사기록(archive.history.go.kr)</b> — 국사편찬위원회, NARA 수집 영상</li>
+    <li><b>국가기록원(archives.go.kr)</b> — 2007년 러시아·미국 수집 북한 영상 공개</li>
+    <li><b>한국영상자료원(KMDb, kmdb.or.kr)</b> — 1945-1959 한국영화 데이터베이스, 해방기 영화 정보</li>
+    <li><b>Wilson Center Digital Archive</b> — <code>digitalarchive.wilsoncenter.org</code> 한국 분단기 1차 사료 디지털화, 소련·중국 기밀해제 문서</li>
+    <li><b>British Pathé</b> — 한국 관련 뉴스릴(00059536 등), <code>britishpathe.com/search?q=korea</code></li>
+    <li><b>UCLA newsreels.net</b> — Hearst Metrotone 15,000편</li>
+  </ul>
+
+  <h3 class="sub-title">✅ 발굴 실행 체크리스트 (10단계)</h3>
+  <table class="tbl">
+    <thead><tr><th>단계</th><th>작업</th><th>도구/위치</th><th>상태</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>catalog.archives.gov에서 "Korea" + Moving Images 검색</td><td>웹 브라우저</td><td>🔲 대기</td></tr>
+      <tr><td>2</td><td>"Universal Newsreel" Korea 카탈로그 검색 (4,000건 릴리스 시트 활용)</td><td>catalog.archives.gov</td><td>🔲 대기</td></tr>
+      <tr><td>3</td><td>RG 242-MID 시리즈에서 "Korea" OR "Chosen" 검색</td><td>catalog.archives.gov</td><td>🔲 대기</td></tr>
+      <tr><td>4</td><td>archive.org에서 무료 영상 5편 다운로드</td><td>archive.org</td><td>🔲 대기</td></tr>
+      <tr><td>5</td><td>확인된 NAID 5건 온라인 스트리밍/다운로드</td><td>catalog.archives.gov</td><td>🔲 대기</td></tr>
+      <tr><td>6</td><td>RIP 103 PDF 다운로드 및 영상 관련 섹션 정독</td><td>archives.gov</td><td>🔲 대기</td></tr>
+      <tr><td>7</td><td>Unwritten Record 블로그 Korean War 카테고리 전체 포스트 확인</td><td>블로그</td><td>🔲 대기</td></tr>
+      <tr><td>8</td><td>mopix@nara.gov에 한국 독립/해방 관련 영상 목록 요청 이메일 발송</td><td>이메일</td><td>🔲 대기</td></tr>
+      <tr><td>9</td><td>RG 331 Box 5062 영화 정책 기록 FOIA/열람 요청</td><td>이메일/방문</td><td>🔲 대기</td></tr>
+      <tr><td>10</td><td>Archives II 4층 Motion Picture Research Room 방문 예약</td><td>전화/이메일</td><td>🔲 대기</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note note-green"><b>💡 최우선 작업 (원격 실행 가능)</b>
+    <ul>
+      <li>① NAID 5건 즉시 열람 (catalog.archives.gov/id/20374, 20315, 22366, 22804, 28210)</li>
+      <li>② archive.org 영상 5편 무료 다운로드</li>
+      <li>③ mopix@nara.gov에 이메일 문의: "Korean independence/liberation 1945-1948 moving images 목록 요청"</li>
+      <li>④ RIP 103 PDF 다운로드 후 영상 섹션 분석</li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec" id="usamgik">
+  <div class="sec-head">
+    <span class="sec-num">08</span>
+    <div>
+      <h2>USAMGIK 영화정책 & 미군정기 기록 <span class="en">USAMGIK Film Policy & Military Government Records</span></h2>
+      <p class="sec-sub">미군정(1945-1948)의 한국 영화 통제·배급 정책과 NARA 원문서 위치</p>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Ordinance 68 (1946.3) <span class="en">군정법령 제68호</span></h3>
+      <p><b>미국 영화 수입 재개 법령.</b> 일제가 금지한 미국 영화 수입 재개. 반공주의 슬로건 하 모든 상영 영화 검열 의무화. 일제 검열 체계와 구조적 유사성. 한국 영화산업에 대한 미군정의 직접적 통제 시작점.</p>
+      <ul class="kv"><li><b>시기</b> 1946년 3월</li><li><b>내용</b> 검열 의무화</li></ul>
+    </div>
+
+    <div class="card">
+      <h3>CMPE — Central Motion Picture Exchange <span class="en">중앙영화교환소</span></h3>
+      <p><b>1946년 2월 서울 지부 개설.</b> MPEA(Motion Picture Export Association, 1945.6 설립) 대표가 파라마운트 출신과 함께 설립. 일별 매표 수입·월간 관객 수 수집. 할리우드 영화 독점 배급 기구. 한국 극장 매표 수입의 50% 이상 수취. 한국 영화인들의 강력한 반발.</p>
+      <ul class="kv">
+        <li><b>개설</b> 1946.2 서울</li>
+        <li><b>수취</b> 매표 수입 50%+</li>
+        <li><b>NARA 문서</b> RG 331, Box 1020, Folder 9</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>DPI 영화과 (공보부 영화섹션) <span class="en">Department of Public Information</span></h3>
+      <p>USAMGIK 공보부 산하. 한국인 대상 민주주의·자본주의·양성평등·미국문화 선전 영화 수백 편 상영 주관. 반공·친미 콘텐츠 중심. 한국인 영화인 동원.</p>
+    </div>
+
+    <div class="card">
+      <h3>해방 직후 한국 영화 암시장</h3>
+      <p>해방~검열 체계 확립 사이 "암시장" 형성. 버스터 키튼, 타잔 등 비공인 할리우드 영화 상영. 소련 영화도 유통. USAMGIK가 결국 차단. 미군정 영화 통제의 한계를 보여주는 현상.</p>
+    </div>
+  </div>
+
+  <div class="note note-red"><b>📋 핵심 NARA 문서 위치 (USAMGIK 영화정책)</b>
+    <ul>
+      <li><b>RG 331, Box 5062, Folder 15C</b> — "Motion Pictures, Sep 1946 – Dec 1947" (SCAP 기록, 한국·일본 영화 통제 관련)</li>
+      <li><b>RG 331, Box 1020, Folder 9</b> — "Central Motion Picture Exchange" (CMPE 서울 지부 설립·운영 기록)</li>
+      <li><b>RG 59, Box 7398, Decimal File 895</b> — 국무부 한국 영화 관련 문서(1945-49). 1947년 한국 교육·정보 조사단 보고서(한국 내 미국 영화 상영 실태) — "유일한 미국 영화는 MPEA 한국지사가 배급한 오래된 장편"</li>
+      <li><b>RG 59, Decimal File 895, Reel 5</b> — "US role in Korea" (한국 내 미국 역할)</li>
+      <li><b>RG 59, Dispatch No. 247</b> — "South Korean Motion Pictures" (1949.5.4, 주한미대사관)</li>
+      <li><b>RG 208, Box 3, Entry 6A</b> — OWI 역사가 기록 (국내부, 1942-45)</li>
+    </ul>
+  </div>
+
+  <div class="note note-blue"><b>💡 연구 맥락 (Brian Yecies 논문 기반)</b> USAMGIK은 한국에서 할리우드 영화를 대량 배급하여 "미국 문화"를 선전하는 정책을 시행했습니다. MPEA가 1945년 6월 설립되어 한국 시장 진출을 추진했습니다. 이 과정에서 제작·상영된 선전 영상과 뉴스릴이 NARA에 보존되어 있을 가능성이 높습니다. <b>Operation Blacklist Forty</b>(1945-1948 미군 한국 점령 작전명, XXIV Corps 기록) 관련 영상 포함 가능성도 있습니다.</div>
+</section>
+
+<section class="sec" id="timeline">
+  <div class="sec-head">
+    <span class="sec-num">09</span>
+    <div>
+      <h2>한국 해방 역사 타임라인 <span class="en">Korean Liberation Timeline</span></h2>
+      <p class="sec-sub">영상·문서 기록과 연계한 핵심 역사 사건 (1910-1953)</p>
+    </div>
+  </div>
+
+  <div class="tl">
+    <div class="tl-item"><span class="tl-date">1910-1945</span><div class="tl-body"><b>일제강점기</b> — 조선총독부 제작 뉴스릴·선전영상 → RG 242-MID-J에 노획본 보존 가능</div></div>
+    <div class="tl-item"><span class="tl-date">1919.03.01</span><div class="tl-body"><b>3.1운동</b> — RG 59 Decimal File 895(1919-1920) 미 외교관 현장 보고. 영상 존재 여부 미확인</div></div>
+    <div class="tl-item"><span class="tl-date">1945.08.08</span><div class="tl-body"><b>소련, 대일 선전포고 → 한반도 진주 시작</b> — 🎬 242-MID-5237: 소련군 북한 항구 진주 영상 (archive.org 다운로드 가능)</div></div>
+    <div class="tl-item"><span class="tl-date">1945.08.15</span><div class="tl-body"><b>일본 항복 — 광복절 / 해방</b> — 대구, 서울 등에서 독립 만세 시위. 태극기 게양. 조선건국준비위원회 활동 시작. 428-NPC-19594 "Celebration of VJ Day" 영상 확인(추정)</div></div>
+    <div class="tl-item"><span class="tl-date">1945.08.16</span><div class="tl-body"><b>여운형, 조선건국준비위원회 결성</b> — 🎬 조선영화사 카메라맨 김학성·이용민이 평양·함흥에서 소련군 진주, 일본군 무장해제 촬영 (국가기록원 소장)</div></div>
+    <div class="tl-item"><span class="tl-date">1945.09.02</span><div class="tl-body"><b>도쿄만 USS 미주리 항복 서명</b> — 🎬 111-ADC-9888: 항복 서명식 원본 영상(archive.org). 🎬 Appointment in Tokyo: 전체 태평양 전쟁 다큐멘터리. 208-UN-171B "Japanese Sign Final Surrender" 온라인 시청 가능</div></div>
+    <div class="tl-item"><span class="tl-date">1945.09.08</span><div class="tl-body"><b>미군 인천 상륙 — XXIV 군단</b> — Operation Blacklist Forty 개시. 하지 중장(Lt.Gen. Hodge) 지휘. 45,000명 주둔. XXIV Corps 7사단 인천 도착. 해군 기록 사진/영상</div></div>
+    <div class="tl-item"><span class="tl-date">1945.09.09</span><div class="tl-body"><b>USAMGIK(미군정) 공식 수립 / 서울 일본 항복식</b> — 조선총독부에서 일본 항복. 미 해군/신호대 촬영 영상 존재. 아놀드 군정장관, "남한에 유일한 정부는 USAMGIK" 선언(10.10)</div></div>
+    <div class="tl-item"><span class="tl-date">1945.10.12</span><div class="tl-body"><b>일본 귀환 한국인 부산 도착</b> — 🎬 RG 111 사진: Wilson Center 확인. 국사편찬위원회 한국역사기록 #IM0000112797에서 열람 가능</div></div>
+    <div class="tl-item"><span class="tl-date">1945.09~1948.08</span><div class="tl-body"><b>미군정(USAMGIK)</b> — RG 331 SCAP 기록, RG 59 국무부 기록. 할리우드 영화 배급, 선전 영상 제작</div></div>
+    <div class="tl-item"><span class="tl-date">1946.02</span><div class="tl-body"><b>CMPE(중앙영화교환소) 서울 개설</b> — MPEA 대표가 파라마운트 출신과 함께 서울 지부 개설. 할리우드 영화 배급 시작. 매표 수입 50% 수취</div></div>
+    <div class="tl-item"><span class="tl-date">1946.03</span><div class="tl-body"><b>USAMGIK Ordinance 68 공포</b> — 미국 영화 수입 재개, 반공 슬로건 하 모든 영화 검열 의무화. 일제 검열 체계와 유사한 구조</div></div>
+    <div class="tl-item"><span class="tl-date">1946.10</span><div class="tl-body"><b>대구 10월 항쟁(Autumn Uprising)</b> — G-2 보고서 존재. 영상 기록 존재 여부 확인 필요</div></div>
+    <div class="tl-item"><span class="tl-date">1946.10</span><div class="tl-body"><b>자유만세(Hurrah for Freedom) 개봉</b> — 최인규 감독. 해방 후 한국 최초 영화. 항일 독립투쟁 묘사. 현존 가장 오래된 한국 영화(1946)</div></div>
+    <div class="tl-item"><span class="tl-date">1948.04.03</span><div class="tl-body"><b>제주 4.3 사건</b> — 📄 RG 338, Entry 11070, Box 68/84: 미군 보고서. NARA 및 미국 군사역사연구소(Pennsylvania) 소장</div></div>
+    <div class="tl-item"><span class="tl-date">1948.08.15</span><div class="tl-body"><b>대한민국 정부 수립</b> — 이승만 대통령 취임. USAMGIK 종료. 한반도 분단 공식화. USIA/Signal Corps 촬영 가능성</div></div>
+    <div class="tl-item"><span class="tl-date">1950.06.25</span><div class="tl-body"><b>한국전쟁 발발</b> — Signal Corps 111-ADC 시리즈 대량 촬영 시작</div></div>
+  </div>
+</section>
+
+<section class="sec" id="access">
+  <div class="sec-head">
+    <span class="sec-num">10</span>
+    <div>
+      <h2>온라인 접근 경로 & 학술 참고자료 <span class="en">Online Access Pathways & Academic References</span></h2>
+      <p class="sec-sub">무료 온라인 접근 가능한 NARA 한국 영상 경로 12곳과 핵심 학술 연구 자료</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">🌐 온라인 접근 경로 (12곳)</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>📦 NARA 카탈로그</h3>
+      <p><a href="https://catalog.archives.gov">catalog.archives.gov</a> → Moving Images 필터</p>
+    </div>
+    <div class="card">
+      <h3>▶️ NARA YouTube 채널</h3>
+      <p><a href="https://www.youtube.com/@USNationalArchives">youtube.com/@USNationalArchives</a> → "Korea" 검색</p>
+    </div>
+    <div class="card">
+      <h3>📥 Internet Archive — Korea</h3>
+      <p><a href="https://archive.org/details/CrimeofK1950">archive.org</a> — "Korea NARA" 검색</p>
+    </div>
+    <div class="card">
+      <h3>📝 Unwritten Record 블로그</h3>
+      <p><a href="https://unwritten-record.blogs.archives.gov/category/korean-war/">unwritten-record.blogs.archives.gov</a> — NARA 영상팀의 한국전쟁 카테고리</p>
+    </div>
+    <div class="card">
+      <h3>🎬 NARA 뉴스릴 가이드</h3>
+      <p><a href="https://www.archives.gov/research/motion-pictures/newsreels">archives.gov/research/motion-pictures/newsreels</a> — RG 242 포함 전체 뉴스릴 목록</p>
+    </div>
+    <div class="card">
+      <h3>🎖️ WWII 영상 가이드</h3>
+      <p><a href="https://www.archives.gov/research/motion-pictures/ww2">archives.gov/research/motion-pictures/ww2</a> — RG 242 시리즈 전체 목록</p>
+    </div>
+    <div class="card">
+      <h3>🗂️ Motion Picture 카드 카탈로그 안내</h3>
+      <p><a href="https://www.archives.gov/research/motion-pictures/catalog-film-sound-video">archives.gov/research/motion-pictures/catalog-film-sound-video</a> — 750만 카드, RG별 영상 색인</p>
+    </div>
+    <div class="card">
+      <h3>📄 RIP 70 — 영상 기록 가이드</h3>
+      <p><a href="https://www.archives.gov/publications/ref-info-papers/70/part-2.html">archives.gov/publications/ref-info-papers/70/part-2.html</a> — RG별 영상 컬렉션 상세</p>
+    </div>
+    <div class="card">
+      <h3>🔎 RG 242 Finding Aid</h3>
+      <p><a href="https://www.archives.gov/findingaid/stat/discovery/242">archives.gov/findingaid/stat/discovery/242</a> — 노획 외국 기록물 탐색기</p>
+    </div>
+    <div class="card">
+      <h3>⚓ 미 해군역사센터</h3>
+      <p><a href="https://www.history.navy.mil/content/history/museums/nmusn/explore/photography/korean-war/surrender-japan-korea.html">history.navy.mil</a> — 1945 인천 상륙·서울 항복식 사진</p>
+    </div>
+    <div class="card">
+      <h3>🪖 Military Resources: Korean War</h3>
+      <p><a href="https://www.archives.gov/research/alic/reference/military/korean-war.html">archives.gov/research/alic/reference/military/korean-war.html</a> — NARA 한국전쟁 관련 자원 종합</p>
+    </div>
+    <div class="card">
+      <h3>👤 Citizen Archivist</h3>
+      <p><a href="https://www.archives.gov/citizen-archivist/registerandgetstarted">archives.gov/citizen-archivist/registerandgetstarted</a> — 미확인 영상 태깅·전사 참여</p>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>🇰🇷 국립중앙도서관 NARA 컬렉션</h3>
+      <p><a href="https://www.nl.go.kr/EN/contents/EN35401000000.do">nl.go.kr</a> — 2004년부터 수집, 3,254,748 페이지</p>
+    </div>
+  </div>
+
+  <div class="note note-red"><b>⚠️ 주의사항</b> NARA 카탈로그(catalog.archives.gov)는 robots.txt로 자동 크롤링이 차단되어 있어, <b>브라우저에서 직접 접속</b>하여 검색해야 합니다. 앞선 검색 쿼리 블록을 활용하세요.</div>
+
+  <h3 class="sub-title">📚 핵심 학술자료 & 참고문헌</h3>
+  <div class="grid cols-2">
+    <div class="card pri-top">
+      <div class="card-head"><h3>송창기 — "An AI-based Systematic Methodology for Discovering and Semantically Extracting Korea-related Records from Foreign Archives" (2026)</h3><span class="badge b-new">🆕 방법론 준거</span></div>
+      <p>국가기록원 기록관리교육센터, 논문 v20(투고 2026.5). NARA·TNA 한국 기록 발굴의 <b>구조적 부정합 이론</b>과 계층적 키워드 프레임워크(44그룹 1,943항목), 28 RG 교차 매핑, TNA 14 전략 레이어, 인용 역추적 평가(F1=0.931, Recall 93.0%)를 제시한 본 사업의 방법론적 준거. 동반 저장소 korea-records-keywords v1.0.0(MIT)으로 키워드 전수 공개. <b>별책 「마스터 쿼리 코퍼스」 §13에 통합 반영됨.</b></p>
+    </div>
+    <div class="card">
+      <h3>Brian Yecies — "Disarming Japan's Cannons with Hollywood's Cameras: Cinema in Korea Under U.S. Occupation, 1945-1948"</h3>
+      <p><em>Asia-Pacific Journal</em> 게재(2023). NARA RG 59, RG 208, RG 331 문서 활용. CMPE 서울 지부 설립 과정, MPEA의 한국 시장 진입 전략을 NARA 원문서로 규명한 핵심 논문. 확인된 문서 위치: RG 331 Box 5062 Folder 15C, RG 331 Box 1020 Folder 9, RG 59 Box 7398, RG 59 Decimal File 895 Reel 5.</p>
+    </div>
+    <div class="card">
+      <h3>"해방 공간의 저항과 시각 기록" (Liberation Space and Times of Resistance in Visual Records)</h3>
+      <p><em>International Journal of Korean History(IJKH) Vol.19-2</em>. 1945-1946 NARA 한국 영상의 구체적 시리즈 정보. 해방뉴스(Haebang News/Sibo), 민중영화사(Minjung Film), 조련뉴스(Choryeon News) 등 해방 직후 한국 측 영상물 분석.</p>
+    </div>
+    <div class="card">
+      <h3>Rebecca Collier — RIP 103: NARA Records Relating to the Korean War/Conflict</h3>
+      <p>NARA 공식 Reference Information Paper. 한국전쟁 관련 NARA 소장 기록물의 가장 체계적인 가이드. 비텍스트 기록물 포함 종합 안내서. PDF 무료 다운로드 가능.</p>
+    </div>
+    <div class="card">
+      <h3>Harvard Film Archive — "Out of the Ashes: US-ROK Alliance & South Korean Cinema"</h3>
+      <p>전시 프로그램. 한미동맹과 한국영화의 관계를 분석한 하버드 영화아카이브 프로젝트. USAMGIK 영화정책의 한국영화 산업 영향 심층 분석.</p>
+    </div>
+    <div class="card">
+      <h3>Bruce Cumings — <em>The Origins of the Korean War</em> (Princeton, 1981-1990)</h3>
+      <p>한국전쟁 기원에 관한 수정주의 해석의 기념비적 저작. 전 2권. NARA 소장 미군정 문서를 대규모로 활용한 최초의 학술연구. NARA 문서 기반 결정판.</p>
+    </div>
+    <div class="card">
+      <h3>Wilson Center Digital Archive — Allied Occupation of Korea, 1945-1948</h3>
+      <p><a href="https://digitalarchive.wilsoncenter.org/topics/allied-occupation-korea-1945-1948">digitalarchive.wilsoncenter.org</a> 타임라인 — RG 111 사진 직접 인용. "Korean Uprisings in 1946" 논문 — RG 111 1945.10.12 부산 귀환 사진 인용. Shtykov Report(소련 외무장관 보고서) — 미소공동위원회 실패 원인 분석. 소련·미국·한국 측 1차 자료 무료 제공.</p>
+    </div>
+    <div class="card">
+      <h3>Yecies & Shim — <em>Korea's Occupied Cinemas, 1893-1948</em> (Routledge)</h3>
+      <p>한국 영화사의 식민지·점령기 전 과정을 다룬 영문 학술서. 일제→미군정→대한민국 건국 시기 영화산업 변천 기록.</p>
+    </div>
+    <div class="card">
+      <h3>Travis Workman — <em>Political Moods: Film Melodrama and the Cold War in the Two Koreas</em> (UC Press, Open Access)</h3>
+      <p>UC Press 오픈 액세스. 해방 전후 한국 영화와 미디어의 정치적 감성 분석. 무료 전문 열람 가능.</p>
+    </div>
+    <div class="card">
+      <h3>Hieyoon Kim — <em>Celluloid Democracy</em></h3>
+      <p>해방 후 한국 영화 활동가 역사를 다룬 저서.</p>
+    </div>
+    <div class="card">
+      <h3>Yi HI (2003) — "The Korean Film Community During the Post-liberation Era"</h3>
+      <p>한국영상자료원 게재 논문.</p>
+    </div>
+  </div>
+
+  <div class="note note-blue"><b>기타 참고 연구</b>
+    <ul>
+      <li><b>Operation Blacklist Forty</b> — 1945-1948 미군 한국 점령 작전명. XXIV Corps 기록에 영상 포함 가능.</li>
+      <li><b>NARA Citizen Archivist 프로그램</b> — 미식별 뉴스릴 태깅/전사 참여 가능. 한국어 자료 태깅에 기여 가능.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec" id="cat1">
+  <div class="sec-head">
+    <span class="sec-num">11</span>
+    <div>
+      <h2>대분류 1: 국가 아카이브 & 정부 기록 <span class="en">National Archives & Government Records</span></h2>
+      <p class="sec-sub">47개 아카이브 · 9개 지역군 · 미국·한국·영국·러시아·중국·대만·일본·프랑스·독일 및 기타 22개국 국가기록보관소·정부기관 소장자료</p>
+    </div>
+  </div>
+  <p>대분류 1은 9개 지역군에 걸친 47개 국가 아카이브·정부 기록 기관을 다룬다. 미국 NARA(RG 111 Signal Corps, RG 242 노획문서 등)를 정점으로, 한국의 KOFA·군사편찬연구소, 영국 IWM·BFI·TNA, 러시아 RGAKFD·АВП РФ·РГАСПИ, 중국·대만의 CFA·제2역사당안관·국가발전위원회 당안관·KMT 당사당안관, 일본의 NFAJ·JACAR·외무성 외교사료관·NIDS, 프랑스 INA·Gaumont-Pathé, 독일 Bundesarchiv, 그리고 호주·캐나다·뉴질랜드·네덜란드·이탈리아·터키 등 22개 UN 참전국·의료지원국·중립국감독위원회(NNSC) 관련 기관까지 포괄한다. 해방기 미군정 기록부터 한국전쟁 전투·외교·인도지원 기록, 일제강점기 식민통치 문서, 냉전기 정보기관 기밀해제 문서에 이르기까지 한국 근현대사 시청각·문서 자료의 핵심 원천이 망라되어 있다.</p>
+
+  <h3 class="sub-title">🇺🇸 1-1. 미국 국가기록 (United States) — 5개</h3>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#1</span>
+      <h4>🇺🇸 NARA — 미국 국립기록관리청 <span class="en">National Archives and Records Administration</span></h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> College Park, Maryland 20740 (Archives II) & Washington D.C. (Archives I)</li>
+        <li><b>조사 세션</b> 제1-2차 세션 (Source B 교차: 세션 1-9, 11, 17-20)</li>
+        <li><b>소장 규모</b> 총 130억 페이지 이상의 기록물. 시청각 자료: 수백만 피트의 영화 필름, 37만+ 영상 항목. 750만 카탈로그 카드(125롤 마이크로필름). 12개 이상 Record Group에 한국 관련 시청각 자료 분산 보유.</li>
+        <li><b>핵심 RG</b>
+          <ul>
+            <li><b>RG 111 (Signal Corps)</b>: 미 육군 통신대 전투 촬영 영상 — 한국전쟁 전투·일상·포로·민간인 영상의 최대 컬렉션. 35mm·16mm 필름 수만 롤. 111-ADC 시리즈 한국 점령/전쟁 영상 800+ 릴 디지털화. 111-ADC-9888(USS Missouri 항복 의식 영상, Archive.org 다운로드 가능), 111-ADC-6600 시리즈(1947년 한국 난민 촬영 영상), 111-TV-642(The Big Picture TV 시리즈, 한국 1945-1949 에피소드, Archive.org 스트리밍)</li>
+            <li><b>RG 242 (Foreign Records Seized)</b>: 노획문서 컬렉션 — 일제시대 조선총독부 문서, 북한 노획문서 포함. 한국 독립운동 관련 일본측 기록. 일본 뉴스릴 및 한국 관련 필름(242-MID-5237: 1945년 러시아군 한국 도착 영상 확인)</li>
+            <li><b>RG 342 (USAF)</b>: 미 공군 영상 — 한국전쟁 공중전, 폭격 영상, 정찰 사진</li>
+            <li><b>RG 554 (UNC/FEC/SCAP)</b>: 유엔군사령부·극동사령부·연합국최고사령부 기록 — 미군정(USAMGIK) 기록, 한반도 점령 정책, UNC 군사작전 기록</li>
+            <li><b>RG 319 (Army Staff)</b>: 육군참모부 기록 — 한국전쟁 작전 보고</li>
+            <li><b>RG 407 (Adjutant General)</b>: 부관감 기록 — 한국전쟁 부대 기록</li>
+            <li><b>RG 218 (JCS)</b>: 합동참모본부 — 한국전쟁 전략 결정</li>
+            <li><b>RG 80 (Navy)</b>: 해군 기록 — 인천상륙작전 해군 촬영분, 일본 항복 의식 사진</li>
+            <li><b>RG 127 (Marines)</b>: 해병대 기록 — 장진호 전투 등 해병대 촬영분</li>
+            <li><b>RG 208 (전시정보국)</b>: 한국 관련 선전 영상</li>
+            <li><b>RG 306 (USIA)</b>: 15,593릴 1945-78</li>
+            <li><b>RG 331 (SCAP)</b>: 영화정책 기록 Box 5062 (USAMGIK 영화정책·검열·배급 문서)</li>
+            <li><b>RG 59 (국무부)</b>: 한국 10진 파일 1945-1949 Box 7398</li>
+          </ul>
+        </li>
+        <li><b>한국 관련 핵심 영상자료</b> Signal Corps 전투 영상: 한국전쟁 전 기간(1950.6-1953.7) 전투·후방·포로 영상; 해방기 USAMGIK 촬영분: 1945-1948 미군정 활동, 38선 이남 점령 과정; 인천상륙작전(1950.9.15) 다각도 촬영분 — 해군·해병대·육군 합동; 판문점 정전협상(1951-1953) 영상; 포로교환(Operation Big Switch/Little Switch) 영상; 일제시대 노획 조선총독부 영상기록(RG 242); 한국 재건(UNKRA·USIA 관련) 영상; Universal Newsreel(150,000 타이틀, 600,000+ 교차참조카드, 125롤 마이크로필름 — 1978년 화재로 Vol.14-17(1941-1945) 소실, Vol.18(1945)은 생존); Operation Blacklist Forty(미군 한국 점령 공식 작전명)</li>
+        <li><b>컬렉션 주제</b> 한국 독립운동(1919-1945), 광복/해방(1945), 미군정 USAMGIK(1945-1948), 한국전쟁(1950-1953), 전후 재건, 일본 항복 의식, Signal Corps 전투 기록, Universal Newsreel, 포로 교환, 난민</li>
+        <li><b>NAID 식별자</b> NAID 20315, 20374, 22366, 22502, 22804, 23653, 23694, 28210, 36064, 65891, 81762</li>
+        <li><b>디지털 접근</b> <a href="https://catalog.archives.gov">catalog.archives.gov</a> — 온라인 카탈로그 무료 검색. 일부 디지털화 영상 무료 열람 가능. 대부분의 영상은 College Park 현장 방문 필요. 추가 참조: <a href="https://catalog.archives.gov/advancedsearch">NARA 고급 검색</a>, <a href="https://archives.gov/research/guides/catalog-film-sound-video.html">NARA 시청각 가이드</a>, <a href="https://unwritten-record.blogs.archives.gov/">NARA Unwritten Record 블로그</a>, <a href="https://unwritten-record.blogs.archives.gov/2022/04/05/korean-war-refugees-in-signal-corps-films/">한국전쟁 난민 영상 블로그</a>, <a href="https://unwritten-record.blogs.archives.gov/2020/04/30/the-land-of-the-morning-calm-u-s-army-films-from-the-korean-war/">한국전쟁 육군 영상 블로그</a>, <a href="http://www.archives.gov/publications/ref-info-papers/70/part-2.html">RIP 70(시청각 참조)</a>, <a href="https://nara-media.s3.amazonaws.com">NARA S3 Shot Cards</a>, <a href="https://aad.archives.gov/aad/series-list.jsp?cat=WR27">AAD 전쟁기록 검색</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 한국 관련 영상자료의 세계 최대 보존처. Signal Corps 전투 영상은 한국전쟁의 가장 방대한 1차 영상자료이며, RG 242 노획문서는 일제시대-해방기 한반도의 양쪽 시각을 모두 포함. USAMGIK 기록은 해방기 남한의 정치·사회·경제 상황을 가장 체계적으로 기록한 영상원천. 미군정기 한국의 정치·사회·문화 변동을 기록한 Signal Corps 영상은 해방 직후 한국의 실상을 보여주는 1차 사료로서 독보적 가치를 지님.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#2</span>
+      <h4>🇺🇸 USIA / RG 306 — 미국 공보원 <span class="en">United States Information Agency</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> NARA College Park, MD (RG 306으로 이관)</li>
+        <li><b>조사 세션</b> 제20차 세션 (Source B 교차: 세션 15-16)</li>
+        <li><b>소장 규모</b> 15,593릴의 영상 필름(1945-1978). 미국의 해외 공보·선전 활동 시청각 기록 전체.</li>
+        <li><b>한국 관련 핵심 영상자료</b> 한국 대상 선전·교육 영상: 미국의 한국 대상 공보 활동 기록; 한국전쟁 선전영화: 한국전쟁의 정당성·유엔 활동 홍보 영상; 한국 재건 홍보: UNKRA·미국 원조를 통한 한국 재건 과정 홍보 영상; Voice of America 한국어 방송 관련 자료; 냉전기 미국의 한국 정책 홍보 영상; USAMGIK 시기 한국 관련 공보 영상, 냉전기 대한민국 홍보 영상물, 전후 재건 과정 촬영 다큐멘터리</li>
+        <li><b>컬렉션 주제</b> 미국 해외 선전, 냉전 공보 활동, 한국전쟁 정당화 영상, 전후 재건 홍보, 미국-한국 동맹 홍보</li>
+        <li><b>디지털 접근</b> <a href="https://catalog.archives.gov">catalog.archives.gov</a> — NARA 카탈로그 통합 검색. 추가: <a href="https://www.archives.gov/research/foreign-policy/related-records/rg-306">NARA RG 306 가이드</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 냉전기 미국의 대한 공보정책·선전전략의 실체를 보여주는 1차 자료. 한국전쟁·재건기 미국 시각의 한국 표상을 분석하는 핵심 원천. 한국전쟁의 국제적 프레이밍과 미국의 개입 정당화 논리를 연구하는 데 필수적.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#3</span>
+      <h4>🇺🇸 CIA 기밀해제 기록 <span class="en">CIA FOIA Reading Room / CREST Database</span></h4>
+      <span class="badge b-free">무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제20차 세션</li>
+        <li><b>소재지</b> NARA College Park, MD / CIA FOIA Reading Room</li>
+        <li><b>소장 규모</b> CREST 데이터베이스: 1,300만+ 페이지 기밀해제 문서. 극동 정보 보고서, 한반도 정세 분석, 소련/중국 동향 보고.</li>
+        <li><b>한국 관련 핵심 자료</b> 한국전쟁 정보분석: 전쟁 발발 전 정보 실패, 중국 참전 예측 실패 분석; 비밀작전 기록: 한국전쟁기 비밀공작 관련 기밀해제 문서; 해방기 한반도 정세 분석 보고서; 1945-1952 극동 정보 보고서, 한반도 분단 과정 분석 문서, 한국전쟁 개전 전후 정보 평가, USAMGIK 시기 정치 정세 보고</li>
+        <li><b>컬렉션 주제</b> 냉전 정보 활동, 한반도 정세 분석, 소련/중국 동향, 한국전쟁 정보 실패, 비밀 공작</li>
+        <li><b>디지털 접근</b> <a href="https://www.cia.gov/readingroom">cia.gov/readingroom</a> — 기밀해제 문서 온라인 무료. 추가: <a href="https://www.cia.gov/readingroom/collection/crest-25-year-program-archive">CREST 데이터베이스</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 해방 직후 한반도의 정치적 역학관계를 미국 정보기관의 시각에서 조명하는 유일한 자료군. 한국전쟁 발발 직전의 정보 실패(intelligence failure) 연구에 핵심적.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#4</span>
+      <h4>🇺🇸 국무부 RG 59 — 한반도 외교문서 <span class="en">State Department Records</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제20차 세션</li>
+        <li><b>소재지</b> NARA College Park, MD (RG 59)</li>
+        <li><b>소장 규모</b> 한국 10진 파일(Korea Decimal Files) 1945-1949. Box 7398 등 한국 관련 문서·시각 자료.</li>
+        <li><b>핵심 자료</b> 한반도 관련 미 외교문서 전체: 1882년 수교부터 한국전쟁까지; USAMGIK 정치보고: 미군정 정치고문관 보고서, 남한 정치상황 분석; 한국전쟁 외교: 전쟁 발발~정전 과정 외교 전문; FRUS(Foreign Relations of the United States) 한국 관련 권; 1945-1949 한국 관련 외교 문서, 시각 자료(사진·지도), 한국 독립 관련 외교 서한</li>
+        <li><b>컬렉션 주제</b> 미국 대한반도 외교정책, 신탁통치 문제, 한반도 분단, 대한민국 정부 승인 과정</li>
+        <li><b>디지털 접근</b> <a href="https://catalog.archives.gov">catalog.archives.gov</a> — NARA 통합. FRUS 시리즈는 <a href="https://history.state.gov/historicaldocuments">history.state.gov</a>에서 무료. 추가: <a href="https://www.archives.gov/research/foreign-policy/state-dept">NARA RG 59 가이드</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 미국의 대한반도 정책 결정 과정을 보여주는 핵심 외교 문서군. 해방 후 한반도 분단의 외교적 배경 연구에 필수적.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#5</span>
+      <h4>🇺🇸 미국 적십자 RG 200 <span class="en">American Red Cross Records</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제26차 세션</li>
+        <li><b>소재지</b> NARA College Park, MD (RG 200)</li>
+        <li><b>소장 규모</b> RG 200: 미국 적십자사 활동 기록, 사진·영상 포함</li>
+        <li><b>한국 관련 핵심 자료</b> 한국전쟁 구호활동 영상·사진; POW(포로) 서비스 기록: 포로 명단 교환, 가족 소식 전달; 전쟁 피해 민간인 구호 기록; 적십자 의료 지원 활동; 한국전쟁기 인도적 지원 활동 기록, 전쟁 포로 관련 문서, 난민 구호 사진</li>
+        <li><b>컬렉션 주제</b> 인도적 지원, 전쟁 포로, 난민 구호, 의료 지원</li>
+        <li><b>디지털 접근</b> <a href="https://catalog.archives.gov">catalog.archives.gov</a> — NARA 통합 검색. 추가: <a href="https://www.archives.gov/research/guide-fed-records/groups/200.html">NARA RG 200 가이드</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 한국전쟁의 인도주의적 측면을 기록한 자료로, 전투 중심의 기존 연구를 보완하는 민간 시각의 기록.</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">🇰🇷 1-2. 한국 국가기록 (Republic of Korea) — 3개</h3>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#6</span>
+      <h4>🇰🇷 KOFA — 한국영상자료원 <span class="en">Korean Film Archive</span></h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> 서울특별시 마포구 월드컵북로 400</li>
+        <li><b>조사 세션</b> 제1차 세션 (Source B 교차: 세션 10, 13)</li>
+        <li><b>소장 규모</b> 한국 영화·영상 자료의 법정 보존기관. 해방뉴스(1945-1947) 4편 현존 디지털화 완료. 조선영화사→대한뉴스(1953-1994) 2,040편 전체 KMDb VOD 무료 공개. 2013년 NARA RG-165 CAD 문서 131건 수집.</li>
+        <li><b>한국 관련 핵심 영상자료</b>
+          <ul>
+            <li><b>해방뉴스(解放뉴스)</b>: 1945년 해방 직후 촬영된 한국 최초의 뉴스릴. 해방의 감격, 거리 풍경, 정치 활동. 총 14편 중 4편 현존(1946년 제작분), 조선영화사 제작, KMDb VOD 무료 시청 가능</li>
+            <li><b>대한뉴스(大韓뉴스)</b>: 1953년부터 1994년까지 제작된 정부 뉴스릴. 대한민국 정부수립·한국전쟁 이후 기록. 2,040편 전체 온라인 공개</li>
+            <li><b>조선시보(朝鮮時報)</b>: 미군정기 뉴스릴 1946-1947</li>
+            <li>해방기·한국전쟁기 극영화: 한국 최초기 영화 소장. 현존 최고(最古) 한국영화 1946년 「자유만세(Long Live Liberty)」 확인. 「해방 조선을 가다(Go to Liberated Korea)」(1947) 발견</li>
+            <li>일제시대 한반도 촬영 영상: 일본에서 환수·수집한 식민지시대 영상</li>
+            <li>남북영화교류: 북한 영화 일부 보관</li>
+            <li>한국전쟁 기록영화: 국방부·공보처 제작 기록영화</li>
+            <li>NARA 수집 자료: RG-165 CAD 문서 131건(2013년 수집)</li>
+          </ul>
+        </li>
+        <li><b>디지털 접근</b> <a href="https://www.koreafilm.or.kr">koreafilm.or.kr</a> — 한국영상자료원 온라인 상영관에서 일부 무료 감상 가능. <a href="https://www.kmdb.or.kr">kmdb.or.kr</a>(한국영화데이터베이스)에서 메타데이터 검색. 추가: <a href="https://eng.koreafilm.or.kr/">KOFA 영문 사이트</a>, <a href="https://www.kmdb.or.kr/care/vod/guide">KMDb VOD 가이드</a>, <a href="https://www.kmdb.or.kr/history/document/intro">KOFA 역사 자료</a>, <a href="https://artsandculture.google.com/partner/korean-film-archive">Google Arts & Culture KOFA</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 한국 최대의 영상자료원으로, 해방뉴스·대한뉴스는 한국의 해방·건국·전쟁을 한국인 시각에서 기록한 가장 중요한 1차 영상원천. 일제시대 영상의 체계적 수집·보존 노력 지속 중. 해방뉴스는 한국인이 스스로 제작한 최초의 해방기 뉴스릴로, 한국 영상 주권의 시작점이자 해방 직후 한국 사회의 열망과 혼란을 한국인의 시각으로 기록한 유일무이한 1차 사료. Source B 우선순위 평가 4.85점으로 전체 1위.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#7</span>
+      <h4>🇰🇷 군사편찬연구소 <span class="en">Institute for Military History Compilation</span></h4>
+      <span class="badge b-top">Tier 1</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> 서울특별시 용산구</li>
+        <li><b>조사 세션</b> 제30차 세션 (Source B 교차: 세션 26-30)</li>
+        <li><b>소장 규모</b> 한국군 전투 기록, 한국전쟁 관련 시청각 자료, 구술사 컬렉션</li>
+        <li><b>핵심 자료</b> ROK 군사기록: 한국군 전투보고, 작전일지, 부대사; 구술증언: 한국전쟁 참전군인 구술증언 수집 — 세대 교체로 시급; 한국전쟁 전투영상: 한국군 촬영분 일부; 한국군 건군사 기록: 1948년 건군 과정; e-영상역사관: 대한뉴스 전체 2,040편 온라인 공개, 조선시보(미군정기 뉴스릴 1945-1948), 군사 다큐멘터리</li>
+        <li><b>컬렉션 주제</b> 한국전쟁 전투사, 군사 작전 기록, 한국군 역사, 미군정기 군사 활동</li>
+        <li><b>디지털 접근</b> <a href="https://www.imhc.mil.kr">imhc.mil.kr</a>. 추가: <a href="http://koreanhistory.or.kr/">군사편찬연구소</a>, <a href="http://kfilm.khistory.org/?mod=colt&kind=k1">e-영상역사관</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 한국군 측 한국전쟁 기록의 최대 보존처. 참전군인 세대 교체(90대+)로 구술증언 수집 시급성 최고. e-영상역사관을 통해 미군정기~한국전쟁기 뉴스릴을 무료 공개하여 연구 접근성이 높음.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#8</span>
+      <h4>🇰🇷 국립현대사박물관 e-영상역사관 <span class="en">National Museum of Korean Contemporary History</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제22차 세션 (Source B 교차: 세션 10, 22)</li>
+        <li><b>소재지</b> 서울특별시 종로구 세종대로 198</li>
+        <li><b>소장 규모</b> 800+ 편의 영상 자료. NARA 수집 필름 KBS 파트너십 통해 1,000+ 편 무료 스트리밍</li>
+        <li><b>핵심 자료</b> 근현대사 영상 아카이브. 해방·건국·전쟁·재건 관련 영상자료 수집·전시. NARA 수집 한국 관련 영상을 KBS와 협력하여 온라인 무료 공개</li>
+        <li><b>컬렉션 주제</b> 해방·건국 과정, 한국전쟁, 전후 재건, 근현대사 주요 사건</li>
+        <li><b>디지털 접근</b> <a href="https://www.much.go.kr">much.go.kr</a>. 추가: <a href="https://archive.much.go.kr/archive/userrecordimage/recordImageIntroduce.do">역사박물관 영상 아카이브</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — NARA 소장 한국 관련 영상을 한국 내에서 무료 접근 가능하게 한 핵심 창구. 일반 시민과 연구자 모두의 접근성을 크게 향상시킨 공공 서비스.</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">🇬🇧 1-3. 영국 국가기록 (United Kingdom) — 3개</h3>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#9</span>
+      <h4>🇬🇧 IWM — 제국전쟁박물관 <span class="en">Imperial War Museum</span></h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> London, UK — Lambeth Road, SE1 6HZ</li>
+        <li><b>조사 세션</b> 제4차 세션 (Source B 교차: 세션 13)</li>
+        <li><b>소장 규모</b> 25,000+ 시간의 영상 필름. 제1·2차 세계대전, 한국전쟁, 냉전 관련 영상·사진·문서</li>
+        <li><b>한국 관련 핵심 영상자료</b> 영국군 한국전쟁 영상: 글로스터 연대(Gloucestershire Regiment)의 임진강 전투(1951.4) — "Glorious Glosters" 영상 자료; 영연방 한국전쟁 기록: 영국·호주·캐나다·뉴질랜드 합동 기록; 영국 해군 한국전쟁 활동: HMS Ocean 등 항공모함 작전; POW(포로) 관련: 영국군 포로 경험 기록; 한국전쟁 종군화가(War Artists) 작품 컬렉션; 29보병여단 전투 기록</li>
+        <li><b>컬렉션 주제</b> 영국군 한국전쟁 참전, 임진강 전투, 영연방 참전 기록, 영국 뉴스릴 한국 보도</li>
+        <li><b>디지털 접근</b> <a href="https://www.iwm.org.uk">iwm.org.uk</a> — 온라인 카탈로그 무료 검색, 일부 디지털화 자료 열람. 추가: <a href="https://www.iwm.org.uk/collections/film">IWM 영상 컬렉션</a>, <a href="https://www.iwm.org.uk/research/research-facilities/film-research">IWM 영상 연구</a>, <a href="https://www.iwm.org.uk/history/25-photographs-of-the-korean-war">IWM 한국전쟁 사진</a>, <a href="https://www.iwm.org.uk/history/film-favourites-from-the-archives">IWM 아카이브 영상 하이라이트</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 영국군 한국전쟁 영상의 최대 보존처. 임진강 전투 영상은 한국전쟁에서 영연방군의 역할을 보여주는 핵심 자료. 영연방 참전국의 시각에서 한국전쟁을 기록한 영상은 미국 중심의 기존 서사를 보완하는 다국적 시각을 제공.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#10</span>
+      <h4>🇬🇧 BFI — 영국영화연구소 <span class="en">British Film Institute</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제8차 세션 (Source B 교차: 세션 15)</li>
+        <li><b>소재지</b> 21 Stephen Street, London W1T 1LN, UK</li>
+        <li><b>소장 규모</b> 180,000+ 영상 타이틀. Gaumont British News(1931-1951) 원본 보유(1931-1939, 1945-1951). 사회주의 영화 컬렉션 6,000편(러시아·쿠바·중국·베트남·아프가니스탄·한국 등), 2018년까지 750시간 디지털화</li>
+        <li><b>핵심 자료</b> British Pathé 원본 소장: 한국 관련 뉴스릴 원본 필름; Movietone 영국판 뉴스릴; 영국 제작 한국 관련 다큐멘터리; Gaumont British News 한국 관련 뉴스릴(1945-1951); BBC Television Newsreel(1948-1954) 한국 관련 보도; 사회주의 영화 컬렉션 내 북한 관련 영상</li>
+        <li><b>컬렉션 주제</b> 영국 뉴스릴, 사회주의 영화, 다큐멘터리, BBC 초기 TV 뉴스</li>
+        <li><b>디지털 접근</b> <a href="https://www.bfi.org.uk">bfi.org.uk</a> — BFI Player에서 일부 무료. 추가: <a href="https://player.bfi.org.uk/">BFI Player</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — Gaumont British News의 원본을 보유한 유일한 기관(ITN Source는 디지털 사본 보유). 사회주의 영화 컬렉션은 북한 및 공산권 시각의 한국전쟁 영상을 연구할 수 있는 서구 내 몇 안 되는 접근점.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#11</span>
+      <h4>🇬🇧 TNA — 영국 국립기록보관소 <span class="en">The National Archives</span></h4>
+      <span class="badge b-free">무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Kew, Richmond, Surrey TW9 4DU</li>
+        <li><b>조사 세션</b> 제8차 세션 (Source B 교차: 세션 13, 15)</li>
+        <li><b>소장 규모</b> 영국 정부 공식 기록의 법정 보존기관. 외교·군사·식민 기록 포함</li>
+        <li><b>핵심 자료</b> FO 371(외무부): 한국 관련 영국 외교문서; WO(전쟁성): 영국군 한국전쟁 작전 기록; CO(식민지부): 한국-영국 관계 초기 기록; DEFE(국방부): 한국전쟁 군사 분석; 국방부(Ministry of Defence) 한국전쟁 기록, 영국군 한국 파견 관련 시각 자료</li>
+        <li><b>컬렉션 주제</b> 영국 외교정책, 한국전쟁 참전 결정, 영연방 군사 협력, 냉전 동아시아</li>
+        <li><b>디지털 접근</b> <a href="https://www.nationalarchives.gov.uk">nationalarchives.gov.uk</a> — Discovery 카탈로그 무료 검색. 일부 디지털화. 추가: <a href="https://discovery.nationalarchives.gov.uk/">TNA Discovery 카탈로그</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 영국의 대한반도 외교정책 결정 과정을 보여주는 공식 기록. 한국전쟁에서 영국의 역할과 미영 관계를 연구하는 데 필수적.</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">🇷🇺 1-4. 러시아/소련 국가기록 (Russia/USSR) — 3개</h3>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#12</span>
+      <h4>🇷🇺 RGAKFD — 러시아 국가영화자료원 <span class="en">Russian State Documentary Film & Photo Archive</span></h4>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Krasnogorsk, Moscow Oblast, Russia</li>
+        <li><b>조사 세션</b> 제3차 세션 (Source B 교차: 세션 14)</li>
+        <li><b>소장 규모</b> 소련/러시아 국가 영상·사진 아카이브. 소비에트 뉴스릴 전체, 전쟁 기록 영상</li>
+        <li><b>한국 관련 핵심 영상자료</b> 소련 뉴스릴: 한반도 관련 소련 뉴스릴 촬영분; 소련 25군 평양 진주(1945.8.24) 영상; 북한 정권수립 과정 소련 측 촬영분; 김일성 초기 활동 소련 촬영분; 한국전쟁 소련 측 수집 영상; 북한 뉴스릴 소련 보존분 — 북한 영상 간접 접근의 핵심 경로; 조선인민공화국 수립 과정 기록; 소련 공군 한국전쟁 참전 기록(극비 해제 자료)</li>
+        <li><b>컬렉션 주제</b> 소련군 한반도 진주, 북한 건국 과정, 소련 뉴스릴, 한국전쟁 소련 시각, 냉전 선전</li>
+        <li><b>디지털 접근</b> <a href="http://www.rgakfd.ru">rgakfd.ru</a> — 카탈로그 일부 온라인. 접근 어려움 증가 추세(정치 상황). 추가: <a href="http://www.pbs.org/redfiles/rao/archives/rgakfd/">PBS Red Files 아카이브 가이드</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 소련이 촬영·수집한 한반도 영상의 최대 보존처. 북한 초기 영상에 대한 간접 접근의 유일한 현실적 경로 중 하나. 2022년 이후 접근성 악화. 1945년 소련군의 한반도 북부 진주와 북한 건국 과정을 소련측 시각에서 기록한 유일한 영상 아카이브.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#13</span>
+      <h4>🇷🇺 АВП РФ — 러시아 외교문서보관소</h4>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제31차 세션</li>
+        <li><b>핵심 자료</b> 스탈린-김일성 서한: 한국전쟁 발발 배경의 핵심 문서; 38선 분할 관련 소련 외교문서; 소련의 한반도 정책 결정 문서; 한국전쟁 정전 과정 소련 측 문서</li>
+        <li><b>디지털 접근</b> 접근 극히 제한. <a href="https://digitalarchive.wilsoncenter.org">Wilson Center CWIHP</a>에서 일부 번역본 무료 열람 가능</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#14</span>
+      <h4>🇷🇺 РГАСПИ — 러시아 사회정치사 기록보관소 <span class="en">Russian State Archive of Socio-Political History</span></h4>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Moscow, Russia</li>
+        <li><b>조사 세션</b> 제31차 세션 (Source B 교차: 세션 14, 31-34)</li>
+        <li><b>소장 규모</b> 소련 공산당 중앙위원회 기록, 코민테른 문서, 소련 외교 문서</li>
+        <li><b>핵심 자료</b> 소련공산당 한반도 정책 결정 문서; 코민테른 한국 공산주의 운동 기록; 소련의 한반도 분할 점령 정책; 소련-북한 관계 문서, 김일성 관련 소련 문서, 한국전쟁 소련 정책 결정 문서</li>
+        <li><b>컬렉션 주제</b> 소련 공산당, 소련-북한 관계, 한국전쟁 소련 정책, 코민테른</li>
+        <li><b>디지털 접근</b> <a href="http://www.rgaspi.org">rgaspi.org</a> — 카탈로그 일부</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 소련의 한반도 정책 결정 과정을 보여주는 핵심 문서 아카이브. 냉전 연구자들에게 한국전쟁의 소련 측 결정 과정을 이해하는 데 필수적.</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">🇨🇳🇹🇼 1-5. 중국/대만 국가기록 (PRC/ROC) — 4개</h3>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#15</span>
+      <h4>🇨🇳 CFA — 중국영화자료관 <span class="en">China Film Archive</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> 北京市 海淀区</li>
+        <li><b>조사 세션</b> 제3차</li>
+        <li><b>태그</b> Tier 2 (6개월), 접근 제한</li>
+        <li><b>한국 관련 핵심 자료</b> 중국인민지원군(CPV) '항미원조(抗美援朝)' 기록영화; 중앙뉴스영화제작소 한국전쟁 뉴스릴; 중국 측 한국전쟁 선전영화·다큐멘터리; 장진호 전투 등 CPV 주요 전투 기록</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 한국전쟁 중국 측 시각의 핵심 원천. CPV 30만 이상 참전 실상 기록.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#16</span>
+      <h4>🇨🇳 제2역사당안관 (난징) <span class="en">Second Historical Archives of China, Nanjing</span></h4>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> 南京市 中山东路309号 (Source B: Nanjing, China)</li>
+        <li><b>조사 세션</b> 제25차 (Source B 교차: 세션 31-34)</li>
+        <li><b>태그</b> Tier 2(6개월), 접근 제한</li>
+        <li><b>소장 규모</b> 2,310,000건 중화민국(ROC) 기록. 국민정부 외교 문서, 군사 기록</li>
+        <li><b>한국 관련 핵심 자료</b> 대한민국 임시정부 관련 ROC 정부 기록; 한국광복군(KLA) 활동 기록; 카이로 선언(1943) 관련 문서; 김구·이승만 등 독립운동 지도자 관련 ROC 측 기록; 한국광복군-중국군 협력 기록; 한국전쟁 중국인민지원군 기록(제한적)</li>
+        <li><b>컬렉션 주제</b> 대한민국임시정부, 한국광복군, 중국-한국 관계, 한국전쟁</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 한국 독립운동 중국 측 원천 최대 보관처. 231만 건 ROC 기록. 대한민국임시정부와 한국 독립운동의 중국 내 활동을 기록한 중국 측 원본 자료의 최대 보유 기관.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#17</span>
+      <h4>🇹🇼 대만 국가발전위원회 당안관 <span class="en">National Archives Administration, Taiwan</span></h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> 新北市 新莊區 (Source B: Taipei, Taiwan)</li>
+        <li><b>조사 세션</b> 제25차 (Source B 교차: 세션 31-34)</li>
+        <li><b>소장 규모</b> 중화민국(ROC) 정부 기록, 대한민국임시정부 관련 문서, 국민당-한국 관계 기록</li>
+        <li><b>한국 관련 핵심 자료</b> 대한민국 임시정부 승인·지원 공식 문서; 한국광복군(KLA) 활동 허가·관리 문서; 카이로 선언(1943): 'Korea shall become free and independent'; 장개석 일기 한국 관련 기술; KMT 당안관: 한국 관련 당 결정 문서; 중경(重慶) 임시정부 활동 문서, 장제스-이승만 서한; 중앙뉴스(中央新聞): ROC 뉴스릴의 한국 관련 보도</li>
+        <li><b>컬렉션 주제</b> 대한민국임시정부, 한국광복군, ROC-한국 관계, 한국전쟁 대만 역할</li>
+        <li><b>디지털 접근</b> <a href="https://www.archives.gov.tw">archives.gov.tw</a>. 추가: <a href="https://ahonline.drnh.gov.tw">대만 국사관</a>, <a href="https://archive.history.go.kr/id/AUS005_06_03V0000_736">대만 역사디지털도서관</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 한국 독립운동·임시정부의 국제적 맥락 핵심 원천. 카이로 선언 배경의 가장 직접적 자료.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#18</span>
+      <h4>🇹🇼 KMT 당사 당안관 <span class="en">Kuomintang Party Archives</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제25차</li>
+        <li><b>한국 관련 핵심 자료</b> 국민당의 한국 독립운동 지원 당 차원 결정 문서; 김구·이승만과 KMT 지도부 교류 기록</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — KMT 당 차원의 한국 독립운동 지원 결정 기록.</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">🇯🇵 1-6. 일본 국가기록 (Japan) — 4개</h3>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#19</span>
+      <h4>🇯🇵 NFAJ — 국립영화아카이브 <span class="en">National Film Archive of Japan</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> 東京都 中央区 京橋3-7-6</li>
+        <li><b>조사 세션</b> 제5차 (Source B 교차: 세션 23)</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>소장 규모</b> 87,000+ 영화 필름. 일제강점기 뉴스릴(日本ニュース), 식민지 조선 다큐멘터리, 전후 일본 뉴스릴</li>
+        <li><b>한국 관련 핵심 자료</b> 일제시대 조선 촬영 극영화; 일본 뉴스영화(日本ニュース映画): 식민지 조선 뉴스릴, 1945년 항복 전후 한반도 관련 보도; 조선총독부 제작·의뢰 영상, 선전 다큐멘터리; 문화영화(文化映画): 식민지 조선 산업·문화·관광 홍보영화; 재일조선인 관련 전후 영상</li>
+        <li><b>컬렉션 주제</b> 일본 식민지 영상, 조선총독부 선전물, 일본 항복 과정, 재일조선인, 전후 일본 사회</li>
+        <li><b>디지털 접근</b> <a href="https://www.nfaj.go.jp">nfaj.go.jp</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 일제시대 한반도 촬영 영상의 일본 내 핵심 보존처. 식민지 조선에 대한 일본의 시선과 선전 전략을 연구하는 데 필수적. NHK 아카이브와 함께 일본 측 시청각 자료의 양대 축.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#20</span>
+      <h4>🇯🇵 JACAR — 아시아역사자료센터 <span class="en">Japan Center for Asian Historical Records</span></h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">완전 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> 東京都 千代田区 (국립공문서관 내, 北の丸公園3-2)</li>
+        <li><b>조사 세션</b> 제5차 (Source B 교차: 세션 24)</li>
+        <li><b>소장 규모</b> 3,300만 이미지 완전 무료. 일본 정부 문서 1868-1972. 외무성·육군성·해군성 기록 디지털화</li>
+        <li><b>한국 관련 핵심 자료</b> 조선총독부 문서: 식민통치 전 기간 — 독립운동 탄압, 통치 정책; 외무성 외교문서: 한일관계, 독립운동 감시, 임시정부; 방위성 군사문서: 일본군 한반도 주둔·작전; 3·1운동 관련 일본 측 보고: 탄압 과정 상세; 한국 병합(1910) 과정 문서; 일제 말기 징용·징병 관련 문서; 식민지 행정 문서, 1945년 항복 관련 문서, 재일조선인 관련 기록</li>
+        <li><b>컬렉션 주제</b> 일본 식민지 행정, 조선총독부, 일본 외교, 태평양전쟁, 항복 과정</li>
+        <li><b>디지털 접근</b> <a href="https://www.jacar.go.jp">jacar.go.jp</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 일제시대 한반도의 식민통치·독립운동 일본 측 1차 자료 최대 보관처. 3,300만 이미지 완전 무료 — 세계적 유례없는 개방성. 일제강점기 한반도 관련 일본 측 공식 문서를 원격으로 열람할 수 있는 유일한 무료 플랫폼.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#21</span>
+      <h4>🇯🇵 일본 외무성 외교사료관 <span class="en">Diplomatic Archives, MOFA Japan</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제5차</li>
+        <li><b>한국 관련 핵심 자료</b> 한일관계 외교문서, 독립운동 감시, 임시정부 정보수집 (JACAR 통합 검색)</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 일본 외교 시각의 한반도 기록. JACAR 통합.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#22</span>
+      <h4>🇯🇵 NIDS — 방위연구소 전사편찬실 <span class="en">National Institute for Defense Studies</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제5차</li>
+        <li><b>한국 관련 핵심 자료</b> 일본군 한반도 관련 군사 기록, 한국전쟁 연구 (JACAR 통합 검색)</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 일본군 한반도 군사 기록. JACAR 통합.</p>
+    </div>
+  </div>
+
+  <p class="note-src">참고: Source B에는 NFAJ 외에 별도로 <b>NHK 전쟁증언 아카이브</b>(Tier 1, 세션 12·31-34)가 수록되어 있다 — 東京都渋谷区神南2-2-1 소재, 日本ニュース(1940-1951) 온라인 무료 스트리밍 제공. 1945년 한반도 관련 에피소드(일본 항복 과정, 조선인 귀환(引揚), 한반도 분단 초기 모습, 한국전쟁 보도) 다수 포함. <a href="http://cgi2.nhk.or.jp/shogenarchives/jpnews/list.cgi">NHK 전쟁증언 아카이브</a> — 日本ニュース를 온라인 무료 스트리밍으로 공개한 유일한 소스로 1945년 한반도의 모습을 일본 뉴스릴 시각에서 즉시 확인할 수 있는 최고의 무료 접근점.</p>
+
+  <h3 class="sub-title">🇫🇷 1-7. 프랑스 국가기록 (France) — 2개</h3>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#23</span>
+      <h4>🇫🇷 INA — 프랑스 국립시청각연구소 <span class="en">Institut national de l'audiovisuel</span></h4>
+      <span class="badge b-free">프리뷰 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Bry-sur-Marne, France (4 avenue de l'Europe, 94366)</li>
+        <li><b>조사 세션</b> 제8차 (Source B 교차: 세션 16-17)</li>
+        <li><b>태그</b> Tier 2(6개월) / Source B: Tier 1</li>
+        <li><b>소장 규모</b> 프랑스 방송 시청각 유산의 법정 보존기관. 수백만 시간의 라디오·TV·영화 자료. Actualités Françaises(프랑스 뉴스, 1940-1969) 전체 보유</li>
+        <li><b>한국 관련 핵심 자료</b> Actualités Françaises 한국전쟁 보도; 프랑스 대대(Bataillon français de l'ONU) 전투 촬영; Gaumont-Pathé 뉴스릴 한국 관련(INA 이관분); 지평리 전투(1951.2) 프랑스 대대 활약 영상; 1945년 한국 해방 관련 보도, AFE98000049(한국 해방 관련 에피소드 확인)</li>
+        <li><b>컬렉션 주제</b> 프랑스 뉴스릴, 한국전쟁 프랑스군 참전, 인도차이나 전쟁과 한국전쟁 연계, 프랑스 시각의 냉전</li>
+        <li><b>디지털 접근</b> <a href="https://www.ina.fr">ina.fr</a>. 추가: <a href="https://www.inamediapro.com/">INA 미디어프로(전문가용)</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 프랑스군 한국전쟁 참전 핵심 영상 원천. 지평리 전투는 한국전쟁 전환점. Actualités Françaises는 프랑스의 시각에서 한국을 기록한 유일한 체계적 뉴스릴 자료군.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#24</span>
+      <h4>🇫🇷 Gaumont-Pathé Archives</h4>
+      <span class="badge b-free">프리뷰 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Saint-Ouen, France</li>
+        <li><b>조사 세션</b> 제8차 (Source B 교차: 세션 15-16)</li>
+        <li><b>소장 규모</b> Gaumont(1897~) + Pathé(1896~) 합병 아카이브. 프랑스 최대 뉴스릴 컬렉션. 1931-1951 Gaumont British News 포함</li>
+        <li><b>한국 관련 핵심 자료</b> Gaumont 뉴스릴 한국전쟁 보도; Pathé-Journal 한국 관련(1945-1953); 1945년 해방 관련 보도 가능성</li>
+        <li><b>컬렉션 주제</b> 프랑스 뉴스릴, Pathé Journal, Gaumont Actualités, 한국전쟁</li>
+        <li><b>디지털 접근</b> <a href="https://www.gaumontpathe.com">gaumontpathe.com</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 대부분 INA로 이관. 일부 상업 라이선스. 세계 최초의 뉴스릴 제작사들의 합병 아카이브로, 20세기 초부터의 한국 관련 영상을 보유할 가능성이 높음.</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">🇩🇪 1-8. 독일 국가기록 (Germany) — 1개</h3>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#25</span>
+      <h4>🇩🇪 Bundesarchiv — 독일 연방기록보관소 <span class="en">German Federal Archives</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Berlin-Lichterfelde (영상: Filmarchiv Berlin, Fehrbelliner Platz 3, 10707 Berlin)</li>
+        <li><b>조사 세션</b> 제8차 (Source B 교차: 세션 17, 19)</li>
+        <li><b>소장 규모</b> Welt im Film(1945-1952): 연합군 점령기 독일 뉴스릴 730편 온라인 무료 공개. Welt im Bild(1952-1956): 서독 뉴스릴. Ufa-Wochenschau(1956-1978). Der Augenzeuge(1946-1980): 동독 뉴스릴</li>
+        <li><b>한국 관련 핵심 자료</b> Welt im Film: 서독 점령기 뉴스릴(미·영 공동) — 한국전쟁 보도 다수, 1945-1952 한국 관련 에피소드(한국전쟁 발발, UN군 파견, 인천상륙 등) 온라인 무료 스트리밍; Der Augenzeuge: 동독(DEFA) 뉴스릴 — 공산측 시각 한국전쟁 보도; Deutsche Wochenschau: 서독 뉴스릴 한국전쟁; 동독-북한 관계 영상: 동독의 북한 재건 지원; 독일 적십자 한국전쟁 의료 지원</li>
+        <li><b>컬렉션 주제</b> 연합군 점령기 뉴스릴, 서독 뉴스릴, 동독 뉴스릴, 한국전쟁 독일 보도, 냉전 선전</li>
+        <li><b>디지털 접근</b> <a href="https://www.bundesarchiv.de">bundesarchiv.de</a>. 추가: <a href="https://www.filmothek.bundesarchiv.de/">Bundesarchiv Filmothek 온라인</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 동·서독 양쪽 뉴스릴의 한국전쟁 보도 비교가 가능한 유일한 기관. 분단국가(독일)의 분단국가(한국) 시각 연구 핵심. Der Augenzeuge는 동구권 시각의 한국전쟁 보도를 서구에서 접근할 수 있는 몇 안 되는 합법적 경로.</p>
+    </div>
+  </div>
+
+  <p class="note-src">참고: Source B에는 독일 관련하여 <b>Archive.org 독일 뉴스릴 컬렉션</b>(Tier 2, 세션 17·19)도 별도 수록 — Internet Archive에 업로드된 UfA-Wochenschau, Europawoche 등 WWII기 독일 뉴스릴로 태평양 전쟁·한반도 관련 보도 영상 포함. <a href="https://archive.org/details/1944-12-19-UfA-Europawoche-095">UfA-Europawoche 1944</a> 등 무료 열람 가능.</p>
+
+  <h3 class="sub-title">🌍 1-9. 기타 국가 (UN 참전국 · 의료국 · NNSC) — 22개</h3>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#26</span>
+      <h4>🇦🇺 AWM — 호주 전쟁기념관 <span class="en">Australian War Memorial</span></h4>
+      <span class="badge b-free">무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Treloar Crescent, Campbell ACT 2612, Australia</li>
+        <li><b>조사 세션</b> 제15차 (Source B 교차: 세션 12, 21)</li>
+        <li><b>태그</b> Tier 2(6개월) / Source B: Tier 1</li>
+        <li><b>소장 규모</b> 7,000+ 영상 타이틀, 325만 피트 필름. BCOF(영연방 점령군) 컬렉션, 한국전쟁 전투 기록, 4,500+ 디지털화 BCOF 이미지</li>
+        <li><b>한국 관련 핵심 자료</b> 호주군 가평 전투(1951.4), 마량산 전투(1951.10) 영상; RAAF 77비행대대 작전 기록; 호주 해군 HMAS Bataan 활동; 참전군인 구술증언; BCOF 컬렉션: 영연방 점령군(British Commonwealth Occupation Force) 일본·한국 활동 기록; F03391: RAAF 이와쿠니 기지 1948년 영상, 한국 관련 장면 포함; RAN(호주 해군) 한국 이민 순찰 기록</li>
+        <li><b>컬렉션 주제</b> BCOF 점령 활동, 호주군 한국전쟁 참전, 가평 전투, 해군 작전</li>
+        <li><b>디지털 접근</b> <a href="https://www.awm.gov.au">awm.gov.au</a>. 추가: <a href="https://www.awm.gov.au/collection">AWM 컬렉션 검색</a>, <a href="https://www.awm.gov.au/collection/C1597088">AWM F03391 RAAF 이와쿠니</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 호주군 한국전쟁 최대 기록. 온라인 카탈로그 무료. BCOF 컬렉션은 1945-1952 일본/한국의 영연방 군사 활동을 기록한 유일한 체계적 영상 자료군.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#27</span>
+      <h4>🇨🇦 NFB — 캐나다 국립영화위원회 <span class="en">National Film Board of Canada</span></h4>
+      <span class="badge b-free">무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제16차 (Source B 교차: 세션 21)</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>한국 관련 핵심 자료</b> 캐나다군 PPCLI 전투 기록; 'Korea'(1952) NFB 다큐멘터리; Canadian Army Newsreel 한국전쟁분</li>
+        <li><b>디지털 접근</b> <a href="https://www.nfb.ca">nfb.ca</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 캐나다군 한국전쟁 기록. 다수 온라인 무료 스트리밍.</p>
+    </div>
+  </div>
+
+  <p class="note-src">참고: Source B는 캐나다 관련하여 <b>LAC(캐나다 국립도서관·기록원, Library and Archives Canada)</b>를 별도 수록 — 395 Wellington Street, Ottawa 소재, Tier 2, 세션 21. 캐나다 정부·문화 기록의 법정 보존기관으로 NFB 영상 포함. PPCLI(프린세스 패트리샤 캐나다 경보병연대) 1,000+ 사진(BCOF/한국 1950-1953) 소장. <a href="https://library-archives.canada.ca/eng">library-archives.canada.ca</a>.</p>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#28</span>
+      <h4>🇳🇿 뉴질랜드 아카이브 <span class="en">Archives New Zealand / NZ Film Archive</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제16차 (Source B 교차: 세션 21, Tier 3)</li>
+        <li><b>소재지</b> Wellington, New Zealand</li>
+        <li><b>소장 규모</b> 뉴질랜드 전쟁 기록, Bob Jagger 사진 컬렉션, Auckland Museum Cenotaph 데이터베이스 115,000+ 기록</li>
+        <li><b>한국 관련 핵심 자료</b> 16th Field Regiment 포병·해군 참전 기록; NZ Weekly Review 뉴스릴; Bob Jagger 한국전쟁 사진; 뉴질랜드 포병대대 한국전쟁 기록; BCOF 참여 기록</li>
+        <li><b>디지털 접근</b> 추가: <a href="http://archives.govt.nz/research/guides/war">Archives NZ 전쟁 연구 가이드</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 뉴질랜드 한국전쟁 참전 기록. 소규모 참전국의 기록으로서 한국전쟁의 국제적 성격을 입증하는 자료.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#29</span>
+      <h4>🇳🇱 EYE Filmmuseum <span class="en">EYE Filmmuseum Netherlands</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Amsterdam, Netherlands</li>
+        <li><b>조사 세션</b> 제17차 (Source B 교차: 세션 16)</li>
+        <li><b>한국 관련 핵심 자료</b> 네덜란드 대대 전투 기록; Polygoon 뉴스릴 한국 관련분; 네덜란드 뉴스릴 한국 보도; 일본-네덜란드 동인도 귀환 관련 한반도 경유 기록</li>
+        <li><b>디지털 접근</b> 추가: <a href="https://www.eyefilm.nl/en">EYE Film</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 네덜란드 한국전쟁 참전 기록. 네덜란드의 한국전쟁 참전과 동남아-한반도 연계를 보여주는 자료.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#30</span>
+      <h4>🇳🇱 NIOD 전쟁·홀로코스트 연구소 <span class="en">NIOD Institute for War, Holocaust and Genocide Studies</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제17차</li>
+        <li><b>한국 관련 핵심 자료</b> 네덜란드 한국전쟁 참전 연구자료, 구술증언, 포로 기록</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 네덜란드 한국전쟁 연구 중심기관.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#31</span>
+      <h4>🇮🇹 Istituto Luce <span class="en">Istituto Luce - Cinecittà</span></h4>
+      <span class="badge b-free">무료 스트리밍</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Via Tuscolana 1055, 00173 Roma, Italy</li>
+        <li><b>조사 세션</b> 제18차 (Source B 교차: 세션 17)</li>
+        <li><b>소장 규모</b> 이탈리아 국영 뉴스릴 아카이브. Giornale Luce(1927-1945), La Settimana Incom(1946-1965) 온라인 공개</li>
+        <li><b>한국 관련 핵심 자료</b> 68적십자병원 한국전쟁 의료 지원; La Settimana Incom 뉴스릴 한국 관련분; 이탈리아 적십자 한국전쟁 지원 기록</li>
+        <li><b>디지털 접근</b> <a href="https://www.archivioluce.com">archivioluce.com</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 이탈리아 뉴스릴 무료 스트리밍. 이탈리아의 한국전쟁 보도와 인도적 지원 활동 기록.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#32</span>
+      <h4>🇹🇷 ATASE — 터키 군사기록보관소 <span class="en">Askeri Tarih ve Stratejik Etüt</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제19차</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>한국 관련 핵심 자료</b> 터키 여단(5,455명) 전투 기록; 군우리 전투(1950.11) — 미2사단 철수 엄호; UN 3번째 규모 지상군 파병</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — UN 참전국 지상군 3위 규모. 군우리 전투 핵심 기록.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#33</span>
+      <h4>🇪🇹 에티오피아 강뉴부대 기념관 <span class="en">Kagnew Battalion Memorial</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제19차</li>
+        <li><b>한국 관련 핵심 자료</b> 강뉴 부대(Kagnew) 3개 교대 참전 기록; 하일레 셀라시에 파병 결정 문서</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 아프리카 유일 전투부대 참전.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#34</span>
+      <h4>🇨🇴 콜롬비아 국가기록보관소 <span class="en">Archivo General de la Nación, Colombia</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제19차</li>
+        <li><b>한국 관련 핵심 자료</b> 콜롬비아 대대·해군 참전 기록; 올드발디 전투(1952) 기록</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 남미 유일 전투부대·해군 동시 파병.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#35</span>
+      <h4>🇵🇭 필리핀 국가기록보관소 <span class="en">National Archives of the Philippines</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제19차</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>한국 관련 핵심 자료</b> PEFTOK 5개 교대 참전(7,420명); 율동고지 전투(Eerie, 1952)</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 아시아 최대 지상군 파병.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#36</span>
+      <h4>🇹🇭 태국 왕립군 기록 <span class="en">Royal Thai Armed Forces Records</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제19차</li>
+        <li><b>한국 관련 핵심 자료</b> 태국 연대전투단·해군·공군·적십자 참전(6,326명); 포크찹힐 전투(1953)</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 육·해·공·적십자 4군 종합 참전.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#37</span>
+      <h4>🇬🇷 그리스 전쟁박물관 <span class="en">War Museum Athens</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제20차</li>
+        <li><b>한국 관련 핵심 자료</b> 그리스 원정대대(GEF) 참전; 그리스 공군 13수송비행대 기록</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 그리스 한국전쟁 참전 기록.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#38</span>
+      <h4>🇮🇳 인도 NAI·NFAI <span class="en">National Archives of India / NFAI</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제20차</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>한국 관련 핵심 자료</b> UNTCOK 인도 대표: 1948년 총선 감시; 60야전병원: 인도 의료단; NNRC 의장국: 포로 심사 — 유일무이한 역할; Indian News Review 뉴스릴 한국 관련</li>
+        <li><b>디지털 접근</b> <a href="https://filmsdivision.org">filmsdivision.org</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — UNTCOK+의료단+NNRC 3중 역할 유일 국가.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#39</span>
+      <h4>🇸🇪 스웨덴 Filmavisen / 국가기록 <span class="en">Swedish Film Archive</span></h4>
+      <span class="badge b-free">무료 스트리밍</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제21차</li>
+        <li><b>한국 관련 핵심 자료</b> NNSC 스웨덴 대표 활동; 스웨덴 적십자 야전병원; SF-Journalen 뉴스릴</li>
+        <li><b>디지털 접근</b> <a href="https://www.filmarkivet.se">filmarkivet.se</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — NNSC 서방측 중립국 기록.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#40</span>
+      <h4>🇩🇰 덴마크 국가기록 / 영화박물관 <span class="en">Danish National Archives / DFI</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제21차</li>
+        <li><b>한국 관련 핵심 자료</b> Jutlandia 병원선 활동 기록; 덴마크 적십자 의료 지원</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 세계 최대급 병원선 한국전쟁 참전.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#41</span>
+      <h4>🇳🇴 노르웨이 국립도서관 Filmavisen <span class="en">National Library of Norway</span></h4>
+      <span class="badge b-free">무료 스트리밍</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제21차</li>
+        <li><b>한국 관련 핵심 자료</b> NORMASH(이동외과병원) 활동 기록; Filmavisen 뉴스릴 한국 관련분</li>
+        <li><b>디지털 접근</b> <a href="https://www.nb.no">nb.no</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 노르웨이 이동외과병원 한국전쟁 기록.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#42</span>
+      <h4>🇧🇪 벨기에 왕립군사박물관 <span class="en">Royal Museum of the Armed Forces, Belgium</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제22차</li>
+        <li><b>한국 관련 핵심 자료</b> 벨기에·룩셈부르크 연합대대 참전; 임진강 전투 벨기에군; Belgavox 뉴스릴</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 벨기에-룩셈부르크 연합 참전 기록.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#43</span>
+      <h4>🇿🇦 남아공 SANDF 기록보관소 <span class="en">SANDF Archives, South Africa</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제22차</li>
+        <li><b>한국 관련 핵심 자료</b> SAAF 2비행대대('Flying Cheetahs') 참전; African Mirror 뉴스릴</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 아프리카 유일 공군 참전국.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#44</span>
+      <h4>🇵🇱 폴란드 PKF / 국가기록 <span class="en">Polish National Archives / PKF (Filmoteka Narodowa)</span></h4>
+      <span class="badge b-free">무료 스트리밍</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Warsaw, Poland</li>
+        <li><b>조사 세션</b> 제21차 (Source B 교차: 세션 21b, 26-30, Tier 3)</li>
+        <li><b>소장 규모</b> Polska Kronika Filmowa(폴란드 뉴스릴) 전체 보유</li>
+        <li><b>한국 관련 핵심 자료</b> NNSC 폴란드 대표 활동; PKF 뉴스릴 한국 관련 — 공산측 시각; NNSC(중립국감시위원회) 폴란드 대표단 기록</li>
+        <li><b>디지털 접근</b> <a href="https://kronikarp.pl">kronikarp.pl</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — NNSC 공산측 중립국 기록. PKF 무료 스트리밍. 공산권 참가국으로서 NNSC 활동 기록과 한국전쟁의 공산진영 뉴스릴 시각을 제공.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#45</span>
+      <h4>🇨🇿 체코 국가기록 / 영화아카이브 <span class="en">Czech National Archives</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Prague, Czech Republic</li>
+        <li><b>조사 세션</b> 제21차 (Source B 교차: 세션 21b, Tier 3)</li>
+        <li><b>한국 관련 핵심 자료</b> NNSC 체코슬로바키아 대표 활동; 체코 뉴스릴 한국 관련분; 250+ 체코슬로바키아 사진(1953-1956) — NNSC 체코슬로바키아 대표단이 촬영한 판문점·비무장지대 사진, 정전 후 한반도 상황을 공산권 참가국의 시각에서 기록한 희귀 자료</li>
+        <li><b>컬렉션 주제</b> NNSC 활동, 판문점, 비무장지대, 정전 감시</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — NNSC 공산측 중립국 기록. NNSC 활동을 공산권 참가국의 시각에서 기록한 250+ 사진은 정전 후 한반도 상황의 또 다른 시각을 제공하는 희귀 자료.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#46</span>
+      <h4>🇨🇭 스위스 연방기록보관소 <span class="en">Swiss Federal Archives</span></h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제21차</li>
+        <li><b>한국 관련 핵심 자료</b> NNSC 스위스 대표: 1953~현재 판문점 주재; Swiss Filmwochenschau 뉴스릴</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — NNSC 서방측. 판문점 현재까지 주재 유일 국가.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#47</span>
+      <h4>🇱🇺 룩셈부르크 국가기록보관소 <span class="en">National Archives Luxembourg</span></h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제22차</li>
+        <li><b>한국 관련 핵심 자료</b> BUNC(벨기에-룩셈부르크 연합대대) 참전 기록</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 인구 30만 미만 최소국 참전.</p>
+    </div>
+  </div>
+
+</section>
+
+<section class="sec" id="cat2">
+  <div class="sec-head">
+    <span class="sec-num">12</span>
+    <div>
+      <h2>대분류 2: 뉴스릴·방송 아카이브 <span class="en">Newsreel & Broadcast Archives</span></h2>
+      <p class="sec-sub">20개 아카이브 · 미국 3대 뉴스릴(Fox Movietone·Hearst Metrotone·Universal)부터 British Pathé, 한·일·독·폴란드 방송사까지</p>
+    </div>
+  </div>
+  <p>대분류 2는 20개 뉴스릴·방송 아카이브를 다룬다. 미국의 Fox Movietone, Hearst Metrotone(UCLA newsreels.net), Universal Newsreel, Paramount News, March of Time과 영국의 British Pathé, BBC Archives, ITN/Reuters TV, 미국 AP Archive, 일본 NHK Archives, 한국 KBS·MBC Archives, 독일 Welt im Film/Der Augenzeuge, 폴란드 PKF, 그리고 미국 NBC/CBS/C-SPAN, 남아공 African Mirror, 벨기에 Belgavox, 인도 Indian News Review, 노르웨이·스웨덴 뉴스릴까지 포괄한다. 무료 온라인 접근성이 매우 높은 편으로, British Pathé(85,000편 YouTube 무료)·Hearst Metrotone(15,000편 무료)이 대표적 즉시 활용 가능 자원이다.</p>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#48</span>
+      <h4>🇺🇸 Fox Movietone News</h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제6차</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>한국 관련 핵심 자료</b> 한국 해방(1945) 뉴스릴; 한국전쟁 전선·정전 보도; 미국 주요 뉴스릴 중 한국 커버리지 최대급. Source B 교차(AP Archive 통합 소장분): Fox Movietone 한국 관련 뉴스릴은 미국 대중에게 한국이 어떻게 소개되었는지를 보여주는 핵심 자료(현재 AP Archive에 170만+ 스토리 통합 아카이브의 일부로 소장)</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 미국 3대 뉴스릴 중 하나. 한국 관련 가장 방대한 뉴스릴 시리즈.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#49</span>
+      <h4>🇺🇸 Hearst Metrotone / UCLA newsreels.net <span class="en">Hearst Metrotone News (UCLA)</span></h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">완전 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제6차</li>
+        <li><b>소장 규모</b> 15,000편 무료 온라인</li>
+        <li><b>한국 관련 핵심 자료</b> 한국 해방·건국·전쟁 뉴스릴 다수; 1945-1968 한국 커버리지 광범위; 미국 시청자 대상 한국 뉴스 보도</li>
+        <li><b>디지털 접근</b> <a href="https://newsreels.net">newsreels.net</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 15,000편 뉴스릴 완전 무료. 한국 관련 뉴스릴 연구의 가장 접근성 높은 원천.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#50</span>
+      <h4>🇺🇸 Universal Newsreel</h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제7차</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>한국 관련 핵심 자료</b> Universal News 한국전쟁 보도; 한국 해방·건국 뉴스릴; NARA 일부, Archive.org 일부 무료. (참고: #1 NARA 항목의 RG 306/Universal Newsreel 상세 — 150,000 타이틀, 1978년 화재로 일부 소실)</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 미국 3대 뉴스릴. NARA·Archive.org 일부 무료.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#51</span>
+      <h4>🇺🇸 Paramount News</h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제7차</li>
+        <li><b>한국 관련 핵심 자료</b> Paramount News 한국전쟁 보도</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 미국 주요 뉴스릴.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#52</span>
+      <h4>🇺🇸 March of Time <span class="en">The March of Time</span></h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제7차</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>한국 관련 핵심 자료</b> 한국전쟁 심층 보도: 일반 뉴스릴보다 긴 분석적 포맷; 'Crisis in Asia' 등 한국·냉전 관련 에피소드</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 뉴스릴이 아닌 뉴스 다큐멘터리 형태. 심층 분석적 가치.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#53</span>
+      <h4>🇬🇧 British Pathé</h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">완전 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> London, UK (온라인 접근 가능)</li>
+        <li><b>조사 세션</b> 제4차 (Source B 교차: 세션 1-3, 5)</li>
+        <li><b>소장 규모</b> 85,000편 YouTube 무료 (Source B: 85,000+ 영상 타이틀 온라인 무료 프리뷰(워터마크), Pathé News(1910-1970) 전체 디지털화, Pathé Gazette·Empire News Bulletin 포함)</li>
+        <li><b>한국 관련 핵심 자료</b> 한국 해방(1945) 뉴스릴; 한국전쟁 전 기간 보도; 정전협상·포로교환 영상; 한국 재건 보도; 한국 관련 300+ 아이템 검색 가능 — ① 1945 Japan Surrender 관련 영상 시리즈 ② 1946 Korea Elections 관련 보도 ③ 1948 Republic of Korea 수립 보도 ④ 한국전쟁 전투 보도 다수 ⑤ 1953 정전 관련 보도</li>
+        <li><b>컬렉션 주제</b> 한국 해방, 남한 단독선거, 대한민국 수립, 한국전쟁 전투, 정전협정</li>
+        <li><b>디지털 접근</b> <a href="https://www.youtube.com/@BritishPathe">youtube.com/@BritishPathe</a>. 추가: <a href="https://www.britishpathe.com/">britishpathe.com</a>, <a href="https://www.britishpathe.com/search/query/korea/">BP Korea 검색</a>, <a href="https://www.britishpathe.com/asset/65578/">BP Japan Surrender 1945</a>, <a href="https://www.britishpathe.com/asset/96459/">BP Korea 1946 Elections</a>, <a href="https://www.britishpathe.com/asset/96735/">BP Seoul 1948 Republic</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 85,000편 YouTube 완전 무료. 한국 관련 뉴스릴 즉시 접근 가능한 최대 원천. 영국의 시각에서 한국을 기록한 체계적인 뉴스릴 자료군으로, Pathé News의 글로벌 배급 네트워크를 통해 전 세계에 한국 소식이 어떻게 전파되었는지를 연구할 수 있음.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#54</span>
+      <h4>🇬🇧 BBC Archives</h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제8차</li>
+        <li><b>한국 관련 핵심 자료</b> BBC 한국전쟁 라디오·TV 보도; 한국전쟁 종군기자 보도</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 영국 최대 방송사 한국전쟁 보도.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#55</span>
+      <h4>🇬🇧 ITN / Reuters TV <span class="en">ITN Source / Reuters</span></h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제8차 (Source B: Reuters Historical / ITN Source, Tier 2, 세션 5)</li>
+        <li><b>한국 관련 핵심 자료</b> 한국전쟁 뉴스 영상; Reuters 통신 한국 관련 뉴스릴</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 국제 통신사 한국전쟁 보도.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#56</span>
+      <h4>🇺🇸 AP Archive <span class="en">Associated Press Archive</span></h4>
+      <span class="badge b-free">프리뷰 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> New York, NY, USA (온라인 접근 가능)</li>
+        <li><b>조사 세션</b> 제9차 (Source B 교차: 세션 5, 14, Tier 1)</li>
+        <li><b>소장 규모</b> 170만+ 뉴스 영상 스토리. AP, APTN, ABC, Fox Movietone, Visnews 통합 아카이브</li>
+        <li><b>한국 관련 핵심 자료</b> AP/Movietone 한국전쟁 뉴스 영상; 한국 해방·건국 보도; 미국 통신사 한국 관련 촬영분; Fox Movietone 한국 관련 뉴스릴, APTN 한국 관련 뉴스 영상</li>
+        <li><b>컬렉션 주제</b> AP 한국 보도, Fox Movietone 한국 뉴스릴, 한국전쟁 뉴스</li>
+        <li><b>디지털 접근</b> <a href="https://www.aparchive.com">aparchive.com</a>. 추가: <a href="https://www.youtube.com/@APArchive">AP Archive YouTube</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 세계 최대 통신사 한국 관련 영상. Fox Movietone를 포함하여 20세기 미국 뉴스 영상의 최대 통합 아카이브.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#57</span>
+      <h4>🇯🇵 NHK Archives</h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제5차</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>소장 규모</b> 900만 항목</li>
+        <li><b>한국 관련 핵심 자료</b> 일제시대 한반도 뉴스릴; 한국전쟁 일본 측 보도; 전쟁증언 아카이브 무료: 한국 관련 일본인 증언</li>
+        <li><b>디지털 접근</b> <a href="https://www2.nhk.or.jp/archives">nhk.or.jp/archives</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 일본 최대 방송사. 전쟁증언 무료 아카이브 운영.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#58</span>
+      <h4>🇰🇷 KBS Archives</h4>
+      <span class="badge b-top">Tier 1</span><span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제10차</li>
+        <li><b>소장 규모</b> 150만+ 항목</li>
+        <li><b>한국 관련 핵심 자료</b> 해방·건국·전쟁 세대 인터뷰; 한국전쟁 특집 다큐멘터리 다수; 광복절 특집 영상 아카이브</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 한국 최대 방송사. 해방·전쟁 세대 인터뷰 소실 위험.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#59</span>
+      <h4>🇰🇷 MBC Archives</h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제10차</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>소장 규모</b> 100만+ 항목</li>
+        <li><b>한국 관련 핵심 자료</b> 이산가족 찾기(1983) 아카이브 — UNESCO 세계기록유산; 한국전쟁 관련 다큐멘터리</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 이산가족 찾기 세계기록유산. 한국전쟁 관련 방송 다수.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#60</span>
+      <h4>🇩🇪 Welt im Film / Der Augenzeuge (독일)</h4>
+      <span class="badge b-free">일부 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제8차</li>
+        <li><b>태그</b> Tier 2(6개월)</li>
+        <li><b>한국 관련 핵심 자료</b> 서독 Welt im Film: 한국전쟁 보도; 동독 Der Augenzeuge: 공산측 시각 한국전쟁</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 동·서독 시각 비교 가능. Bundesarchiv 소장.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#61</span>
+      <h4>🇵🇱 PKF 폴란드 뉴스릴 <span class="en">Polska Kronika Filmowa</span></h4>
+      <span class="badge b-free">무료 스트리밍</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제21차</li>
+        <li><b>한국 관련 핵심 자료</b> 공산측 시각 한국전쟁 보도; NNSC 폴란드 활동</li>
+        <li><b>디지털 접근</b> <a href="https://kronikarp.pl">kronikarp.pl</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 공산측 뉴스릴 무료 스트리밍.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#62</span>
+      <h4>🇺🇸 NBC / CBS / C-SPAN (미국 방송) <span class="en">US Networks</span></h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제12차</li>
+        <li><b>한국 관련 핵심 자료</b> NBC/CBS 한국전쟁 TV 보도; C-SPAN 한국전쟁 관련 의회 청문회</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 미국 TV 네트워크 한국전쟁 보도.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#63</span>
+      <h4>🇿🇦 African Mirror (남아공)</h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제22차</li>
+        <li><b>한국 관련 핵심 자료</b> SAAF 2비행대대 한국전쟁 뉴스릴</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 아프리카 시각 한국전쟁 뉴스릴.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#64</span>
+      <h4>🇧🇪 Belgavox (벨기에)</h4>
+      <span class="badge">접근 제한</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제22차</li>
+        <li><b>한국 관련 핵심 자료</b> 벨기에 한국전쟁 참전 뉴스릴</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 벨기에 뉴스릴 한국 관련.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#65</span>
+      <h4>🇮🇳 Indian News Review <span class="en">Indian News Review / Films Division</span></h4>
+      <span class="badge b-free">무료 스트리밍</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제20차</li>
+        <li><b>한국 관련 핵심 자료</b> 인도 뉴스릴 한국 관련 보도; NNRC 활동 관련 보도</li>
+        <li><b>디지털 접근</b> <a href="https://filmsdivision.org">filmsdivision.org</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 인도 시각 한국 관련 뉴스릴.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#66</span>
+      <h4>🇳🇴 노르웨이 Filmavisen <span class="en">Norwegian Filmavisen</span></h4>
+      <span class="badge b-free">무료 스트리밍</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제21차</li>
+        <li><b>한국 관련 핵심 자료</b> NORMASH 활동 뉴스릴</li>
+        <li><b>디지털 접근</b> <a href="https://www.nb.no">nb.no</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 노르웨이 뉴스릴 무료.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#67</span>
+      <h4>🇸🇪 스웨덴 SF-Journalen / filmarkivet.se <span class="en">Swedish Newsreels</span></h4>
+      <span class="badge b-free">무료 스트리밍</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제21차</li>
+        <li><b>한국 관련 핵심 자료</b> NNSC 스웨덴 활동 뉴스릴</li>
+        <li><b>디지털 접근</b> <a href="https://www.filmarkivet.se">filmarkivet.se</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 스웨덴 뉴스릴 무료.</p>
+    </div>
+  </div>
+
+</section>
+
+<section class="sec" id="cat3">
+  <div class="sec-head">
+    <span class="sec-num">13</span>
+    <div>
+      <h2>대분류 3: 스톡 풋티지 <span class="en">Stock Footage & Commercial Archives</span></h2>
+      <p class="sec-sub">11개 상업·디지털 아카이브 · Getty Images·CriticalPast 등 라이선스·프리뷰 기반 영상 유통 플랫폼 및 Internet Archive·YouTube 무료 플랫폼</p>
+    </div>
+  </div>
+  <p>대분류 3은 11개 스톡 풋티지·상업/디지털 아카이브를 다룬다. 대부분 미국 소재의 상업적 영상 라이선스 플랫폼으로, Getty Images(BBC Motion Gallery 포함, 4억+ 이미지·비디오, Universal Newsreel 포함), CriticalPast(57,000+ 시간 미국 정부 영상 프리뷰 무료), Periscope Film, Historic Films, Footage Farm, Pond5, Buyout Footage, Footage.net(메타 검색 엔진), NBC Universal Archives, 그리고 완전 무료 플랫폼인 Internet Archive(3,900만+ 영상·음성 파일, 200+ 한국 관련 영상)와 YouTube 역사·아카이브 채널(British Pathé·AP Archive·Periscope Film 등 공식 채널)이 포함된다. 대부분 유료 라이선스이나 CriticalPast·Footage.net·Internet Archive·YouTube는 검색·프리뷰 또는 전체가 무료로, 연구 초기 단계에서 자료 존재 여부를 빠르게 확인하는 데 유용하다.</p>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#68</span>
+      <h4>🇺🇸 Getty Images <span class="en">Getty Images / BBC Motion Gallery</span></h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> Seattle, WA / London, UK</li>
+        <li><b>조사 세션</b> 제9차 (Source B 교차: 세션 5, Tier 2)</li>
+        <li><b>소장 규모</b> Getty: 4억+ 이미지·비디오. BBC Motion Gallery: BBC 뉴스 영상. Universal Newsreel 포함</li>
+        <li><b>한국 관련 핵심 자료</b> 한국전쟁 사진·영상 상업 라이선스; 뉴스 사진 컬렉션 한국 관련; Universal Newsreel 한국 관련 뉴스릴, BBC 한국전쟁 보도 영상</li>
+        <li><b>컬렉션 주제</b> Universal Newsreel, BBC 한국 보도, 한국전쟁</li>
+        <li><b>디지털 접근</b> <a href="https://www.gettyimages.com">gettyimages.com</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 세계 최대 상업 이미지·영상 라이선스. Universal Newsreel을 포함한 미국 뉴스릴의 주요 상업적 소스. BBC 영상은 영국 공영방송의 한국 관련 보도를 포함.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#69</span>
+      <h4>🇺🇸 CriticalPast</h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">프리뷰 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제9차</li>
+        <li><b>소장 규모</b> 57,000+ 시간 미국 정부 영상</li>
+        <li><b>한국 관련 핵심 자료</b> 미국 정부 한국 관련 영상 — Signal Corps, USIA, 해군 등; 한국전쟁 전투·해방·건국 영상 프리뷰 검색</li>
+        <li><b>디지털 접근</b> <a href="https://www.criticalpast.com">criticalpast.com</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 57,000시간+ 미국 정부 영상. 프리뷰 검색 무료. 한국 관련 영상 대량 포함.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#70</span>
+      <h4>🇺🇸 Periscope Film</h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제9차</li>
+        <li><b>한국 관련 핵심 자료</b> 미군 교육·훈련 영화 한국전쟁 관련; 한국전쟁 전투 기록 영상</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 미군 교육·기록 영화 전문.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#71</span>
+      <h4>🇺🇸 Historic Films</h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제9차</li>
+        <li><b>한국 관련 핵심 자료</b> 한국전쟁 뉴스릴·다큐멘터리 라이선스</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 역사 영상 상업 라이선스.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#72</span>
+      <h4>🇺🇸 Footage Farm</h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제9차</li>
+        <li><b>한국 관련 핵심 자료</b> 한국전쟁 영상 라이선스</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 역사 영상 전문 딜러.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#73</span>
+      <h4>🇺🇸 Pond5</h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제9차</li>
+        <li><b>한국 관련 핵심 자료</b> 한국전쟁 관련 스톡 영상</li>
+        <li><b>디지털 접근</b> <a href="https://www.pond5.com">pond5.com</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 대형 스톡 영상 마켓플레이스.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#74</span>
+      <h4>🇺🇸 Buyout Footage</h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제9차</li>
+        <li><b>한국 관련 핵심 자료</b> 공공 도메인 한국전쟁 영상 판매</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 퍼블릭 도메인 영상 전문.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#75</span>
+      <h4>🇺🇸 Footage.net</h4>
+      <span class="badge b-free">검색 무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제9차</li>
+        <li><b>한국 관련 핵심 자료</b> 한국전쟁 영상 통합 검색 — 다수 아카이브 메타 검색</li>
+        <li><b>디지털 접근</b> <a href="https://footage.net">footage.net</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 영상 아카이브 메타 검색 엔진.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <div class="arch-head">
+      <span class="arch-no">#76</span>
+      <h4>🇺🇸 NBC Universal Archives</h4>
+      <span class="badge">유료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>조사 세션</b> 제12차</li>
+        <li><b>한국 관련 핵심 자료</b> NBC 한국전쟁 TV 보도 아카이브</li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — NBC TV 뉴스 아카이브.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#77</span>
+      <h4>🌍 Internet Archive (Archive.org) <span class="en">Internet Archive</span></h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> 300 Funston Avenue, San Francisco, CA (온라인)</li>
+        <li><b>조사 세션</b> 세션 1-5, 8-12, 14-19</li>
+        <li><b>소장 규모</b> 세계 최대 무료 디지털 아카이브. 3,900만+ 영상·음성 파일. NARA 기탁 미국 정부 영상, 전 세계 뉴스릴 디지털화 영상, 다큐멘터리, 교육 영상.</li>
+        <li><b>한국 관련 자료</b> 200+ 한국 관련 영상 발견. 핵심: "Occupation of Korea"(1945 USAMGIK 공식 다큐); "Liberation of Seoul 1945"; Universal Newsreel 한국 에피소드 다수; Welt im Film 한국 에피소드; 한국전쟁 뉴스릴·다큐 다수; NARA 기탁 정부 영상</li>
+        <li><b>컬렉션 주제</b> USAMGIK, 한국 해방, 서울 해방, 한국전쟁, 미국 뉴스릴, 독일 뉴스릴, 정부 기록</li>
+        <li><b>디지털 접근</b> <a href="https://archive.org/">Archive.org</a>; <a href="https://archive.org/search?query=korea+1945">Korea 검색</a>; <a href="https://archive.org/details/gov.archives.li.107-1553">U.S. Occupation of Korea</a>; <a href="https://archive.org/search?query=%22korean+war%22+newsreel">Korean War Newsreels</a>; <a href="https://archive.org/search?query=USAMGIK+OR+%22military+government%22+korea">USAMGIK 검색</a>; <a href="https://archive.org/details/111-adc-8362">Liberation Ceremonies, Seoul 1945</a>; <a href="https://archive.org/search?query=%22welt+im+film%22+korea">Welt im Film Korea</a>; <a href="https://archive.org/search?query=%22universal+newsreel%22+korea">Universal Newsreel Korea</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 전 세계 한국 관련 역사 영상을 무료로 다운로드·시청할 수 있는 최고의 플랫폼. 본 연구 전체를 통틀어 가장 많은 직접 접근 가능한 영상을 제공한 단일 플랫폼. NARA 기탁 정부 영상부터 각국 뉴스릴까지 다양한 출처의 영상이 집적되어 있어 교차 검증에 이상적.</p>
+    </div>
+  </div>
+
+  <div class="arch" data-tier="1">
+    <div class="arch-head">
+      <span class="arch-no">#78</span>
+      <h4>🌍 YouTube 역사·아카이브 채널 <span class="en">YouTube Historical / Archive Channels</span></h4>
+      <span class="badge b-top">Tier 1</span><span class="badge b-free">무료</span>
+    </div>
+    <div class="arch-body">
+      <ul class="kv">
+        <li><b>소재지</b> 온라인</li>
+        <li><b>조사 세션</b> 세션 4, 10, 18</li>
+        <li><b>소장 규모</b> 각 아카이브 기관·상업 아카이브의 공식 YouTube 채널. 수만 편의 역사 영상 무료 공개.</li>
+        <li><b>한국 관련 자료</b> British Pathé: 한국 관련 300+ 뉴스릴 무료 시청; AP Archive: 한국 관련 뉴스 영상; Periscope Film: NARA 출처 한국 군사 기록 영상; War Archives: 한국전쟁 전투 기록</li>
+        <li><b>컬렉션 주제</b> 한국 뉴스릴, 한국전쟁, 해방기 한국, 미군 기록</li>
+        <li><b>디지털 접근</b> <a href="https://www.youtube.com/@APArchive">AP Archive YouTube</a>; <a href="https://www.youtube.com/@britishpathe">British Pathé YouTube</a>; <a href="https://www.youtube.com/@PeriscopeFilm">Periscope Film YouTube</a>; <a href="https://www.youtube.com/@WarArchives">War Archives YouTube</a>; <a href="https://www.youtube.com/user/uaborrecords">NARA YouTube</a></li>
+      </ul>
+      <p class="sig">📊 <b>연구적 의의</b> — 연구 초기 단계에서 한국 관련 역사 영상을 빠르게 식별·시청할 수 있는 가장 접근성 높은 플랫폼. 고화질 영상을 무료로 시청할 수 있어 연구 방향 설정에 유용.</p>
+    </div>
+  </div>
+
+</section>
+
+<section class="sec" id="cat4">
+  <div class="sec-head">
+    <span class="sec-num">14</span>
+    <div>
+      <h2>대분류 4: 대학·연구기관 <span class="en">University & Research Institutions</span></h2>
+      <p class="sec-sub">30개 아카이브 · 대통령 도서관·아이비리그 특별컬렉션·구술사 재단·냉전 연구소</p>
+    </div>
+  </div>
+  <p>대분류 4는 30개 대학·연구기관 아카이브를 다룬다. 대부분 미국 소재로 UCLA·LOC·Hoover Institution·MacArthur Memorial·Truman/Eisenhower 대통령도서관 등 정치·외교 문서 중심 기관, 예일·컬럼비아·조지타운·코넬·하버

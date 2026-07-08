@@ -1,0 +1,63 @@
+# -*- coding: utf-8 -*-
+"""§25 검증 완료 시드 영상 — 보고서 v6.5의 2026.7 링크 전수검증 통과분.
+ia_id가 있으면 archive.org 원본 확보 대상, naid만 있으면 NARA 카탈로그 메타 등록 대상."""
+
+SEEDS = [
+ # ── archive.org 확보 대상 (✅ 검증) ──
+ dict(ia_id="111-adc-9888", title_orig="Japanese Surrender on Board USS Missouri", title_ko="USS 미주리 항복 서명식",
+      archive="NARA(#1)/archive.org", rg_series="RG 111/111-ADC", local_id="111-ADC-9888", naid="23653",
+      date_content="1945-09-02", research_topic="해방·미군정"),
+ dict(ia_id="ApptInTokyo", title_orig="Appointment in Tokyo", title_ko="도쿄의 약속",
+      archive="NARA(#1)/archive.org", rg_series="RG 111", local_id="ApptInTokyo",
+      date_content="1945", research_topic="해방·미군정"),
+ dict(ia_id="gov.archives.arc.44175", title_orig="Miscellaneous Scenes, Korean Soldiers", title_ko="한국 군인 장면 모음(노획 필름)",
+      archive="NARA(#1)/archive.org", rg_series="RG 242/242-MID", local_id="242-MID-5237", naid="44175",
+      date_content="1945", research_topic="해방·미군정",
+      rights_note_extra="⚠️ 소련군 진주 서술은 화면 대조 재검증 필요(§25)"),
+ dict(ia_id="CrimeofK1950", title_orig="The Crime of Korea", title_ko="한국의 범죄(시그널코프)",
+      archive="NARA(#1)/archive.org", rg_series="RG 111", local_id="CrimeofK1950",
+      date_content="1950", research_topic="전쟁-군사"),
+ dict(ia_id="USAF-20420", title_orig="Korean War: Captured North Korea Combat Footage", title_ko="노획 북한 전투 영상",
+      archive="NARA(#1)/archive.org", rg_series="RG 342", local_id="USAF-20420",
+      date_content="1950", research_topic="전쟁-군사"),
+ dict(ia_id="71812CrisisInKoreaMos", title_orig="Crisis in Korea (silent newsreel 71812)", title_ko="한국의 위기(무성 뉴스릴)",
+      archive="archive.org", rg_series="RG 111(추정)", local_id="71812",
+      date_content="1950", research_topic="전쟁-군사"),
+ dict(ia_id="111-adc-8082", title_orig="War, Suwon, Korea", title_ko="수원 전투",
+      archive="NARA(#1)/archive.org", rg_series="RG 111/111-ADC", local_id="111-ADC-8082",
+      date_content="1950", research_topic="전쟁-군사"),
+ dict(ia_id="ARC-39096", title_orig="Dec 1945/Jan 1946 Newsreel: Patton Funeral; POWs; Homma Trial", title_ko="1945-46 전후처리 뉴스릴",
+      archive="NARA(#1)/archive.org", rg_series="RG 111", local_id="ARC-39096",
+      date_content="1945-12", research_topic="해방·미군정"),
+ dict(ia_id="111-adc-8741", title_orig="ROK Trainees, Camp Ota, Japan", title_ko="오타 기지 한국군 훈련병",
+      archive="NARA(#1)/archive.org", rg_series="RG 111/111-ADC", local_id="111-ADC-8741",
+      date_content="1950", research_topic="전쟁-군사"),
+ dict(ia_id="1944-12-19-UfA-Europawoche-095", title_orig="UfA Europawoche Nr. 095", title_ko="우파 유로파보헤 95호(독일 뉴스릴)",
+      archive="archive.org", rg_series="RG 242/242-UFA(연관)", local_id="UfA-Europawoche-095",
+      date_content="1944-12-19", research_topic="일제강점기"),
+ dict(ia_id="gov.archives.li.107-1553", title_orig="U.S. Occupation of Korea", title_ko="미군의 한국 점령",
+      archive="NARA(#1)/archive.org", rg_series="RG 111(추정)", local_id="107-1553",
+      date_content="1945-1948", research_topic="해방·미군정"),
+ dict(ia_id="111-adc-8362", title_orig="Liberation Ceremonies, Seoul, Korea", title_ko="서울 해방 기념식",
+      archive="NARA(#1)/archive.org", rg_series="RG 111/111-ADC", local_id="111-ADC-8362",
+      date_content="1945", research_topic="해방·미군정"),
+ # ── NARA 카탈로그 메타 등록 대상 (✅ NAID 검증 — 온라인 열람) ──
+ dict(naid="20315", title_orig="Refugee Camp, Kaesong, Korea; 38th Parallel", title_ko="개성 피난민 수용소·38선",
+      archive="NARA(#1)", rg_series="RG 111/111-ADC", local_id="111-ADC-6541",
+      date_content="1947", research_topic="해방·미군정"),
+ dict(naid="20374", title_orig="Refugees Arriving from the Russian Zone, Baik Chung, Korea", title_ko="백청 소련지구 피난민 도착",
+      archive="NARA(#1)", rg_series="RG 111/111-ADC", local_id="111-ADC-6600",
+      date_content="1947", research_topic="해방·미군정"),
+ dict(naid="22366", title_orig="Refugees Cross Han River, Seoul; Greek Troops, Suwon", title_ko="한강 도하 피난민·그리스군",
+      archive="NARA(#1)", rg_series="RG 111/111-ADC", local_id="111-ADC-8601",
+      date_content="1950", research_topic="전쟁-군사"),
+ dict(naid="22804", title_orig="Refugees (Chorwon area, 65th Inf.)", title_ko="철원 피난민(제목 재검증 필요 ⚠️)",
+      archive="NARA(#1)", rg_series="RG 111/111-ADC", local_id="111-ADC-9039",
+      date_content="1949-1951", research_topic="전쟁-군사"),
+ dict(naid="28210", title_orig="Korean Progress, Seoul, Korea", title_ko="서울의 발전(난민 주택)",
+      archive="NARA(#1)", rg_series="RG 111/111-LC", local_id="111-LC-44092",
+      date_content="1960", research_topic="전후재건"),
+]
+
+# §27 Phase 0-4주차: 정기 스캔 대상 컬렉션
+SWEEP_COLLECTIONS = ["universal_newsreels", "avgeeks", "prelinger"]
