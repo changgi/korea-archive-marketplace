@@ -25,3 +25,11 @@ RG 338+KMAG · RG 389+"Korean POW" · RG 469+ECA · RG 263+North Korea(CIA)
 ## 다국어
 日: 朝鮮·京城·引揚げ·日本ニュース / 露: Корея·освобождение Кореи / 中: 光復軍·抗美援朝·上甘嶺 /
 獨: Welt im Film Korea·Der Augenzeuge / 佛: Corée·bataillon français / 土: Kore Savaşı·Kunuri
+
+## Gallica (프랑스 국립도서관 — 키 불요)
+프랑스어 필수: Corée · Coréens · guerre de Corée · Séoul · Fusan · Tchosen · missionnaires Corée
+구한말 프랑스 선교사·외교 문헌/사진의 최대 보고 ('Corée' 76,000+건 실측)
+
+## Europeana (58개국 통합 — 무료 키: apis.europeana.eu)
+query: Korea OR Corée OR Korea-Krieg OR Corea · qf=TYPE:VIDEO|IMAGE
+독일 Welt im Film·이탈리아 Luce 등 유럽 기관 소장분 교차 확인용

@@ -2,8 +2,13 @@
   "mcpServers": {
     "korea-archive": {
       "command": "python",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/server.py"],
-      "env": { "NARA_API_KEY": "" }
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/servers/server.py"
+      ],
+      "env": {
+        "NARA_API_KEY": "",
+        "EUROPEANA_API_KEY": ""
+      }
     }
   }
 }

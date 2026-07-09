@@ -6,13 +6,17 @@
 ## 포함 구성
 - **스킬 `korea-archive-discovery`** — 표기 변형(Keijo·Fusan·Chosin…), 넓게→좁게 전략,
   TNA 부처코드·인접 확장, 권리 판정 5원칙, 쿼리 치트시트.
-- **MCP 서버 `korea-archive`** — 도구 7종:
-  `tna_search` `tna_adjacent_mine` `nara_search` `ia_search` `ia_metadata` `query_bank` `judge_rights`
+- **MCP 서버 `korea-archive`** — 도구 9종:
+  `tna_search` `tna_adjacent_mine` `nara_search` `ia_search` `ia_metadata` `gallica_search` `europeana_search` `query_bank` `judge_rights`
 
 ## 요구사항
 - Python 3.10+ 및 `pip install mcp`
 - (선택) NARA 검색용 API 키 — Catalog_API@nara.gov 에 이름·이메일로 무료 발급 요청 후
-  `.mcp.json`의 `NARA_API_KEY` 또는 환경변수로 설정. TNA·archive.org·쿼리뱅크·권리판정은 키 없이 동작.
+  `.mcp.json`의 `NARA_API_KEY` 또는 환경변수로 설정. Europeana는 apis.europeana.eu 무료 키를 `EUROPEANA_API_KEY`로. TNA·archive.org·쿼리뱅크·권리판정은 키 없이 동작.
+
+## 사용 예 (신규 소스 포함)
+- "Gallica에서 구한말 프랑스 선교사 사진 찾아줘" (프랑스어 Corée 자동 적용)
+- "Europeana에서 한국전쟁 영상 찾아줘" (EUROPEANA_API_KEY 필요 — 무료)
 
 ## 사용 예
 - "TNA에서 FO 371 FK1015 검색해줘"

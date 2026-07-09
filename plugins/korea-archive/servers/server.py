@@ -134,5 +134,58 @@ def judge_rights(rg_series: str, title: str = "", archive: str = "") -> str:
     cls, note = auto_rights({"rg_series": rg_series, "title_orig": title, "archive": archive})
     return f"등급: {cls}\n근거: {note}\n※ 자동 초기판정 — 공개 전 수동 확정 필수, D등급 공개 금지"
 
+
+@mcp.tool()
+def gallica_search(query: str, max_results: int = 15) -> str:
+    """프랑스 국립도서관 Gallica 검색 (SRU API, 키 불요). 프랑스어 키워드 사용 —
+    'Corée'(한국), 'guerre de Corée'(한국전쟁), 'Séoul', 'Tchosen'. 구한말 프랑스
+    선교사·외교 문헌과 사진의 보고. 예: gallica_search('Corée missionnaires')"""
+    import urllib.parse, urllib.request, xml.etree.ElementTree as ET
+    q = urllib.parse.quote(f'gallica all "{query}"' if '"' not in query else f'gallica all {query}')
+    url = (f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2"
+           f"&query={q}&maximumRecords={min(max_results,50)}")
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=40) as r:
+        root = ET.fromstring(r.read().decode("utf-8", "replace"))
+    ns = {"srw": "http://www.loc.gov/zing/srw/", "dc": "http://purl.org/dc/elements/1.1/"}
+    total = root.find(".//srw:numberOfRecords", ns)
+    lines = []
+    for rec in root.findall(".//srw:record", ns)[:max_results]:
+        def g(tag):
+            e = rec.find(f".//dc:{tag}", ns)
+            return (e.text or "").strip() if e is not None and e.text else ""
+        lines.append(f"- {g('title')[:100]} ({g('date')}) [{g('type')[:20]}] {g('identifier')}")
+    return (f"Gallica '{query}' — 총 {total.text if total is not None else '?'}건:\n"
+            + ("\n".join(lines) or "(0건)")
+            + "\n팁: 프랑스어 변형 — Corée·Coréens·Séoul·Fusan·guerre de Corée·Tchosen")
+
+@mcp.tool()
+def europeana_search(query: str, max_results: int = 15, media_type: str | None = None) -> str:
+    """유럽 문화유산 통합 검색 Europeana (58개국 4,000+ 기관). 무료 API 키 필요 —
+    europeana.eu/apis 에서 즉시 발급, 환경변수 EUROPEANA_API_KEY.
+    media_type: 'VIDEO'|'IMAGE'|'TEXT'|'SOUND'. 예: europeana_search('Corée', media_type='IMAGE')"""
+    import urllib.parse, json as _json, urllib.request
+    key = os.environ.get("EUROPEANA_API_KEY")
+    if not key:
+        return ("EUROPEANA_API_KEY 미설정 — https://apis.europeana.eu/ 에서 무료 발급 후 "
+                "환경변수로 설정하면 58개국 아카이브 통합 검색이 활성화됩니다. "
+                "대안: 키 없이 웹에서 europeana.eu 직접 검색 (query: Korea OR Corée OR Korea-Krieg)")
+    params = {"wskey": key, "query": query, "rows": min(max_results, 50), "profile": "standard"}
+    if media_type: params["qf"] = f"TYPE:{media_type.upper()}"
+    url = "https://api.europeana.eu/record/v2/search.json?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=40) as r:
+        data = _json.loads(r.read().decode())
+    items = data.get("items") or []
+    lines = []
+    for it in items[:max_results]:
+        title = (it.get("title") or ["?"])[0]
+        year = (it.get("year") or [""])[0]
+        prov = (it.get("dataProvider") or [""])[0]
+        lines.append(f"- {str(title)[:90]} ({year}) — {str(prov)[:40]} | {it.get('guid','')}")
+    return (f"Europeana '{query}'" + (f" [{media_type}]" if media_type else "")
+            + f" — 총 {data.get('totalResults')}건:\n" + ("\n".join(lines) or "(0건)")
+            + "\n팁: 다국어 병행 — Corée(불)·Korea-Krieg(독)·Corea(이/스)")
+
 if __name__ == "__main__":
     mcp.run()
