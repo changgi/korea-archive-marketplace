@@ -161,15 +161,12 @@ def gallica_search(query: str, max_results: int = 15) -> str:
 
 @mcp.tool()
 def europeana_search(query: str, max_results: int = 15, media_type: str | None = None) -> str:
-    """유럽 문화유산 통합 검색 Europeana (58개국 4,000+ 기관). 무료 API 키 필요 —
-    europeana.eu/apis 에서 즉시 발급, 환경변수 EUROPEANA_API_KEY.
+    """유럽 문화유산 통합 검색 Europeana (58개국 4,000+ 기관). 키 없이 즉시 작동(공용 데모 키) —
+    대량 사용 시 apis.europeana.eu 무료 키를 EUROPEANA_API_KEY로.
     media_type: 'VIDEO'|'IMAGE'|'TEXT'|'SOUND'. 예: europeana_search('Corée', media_type='IMAGE')"""
     import urllib.parse, json as _json, urllib.request
-    key = os.environ.get("EUROPEANA_API_KEY")
-    if not key:
-        return ("EUROPEANA_API_KEY 미설정 — https://apis.europeana.eu/ 에서 무료 발급 후 "
-                "환경변수로 설정하면 58개국 아카이브 통합 검색이 활성화됩니다. "
-                "대안: 키 없이 웹에서 europeana.eu 직접 검색 (query: Korea OR Corée OR Korea-Krieg)")
+    key = os.environ.get("EUROPEANA_API_KEY") or "api2demo"
+    demo = not os.environ.get("EUROPEANA_API_KEY")
     params = {"wskey": key, "query": query, "rows": min(max_results, 50), "profile": "standard"}
     if media_type: params["qf"] = f"TYPE:{media_type.upper()}"
     url = "https://api.europeana.eu/record/v2/search.json?" + urllib.parse.urlencode(params)
