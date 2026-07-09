@@ -9,7 +9,14 @@
 - **MCP 서버 `korea-archive`** — 도구 9종:
   `tna_search` `tna_adjacent_mine` `nara_search` `ia_search` `ia_metadata` `gallica_search` `europeana_search` `query_bank` `judge_rights`
 
-## 요구사항
+## v1.2 — 요구사항 제로
+`.mcp.json`이 원격 서버(https://korea-archive-mcp.vercel.app/api/mcp)에 연결되므로
+**Python·pip 설치 없이** 플러그인 설치만으로 스킬 + 도구 9종이 모두 작동합니다.
+
+로컬 실행(자기 API 키·자기 PC에서 직접 호출)을 원하면 `.mcp.local.json.example`의 내용으로
+`.mcp.json`을 교체하고 Python 3.10+ 와 `pip install mcp`를 준비하세요.
+
+## (구) 로컬 실행 요구사항
 - Python 3.10+ 및 `pip install mcp`
 - (선택) NARA 검색용 API 키 — Catalog_API@nara.gov 에 이름·이메일로 무료 발급 요청 후
   `.mcp.json`의 `NARA_API_KEY` 또는 환경변수로 설정. Europeana는 apis.europeana.eu 무료 키를 `EUROPEANA_API_KEY`로. TNA·archive.org·쿼리뱅크·권리판정은 키 없이 동작.
