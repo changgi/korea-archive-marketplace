@@ -48,3 +48,9 @@
 - **sen** 서울시교육청 정보공개(open.sen.go.kr, '열린 서울교육') — 원문정보공개 결재문서·사전정보공표. 미공개분은 정보공개청구.
 - **gyeongnam** 경상남도기록원(archives.gyeongnam.go.kr) — 국내 최초 광역 지방기록원. 경남도정 기록·구술·행정박물.
 - 확장: 다른 지자체 정보공개도 동일 패턴(scrape_plan(url) 또는 cheliped 2단계)으로 수집 가능.
+
+
+## 7. 전쟁기념관 아카이브 — archives.warmemo.or.kr  (도구: warmemo_search)
+한국전쟁·근현대 군사사 기록·사진·유물·구술·문서. 6·25 참전·전투·부대 국내 소장 사료.
+keyless API 없는 JS 포털 → cheliped 2단계(검색창 fill→목록). 해외(NARA RG 111/342·TNA WO)와
+교차검증 시 강력. 저작권은 전쟁기념관 이용약관·공공누리 유형 확인.

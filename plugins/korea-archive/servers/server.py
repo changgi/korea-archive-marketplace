@@ -4,7 +4,7 @@
 
 도구: tna_search · tna_adjacent_mine · nara_search · ia_search · ia_metadata
       query_bank · judge_rights · report_template
-      nedb_search(한국사DB) · archives_search(국가기록원) · scrape_plan(cheliped 폴백) · nlk_search(국립중앙도서관) · foia_search(정보공개포털) · seoul_archives_search(서울기록원) · local_gov_search(지방 정보공개·기록원)
+      nedb_search(한국사DB) · archives_search(국가기록원) · scrape_plan(cheliped 폴백) · nlk_search(국립중앙도서관) · foia_search(정보공개포털) · seoul_archives_search(서울기록원) · local_gov_search(지방 정보공개·기록원) · warmemo_search(전쟁기념관)
 설치·연결 방법은 README.md 참조. 표준 의존성: pip install mcp
 """
 from __future__ import annotations
@@ -597,6 +597,20 @@ def local_gov_search(query: str, source: str) -> str:
         url = base
         cmd = _cheliped_search(url, query)
     return (f"{name} '{query}'\n브라우저 열기: {url}\n※ {note}\n{cmd}")
+
+
+
+# ══════════ 전쟁기념관 아카이브 수집기 (v1.8.0) ══════════
+@mcp.tool()
+def warmemo_search(query: str) -> str:
+    """전쟁기념관 아카이브(archives.warmemo.or.kr) 검색 — 한국전쟁·근현대 군사사 기록·사진·유물·
+    구술·문서. 특히 6·25전쟁 참전·전투·부대 관련 국내 소장 사료. keyless API가 없는 JS 포털이라
+    브라우저 열기 URL과 cheliped 스크래핑(검색창 입력→목록) 명령을 반환한다. NARA·TNA의 해외
+    한국전쟁 기록과 교차검증하기 좋은 국내 1차 소스."""
+    url = "http://archives.warmemo.or.kr/index.do"
+    return (f"전쟁기념관 아카이브 '{query}'\n브라우저 열기: {url}\n"
+            "※ 한국전쟁·군사사 기록·사진·유물·구술. 6·25 참전·전투·부대 사료 — 해외(NARA·TNA)와 교차검증.\n"
+            + _cheliped_search(url, query))
 
 
 
