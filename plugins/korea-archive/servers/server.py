@@ -357,9 +357,12 @@ def _browse(url):
     return f"\n열어보기: {url}"
 
 
-def _agent_browse(name, query, url):
-    return (f"{name} '{query}'\n이 사이트는 서버 검색 응답이 제한적이라 자동 페치가 어렵습니다. "
-            f"브라우저 도구(웹 열람)로 아래 주소를 열어 결과 목록을 읽어오세요:\n{url}")
+def _agent_browse(name, query, url, why="이 기관은 자동 페치가 제한적입니다"):
+    return (f"{name} '{query}' — {why}.\n"
+            f"➤ 에이전트 지시: 이 메시지를 그대로 사용자에게 전달하지 마세요. 대신 당신의 웹 검색(WebSearch)으로 "
+            f"'{query}'를 이 기관에서 찾거나, 아래 공식 검색 URL을 열람해 상위 결과(제목·연대·링크)를 정리한 뒤 "
+            f"사용자에게 표로 제시하세요. 결과가 있으면 report_template으로 HTML 보고서화도 가능합니다.\n"
+            f"공식 검색: {url}")
 
 
 @mcp.tool()
@@ -380,9 +383,9 @@ def nedb_search(query: str, db: str = "", max_results: int = 15) -> str:
             return (f"한국사DB '{query}' — 검색어가 등장하는 DB {len(dbs)}종:\n"
                     + "\n".join("- " + d for d in dbs[:max_results]) + _browse(browse)
                     + "\n각 DB에서 문서 단위로 열람. 한자 원표기 병행 검색 권장.")
-        return f"한국사DB '{query}' — 매칭 DB 미검출(한자/이표기 시도 권장)." + _browse(browse)
+        return _agent_browse("한국사DB", query, browse, "통합검색에서 매칭 DB 미검출")
     except Exception as e:
-        return f"한국사DB '{query}' — 자동조회 실패({e})." + _browse(browse)
+        return _agent_browse("한국사DB", query, browse, f"자동조회 실패({e})")
 
 
 @mcp.tool()
@@ -410,8 +413,8 @@ def archives_search(query: str, max_results: int = 10) -> str:
             return f"국가기록원 API 오류: {m.group(1).strip() if m else '?'} — 키·쿼터 확인." + _browse(portal)
         except Exception as e:
             return f"국가기록원 API 오류({e})." + _browse(portal)
-    return (f"국가기록원 '{query}' — ARCHIVES_API_KEY 미설정. data.go.kr '나라기록물정보 서비스'(15000153) "
-            "무료 키 설정 시 자동 검색." + _browse(portal))
+    return _agent_browse("국가기록원", query, portal,
+                         "OpenAPI 키(ARCHIVES_API_KEY, data.go.kr 15000153) 미설정")
 
 
 @mcp.tool()
@@ -459,8 +462,9 @@ def nlk_search(query: str, collection: str = "total", max_results: int = 15) -> 
             return f"NLK OpenAPI 오류: {m.group(1) if m else '?'} — NLK_API_KEY 확인." + _browse(open_url)
         except Exception as e:
             return f"NLK API 오류({e})." + _browse(open_url)
-    keyed = "NLK_API_KEY 미설정(www.nl.go.kr Open API 신청 시 자동 검색). " if (api_ok and not key) else ""
-    return f"국립중앙도서관 · {name} '{query}'\n{keyed}※ {note}" + _browse(open_url)
+    why = ("OpenAPI 키(NLK_API_KEY, www.nl.go.kr Open API) 미설정" if (api_ok and not key)
+           else f"큐레이션/전용 컬렉션 — {note}")
+    return _agent_browse(f"국립중앙도서관 · {name}", query, open_url, why)
 
 
 @mcp.tool()
@@ -479,9 +483,9 @@ def seoul_archives_search(query: str, max_results: int = 15) -> str:
         if cols:
             lines = [f"- {n}\n  {u}" for n, u in cols[:max_results]]
             return f"서울기록원 '{query}' — 매칭 컬렉션 {len(cols)}개:\n" + "\n".join(lines) + f"\n전체 항목: {deep}"
-        return f"서울기록원 '{query}' — 매칭 컬렉션 미검출." + _browse(deep)
+        return _agent_browse("서울기록원", query, deep, "매칭 컬렉션 미검출")
     except Exception as e:
-        return f"서울기록원 '{query}' — 자동조회 실패({e})." + _browse(deep)
+        return _agent_browse("서울기록원", query, deep, f"자동조회 실패({e})")
 
 
 @mcp.tool()
@@ -497,9 +501,9 @@ def warmemo_search(query: str) -> str:
             lines = [f"- {_clean(c)} : {n}건" for c, n in cats[:20]]
             return (f"전쟁기념관 '{query}' — 카테고리별 검색 건수:\n" + "\n".join(lines) + _browse(url)
                     + "\n한국전쟁·군사사 사료 — 해외(NARA·TNA)와 교차검증.")
-        return f"전쟁기념관 '{query}' — 검색 결과 미검출." + _browse(url)
+        return _agent_browse("전쟁기념관", query, url, "통합검색 결과 미검출")
     except Exception as e:
-        return f"전쟁기념관 '{query}' — 자동조회 실패({e})." + _browse(url)
+        return _agent_browse("전쟁기념관", query, url, f"자동조회 실패({e})")
 
 
 @mcp.tool()
@@ -531,9 +535,9 @@ def local_gov_search(query: str, source: str) -> str:
             if uniq:
                 lines = [f"- {t}\n  https://opengov.seoul.go.kr{h}" for h, t in uniq[:15]]
                 return f"서울정보소통광장 '{query}' — 결재문서 {len(uniq)}건:\n" + "\n".join(lines)
-            return f"서울정보소통광장 '{query}' — 결과 미검출." + _browse(url)
+            return _agent_browse("서울정보소통광장", query, url, "결재문서 미검출")
         except Exception as e:
-            return f"서울정보소통광장 '{query}' — 자동조회 실패({e})." + _browse(url)
+            return _agent_browse("서울정보소통광장", query, url, f"자동조회 실패({e})")
     if src == "sen":
         url = "https://open.sen.go.kr/"
         return _agent_browse("서울시교육청 정보공개(열린 서울교육)", query, url)
