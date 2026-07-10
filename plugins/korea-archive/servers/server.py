@@ -336,101 +336,223 @@ def report_template() -> str:
     return REPORT_RULES + "\n\n===== HTML TEMPLATE ({{플레이스홀더}}를 채울 것) =====\n" + REPORT_TEMPLATE
 
 
-# ══════════ 국내 아카이브 수집기 + cheliped 브라우저 스크래핑 폴백 (v1.4.0) ══════════
-import urllib.parse as _up, urllib.request as _ur
+# ══════════ 국내 아카이브 수집기 — 자동 브라우징(서버 사이드 fetch·파싱) v1.9.0 ══════════
+import urllib.parse as _up, urllib.request as _ur, html as _html
 
 _UA_KO = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
-CHELIPED_INSTALL = ("cheliped-skills 설치(https://github.com/tykimos/cheliped-skills): "
-    "git clone https://github.com/tykimos/cheliped-skills && "
-    "cd cheliped-skills/browser/scripts && npm install && npm run build")
 
 
-def _http_text(url, timeout=30):
-    req = _ur.Request(url, headers={"User-Agent": _UA_KO})
+def _http_text(url, timeout=15):
+    req = _ur.Request(url, headers={"User-Agent": _UA_KO, "Accept": "*/*",
+                                    "X-Requested-With": "XMLHttpRequest"})
     with _ur.urlopen(req, timeout=timeout) as r:
         return r.read().decode("utf-8", "replace")
 
 
-def _cheliped_cmd(url):
-    cmds = [{"cmd": "goto", "args": [url]}, {"cmd": "observe"}]
-    return "node cheliped-cli.mjs '" + json.dumps(cmds, ensure_ascii=False) + "'"
+def _clean(s):
+    return _html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", s))).strip()
+
+
+def _browse(url):
+    return f"\n열어보기: {url}"
+
+
+def _agent_browse(name, query, url):
+    return (f"{name} '{query}'\n이 사이트는 서버 검색 응답이 제한적이라 자동 페치가 어렵습니다. "
+            f"브라우저 도구(웹 열람)로 아래 주소를 열어 결과 목록을 읽어오세요:\n{url}")
 
 
 @mcp.tool()
 def nedb_search(query: str, db: str = "", max_results: int = 15) -> str:
-    """국사편찬위원회 한국사데이터베이스(db.history.go.kr) 검색. 조선왕조실록·승정원일기·
-    일제강점기·독립운동·한국근현대 신문 등 1,100만+ 건의 국내 1차 사료. 이 사이트는 검색 결과가
-    JavaScript로 렌더되어 일반 HTTP로는 목록이 비어 옴 — robots는 허용이므로 cheliped-skills
-    브라우저 스크래핑으로 추출하라. db: 특정 DB로 한정(예 'sillok' 조선왕조실록, 'jsseung' 승정원일기).
-    한자·한글 병행 표기 권장(예 '慰安婦'·'위안부')."""
-    base = "https://db.history.go.kr/search/searchResultList.do"
-    params = {"searchKeyword": query, "searchKeywordType": "BI", "pageSize": min(max_results, 50)}
-    if db:
-        params["itemId"] = db
-    url = base + "?" + _up.urlencode(params)
-    hint = ""
+    """국사편찬위원회 한국사데이터베이스(db.history.go.kr) 통합검색을 서버에서 직접 조회. 검색어가
+    등장하는 DB(조선왕조실록·승정원일기·포로신문보고서·독립운동사 등) 목록과 열람 URL을 반환한다.
+    조선~근현대 1차 사료 1,100만+ 건. 인명·기관명은 한자 원표기가 색인 정확도 높음."""
+    browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
+    api = "https://db.history.go.kr/search/searchTotalResult.do?searchKeyword=" + _up.quote(query)
     try:
-        html = _http_text(url, timeout=25)
-        m = re.search(r"([\d,]{1,12})\s*건", html)
-        hint = (f"직접 조회에서 약 {m.group(1)}건 감지. " if m else "직접 조회는 빈 목록(JS 렌더 확인). ")
+        b = _http_text(api, 15)
+        dbs, seen = [], set()
+        for code, inner in re.findall(r'href="/item/(\w+)/main\.do"[^>]*>(.*?)</a>', b, re.S):
+            nm = _clean(inner)
+            if nm and nm not in seen:
+                seen.add(nm); dbs.append(nm)
+        if dbs:
+            return (f"한국사DB '{query}' — 검색어가 등장하는 DB {len(dbs)}종:\n"
+                    + "\n".join("- " + d for d in dbs[:max_results]) + _browse(browse)
+                    + "\n각 DB에서 문서 단위로 열람. 한자 원표기 병행 검색 권장.")
+        return f"한국사DB '{query}' — 매칭 DB 미검출(한자/이표기 시도 권장)." + _browse(browse)
     except Exception as e:
-        hint = f"(직접 조회 실패: {e}) "
-    return (f"한국사DB '{query}'{(' · DB=' + db) if db else ''}\n"
-            f"브라우저 열기: {url}\n{hint}"
-            f"JS 렌더 사이트이므로 목록·본문은 브라우저 스크래핑으로 추출:\n"
-            f"{CHELIPED_INSTALL}\n실행: {_cheliped_cmd(url)}\n"
-            "팁: cheliped observe가 부여한 번호 id로 상세(level.do) 진입·다음페이지 클릭. "
-            "인명·기관명은 한자 원표기가 색인 정확도 높음.")
+        return f"한국사DB '{query}' — 자동조회 실패({e})." + _browse(browse)
 
 
 @mcp.tool()
 def archives_search(query: str, max_results: int = 10) -> str:
-    """국가기록원 국가기록포털(archives.go.kr) 검색. 정식 OpenAPI
-    (search.archives.go.kr/openapi/search.arc, RSS/XML) 사용 — data.go.kr '나라기록물정보 서비스'
-    (데이터 15000153)에서 무료 인증키를 발급받아 환경변수 ARCHIVES_API_KEY로 설정하면 자동 검색
-    (일 1,000건 제한). 키가 없으면 브라우저 열기 URL과 cheliped 스크래핑 명령을 반환한다."""
+    """국가기록원 국가기록포털(archives.go.kr). 정식 OpenAPI(RSS) — data.go.kr '나라기록물정보 서비스'
+    (15000153) 무료 키를 환경변수 ARCHIVES_API_KEY로 설정하면 서버가 자동 검색해 결과를 반환한다.
+    키가 없으면 포털 열람 URL을 반환. 노획문서·정부기록. 공공누리(KOGL) 유형 확인 후 이용."""
     key = os.environ.get("ARCHIVES_API_KEY")
-    portal = ("https://www.archives.go.kr/next/newsearch/listSubjectDescription.do?query="
-              + _up.quote(query))
-    if not key:
-        return (f"국가기록원 '{query}'\n"
-                "인증키 미설정 — data.go.kr에서 '나라기록물정보 서비스'(15000153) 무료 신청 후 "
-                "ARCHIVES_API_KEY 환경변수로 넣으면 OpenAPI 자동 검색이 켜집니다.\n"
-                f"브라우저 열기: {portal}\n{CHELIPED_INSTALL}\n실행: {_cheliped_cmd(portal)}")
-    api = ("https://search.archives.go.kr/openapi/search.arc?serviceKey=" + _up.quote(key)
-           + "&query=" + _up.quote(query) + f"&start=1&limit={min(max_results, 50)}")
+    portal = "https://www.archives.go.kr/next/newsearch/listSubjectDescription.do?query=" + _up.quote(query)
+    if key:
+        api = ("https://search.archives.go.kr/openapi/search.arc?serviceKey=" + _up.quote(key)
+               + "&query=" + _up.quote(query) + f"&start=1&limit={min(max_results, 50)}")
+        try:
+            xml = _http_text(api, 20)
+            if "searchError" not in xml:
+                def t(bl, x):
+                    m = re.search(rf"<{x}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{x}>", bl, re.S)
+                    return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
+                tot = t(xml, "totalCount") or t(xml, "totalResults") or "?"
+                items = re.findall(r"<item>(.*?)</item>", xml, re.S)
+                lines = [f"- {t(i,'title')[:90]} ({t(i,'produceYear') or t(i,'pubDate')[:16]}) {t(i,'link')}"
+                         for i in items[:max_results]]
+                return f"국가기록원 '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)") + "\n공공누리 유형 확인 후 이용."
+            m = re.search(r"<message>(.*?)</message>", xml, re.S)
+            return f"국가기록원 API 오류: {m.group(1).strip() if m else '?'} — 키·쿼터 확인." + _browse(portal)
+        except Exception as e:
+            return f"국가기록원 API 오류({e})." + _browse(portal)
+    return (f"국가기록원 '{query}' — ARCHIVES_API_KEY 미설정. data.go.kr '나라기록물정보 서비스'(15000153) "
+            "무료 키 설정 시 자동 검색." + _browse(portal))
+
+
+@mcp.tool()
+def nlk_search(query: str, collection: str = "total", max_results: int = 15) -> str:
+    """국립중앙도서관(nl.go.kr) 디지털 컬렉션 검색. collection: 'total'(전체 소장자료)·'subject'(주제별)·
+    'newspaper'(대한민국신문아카이브 1883-1960 고신문, 저작권만료 자유이용)·'gwanbo'(관보)·'exhibit'(전시)·
+    'koreanmemory'(코리안메모리)·'overseas'(해외 한국관련자료). NLK_API_KEY(www.nl.go.kr Open API) 설정 시
+    total/subject/gwanbo/overseas는 서버가 자동 검색. 그 외/키없음은 해당 컬렉션 열람 URL 반환."""
+    COLL = {
+        "total": ("전체 소장자료", "https://www.nl.go.kr/NL/contents/search.do?srchTarget=total&kwd=", True),
+        "subject": ("주제별컬렉션", "https://www.nl.go.kr/NL/contents/N20103000000.do", True),
+        "newspaper": ("대한민국신문아카이브", "https://www.nl.go.kr/newspaper/search_list.do?keyword=", False),
+        "gwanbo": ("관보", "https://www.nl.go.kr/NL/contents/N20301000000.do", True),
+        "exhibit": ("전시컬렉션(온라인전시)", "https://www.nl.go.kr/NL/contents/N20104000000.do", False),
+        "koreanmemory": ("코리안메모리", "https://nl.go.kr/koreanmemory/", False),
+        "overseas": ("해외 한국관련자료", "https://www.nl.go.kr/NL/contents/N20401010000.do", True),
+    }
+    NOTE = {"newspaper": "1883–1960 고신문 108종. 저작권 만료 — 출처표기 시 자유이용.",
+            "koreanmemory": "구술·사진 큐레이션.", "exhibit": "온라인 전시(서사형).",
+            "overseas": "해외 소재 한국 관련 자료 목록.", "gwanbo": "대한제국·총독부·대한민국 관보 원문.",
+            "subject": "주제별 선별 디지털 컬렉션.", "total": "전체 소장자료."}
+    c = collection.strip().lower()
+    if c not in COLL:
+        return "collection 값: " + ", ".join(COLL.keys())
+    name, base, api_ok = COLL[c]
+    open_url = (base + _up.quote(query)) if base.endswith(("kwd=", "keyword=")) else base
+    note = NOTE.get(c, "")
+    key = os.environ.get("NLK_API_KEY")
+    if api_ok and key:
+        api = ("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key)
+               + "&apiType=xml&srchTarget=total&kwd=" + _up.quote(query)
+               + f"&pageSize={min(max_results, 50)}&pageNum=1")
+        try:
+            xml = _http_text(api, 20)
+            if "<error>" not in xml:
+                def t(bl, x):
+                    m = re.search(rf"<{x}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{x}>", bl, re.S)
+                    return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
+                tot = t(xml, "total") or "?"
+                items = re.findall(r"<item>(.*?)</item>", xml, re.S)
+                lines = [f"- {t(i,'titleInfo')[:90]} / {t(i,'authorInfo')[:24]} ({t(i,'pubYearInfo')}) {t(i,'detailLink')}"
+                         for i in items[:max_results]]
+                return f"국립중앙도서관 · {name} '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)") + f"\n※ {note}"
+            m = re.search(r"<msg>(.*?)</msg>", xml)
+            return f"NLK OpenAPI 오류: {m.group(1) if m else '?'} — NLK_API_KEY 확인." + _browse(open_url)
+        except Exception as e:
+            return f"NLK API 오류({e})." + _browse(open_url)
+    keyed = "NLK_API_KEY 미설정(www.nl.go.kr Open API 신청 시 자동 검색). " if (api_ok and not key) else ""
+    return f"국립중앙도서관 · {name} '{query}'\n{keyed}※ {note}" + _browse(open_url)
+
+
+@mcp.tool()
+def seoul_archives_search(query: str, max_results: int = 15) -> str:
+    """서울기록원(archives.seoul.go.kr) 카탈로그를 서버에서 직접 조회 — 검색어와 매칭되는 컬렉션
+    목록과 전체 항목 URL을 반환한다. 서울시 행정기록·시정사진·구술 등 지방기록물."""
+    land = "https://archives.seoul.go.kr/catalog?search_api_fulltext=" + _up.quote(query)
+    deep = "https://archives.seoul.go.kr/catalog/result?regclass=RC_ITEM&search_api_fulltext=" + _up.quote(query)
     try:
-        xml = _http_text(api, timeout=30)
+        b = _http_text(land, 15)
+        cols = []
+        for href, inner in re.findall(r'href="(/catalog/result\?[^"]*collects=[^"]*)"[^>]*>(.*?)</a>', b, re.S):
+            nm = _clean(inner)
+            if nm and "컬렉션" in nm:
+                cols.append((nm, "https://archives.seoul.go.kr" + href))
+        if cols:
+            lines = [f"- {n}\n  {u}" for n, u in cols[:max_results]]
+            return f"서울기록원 '{query}' — 매칭 컬렉션 {len(cols)}개:\n" + "\n".join(lines) + f"\n전체 항목: {deep}"
+        return f"서울기록원 '{query}' — 매칭 컬렉션 미검출." + _browse(deep)
     except Exception as e:
-        return f"국가기록원 API 오류: {e}\n브라우저 열기: {portal}"
-    if "searchError" in xml:
-        m = re.search(r"<message>(.*?)</message>", xml, re.S)
-        return (f"국가기록원 API 오류: {m.group(1).strip() if m else '알 수 없음'}\n"
-                "인증키 유효성·일일 쿼터(1,000건)를 확인하세요.")
+        return f"서울기록원 '{query}' — 자동조회 실패({e})." + _browse(deep)
 
-    def _tag(block, t):
-        m = re.search(rf"<{t}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{t}>", block, re.S)
-        return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
 
-    tot = _tag(xml, "totalCount") or _tag(xml, "totalResults") or "?"
-    items = re.findall(r"<item>(.*?)</item>", xml, re.S)
-    lines = [f"- {_tag(b, 'title')[:90]} ({_tag(b, 'produceYear') or _tag(b, 'pubDate')[:16]}) "
-             f"{_tag(b, 'link')}" for b in items[:max_results]]
-    return (f"국가기록원 '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)")
-            + "\n※ 노획문서·생산기관 코드는 상세 페이지 확인. 저작권은 공공누리 유형 확인 후 이용.")
+@mcp.tool()
+def warmemo_search(query: str) -> str:
+    """전쟁기념관 아카이브(archives.warmemo.or.kr) 통합검색을 서버에서 직접 조회 — 카테고리별
+    (소장자료·유물·사진·영상·행사 등) 검색 건수를 반환한다. 한국전쟁·근현대 군사사 국내 1차 사료 —
+    NARA(RG 111/342)·TNA(WO)의 해외 한국전쟁 기록과 교차검증에 강력."""
+    url = "http://archives.warmemo.or.kr/intgsrch/intgsrchArchv.do?MID=UM00045&keyword=" + _up.quote(query)
+    try:
+        b = _http_text(url, 15)
+        cats = re.findall(r'class="total-breadcrumb">(.*?)</span>\s*<span>\s*총\s*([\d,]+)', b, re.S)
+        if cats:
+            lines = [f"- {_clean(c)} : {n}건" for c, n in cats[:20]]
+            return (f"전쟁기념관 '{query}' — 카테고리별 검색 건수:\n" + "\n".join(lines) + _browse(url)
+                    + "\n한국전쟁·군사사 사료 — 해외(NARA·TNA)와 교차검증.")
+        return f"전쟁기념관 '{query}' — 검색 결과 미검출." + _browse(url)
+    except Exception as e:
+        return f"전쟁기념관 '{query}' — 자동조회 실패({e})." + _browse(url)
+
+
+@mcp.tool()
+def foia_search(query: str) -> str:
+    """대한민국 정보공개포털(open.go.kr) — 원문정보공개(정부 결재문서 원문)·사전정보공표·정보공개청구.
+    로그인 기반 포털이라 서버 자동 페치가 제한적 — 브라우저 도구로 열어 결과를 읽어오도록 안내한다.
+    미공개 문서는 포털에서 정보공개청구로 요청 가능."""
+    url = "https://www.open.go.kr/othicInfo/infoList/orginlInfoList.do?searchKeyword=" + _up.quote(query)
+    return (_agent_browse("정보공개포털(원문정보공개)", query, url)
+            + "\n※ 미공개 문서는 포털에서 정보공개청구로 요청.")
+
+
+@mcp.tool()
+def local_gov_search(query: str, source: str) -> str:
+    """지방자치단체 정보공개·기록원 검색. source: 'seoul_opengov'(서울정보소통광장 — 서울시 결재문서
+    원문공개, 서버 자동조회)·'sen'(서울시교육청 정보공개)·'gyeongnam'(경상남도기록원). 결재문서 원문·
+    지방기록물은 지역사·특정사건 발굴의 1차 사료."""
+    src = source.strip().lower()
+    if src == "seoul_opengov":
+        url = "https://opengov.seoul.go.kr/sanction/list?searchKeyword=" + _up.quote(query)
+        try:
+            b = _http_text(url, 15)
+            items = re.findall(r'<a[^>]+href="(/sanction/\d+)"[^>]*>(.*?)</a>', b, re.S)
+            uniq, seen = [], set()
+            for h, t in items:
+                tt = re.sub(r'^제목\s*:\s*', '', _clean(t))
+                if h not in seen and tt:
+                    seen.add(h); uniq.append((h, tt))
+            if uniq:
+                lines = [f"- {t}\n  https://opengov.seoul.go.kr{h}" for h, t in uniq[:15]]
+                return f"서울정보소통광장 '{query}' — 결재문서 {len(uniq)}건:\n" + "\n".join(lines)
+            return f"서울정보소통광장 '{query}' — 결과 미검출." + _browse(url)
+        except Exception as e:
+            return f"서울정보소통광장 '{query}' — 자동조회 실패({e})." + _browse(url)
+    if src == "sen":
+        url = "https://open.sen.go.kr/"
+        return _agent_browse("서울시교육청 정보공개(열린 서울교육)", query, url)
+    if src == "gyeongnam":
+        url = "https://archives.gyeongnam.go.kr/main.web"
+        return _agent_browse("경상남도기록원", query, url)
+    return "source 값: seoul_opengov, sen, gyeongnam"
 
 
 @mcp.tool()
 def scrape_plan(url: str) -> str:
-    """임의 URL의 robots.txt를 확인해 직접 수집 가능 여부를 판정하고, robots가 차단했거나
-    JavaScript 렌더 사이트는 cheliped-skills(브라우저 CDP 스크래핑) 실행 명령을 반환한다.
-    API가 없거나 robots로 막힌 국내외 아카이브 수집의 폴백 경로."""
+    """임의 URL의 robots.txt를 확인해 직접 수집 가능 여부를 판정한다. robots가 차단했거나 JS 렌더라
+    서버 페치로 안 되는 사이트는, 에이전트의 브라우저 도구(웹 열람)로 해당 URL을 열어 결과를 읽도록 안내."""
     p = _up.urlparse(url)
     root = f"{p.scheme}://{p.netloc}"
     path = p.path or "/"
     verdict = "robots 미확인"
     try:
-        rb = _http_text(root + "/robots.txt", timeout=15)
+        rb = _http_text(root + "/robots.txt", 12)
         blocked, agent_all = False, False
         for line in rb.splitlines():
             s = line.strip().lower()
@@ -440,178 +562,12 @@ def scrape_plan(url: str) -> str:
                 d = s.split(":", 1)[1].strip()
                 if d and path.startswith(d):
                     blocked = True
-        verdict = ("robots 차단됨 → 브라우저 스크래핑 사용" if blocked
-                   else "robots 허용(단 JS 렌더면 브라우저 필요)")
+        verdict = "robots 차단 → 브라우저 도구로 열람" if blocked else "robots 허용(단 JS 렌더면 브라우저 필요)"
     except Exception as e:
-        verdict = f"robots 미확인({e}) → 브라우저 스크래핑 안전"
-    return (f"{url}\n판정: {verdict}\n{CHELIPED_INSTALL}\n실행: {_cheliped_cmd(url)}\n"
-            "다단계: goto→observe로 요소 번호 확인 후 "
-            '[{"cmd":"click","args":[번호]}] 또는 [{"cmd":"scrape"}]로 목록·상세·페이지네이션 처리.')
-
-
-
-# ══════════ 국립중앙도서관 디지털 컬렉션 수집기 (v1.5.0) ══════════
-# 6개 컬렉션 라우팅: 주제별·신문아카이브·관보·전시·코리안메모리·해외한국관련자료
-_NLK_COLL = {
-    "total":        ("전체 소장자료",           "https://www.nl.go.kr/NL/contents/search.do?srchTarget=total&kwd=", True),
-    "subject":      ("주제별컬렉션",             "https://www.nl.go.kr/NL/contents/N20103000000.do", True),
-    "newspaper":    ("대한민국신문아카이브",       "https://www.nl.go.kr/newspaper/search_list.do?keyword=", False),
-    "gwanbo":       ("관보",                    "https://www.nl.go.kr/NL/contents/N20301000000.do", True),
-    "exhibit":      ("전시컬렉션(온라인전시)",      "https://www.nl.go.kr/NL/contents/N20104000000.do", False),
-    "koreanmemory": ("코리안메모리",             "https://nl.go.kr/koreanmemory/", False),
-    "overseas":     ("해외 한국관련자료",         "https://www.nl.go.kr/NL/contents/N20401010000.do", True),
-}
-_NLK_NOTE = {
-    "newspaper":    "1883–1960년 고신문 108종(기사 868만·색인 1,647만). 저작권 만료 — 출처(국립중앙도서관) 표기 시 자유이용.",
-    "koreanmemory": "구술·사진·기록으로 엮은 큐레이션 아카이브 — 키워드보다 주제 브라우징에 적합.",
-    "exhibit":      "온라인 전시(서사형) — 키워드 검색보다 전시 목록 브라우징 권장.",
-    "overseas":     "해외 소재 한국 관련 자료 목록화 — 소장기관·마이크로필름 정보 확인.",
-    "gwanbo":       "대한제국·조선총독부·대한민국 관보 원문 — 법령·서임·고시 1차 사료.",
-    "subject":      "국립중앙도서관이 주제별로 선별한 디지털 컬렉션.",
-    "total":        "국립중앙도서관 전체 소장자료(단행본·고서·학위논문·디지털화 자료 등).",
-}
-
-
-@mcp.tool()
-def nlk_search(query: str, collection: str = "total", max_results: int = 15) -> str:
-    """국립중앙도서관(nl.go.kr) 디지털 컬렉션 검색. collection 값:
-    'total'(전체 소장자료)·'subject'(주제별컬렉션)·'newspaper'(대한민국신문아카이브 1883-1960 고신문,
-    저작권만료 자유이용)·'gwanbo'(관보)·'exhibit'(전시컬렉션/온라인전시)·'koreanmemory'(코리안메모리)·
-    'overseas'(해외 한국관련자료). 통합 OpenAPI(search.do)는 data 발급키를 환경변수 NLK_API_KEY로
-    설정하면 total/subject/gwanbo/overseas에서 자동 검색(www.nl.go.kr Open API 신청). 키가 없거나
-    신문·전시·코리안메모리 등 JS/큐레이션 사이트는 브라우저 열기 URL + cheliped 스크래핑 명령 반환."""
-    c = collection.strip().lower()
-    if c not in _NLK_COLL:
-        return "collection 값: " + ", ".join(_NLK_COLL.keys())
-    name, base, api_ok = _NLK_COLL[c]
-    open_url = (base + _up.quote(query)) if base.endswith(("kwd=", "keyword=")) else base
-    note = _NLK_NOTE.get(c, "")
-    key = os.environ.get("NLK_API_KEY")
-
-    if api_ok and key:
-        api = ("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key)
-               + "&apiType=xml&srchTarget=total&kwd=" + _up.quote(query)
-               + f"&pageSize={min(max_results,50)}&pageNum=1")
-        try:
-            xml = _http_text(api, timeout=30)
-        except Exception as e:
-            xml = ""
-            err = str(e)
-        else:
-            err = ""
-        if xml and "<error>" not in xml:
-            def _t(block, t):
-                m = re.search(rf"<{t}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{t}>", block, re.S)
-                return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
-            tot = _t(xml, "total") or "?"
-            items = re.findall(r"<item>(.*?)</item>", xml, re.S)
-            lines = [f"- {_t(b,'titleInfo')[:90]} / {_t(b,'authorInfo')[:24]} "
-                     f"({_t(b,'pubYearInfo')}) [{_t(b,'typeName')[:14]}] {_t(b,'detailLink')}"
-                     for b in items[:max_results]]
-            return (f"국립중앙도서관 · {name} '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)")
-                    + f"\n※ {note}")
-        if "<error>" in xml:
-            m = re.search(r"<msg>(.*?)</msg>", xml)
-            return (f"NLK OpenAPI 오류: {m.group(1) if m else '알수없음'} — NLK_API_KEY 확인.\n"
-                    f"브라우저 열기: {open_url}")
-
-    # 폴백: 브라우저 + cheliped
-    keyed = "인증키 미설정 — www.nl.go.kr Open API 신청 후 NLK_API_KEY 설정 시 자동 검색. " if (api_ok and not key) else ""
-    return (f"국립중앙도서관 · {name} '{query}'\n{keyed}브라우저 열기: {open_url}\n※ {note}\n"
-            f"{CHELIPED_INSTALL}\n실행: {_cheliped_cmd(open_url)}")
-
-
-
-# ══════════ 정보공개포털 · 서울기록원 수집기 (v1.6.0) ══════════
-def _cheliped_search(url, query):
-    step2 = [{"cmd": "fill", "args": ["<검색창번호>", query]},
-             {"cmd": "click", "args": ["<버튼번호>"]}, {"cmd": "scrape"}]
-    return (f"{CHELIPED_INSTALL}\n1) 관찰: {_cheliped_cmd(url)}\n"
-            "2) 검색: node cheliped-cli.mjs '" + json.dumps(step2, ensure_ascii=False)
-            + "'\n   (1)의 observe 결과에서 얻은 번호로 <검색창번호>·<버튼번호>를 치환)")
-
-
-@mcp.tool()
-def foia_search(query: str) -> str:
-    """대한민국 정보공개포털(open.go.kr) 검색 — 원문정보공개(정부기관이 공개한 결재문서 원문
-    전문검색)·사전정보공표·정보공개청구 사례. 로그인·JS 기반 포털이라 keyless API가 없어
-    브라우저 열기 URL과 cheliped 스크래핑(검색창 입력→목록) 2단계 명령을 반환한다.
-    특정 기관 원문목록은 data.go.kr '원문정보공개' API(기관별)로도 제공."""
-    url = "https://www.open.go.kr/com/main/mainView.do"
-    return (f"정보공개포털 '{query}'\n브라우저 열기: {url}\n"
-            "※ 원문정보공개=정부 결재문서 원문 전문검색 · 사전정보공표 · 정보공개청구 사례. "
-            "미공개 문서는 포털에서 정보공개청구로 요청 가능.\n"
-            + _cheliped_search(url, query))
-
-
-@mcp.tool()
-def seoul_archives_search(query: str, max_results: int = 15) -> str:
-    """서울기록원(archives.seoul.go.kr) 기록물 카탈로그 검색 — 서울시 행정기록·시정사진·
-    구술·시장 결재문서 등 지방기록물. 카탈로그가 JavaScript로 렌더되므로 브라우저 열기 URL과
-    cheliped 스크래핑 명령을 반환한다. 전문검색 파라미터 search_api_fulltext 사용."""
-    url = "https://archives.seoul.go.kr/catalog?search_api_fulltext=" + _up.quote(query)
-    hint = ""
-    try:
-        html = _http_text(url, timeout=20)
-        m = re.search(r"([\d,]{1,9})\s*건", html)
-        hint = (f"약 {m.group(1)}건 감지. " if m else "직접 조회는 빈 목록(JS 렌더 확인). ")
-    except Exception as e:
-        hint = f"(직접 조회 실패: {e}) "
-    return (f"서울기록원 '{query}'\n브라우저 열기: {url}\n{hint}"
-            f"JS 렌더 카탈로그이므로 목록·상세는 브라우저 스크래핑으로 추출:\n"
-            f"{CHELIPED_INSTALL}\n실행: {_cheliped_cmd(url)}\n"
-            "※ 지방기록물 저작권은 공공누리(KOGL) 유형 확인 후 이용.")
-
-
-
-# ══════════ 지방 정보공개·기록원 라우팅 수집기 (v1.7.0) ══════════
-# base 끝이 '=' 이면 키워드 직접검색(1단계), 아니면 포털(검색창 fill 2단계)
-_LOCAL_SRC = {
-    "seoul_opengov": ("서울정보소통광장(결재문서 원문공개)",
-                      "https://opengov.seoul.go.kr/sanction/list?srch_all=",
-                      "서울시 결재문서 원문 전문공개(2014~). 부서·기간 필터 가능. 저작권 공공누리 확인."),
-    "sen":           ("서울시교육청 정보공개(열린 서울교육)",
-                      "https://open.sen.go.kr/",
-                      "서울교육청 원문정보공개 결재문서(2014~)·사전정보공표. 미공개분은 정보공개청구."),
-    "gyeongnam":     ("경상남도기록원",
-                      "https://archives.gyeongnam.go.kr/main.web",
-                      "국내 최초 광역 지방기록원 — 경남도정 기록·구술·행정박물. 지역사 발굴 핵심."),
-}
-
-
-@mcp.tool()
-def local_gov_search(query: str, source: str) -> str:
-    """지방자치단체 정보공개·기록원 검색 라우팅. source 값:
-    'seoul_opengov'(서울정보소통광장 — 서울시 결재문서 원문공개)·
-    'sen'(서울특별시교육청 정보공개 '열린 서울교육' — 원문정보공개 결재문서)·
-    'gyeongnam'(경상남도기록원 — 광역 지방기록물). 모두 keyless API가 없는 JS 포털이라
-    브라우저 열기 URL과 cheliped 스크래핑 명령을 반환한다(결재문서 원문은 지역사·특정사건 발굴의 1차 사료)."""
-    src = source.strip().lower()
-    if src not in _LOCAL_SRC:
-        return "source 값: " + ", ".join(_LOCAL_SRC.keys())
-    name, base, note = _LOCAL_SRC[src]
-    if base.endswith("="):  # 키워드 직접검색 → 1단계
-        url = base + _up.quote(query)
-        cmd = f"실행: {_cheliped_cmd(url)}"
-    else:                    # 포털 → 검색창 fill 2단계
-        url = base
-        cmd = _cheliped_search(url, query)
-    return (f"{name} '{query}'\n브라우저 열기: {url}\n※ {note}\n{cmd}")
-
-
-
-# ══════════ 전쟁기념관 아카이브 수집기 (v1.8.0) ══════════
-@mcp.tool()
-def warmemo_search(query: str) -> str:
-    """전쟁기념관 아카이브(archives.warmemo.or.kr) 검색 — 한국전쟁·근현대 군사사 기록·사진·유물·
-    구술·문서. 특히 6·25전쟁 참전·전투·부대 관련 국내 소장 사료. keyless API가 없는 JS 포털이라
-    브라우저 열기 URL과 cheliped 스크래핑(검색창 입력→목록) 명령을 반환한다. NARA·TNA의 해외
-    한국전쟁 기록과 교차검증하기 좋은 국내 1차 소스."""
-    url = "http://archives.warmemo.or.kr/index.do"
-    return (f"전쟁기념관 아카이브 '{query}'\n브라우저 열기: {url}\n"
-            "※ 한국전쟁·군사사 기록·사진·유물·구술. 6·25 참전·전투·부대 사료 — 해외(NARA·TNA)와 교차검증.\n"
-            + _cheliped_search(url, query))
-
+        verdict = f"robots 미확인({e})"
+    return (f"{url}\n판정: {verdict}\n"
+            "권장: 에이전트 브라우저 도구로 이 URL을 열고, 결과 목록의 제목·링크·연대를 표로 정리한 뒤 "
+            "report_template으로 HTML 보고서화. 과도한 요청은 피할 것.")
 
 
 if __name__ == "__main__":
