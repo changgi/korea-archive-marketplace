@@ -1,6 +1,7 @@
 # 🇰🇷 Korea Archive — Claude Plugin Marketplace
 
-**Discover Korea-related records and films (1860–1960) hidden in foreign archives — NARA, TNA, and archive.org — directly from Claude.**
+**국내외 14곳의 아카이브에 흩어진 한국 관련 기록(1860–1960)을 클로드에서 한 대화로 발굴합니다.**
+**Discover Korea-related records scattered across 14 archives — worldwide and in Korea — from a single Claude conversation.**
 
 [English](#english) · [한국어](#한국어) · [Gallery / 카드뉴스](#gallery--카드뉴스)
 
@@ -9,155 +10,120 @@
 /plugin install korea-archive@korea-archive-marketplace
 ```
 
+웹·모바일(클로드 웹앱)은 MCP 커넥터로 연결: 설정 → 커넥터 → 커스텀 커넥터 추가 →
+`https://korea-archive-mcp.vercel.app/api/mcp`
+
+> **v1.10** — 국내 아카이브 9곳 추가 · 국내 사이트 자동 브라우징(서버가 직접 조회) · HTML 발굴 보고서 자동 생성 · 키 없는 기관은 웹검색 폴백. **총 18개 도구.**
+
 ---
 
 ## English
 
 ### Why this exists
 
-Millions of records about Korea sit in the U.S. National Archives (NARA), the U.K. National Archives (TNA), and archive.org — but a large share is effectively *undiscoverable* with ordinary search. The reason is a **structural mismatch**: the records were cataloged with the vocabulary of their own era.
+Millions of records about Korea sit in foreign archives (NARA, TNA, archive.org, Gallica, Europeana) **and** in Korean institutions — but a large share is effectively *undiscoverable* with ordinary search. The reason is a **structural mismatch**: records were cataloged in the vocabulary of their era.
 
-Searching **"Seoul"** misses most colonial-period material, because in 1910–1945 the city was indexed as **"Keijo"**. Busan was *Fusan*, Incheon was *Jinsen* or *Chemulpo*, and Korea itself was often *Chosen*, *Tyosen*, or *Corea*. Diplomatic files hide behind formulae like *"the Korean question"*, and entire file series are reachable only through department codes such as `FO 371` + `FK1015`.
+Searching **"Seoul"** misses most colonial-period material, because in 1910–1945 the city was indexed as **"Keijo"**. Busan was *Fusan*, Incheon *Jinsen*/*Chemulpo*, and Korea itself often *Chosen*, *Tyosen*, or *Corea*. Korean sites add a second wall — JavaScript, logins, and API keys — that blocks automated collection.
 
-This plugin packages a **peer-validated discovery methodology** — Song (2026), National Archives of Korea: Recall 93.0%, Precision 93.3%, F1 = 0.931 against a citation-anchored reference set — into tools and knowledge that Claude uses automatically.
+This plugin packages a **peer-validated discovery methodology** — Song (2026): Recall 93.0%, Precision 93.3%, F1 = 0.931 — into 18 tools Claude uses automatically, now spanning both overseas and domestic archives.
 
-### What's inside
+### The 14 archives / 18 tools
 
-| Component | Description |
+**Overseas (5)**
+
+| Tool | Source |
 |---|---|
-| **Skill** `korea-archive-discovery` | Search strategy Claude applies automatically: historical spelling variants (40+ place-name groups), broad-to-narrow phasing, TNA department codes, adjacent-piece mining, rights triage |
-| **MCP tool** `tna_search` | Search the U.K. National Archives Discovery catalog (no key needed) |
-| **MCP tool** `tna_adjacent_mine` | *Adaptive Mining* — crawl piece numbers around a verified reference to surface uncatalogued Korea files |
-| **MCP tool** `nara_search` | Search the U.S. NARA catalog, with Record Group cross-filtering (free API key) |
-| **MCP tool** `ia_search` / `ia_metadata` | Search archive.org and inspect item files/sizes before download |
-| **MCP tool** `gallica_search` | Search Gallica, the Bibliothèque nationale de France (no key). The richest source for late-Joseon French missionary and diplomatic documents and photographs — 76,000+ hits for *"Corée"* |
-| **MCP tool** `europeana_search` | Search Europeana — 4,000+ institutions across 58 countries (free API key). Cross-checks European holdings: German *Welt im Film*, Italian Luce, and more |
-| **MCP tool** `query_bank` | Browse 1,943 validated keywords in 44 groups (place variants, battles, persons, indirect terms…) |
-| **MCP tool** `judge_rights` | First-pass copyright triage (A/B publishable · C permission needed · D unknown) |
+| `tna_search` | U.K. National Archives (Discovery) — no key. Reference codes auto-quoted. |
+| `tna_adjacent_mine` | *Adaptive Mining* — crawl piece numbers around a verified reference to surface uncatalogued files. |
+| `nara_search` | U.S. NARA catalog, Record Group cross-filter (free `NARA_API_KEY`). |
+| `ia_search` / `ia_metadata` | archive.org search + file/size inspection before download. |
+| `gallica_search` | Bibliothèque nationale de France — no key. Late-Joseon French missionary & diplomatic sources. |
+| `europeana_search` | 4,000+ institutions in 58 countries. Works out of the box (shared demo key); `EUROPEANA_API_KEY` for heavy use. |
 
-### Install
+**Domestic / 국내 (9)** — server-side auto-browse; keyless institutions hand off to the agent's web search.
 
-**Claude Code**
+| Tool | Source |
+|---|---|
+| `nedb_search` | 국사편찬위 한국사데이터베이스 — 11M+ primary sources (Sillok, Seungjeongwon, POW reports…). |
+| `archives_search` | 국가기록원 (OpenAPI, RSS) — free `ARCHIVES_API_KEY` from data.go.kr (15000153). |
+| `nlk_search` | 국립중앙도서관 — 6 collections incl. 대한민국신문아카이브 (1883–1960 old newspapers, PD). `NLK_API_KEY` optional. |
+| `seoul_archives_search` | 서울기록원 — Seoul municipal records / photos / oral histories. |
+| `foia_search` | 정보공개포털 (open.go.kr) — released decision documents & FOIA requests. |
+| `local_gov_search` | 서울정보소통광장 (city decision documents) · 서울시교육청 · 경상남도기록원. |
+| `warmemo_search` | 전쟁기념관 아카이브 — Korean War / military-history records, photos, oral histories. |
 
-```
-/plugin marketplace add changgi/korea-archive-marketplace
-/plugin install korea-archive@korea-archive-marketplace
-```
+**Utility (across all)**
 
-**Claude Desktop / Cowork** — Customize menu → Plugins tab → “+” in Personal plugins → *Add marketplace* → enter `changgi/korea-archive-marketplace` → install **korea-archive**.
+| Tool | Purpose |
+|---|---|
+| `query_bank` | 1,943 validated keywords (spelling variants, battles, romanized names). |
+| `judge_rights` | First-pass rights triage A/B/C/D with legal basis. |
+| `scrape_plan` | robots check + browser-tool guidance for JS/blocked sites. |
+| `report_template` | Turn finished findings into a styled HTML discovery report (tables · reproducible queries · rights). |
 
-**Requirements** — the skill works with zero setup. For the MCP tools: Python 3.10+ and `pip install mcp`. Optional keys: a free NARA API key (email Catalog_API@nara.gov) enables `nara_search`, and a free Europeana key (register at apis.europeana.eu, set `EUROPEANA_API_KEY`) enables `europeana_search`. TNA, archive.org, and **Gallica** need no key at all.
+Plus the **skill** `korea-archive-discovery`: search strategy Claude applies automatically (spelling variants, broad→narrow phasing, TNA codes, adjacent mining, domestic cross-check, rights triage, HTML report).
 
-### How to use — just talk to Claude
+### Auto-browsing (v1.9–v1.10)
 
-Once installed, plain conversation triggers everything. Real examples, grouped by who you are:
+Korean sites are JS-rendered or login-gated. The domestic tools now **fetch and parse each site server-side**, returning real results:
+- 서울정보소통광장 → the actual decision-document list (title + link)
+- 전쟁기념관 → hit counts by category
+- 한국사DB → which DBs contain the term · 서울기록원 → matching collections
+- 국가기록원 / 국립중앙도서관 → OpenAPI results when a key is set
 
-**Historians and graduate students**
+When a source needs a key that isn't set, the tool **instructs Claude to gather the results via web search** instead of dead-ending.
 
-> “Find TNA cabinet papers about the Korean armistice negotiations.”
-> “Search NARA RG 242 for captured Japanese newsreels about Chosen.”
-> “What did the British Foreign Office file under FK1015 in 1950?”
-> “Mine the pieces around `FO 371/84053` and list anything Korea-related.”
-> — the last one reproduces a validated result: the seed resolves to *“Annual political report for Korea, 1949. Code FK file 1011”*, and adjacent pieces yield the 1950 general-election and personality reports.
+### Optional server keys (env vars)
 
-**Documentary and film researchers**
-
-> “Find downloadable footage of the September 1945 surrender ceremony in Seoul.”
-> “Search archive.org for `identifier:111-adc*` items about refugees.”
-> “Show me the original file list and sizes for item `111-adc-9888` before I download.”
-> “Is Universal Newsreel footage of Korea public domain?” — `judge_rights` explains the MCA deed of gift and flags third-party content risk.
-
-**Korean-war family history / veterans’ descendants**
-
-> “My grandfather served with the Gloucestershire Regiment in Korea — find the war diaries.” (TNA `WO 281` series)
-> “Find records of the Turkish Brigade at Kunu-ri.”
-> “Search for POW records from Koje-do camp.” (NARA RG 389 cross-search)
-
-**European sources — French and pan-European (new in v1.1)**
-
-> “Search Gallica for French missionary accounts of Korea.” — real result: *En Corée. Les Missionnaires français* (1896), with ark links
-> “Find late-19th-century French diplomatic views on Korean independence.” (*La Corée, indépendante, russe ou japonaise*, 1898)
-> “Search Europeana for Korean War footage across European archives.” (`TYPE:VIDEO`)
-> “Cross-check German newsreel coverage of Korea in Europeana.” (*Korea-Krieg*)
-> French search terms the skill applies for you: *Corée, Coréens, guerre de Corée, Séoul, Tchosen, missionnaires Corée*.
-
-**Digital humanities / data work**
-
-> “Give me the full list of historical spelling variants for Korean port cities.” (`query_bank`, group G-12)
-> “Which NARA Record Groups should I sweep for Korea material, with which keywords?” (`query_bank`, topic RG — 28 groups, 63 precision queries)
-> “List the TNA strategy layers and one example query for each.” (`query_bank`, topic TNA — 14 layers, 1,222 generated queries)
-
-**Search-strategy quick reference** (what the skill applies for you)
-
-| Instead of… | Also search… | Why |
-|---|---|---|
-| Seoul | **Keijo**, Kyongsong | Japanese-era official name |
-| Busan | **Fusan**, Pusan | colonial / U.S. military spelling |
-| Incheon | **Jinsen**, Chemulpo, Inchon | era-dependent |
-| Korea | **Chosen**, Tyosen, **Corea** | pre-1945 / pre-1900 indexing |
-| Jangjin Lake | **Chosin Reservoir** | U.S. military name |
-| “Korea policy” | **“Korean question”** | diplomatic formula in FO/State files |
-
-### Rights notice (important)
-
-`judge_rights` gives a *first-pass* triage only. U.S. federal works (RG 111 Signal Corps etc.) are treated as public domain under 17 U.S.C. §105; Universal Newsreel rights were deeded to the U.S. government; but **RG 242 seized foreign films are class D (status unknown — NARA does not certify, 36 C.F.R. 1254.62)** and commercial reuse needs legal review. Always confirm before publishing.
-
-### Citation
-
-Methodology and keyword corpus: Song, Chang-Gi (2026). *An AI-based Systematic Methodology for Discovering and Semantically Extracting Korea-related Records from Foreign Archives.* National Archives of Korea. Companion repo: `korea-records-keywords` v1.0.0 (MIT).
-
-License: MIT. Please respect archive rate limits (the tools pace themselves; NARA keys are capped at 10,000 queries/month).
+`NARA_API_KEY` · `EUROPEANA_API_KEY` · `ARCHIVES_API_KEY` (data.go.kr 15000153) · `NLK_API_KEY` (www.nl.go.kr Open API). All optional — most tools work without any key.
 
 ---
 
 ## 한국어
 
-### 왜 만들었나
+### 왜 필요한가
 
-미국 NARA·영국 TNA·archive.org에는 한국 관련 기록이 수백만 건 잠들어 있지만, 상당수는 일반 검색으로는 사실상 찾을 수 없습니다. 이유는 **구조적 부정합** — 기록이 당대의 어휘로 색인되었기 때문입니다.
+미국 NARA, 영국 TNA, archive.org, 프랑스 Gallica, 유럽 Europeana — 그리고 국내 기관에 우리 근현대사 기록이 수백만 건 잠들어 있지만, 상당수는 일반 검색으로는 **찾을 수 없습니다**. 기록이 당대의 언어로 색인됐기 때문입니다(구조적 부정합).
 
-**"Seoul"**로 검색하면 일제강점기 자료 대부분을 놓칩니다. 1910–1945년의 서울은 **"Keijo(京城)"**로 색인되어 있습니다. 부산은 *Fusan*, 인천은 *Jinsen·Chemulpo*, 한국은 *Chosen·Tyosen·Corea*였습니다. 외교문서는 *"Korean question"* 같은 정형구 뒤에, 문서군 전체는 `FO 371`+`FK1015` 같은 부처 코드 뒤에 숨어 있습니다.
+**"Seoul"**로 검색하면 식민기 자료 대부분을 놓칩니다 — 1910~45년 서울은 **"Keijo"**로 색인됐으니까요. 부산은 *Fusan*, 인천은 *Jinsen·Chemulpo*, 한국은 *Chosen·Corea*. 국내 사이트는 자바스크립트·로그인·API 키라는 두 번째 벽까지 있습니다.
 
-이 플러그인은 국가기록원 논문(송창기 2026 — 재현율 93.0%, 정밀도 93.3%, F1 0.931로 실증)의 **검증된 발굴 방법론**을 Claude가 자동으로 쓰는 도구와 지식으로 담았습니다.
+이 플러그인은 검증된 발굴 방법론(송창기 2026, F1 = 0.931)을 클로드가 자동으로 쓰는 **18개 도구**로 담았고, 이제 해외와 국내 아카이브를 모두 아우릅니다.
 
-### 구성
+### 자동 브라우징 (v1.9–v1.10)
 
-스킬 1종(검색 전략 — 표기 변형 40+ 지명군, 넓게→좁게 단계 설계, TNA 부처코드, 인접 확장 채굴, 권리 분류)과 MCP 도구 9종(`tna_search`·`tna_adjacent_mine`·`nara_search`·`ia_search`·`ia_metadata`·`gallica_search`·`europeana_search`·`query_bank`·`judge_rights`). 위 영어 표와 동일합니다.
-
-v1.1 신규 — **Gallica**(프랑스 국립도서관, 키 불요): 구한말 프랑스 선교사·외교 문헌과 사진의 최대 보고("Corée" 76,000+건 실측). **Europeana**(58개국 4,000+ 기관 통합, 무료 키): 독일 Welt im Film·이탈리아 Luce 등 유럽 소장분 교차 확인.
-
-> "Gallica에서 구한말 프랑스 선교사 기록 찾아줘" — 실측: *En Corée. Les Missionnaires français* (1896)
-> "Europeana에서 한국전쟁 영상 찾아줘" (TYPE:VIDEO)
+국내 사이트는 JS·로그인 기반이라, 국내 도구가 **서버에서 각 사이트를 직접 조회·파싱해 실제 결과**를 돌려줍니다(서울정보소통광장=결재문서 목록, 전쟁기념관=카테고리별 건수, 한국사DB=매칭 DB, 서울기록원=매칭 컬렉션, 국가기록원·국립중앙도서관=키 설정 시 OpenAPI). 키가 없는 기관은 **클로드가 웹검색으로 결과를 가져오도록 지시**합니다.
 
 ### 설치
 
-**Claude Code** — 위의 두 명령 그대로.
-**데스크탑 앱/Cowork** — Customize 메뉴 → Plugins 탭 → Personal plugins의 "+" → *Add marketplace* → `changgi/korea-archive-marketplace` 입력 → **korea-archive** 설치.
-**준비물** — 스킬은 설정 없이 즉시 작동. MCP 도구는 Python 3.10+ 와 `pip install mcp`. NARA 검색만 무료 API 키 필요(Catalog_API@nara.gov 에 이름·이메일로 신청). TNA·archive.org는 키 불요.
+- **플러그인**(데스크탑·Claude Code):
+  ```
+  /plugin marketplace add changgi/korea-archive-marketplace
+  /plugin install korea-archive@korea-archive-marketplace
+  ```
+- **MCP 커넥터**(웹·모바일): 설정 → 커넥터 → 커스텀 커넥터 추가 → `https://korea-archive-mcp.vercel.app/api/mcp`
 
-### 사용법 — 그냥 말을 거세요
+### 사용 예
 
-**역사 연구자·대학원생**
+- "서울정보소통광장에서 위안부 결재문서 찾아줘" → 서울시 결재문서 원문 목록
+- "전쟁기념관에서 인천상륙작전 자료 찾아줘" → 카테고리별 건수
+- "Gallica에서 한국은행 찾아줘" → 표기 6종 총 273건
+- "찾은 결과 HTML 보고서로 만들어줘" → 표·재현쿼리·권리등급 보고서
 
-> "TNA에서 정전협상 관련 영국 내각 문서 찾아줘"
-> "NARA RG 242에서 노획 일본 뉴스릴 검색해줘"
-> "`FO 371/84053` 주변을 마이닝해서 한국 관련 파일 찾아줘"
-> — 마지막 예시는 실증된 결과를 재현합니다: 시드는 *"Annual political report for Korea, 1949 (Code FK 1011)"*이고, 인접 piece에서 1950년 총선·인물 보고서가 나옵니다.
+라이선스: MIT · 방법론: 공업연구사 송창기.
 
-**다큐·영상 제작자**
+---
 
-> "1945년 9월 서울 항복식 다운로드 가능한 영상 찾아줘"
-> "`111-adc-9888` 원본 파일 목록과 크기 확인해줘"
-> "유니버설 뉴스릴 한국 영상은 퍼블릭 도메인이야?"
+## Gallery / 카드뉴스
 
-**참전용사 후손·가족사 연구**
+능력·국내 소스·자동 브라우징·실전(라이브)·설치를 담은 카드 18장 (`docs/cards/`).
 
-> "할아버지가 글로스터 연대로 참전하셨어 — 전쟁일지 찾아줘" (TNA `WO 281`)
-> "군우리 전투 터키여단 기록 찾아줘"
-> "거제도 포로수용소 기록 검색해줘" (NARA RG 389 교차)
+| | | |
+|---|---|---|
+| ![01](docs/cards/card_01.png) | ![02](docs/cards/card_02.png) | ![03](docs/cards/card_03.png) |
+| ![04](docs/cards/card_04.png) | ![05](docs/cards/card_05.png) | ![06](docs/cards/card_06.png) |
+| ![07](docs/cards/card_07.png) | ![08](docs/cards/card_08.png) | ![09](docs/cards/card_09.png) |
+| ![10](docs/cards/card_10.png) | ![11](docs/cards/card_11.png) | ![12](docs/cards/card_12.png) |
+| ![13](docs/cards/card_13.png) | ![14](docs/cards/card_14.png) | ![15](docs/cards/card_15.png) |
+| ![16](docs/cards/card_16.png) | ![17](docs/cards/card_17.png) | ![18](docs/cards/card_18.png) |
 
-**디지털 인문학·데이터 작업**
-
-> "구한말(G-07) 키워드 세트 보여줘"
-> "NARA RG 교차 매핑 28개 보여줘"
-> "TNA 14개 전
+01 표지 · 02 문제 · 03 능력 4층 · 04 해외 5곳 · 05 국내 9곳(NEW) · 06 자동 브라우징(NEW) · 07~11 실전 LIVE · 12 옛 표기 · 13 권리판정 · 14 플러그인 설치 · 15 MCP 커넥터 · 16 당신 차례 · 17 소개 · 18 GitHub.
