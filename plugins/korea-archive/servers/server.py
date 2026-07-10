@@ -465,14 +465,17 @@ def nlk_search(query: str, collection: str = "total", max_results: int = 15) -> 
                     return ""
                 lines = []
                 for it in items[:max_results]:
-                    title = pick(it, ["titleInfo", "title", "TITLE", "title_info"])
-                    if not title:
-                        title = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", it)).strip()
-                    author = pick(it, ["authorInfo", "author", "AUTHOR"])
-                    year = pick(it, ["pubYearInfo", "pubYear", "PUBLISH_PREDATE", "pub_year"])
-                    link = pick(it, ["detailLink", "DETAIL_LINK", "link"])
-                    lines.append("- " + title[:90] + (f" / {author[:24]}" if author else "")
-                                 + (f" ({year})" if year else "") + (f" {link}" if link else ""))
+                    title = pick(it, ["title_info", "titleInfo", "title"]) or \
+                        re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", it)).strip()
+                    typ = pick(it, ["type_name", "typeName"])
+                    pub = pick(it, ["pub_info", "author_info", "authorInfo"])
+                    year = pick(it, ["pub_year_info", "pubYearInfo"])
+                    lk = pick(it, ["org_link", "detail_link", "detailLink"])
+                    if lk.startswith("/"):
+                        lk = "https://www.nl.go.kr" + lk
+                    lines.append("- " + title[:80] + (f" [{typ}]" if typ else "")
+                                 + (f" · {pub[:20]}" if pub else "") + (f" ({year})" if year else "")
+                                 + (f" {lk}" if lk else ""))
                 return f"국립중앙도서관 · {name} '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)") + f"\n※ {note}"
             m = re.search(r"<msg>(.*?)</msg>", xml)
             return f"NLK OpenAPI 오류: {m.group(1) if m else '?'} — NLK_API_KEY 확인." + _browse(open_url)
