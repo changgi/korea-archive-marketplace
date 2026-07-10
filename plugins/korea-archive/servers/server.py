@@ -396,23 +396,26 @@ def archives_search(query: str, max_results: int = 10) -> str:
     key = os.environ.get("ARCHIVES_API_KEY")
     portal = "https://www.archives.go.kr/next/newsearch/listSubjectDescription.do?query=" + _up.quote(query)
     if key:
-        api = ("https://search.archives.go.kr/openapi/search.arc?serviceKey=" + _up.quote(key)
+        sk = key if ('%' in key) else _up.quote(key)  # data.go.kr Encoding키는 그대로, Decoding키는 인코딩
+        api = ("https://apis.data.go.kr/1741050/openapi/searcharc?serviceKey=" + sk
                + "&query=" + _up.quote(query) + f"&start=1&limit={min(max_results, 50)}")
         try:
             xml = _http_text(api, 20)
-            if "searchError" not in xml:
+            if "searchError" not in xml and "<item>" in xml:
                 def t(bl, x):
                     m = re.search(rf"<{x}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{x}>", bl, re.S)
                     return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
-                tot = t(xml, "totalCount") or t(xml, "totalResults") or "?"
+                tot = t(xml, "total") or "?"
                 items = re.findall(r"<item>(.*?)</item>", xml, re.S)
-                lines = [f"- {t(i,'title')[:90]} ({t(i,'produceYear') or t(i,'pubDate')[:16]}) {t(i,'link')}"
+                lines = [f"- {t(i,'title')[:90]} ({t(i,'prod_year')}) · {t(i,'prod_name')[:20]} "
+                         f"[{'공개' if t(i,'is_open')=='1' else '비공개'}] {t(i,'link')}"
                          for i in items[:max_results]]
-                return f"국가기록원 '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)") + "\n공공누리 유형 확인 후 이용."
+                return (f"국가기록원 '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)")
+                        + "\n공공누리(KOGL) 유형 확인 후 이용. 비공개 항목은 정보공개청구 대상.")
             m = re.search(r"<message>(.*?)</message>", xml, re.S)
-            return f"국가기록원 API 오류: {m.group(1).strip() if m else '?'} — 키·쿼터 확인." + _browse(portal)
+            return _agent_browse("국가기록원", query, portal, f"API 오류: {m.group(1).strip() if m else '결과 없음'}")
         except Exception as e:
-            return f"국가기록원 API 오류({e})." + _browse(portal)
+            return _agent_browse("국가기록원", query, portal, f"API 오류({e})")
     return _agent_browse("국가기록원", query, portal,
                          "OpenAPI 키(ARCHIVES_API_KEY, data.go.kr 15000153) 미설정")
 
@@ -455,8 +458,21 @@ def nlk_search(query: str, collection: str = "total", max_results: int = 15) -> 
                     return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
                 tot = t(xml, "total") or "?"
                 items = re.findall(r"<item>(.*?)</item>", xml, re.S)
-                lines = [f"- {t(i,'titleInfo')[:90]} / {t(i,'authorInfo')[:24]} ({t(i,'pubYearInfo')}) {t(i,'detailLink')}"
-                         for i in items[:max_results]]
+                def pick(bl, tags):
+                    for tg in tags:
+                        v = t(bl, tg)
+                        if v: return v
+                    return ""
+                lines = []
+                for it in items[:max_results]:
+                    title = pick(it, ["titleInfo", "title", "TITLE", "title_info"])
+                    if not title:
+                        title = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", it)).strip()
+                    author = pick(it, ["authorInfo", "author", "AUTHOR"])
+                    year = pick(it, ["pubYearInfo", "pubYear", "PUBLISH_PREDATE", "pub_year"])
+                    link = pick(it, ["detailLink", "DETAIL_LINK", "link"])
+                    lines.append("- " + title[:90] + (f" / {author[:24]}" if author else "")
+                                 + (f" ({year})" if year else "") + (f" {link}" if link else ""))
                 return f"국립중앙도서관 · {name} '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)") + f"\n※ {note}"
             m = re.search(r"<msg>(.*?)</msg>", xml)
             return f"NLK OpenAPI 오류: {m.group(1) if m else '?'} — NLK_API_KEY 확인." + _browse(open_url)
