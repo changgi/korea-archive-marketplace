@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "해외 소재 한국 기록 발굴 도구 마켓플레이스 — NARA·TNA·archive.org 발굴 플러그인",
-    "version": "1.2.1"
+    "version": "1.7.0"
   },
   "plugins": [
     {
       "name": "korea-archive",
       "source": "./plugins/korea-archive",
       "description": "해외 아카이브 한국 기록 발굴 — MCP 도구 9종(NARA·TNA·archive.org·Gallica·Europeana) + 검증된 검색 전략 스킬",
-      "version": "1.2.1",
+      "version": "1.7.0",
       "author": {
         "name": "Korea Archive Project"
       },
