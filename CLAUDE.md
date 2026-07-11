@@ -32,6 +32,35 @@ This repo contains the **same tool code in two places**. Understand this before 
 
 **When you change tool behavior, update it in `plugins/korea-archive/servers/server.py` (canonical) and keep the vendored `servers/{harvester,keywords,kla}/` in sync with their top-level counterparts.** A change to a single top-level module is not live in the plugin until the vendored copy is updated. The hosted Vercel connector must be redeployed to reflect server changes.
 
+## Keyword corpus & `query_bank`
+
+`keywords/` is the single source of truth for the validated query corpus, exposed to agents through the `query_bank` tool. The `topic` argument maps directly to the corpus data structures:
+
+- **`G-01`…`G-22`** — `keywords_common.py::COMMON_GROUPS`, the archive-neutral vocabulary layer (spelling variants, battles, romanized names), reused by both NARA and TNA modules.
+- **`N-01`…`N-07`** — `keywords_nara.py::NARA_GROUPS`, NARA-specific series/topic groups.
+- **`RG`** — `keywords_nara.py::RG_MAP`, ~28 Record Groups → (description, cross-filter keywords). This is what powers `nara_search`'s `record_group` cross-filter.
+- **`TNA`** — `keywords_tna.py::generate()`, the 14 strategy layers (1,222 queries) yielding `(layer_id, strategy, queries)`.
+
+Editing a group here changes tool output everywhere; keep the plugin's vendored `servers/keywords/` copy in sync.
+
+## Rights triage classes (`kla/ledger.py::auto_rights`)
+
+`judge_rights` and the ledger both call `auto_rights`, which returns one of four classes from `rg_series`/`archive`/`title`:
+
+- **B (releasable, presumed)** — U.S. federal works `RG 111/208/306/342/428/127` (17 U.S.C. §105; upgrade to **A** only when the catalog's Use Restriction reads "Unrestricted"); Universal Newsreel (`200-UN`, rights assigned to the U.S. government).
+- **C (permission needed)** — Korean rightsholders (`KOFA`, `KBS`).
+- **D (status unknown — never publish)** — `RG 242` captured foreign records (origin-country rights may survive; 36 CFR 1254.62), and anything unmatched (the default). A human finalizes per the report's §30 5-step flow before any release.
+
+## Paper ↔ implementation map
+
+The `harvester/` and `collector/` READMEs cross-reference Song (2026) sections to code — useful when reasoning about *why* a stage exists:
+
+- **§3.5 TNA 14 strategy layers** → `harvester/tna.py::run_layers()`; **T-12/13 citation trace + adjacency** → `tna.py::adaptive_mine()` (also the `tna_adjacent_mine` tool).
+- **§4 NARA 10-stage pipeline** (P1–P8 recall → P9 RG-cross precision → P10 merge) → `harvester/nara.py`.
+- **§6 LLM 4-layer semantic extraction (source isolation)** → `harvester/extract_llm.py`.
+- **§12 search log / reproducibility** and **triple-key dedup** → `harvester/util.py` (`SearchLog`, `Dedup`).
+- **§25–§32 acquisition execution** (17-field ledger, rights auto-triage, link re-verification, monitoring, dashboard) → `collector/kla/`.
+
 ## Commands
 
 No build step, no test suite. Pure Python 3.10+ standard library (except optional `mcp` package and `ANTHROPIC_API_KEY`-gated LLM extraction).
