@@ -1,0 +1,6 @@
+# Keep source text LF so the two server.py copies stay byte-diffable
+*.py   text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.png  binary
