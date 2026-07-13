@@ -222,7 +222,7 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
 
 
 
-REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (11가지)
+REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (12가지)
 1. 파일명: [주제영문]_records_[연도범위].html — 조사 완료 시 기본 산출물로 생성
 2. header: "[주제] — 자료 발굴 보고" + meta(작성일 · 대상 시기 · 대상 아카이브)
 3. highlight 박스: 가장 중요한 발굴 1건 요약 (식별자·경위·구성·연구사적 의의)
@@ -233,7 +233,8 @@ REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (11가지)
 8. 권리 판정 절: 법적 근거(17 U.S.C. §105 · 36 CFR 1254.62 · Crown/OGL · domaine public) + '출판 전 인간 최종 확인 필수' + D등급 공개 금지
 9. footer: 방법론 한 줄 + '모든 링크는 [날짜] 기준 접속 확인됨'
 10. 링크는 도구 호출·열람으로 실재 확인한 URL만 기재 — 추정 URL 금지
-11. 민감 주제(위안부·포로·학살·희생자)는 피해자 존엄·윤리적 사용 문구를 권리 절에 포함"""
+11. 민감 주제(위안부·포로·학살·희생자)는 피해자 존엄·윤리적 사용 문구를 권리 절에 포함
+12. 그림(선택, 없으면 생략): 대표 이미지·지도·연표·다이어그램을 <figure>로 본문에 삽입해 시각화. 자료 사진은 <img src="data:image/jpeg;base64,…">로 base64 임베드(외부 이미지 링크 금지 — 단일 HTML 파일 자기완결), 연표·관계도 등 도해는 인라인 <svg>로 직접 작성 가능. 각 그림에 <figcaption>그림 N. 설명</figcaption>. figure는 어느 절 사이에나 배치 가능"""
 
 REPORT_TEMPLATE = """<!DOCTYPE html>
 <html lang="ko">
@@ -272,6 +273,10 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
   ul.src{columns:1; padding-left:20px; font-size:14px;}
   ul.src li{margin:6px 0;}
   .small{font-size:13px; color:var(--sub);}
+  figure{margin:22px 0;}
+  figure img{width:100%; display:block; border:1px solid var(--line);}
+  figure svg{width:100%; height:auto; display:block; border:1px solid var(--line); background:var(--card);}
+  figcaption{font-size:13px; color:var(--sub); margin-top:6px;}
   footer{margin-top:48px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--sub);}
 </style>
 </head>
@@ -282,6 +287,12 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
   <h1>{{제목}} — 자료 발굴 보고</h1>
   <div class="meta">작성일: {{작성일}} · 대상 시기: {{대상시기}} · 대상 아카이브: {{아카이브 목록}}</div>
 </header>
+
+<!-- 그림(선택) — 대표 이미지·지도·연표·다이어그램. 없으면 이 <figure> 블록 삭제. figure는 어느 절 사이에나 넣을 수 있음. -->
+<figure>
+  <img src="data:image/jpeg;base64,{{BASE64 이미지 데이터 — 외부 링크 금지, 자기완결}}" alt="{{대체 텍스트}}">
+  <figcaption>그림 1. {{그림 설명}}</figcaption>
+</figure>
 
 <div class="highlight">
   <p><strong>핵심 발굴</strong> — {{가장 중요한 발굴 1건: 식별자·원제·경위·구성·연구사적 의의를 문단으로 요약}}</p>
