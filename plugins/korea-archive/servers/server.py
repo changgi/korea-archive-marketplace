@@ -527,8 +527,42 @@ def _c_nlk(q, n):
                     "id": _xtag(it, "type_name"), "url": lk})
     return out
 
+# nedb: 국사편찬위 한국사DB의 data.go.kr 공식 개방파일(KOGL)을 인덱싱해 웹 배치한 것을 검색 — robots 무관(라이브 스크래핑 없음).
+# NEDB_INDEX_URL 에 ingest-opendata.mjs로 만든 nedb_index.json(호스팅 URL) 지정 시 활성화.
+_nedb_idx = None
+_nedb_tried = False
+def _load_nedb_index():
+    global _nedb_idx, _nedb_tried
+    if _nedb_tried:
+        return _nedb_idx
+    _nedb_tried = True
+    url = os.environ.get("NEDB_INDEX_URL")
+    if not url:
+        return None
+    try:
+        d = http_json(url)
+        _nedb_idx = d if isinstance(d, list) else (d.get("records") if isinstance(d, dict) else None)
+    except Exception:
+        _nedb_idx = None
+    return _nedb_idx
+
+def _nedb_file_search(recs, q, n):
+    ql = q.lower()
+    out = []
+    for r in recs:
+        if ql in (r.get("title") or "").lower() or ql in (r.get("text") or "").lower():
+            out.append({"title": r.get("title") or "", "date": r.get("date") or "",
+                        "id": r.get("db") or "", "url": r.get("url") or ""})
+            if len(out) >= n:
+                break
+    return out
+
+def _c_nedb(q, n):
+    recs = _load_nedb_index()
+    return _nedb_file_search(recs, q, n) if recs else []
+
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
-            "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk}
+            "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb}
 
 
 @mcp.tool()
@@ -537,6 +571,13 @@ def nedb_search(query: str, db: str = "", max_results: int = 15) -> str:
     등장하는 DB(조선왕조실록·승정원일기·포로신문보고서·독립운동사 등) 목록과 열람 URL을 반환한다.
     조선~근현대 1차 사료 1,100만+ 건. 인명·기관명은 한자 원표기가 색인 정확도 높음."""
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
+    idx = _load_nedb_index()
+    if idx:  # NEDB_INDEX_URL 설정 시 공식 개방파일(KOGL) 인덱스 검색 — robots 무관, 라이브 스크래핑 없음
+        hits = _nedb_file_search(idx, query, max_results)
+        body = "\n".join(f"- [{h['id']}] {h['title'][:95]}" + (f" {h['url']}" if h['url'] else "") for h in hits) \
+            or "(0건 — 다른 표기(한자 원표기 등) 시도)"
+        return (f"한국사DB(공식 개방파일 인덱스) '{query}' — {len(hits)}건:\n" + body
+                + f"\n※ data.go.kr 공식 파일(KOGL) 기반 — robots 무관. 전체 통합검색(브라우저): {browse}")
     api = "https://db.history.go.kr/search/searchTotalResult.do?searchKeyword=" + _up.quote(query)
     try:
         b = _http_text(api, 15)
@@ -587,12 +628,13 @@ def archives_search(query: str, max_results: int = 10) -> str:
 
 
 @mcp.tool()
-def nlk_search(query: str, collection: str = "total", max_results: int = 15) -> str:
+def nlk_search(query: str, collection: str = "total", category: str = "", max_results: int = 15) -> str:
     """국립중앙도서관(nl.go.kr) 디지털 컬렉션 검색. collection: 'total'(전체 소장자료)·'subject'(주제별)·
     'newspaper'(대한민국신문아카이브 1883-1960 고신문, 저작권만료 자유이용)·'gwanbo'(관보)·'exhibit'(전시)·
     'koreanmemory'(코리안메모리)·'overseas'(해외 한국관련자료). NLK_API_KEY(www.nl.go.kr Open API)를 설정하면
-    total/subject/gwanbo/overseas 선택 시 서버가 Open API로 자동 검색한다(자동검색은 전체 소장자료 대상 —
-    컬렉션별 정밀검색은 반환된 열람 URL 사용). 큐레이션 컬렉션·키 없음은 해당 컬렉션 열람 URL을 반환."""
+    total/subject/gwanbo/overseas 선택 시 서버가 Open API로 자동 검색한다. category(자료유형: 도서·고문헌·
+    학위논문·잡지/학술지·신문·기사·멀티미디어)를 주면 전체 카탈로그 채널과 자료유형 정밀 채널을 함께 수집한다
+    (상호보완 이중수집). 큐레이션 컬렉션·키 없음은 해당 컬렉션 열람 URL을 반환."""
     COLL = {
         "total": ("전체 소장자료", "https://www.nl.go.kr/NL/contents/search.do?srchTarget=total&kwd=", True),
         "subject": ("주제별컬렉션", "https://www.nl.go.kr/NL/contents/N20103000000.do", True),
@@ -614,41 +656,62 @@ def nlk_search(query: str, collection: str = "total", max_results: int = 15) -> 
     note = NOTE.get(c, "")
     key = os.environ.get("NLK_API_KEY")
     if api_ok and key:
-        api = ("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key)
-               + "&apiType=xml&srchTarget=total&kwd=" + _up.quote(query)
-               + f"&pageSize={min(max_results, 50)}&pageNum=1")
+        base_api = ("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key)
+                    + "&apiType=xml&srchTarget=total&kwd=" + _up.quote(query)
+                    + f"&pageSize={min(max_results, 50)}&pageNum=1")
+
+        def t(bl, x):
+            m = re.search(rf"<{x}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{x}>", bl, re.S)
+            return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
+
+        def parse(xml):
+            tot = t(xml, "total") or "?"
+            items = re.findall(r"<item>(.*?)</item>", xml, re.S)
+
+            def pick(bl, tags):
+                for tg in tags:
+                    v = t(bl, tg)
+                    if v:
+                        return v
+                return ""
+            lines = []
+            for it in items[:max_results]:
+                title = pick(it, ["title_info", "titleInfo", "title"]) or \
+                    re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", it)).strip()
+                typ = pick(it, ["type_name", "typeName"])
+                pub = pick(it, ["pub_info", "author_info", "authorInfo"])
+                year = pick(it, ["pub_year_info", "pubYearInfo"])
+                lk = pick(it, ["org_link", "detail_link", "detailLink"])
+                if lk.startswith("/"):
+                    lk = "https://www.nl.go.kr" + lk
+                lines.append("- " + title[:80] + (f" [{typ}]" if typ else "")
+                             + (f" · {pub[:20]}" if pub else "") + (f" ({year})" if year else "")
+                             + (f" {lk}" if lk else ""))
+            return tot, lines
         try:
-            xml = _http_text(api, 20)
-            if "<error>" not in xml:
-                def t(bl, x):
-                    m = re.search(rf"<{x}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{x}>", bl, re.S)
-                    return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
-                tot = t(xml, "total") or "?"
-                items = re.findall(r"<item>(.*?)</item>", xml, re.S)
-                def pick(bl, tags):
-                    for tg in tags:
-                        v = t(bl, tg)
-                        if v: return v
-                    return ""
-                lines = []
-                for it in items[:max_results]:
-                    title = pick(it, ["title_info", "titleInfo", "title"]) or \
-                        re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", it)).strip()
-                    typ = pick(it, ["type_name", "typeName"])
-                    pub = pick(it, ["pub_info", "author_info", "authorInfo"])
-                    year = pick(it, ["pub_year_info", "pubYearInfo"])
-                    lk = pick(it, ["org_link", "detail_link", "detailLink"])
-                    if lk.startswith("/"):
-                        lk = "https://www.nl.go.kr" + lk
-                    lines.append("- " + title[:80] + (f" [{typ}]" if typ else "")
-                                 + (f" · {pub[:20]}" if pub else "") + (f" ({year})" if year else "")
-                                 + (f" {lk}" if lk else ""))
-                return (f"국립중앙도서관 자동검색(전체 소장자료) '{query}' — 총 {tot}건:\n"
-                        + ("\n".join(lines) or "(0건)")
-                        + f"\n※ 자동검색은 전체 카탈로그 대상. '{name}' 컬렉션 정밀검색: {open_url}"
-                        + (f"\n※ {note}" if note else ""))
-            m = re.search(r"<msg>(.*?)</msg>", xml)
-            return f"NLK OpenAPI 오류: {m.group(1) if m else '?'} — NLK_API_KEY 확인." + _browse(open_url)
+            # 이중채널 동시 수집: (A) 전체 소장자료 + (B) 자료유형(category) 정밀 — 상호보완
+            total_xml = _http_text(base_api, 20)
+            if "<error" in total_xml:
+                m = re.search(r"<msg>(.*?)</msg>", total_xml)
+                return f"NLK OpenAPI 오류: {m.group(1) if m else '?'} — NLK_API_KEY 확인." + _browse(open_url)
+            a_tot, a_lines = parse(total_xml)
+            out = (f"국립중앙도서관 자동검색(전체 소장자료) '{query}' — 총 {a_tot}건:\n"
+                   + ("\n".join(a_lines) or "(0건)"))
+            if category:
+                try:
+                    cat_xml = _http_text(base_api + "&category=" + _up.quote(category), 20)
+                except Exception:
+                    cat_xml = "<error/>"
+                if "<error" not in cat_xml:
+                    b_tot, b_lines = parse(cat_xml)
+                    out += (f"\n\n[② 자료유형 '{category}' 정밀 채널 — 총 {b_tot}건 (동시 수집)]\n"
+                            + ("\n".join(b_lines) or "(0건)") + "\n※ 전체+자료유형 이중채널(상호보완).")
+                else:
+                    out += f"\n(자료유형 '{category}' 채널 오류)"
+            else:
+                out += "\n※ 전체 카탈로그 대상. category 인자(신문·고문헌 등)로 자료유형 정밀 이중수집 가능."
+            out += f" '{name}' 컬렉션 정밀검색: {open_url}" + (f"\n※ {note}" if note else "")
+            return out
         except Exception as e:
             return f"NLK API 오류({e})." + _browse(open_url)
     why = ("OpenAPI 키(NLK_API_KEY, www.nl.go.kr Open API) 미설정" if (api_ok and not key)
@@ -766,9 +829,9 @@ def scrape_plan(url: str) -> str:
 @mcp.tool()
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> str:
     """여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk). 해외(tna·ia·gallica·europeana)는 키 불요, 국내
-    (nara·archives·nlk)는 서버 키 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된 record.
-    robots가 막은 사이트(nedb·opengov·서울기록원)는 미포함 — 전용 도구/브라우저 도구로."""
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb). 해외(tna·ia·gallica·europeana)는 키 불요, 국내
+    (nara·archives·nlk)는 서버 키, nedb는 NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처
+    표기 — 복수 출처는 교차확인된 record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로."""
     want = (list(_COLLECT.keys()) if sources.strip().lower() == "all"
             else [s.strip().lower() for s in sources.split(",") if s.strip().lower() in _COLLECT])
     if not want:
@@ -781,8 +844,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> s
              for it in items[:45]]
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
-            + "\n※ [출처] 복수 표기 = 교차확인된 record. 국내(nara·archives·nlk)는 서버 키 설정 시 자동 포함. "
-            "robots 차단 사이트(nedb·opengov·서울기록원)는 전용 도구/브라우저로.")
+            + "\n※ [출처] 복수 표기 = 교차확인된 record. 국내(nara·archives·nlk)는 서버 키, nedb는 "
+            "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저로.")
 
 
 @mcp.tool()
