@@ -7,7 +7,9 @@
       ],
       "env": {
         "NARA_API_KEY": "",
-        "EUROPEANA_API_KEY": ""
+        "EUROPEANA_API_KEY": "",
+        "ARCHIVES_API_KEY": "",
+        "NLK_API_KEY": ""
       }
     }
   }

@@ -1,7 +1,7 @@
 {
   "name": "korea-archive",
-  "version": "1.10.1",
-  "description": "해외 아카이브(NARA·TNA·archive.org·Gallica·Europeana)에서 한국 관련 기록·영상(1860~1960)을 발굴하는 도구와 검증된 검색 전략. TNA 검색·인접 확장(Adaptive Mining)·NARA RG 교차검색·쿼리 뱅크 44그룹·권리 등급 자동판정 제공. v1.2: 원격 서버 기본 연결 — Python 설치 불요, 설치 즉시 도구 9종 작동. 조사 결과를 HTML 발굴 보고서로 생성. 국내 아카이브(한국사DB·국가기록원)와 cheliped 브라우저 스크래핑 폴백 포함 국립중앙도서관 6개 컬렉션 포함 정보공개포털·서울기록원 포함 지방 정보공개·기록원(서울·교육청·경남) 포함 전쟁기념관 아카이브 포함.",
+  "version": "1.11.0",
+  "description": "국내외 14개 아카이브에서 한국 관련 기록·영상(1860~1960)을 발굴하는 MCP 도구 20종 + 검증된 검색 전략 스킬. 해외 5곳(NARA·TNA·archive.org·Gallica·Europeana): TNA 검색·인접 확장(Adaptive Mining)·NARA RG 교차검색·쿼리 뱅크 44그룹·권리 등급 자동판정. 국내 9곳(국사편찬위 한국사DB·국가기록원·국립중앙도서관·서울기록원·정보공개포털·서울정보소통광장·서울시교육청·경남기록원·전쟁기념관): 서버 사이드 자동 브라우징 + 3대 부정합 검증 키워드셋. cross_search로 여러 아카이브 동시 교차수집·병합, source_profile로 기관 자료·이용·활용구조 프로파일 제공. 원격 서버 기본 연결로 Python 설치 없이 즉시 작동하며, 조사 결과는 HTML 발굴 보고서로 생성.",
   "author": {
     "name": "Korea Archive Project"
   },

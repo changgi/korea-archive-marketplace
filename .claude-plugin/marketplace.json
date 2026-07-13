@@ -4,15 +4,15 @@
     "name": "Korea Archive Project"
   },
   "metadata": {
-    "description": "해외 소재 한국 기록 발굴 도구 마켓플레이스 — NARA·TNA·archive.org 발굴 플러그인",
-    "version": "1.10.1"
+    "description": "국내외 14개 아카이브에 흩어진 한국 관련 기록(1860–1960)을 발굴하는 마켓플레이스 — 해외 5곳(NARA·TNA·archive.org·Gallica·Europeana) + 국내 9곳(국사편찬위·국가기록원·국립중앙도서관·서울기록원·전쟁기념관 등). 여러 아카이브 동시 교차수집(cross_search)·기관 자료·이용·활용구조 프로파일(source_profile)·국내 3대 부정합 키워드셋 포함.",
+    "version": "1.11.0"
   },
   "plugins": [
     {
       "name": "korea-archive",
       "source": "./plugins/korea-archive",
-      "description": "해외 아카이브 한국 기록 발굴 — MCP 도구 9종(NARA·TNA·archive.org·Gallica·Europeana) + 검증된 검색 전략 스킬",
-      "version": "1.10.1",
+      "description": "국내외 14개 아카이브 한국 기록 발굴 — MCP 도구 20종(해외: NARA·TNA·archive.org·Gallica·Europeana / 국내: 국사편찬위·국가기록원·국립중앙도서관·서울기록원·정보공개포털·전쟁기념관 등 / 유틸: query_bank·judge_rights·report_template·cross_search(동시 교차수집)·source_profile(기관 프로파일)) + 검증된 검색 전략 스킬 + HTML 발굴 보고서 생성",
+      "version": "1.11.0",
       "author": {
         "name": "Korea Archive Project"
       },

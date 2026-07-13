@@ -13,7 +13,7 @@
 웹·모바일(클로드 웹앱)은 MCP 커넥터로 연결: 설정 → 커넥터 → 커스텀 커넥터 추가 →
 `https://korea-archive-mcp.vercel.app/api/mcp`
 
-> **v1.10** — 국내 아카이브 9곳 추가 · 국내 사이트 자동 브라우징(서버가 직접 조회) · HTML 발굴 보고서 자동 생성 · 키 없는 기관은 웹검색 폴백. **총 18개 도구.**
+> **v1.11** — `cross_search`(여러 아카이브 동시 교차수집·병합) · `source_profile`(기관 자료·이용·활용구조 프로파일) · 국내 3대 부정합 검증 키워드셋 252종 · nlk 이중채널 · nedb 공식 개방파일(KOGL) 수집. **총 20개 도구.**
 
 ---
 
@@ -25,9 +25,9 @@ Millions of records about Korea sit in foreign archives (NARA, TNA, archive.org,
 
 Searching **"Seoul"** misses most colonial-period material, because in 1910–1945 the city was indexed as **"Keijo"**. Busan was *Fusan*, Incheon *Jinsen*/*Chemulpo*, and Korea itself often *Chosen*, *Tyosen*, or *Corea*. Korean sites add a second wall — JavaScript, logins, and API keys — that blocks automated collection.
 
-This plugin packages a **peer-validated discovery methodology** — Song (2026): Recall 93.0%, Precision 93.3%, F1 = 0.931 — into 18 tools Claude uses automatically, now spanning both overseas and domestic archives.
+This plugin packages a **peer-validated discovery methodology** — Song (2026): Recall 93.0%, Precision 93.3%, F1 = 0.931 — into 20 tools Claude uses automatically, now spanning both overseas and domestic archives.
 
-### The 14 archives / 18 tools
+### The 14 archives / 20 tools
 
 **Overseas (5)**
 
@@ -56,10 +56,12 @@ This plugin packages a **peer-validated discovery methodology** — Song (2026):
 
 | Tool | Purpose |
 |---|---|
-| `query_bank` | 1,943 validated keywords (spelling variants, battles, romanized names). |
+| `query_bank` | 1,943 validated keywords + **국내 3대 부정합 키워드셋 252종** (`domestic`, per-institution). |
 | `judge_rights` | First-pass rights triage A/B/C/D with legal basis. |
 | `scrape_plan` | robots check + browser-tool guidance for JS/blocked sites. |
 | `report_template` | Turn finished findings into a styled HTML discovery report (tables · reproducible queries · rights). |
+| `cross_search` | **여러 아카이브를 한 쿼리로 동시 교차수집·병합** (상호보완). 출처 태그 — 복수 출처 = 교차확인. |
+| `source_profile` | **기관 자료구조·이용구조·활용구조** 프로파일 (해외 5 + 국내 6). 발굴 전략 수립용. |
 
 Plus the **skill** `korea-archive-discovery`: search strategy Claude applies automatically (spelling variants, broad→narrow phasing, TNA codes, adjacent mining, domestic cross-check, rights triage, HTML report).
 
@@ -87,7 +89,7 @@ When a source needs a key that isn't set, the tool **instructs Claude to gather 
 
 **"Seoul"**로 검색하면 식민기 자료 대부분을 놓칩니다 — 1910~45년 서울은 **"Keijo"**로 색인됐으니까요. 부산은 *Fusan*, 인천은 *Jinsen·Chemulpo*, 한국은 *Chosen·Corea*. 국내 사이트는 자바스크립트·로그인·API 키라는 두 번째 벽까지 있습니다.
 
-이 플러그인은 검증된 발굴 방법론(송창기 2026, F1 = 0.931)을 클로드가 자동으로 쓰는 **18개 도구**로 담았고, 이제 해외와 국내 아카이브를 모두 아우릅니다.
+이 플러그인은 검증된 발굴 방법론(송창기 2026, F1 = 0.931)을 클로드가 자동으로 쓰는 **20개 도구**로 담았고, 이제 해외와 국내 아카이브를 모두 아우릅니다(여러 아카이브 동시 교차수집·기관 프로파일 포함).
 
 ### 자동 브라우징 (v1.9–v1.10)
 
