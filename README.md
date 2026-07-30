@@ -13,7 +13,7 @@
 웹·모바일(클로드 웹앱)은 MCP 커넥터로 연결: 설정 → 커넥터 → 커스텀 커넥터 추가 →
 `https://korea-archive-mcp.vercel.app/api/mcp`
 
-> **v1.12** — **6·25전쟁 아카이브센터**(koreanwar.or.kr, 전쟁기념관재단 — **협약기관**) TNA식 구조화 도구셋 4종: `koreanwar_search`(통합검색+생산연도·수집구분 필터+OpenAPI 이중채널) · `koreanwar_detail`(건별 메타 — NARA NAID 원본 직결) · `koreanwar_adjacent_mine`(참조코드 인접 채굴) · `koreanwar_battle`(전투정보 DB). **총 24개 도구.**
+> **v1.12** — **6·25전쟁 아카이브센터**(koreanwar.or.kr, 전쟁기념관재단 — **협약기관**) TNA식 구조화 도구: `koreanwar_search`(통합검색+생산연도·수집구분 필터+전투정보 scope+OpenAPI 이중채널) · `koreanwar_item`(건별 메타 — NARA NAID 원본 직결 + radius 인접 채굴). **PlayMCP 개발가이드 준수: 도구 통합으로 총 20개**(ia_metadata→ia_search, local_gov→foia 흡수) + 전 도구 annotations.
 > **v1.11** — `cross_search`(여러 아카이브 동시 교차수집·병합) · `source_profile`(기관 자료·이용·활용구조 프로파일) · 국내 3대 부정합 검증 키워드셋 252종 · nlk 이중채널 · nedb 공식 개방파일(KOGL) 수집.
 
 ---
@@ -26,9 +26,9 @@ Millions of records about Korea sit in foreign archives (NARA, TNA, archive.org,
 
 Searching **"Seoul"** misses most colonial-period material, because in 1910–1945 the city was indexed as **"Keijo"**. Busan was *Fusan*, Incheon *Jinsen*/*Chemulpo*, and Korea itself often *Chosen*, *Tyosen*, or *Corea*. Korean sites add a second wall — JavaScript, logins, and API keys — that blocks automated collection.
 
-This plugin packages a **peer-validated discovery methodology** — Song (2026): Recall 93.0%, Precision 93.3%, F1 = 0.931 — into 24 tools Claude uses automatically, now spanning both overseas and domestic archives.
+This plugin packages a **peer-validated discovery methodology** — Song (2026): Recall 93.0%, Precision 93.3%, F1 = 0.931 — into 20 tools Claude uses automatically, now spanning both overseas and domestic archives.
 
-### The 15 archives / 24 tools
+### The 15 archives / 20 tools
 
 **Overseas (5)**
 
@@ -37,11 +37,11 @@ This plugin packages a **peer-validated discovery methodology** — Song (2026):
 | `tna_search` | U.K. National Archives (Discovery) — no key. Reference codes auto-quoted. |
 | `tna_adjacent_mine` | *Adaptive Mining* — crawl piece numbers around a verified reference to surface uncatalogued files. |
 | `nara_search` | U.S. NARA catalog, Record Group cross-filter (free `NARA_API_KEY`). |
-| `ia_search` / `ia_metadata` | archive.org search + file/size inspection before download. |
+| `ia_search` | archive.org search; pass `identifier` for file/size inspection before download. |
 | `gallica_search` | Bibliothèque nationale de France — no key. Late-Joseon French missionary & diplomatic sources. |
 | `europeana_search` | 4,000+ institutions in 58 countries. Works out of the box (shared demo key); `EUROPEANA_API_KEY` for heavy use. |
 
-**Domestic / 국내 (12)** — server-side auto-browse; keyless institutions hand off to the agent's web search.
+**Domestic / 국내 (9)** — server-side auto-browse; keyless institutions hand off to the agent's web search.
 
 | Tool | Source |
 |---|---|
@@ -49,13 +49,10 @@ This plugin packages a **peer-validated discovery methodology** — Song (2026):
 | `archives_search` | 국가기록원 (OpenAPI, RSS) — free `ARCHIVES_API_KEY` from data.go.kr (15000153). |
 | `nlk_search` | 국립중앙도서관 — 6 collections incl. 대한민국신문아카이브 (1883–1960 old newspapers, PD). `NLK_API_KEY` optional. |
 | `seoul_archives_search` | 서울기록원 — Seoul municipal records / photos / oral histories. |
-| `foia_search` | 정보공개포털 (open.go.kr) — released decision documents & FOIA requests. |
-| `local_gov_search` | 서울정보소통광장 (city decision documents) · 서울시교육청 · 경상남도기록원. |
+| `foia_search` | FOIA hub — 정보공개포털 (open.go.kr) + 서울정보소통광장 (city decision documents) · 서울시교육청 · 경상남도기록원 via `source`. |
 | `warmemo_search` | 전쟁기념관 아카이브 — Korean War / military-history records, photos, oral histories. |
-| `koreanwar_search` | **6·25전쟁 아카이브센터 (MOU 협약기관)** — 55,000+ items; NARA RG extraction from provenance breadcrumbs, 생산연도·수집구분 server-side filters, OpenAPI official-metadata channel (`KOREANWAR_API_TOKEN`). |
-| `koreanwar_detail` | Per-item metadata — producer, dates, acquisition source (**direct NARA catalog NAID link** for re-collected US items), 열람/이용조건 for rights triage. |
-| `koreanwar_adjacent_mine` | *Adaptive Mining* on archRfcd serials (±N) — surface same-series undiscovered items. |
-| `koreanwar_battle` | 6·25 battle-info DB (69 battles, early-war phase) — battle-level anchor for TNA WO 281 / NARA RG 407 cross-verification. |
+| `koreanwar_search` | **6·25전쟁 아카이브센터 (MOU 협약기관)** — 55,000+ items; NARA RG extraction from provenance breadcrumbs, 생산연도·수집구분 server-side filters, `scope=battle` for the battle-info DB (TNA WO 281 / NARA RG 407 anchor), OpenAPI official-metadata channel (`KOREANWAR_API_TOKEN`). |
+| `koreanwar_item` | Per-item metadata — producer, dates, acquisition source (**direct NARA catalog NAID link** for re-collected US items), 열람/이용조건 for rights triage; `radius=1-8` runs *Adaptive Mining* on archRfcd serials (±N, polite parallel batches). |
 
 **Utility (across all)**
 
@@ -94,7 +91,7 @@ When a source needs a key that isn't set, the tool **instructs Claude to gather 
 
 **"Seoul"**로 검색하면 식민기 자료 대부분을 놓칩니다 — 1910~45년 서울은 **"Keijo"**로 색인됐으니까요. 부산은 *Fusan*, 인천은 *Jinsen·Chemulpo*, 한국은 *Chosen·Corea*. 국내 사이트는 자바스크립트·로그인·API 키라는 두 번째 벽까지 있습니다.
 
-이 플러그인은 검증된 발굴 방법론(송창기 2026, F1 = 0.931)을 클로드가 자동으로 쓰는 **24개 도구**로 담았고, 이제 해외와 국내 아카이브를 모두 아우릅니다(여러 아카이브 동시 교차수집·기관 프로파일·6·25전쟁 아카이브센터 협약 연계 포함).
+이 플러그인은 검증된 발굴 방법론(송창기 2026, F1 = 0.931)을 클로드가 자동으로 쓰는 **20개 도구**로 담았고, 이제 해외와 국내 아카이브를 모두 아우릅니다(여러 아카이브 동시 교차수집·기관 프로파일·6·25전쟁 아카이브센터 협약 연계 포함).
 
 ### 자동 브라우징 (v1.9–v1.10)
 
