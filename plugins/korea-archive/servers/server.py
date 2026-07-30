@@ -4,9 +4,11 @@
 
 해외(7): tna_search · tna_adjacent_mine · nara_search · ia_search · ia_metadata
          gallica_search · europeana_search
-국내(8): nedb_search(한국사DB) · archives_search(국가기록원) · nlk_search(국립중앙도서관)
+국내(12): nedb_search(한국사DB) · archives_search(국가기록원) · nlk_search(국립중앙도서관)
          seoul_archives_search(서울기록원) · foia_search(정보공개포털)
-         local_gov_search(지방 정보공개·기록원) · warmemo_search(전쟁기념관) · scrape_plan(폴백)
+         local_gov_search(지방 정보공개·기록원) · warmemo_search(전쟁기념관)
+         koreanwar_search·koreanwar_detail·koreanwar_adjacent_mine·koreanwar_battle
+         (6·25전쟁 아카이브센터 — 협약기관, TNA식 구조화 도구셋) · scrape_plan(폴백)
 유틸(5): query_bank · judge_rights · report_template · cross_search(동시 교차수집·병합) · source_profile(기관 프로파일)
 설치·연결 방법은 README.md 참조. 표준 의존성: pip install mcp
 """
@@ -561,8 +563,76 @@ def _c_nedb(q, n):
     recs = _load_nedb_index()
     return _nedb_file_search(recs, q, n) if recs else []
 
+
+# ══════════ 6·25전쟁 아카이브센터 (koreanwar.or.kr:8443 — 전쟁기념관재단, 협약기관) ══════════
+# MOU 협약: 모든 요청에 프로그램 식별 UA를 싣고 정중한 호출량을 유지한다
+# (robots.txt 404 = 지시 부재; OpenAPI 약관상 대량 크롤링 금지 — 페이지 스캔은 소량으로).
+_KW_BASE = "https://www.koreanwar.or.kr:8443"
+_KW_UA = "KoreaArchiveMCP/1.11 (+https://github.com/changgi/korea-archive-mcp; MOU partner integration)"
+
+def _kw_text(url, timeout=20):
+    req = _ur.Request(url, headers={"User-Agent": _KW_UA, "Accept": "*/*"})
+    with _ur.urlopen(req, timeout=timeout) as r:
+        return r.read().decode("utf-8", "replace")
+
+def _kw_parse_cards(page_html):
+    """/search.do 결과카드 파싱 — archRfcd(아카이브)·bookId(도서), 생산기관/생산자, 상위계층(NARA RG 노출)."""
+    cards = []
+    for b in page_html.split("result-card__body")[1:]:
+        m = re.search(r'href="/(searchDetail(?:-book)?\.do)\?(archRfcd|bookId)=([^"]+)"[^>]*>(.*?)</a>', b, re.S)
+        if not m:
+            continue
+        meta = {}
+        for t, x in re.findall(r'<span class="tit">([^<]+)</span>\s*<span class="txt">(.*?)</span>', b, re.S):
+            meta[_clean(t)] = _clean(x)
+        rg = re.search(r"Record Group (\d+)", meta.get("상위계층", ""))
+        cards.append({"title": _clean(m.group(4)),
+                      "id": m.group(3) if m.group(2) == "archRfcd" else "book:" + m.group(3),
+                      "url": f"{_KW_BASE}/{m.group(1)}?{m.group(2)}={_up.quote(m.group(3))}",
+                      "producer": meta.get("생산기관/생산자", ""), "hierarchy": meta.get("상위계층", ""),
+                      "rg": rg.group(1) if rg else ""})
+    return cards
+
+def _kw_search(params):
+    q = _up.urlencode({k: v for k, v in params.items() if v not in (None, "")})
+    b = _kw_text(f"{_KW_BASE}/search.do?{q}")
+    mt = re.search(r'totalCount">\s*([\d,]+)', b)
+    return (mt.group(1) if mt else "?"), _kw_parse_cards(b)
+
+def _kw_api_scan(q, max_pages=None):
+    """OpenAPI pbrcList.do — 토큰+IP 인증 JSON 목록(키워드 파라미터 없음 → 페이지 순회+로컬 필터).
+    KOREANWAR_API_TOKEN 설정 즉시 활성(신청 승인 대기 중에는 None 반환으로 무시)."""
+    token = os.environ.get("KOREANWAR_API_TOKEN")
+    if not token:
+        return None
+    import time as _t
+    pages = min(int(max_pages or os.environ.get("KOREANWAR_API_PAGES", 3)), 10)
+    ql = q.lower(); hits = []; total = 0; checked = 0
+    for p in range(1, pages + 1):
+        d = json.loads(_kw_text(f"{_KW_BASE}/openapi/pbrcList.do?token={_up.quote(token)}&page={p}&pageSize=100"))
+        if d.get("resultCode") != "OK":
+            raise RuntimeError(f"OpenAPI {d.get('resultCode')}: {d.get('resultMsg', '')}"
+                               " — 토큰 미승인이거나 서버 IP 미등록(승인 후 IP 등록 필요)")
+        total = d.get("totalCount", total)
+        lst = d.get("list") or []
+        checked += len(lst)
+        for it in lst:
+            if any(f and ql in str(f).lower() for f in (it.get("sj"), it.get("engSj"), it.get("spln"), it.get("stmt"))):
+                hits.append({"ref": it.get("archRfcd", ""), "title": it.get("sj") or it.get("engSj") or "",
+                             "kogl": it.get("kogl", ""), "useCnd": it.get("useCnd", ""),
+                             "cpyrYn": it.get("cpyrYn", ""), "olinYn": it.get("olinYn", "")})
+        if len(lst) < 100:
+            break
+        _t.sleep(0.2)
+    return {"total": total, "checked": checked, "hits": hits}
+
+def _c_koreanwar(q, n):
+    _, cards = _kw_search({"keyword": q, "viewType": "archive"})
+    return [{"title": c["title"], "date": "", "id": c["id"], "url": c["url"]} for c in cards[:n]]
+
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
-            "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb}
+            "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
+            "koreanwar": _c_koreanwar}
 
 
 @mcp.tool()
@@ -758,6 +828,163 @@ def warmemo_search(query: str) -> str:
         return _agent_browse("전쟁기념관", query, url, f"자동조회 실패({e})")
 
 
+# ── 6·25전쟁 아카이브센터 (협약기관 — MOU) : TNA-style structured toolset ──
+_KW_DEPTH1 = {"수집": "00001041", "기증": "00001042", "기타": "00001047", "구입": "00001054",
+              "기탁": "00001073", "제작": "00001125", "이관": "00001179", "차입": "00001410"}
+
+
+@mcp.tool()
+def koreanwar_search(query: str, page: int = 1, max_results: int = 10,
+                     year_from: int = 0, year_to: int = 0, acquisition: str = "") -> str:
+    """6·25전쟁 아카이브센터(koreanwar.or.kr, 전쟁기념관재단 — 협약기관) 통합검색을 서버에서 직접 조회.
+    결과카드(제목·archRfcd 영속 참조코드·생산기관·상위계층)를 파싱하며, 상위계층의 NARA Record Group을
+    추출해 원본 역추적 링크를 제공한다. 55,000여 건: 문서·지도·사진·필름·음원·구술.
+    서버측 필터(실측 검증): year_from/year_to=생산연도 범위, acquisition=수집구분(수집·기증·구입·기탁·
+    제작·이관·차입·기타), max_results는 pageSize(10/20/50)로 자동 매핑. 자료유형·연대·이용조건 코드는
+    source_profile('koreanwar') 참조(브라우저 상세검색 폼 전용). KOREANWAR_API_TOKEN 설정 시 OpenAPI
+    공식 메타 채널(KOGL 권리정보) 자동 병행. 한글 질의 권장(미군 원본도 한글 재기술 제목으로 히트)."""
+    page_size = 50 if max_results > 20 else (20 if max_results > 10 else 10)
+    params = {"keyword": query, "viewType": "archive", "page": page, "pageSize": page_size}
+    if year_from or year_to or acquisition:
+        params["detailYn"] = "Y"
+        if year_from:
+            params["detailPrdcBegnYYYY"] = year_from
+        if year_to:
+            params["detailPrdcEdYYYY"] = year_to
+        if acquisition in _KW_DEPTH1:
+            params["depth1"] = _KW_DEPTH1[acquisition]
+    browse = f"{_KW_BASE}/search.do?detailYn=Y&keyword=" + _up.quote(query)
+    try:
+        total, cards = _kw_search(params)
+        lines = []
+        for c in cards[:max_results]:
+            l = f"- [{c['id']}] {c['title'][:95]}"
+            sub = (f"생산: {c['producer'][:70]} | " if c['producer'] else "") + \
+                  (f"계층: {c['hierarchy'][:90]}" if c['hierarchy'] else "")
+            if sub:
+                l += "\n  " + sub
+            if c["rg"]:
+                l += f"\n  ↔ NARA RG {c['rg']} — nara_search(record_group={c['rg']})로 원본 역추적 가능"
+            lines.append(l + "\n  " + c["url"])
+        tags = " · ".join(t for t in [f"생산 {year_from or ''}~{year_to or ''}" if (year_from or year_to) else "",
+                                      f"수집구분 {acquisition}" if acquisition else ""] if t)
+        out = (f"6·25전쟁 아카이브센터 '{query}'{f' [{tags}]' if tags else ''} — 총 {total}건 "
+               f"(p.{page}, {page_size}건/페이지):\n" + ("\n".join(lines) or "(0건 — 한글/한자/영문 표기 변형 시도)"))
+        try:
+            api = _kw_api_scan(query)
+        except Exception as e:
+            api = {"error": str(e)}
+        if api and "hits" in api:
+            out += (f"\n\n[② OpenAPI 공식 메타 채널 — {api['checked']}건 스캔 중 {len(api['hits'])}건 매칭 "
+                    f"(전체 {api['total']}건)]")
+            for h in api["hits"][:max_results]:
+                out += (f"\n- [{h['ref']}] {str(h['title'])[:80]} | 공공누리:{h['kogl'] or '-'} · "
+                        f"이용조건:{h['useCnd'] or '-'} · 저작권:{h['cpyrYn'] or '-'} · 원문온라인:{h['olinYn'] or '-'}")
+        elif api and "error" in api:
+            out += f"\n※ OpenAPI 채널 오류: {api['error']}"
+        else:
+            out += ("\n※ OpenAPI(공식 메타·KOGL 권리정보 채널)는 토큰 승인 후 KOREANWAR_API_TOKEN 설정 시 "
+                    "자동 병행 활성 (승인 대기 중에도 이 검색은 정상 동작).")
+        return (out + "\n협약기관 — 출처 표기 필수: 6·25전쟁 아카이브센터(전쟁기념관재단). "
+                "상세 메타·권리: koreanwar_detail, 인접 채굴: koreanwar_adjacent_mine."
+                f"\n도서자료 포함 전체·상세검색폼(자료유형·연대·이용조건 코드 필터는 브라우저에서): {browse}")
+    except Exception as e:
+        return _agent_browse("6·25전쟁 아카이브센터", query, browse, f"자동조회 실패({e})")
+
+
+@mcp.tool()
+def koreanwar_detail(ref_code: str) -> str:
+    """6·25전쟁 아카이브센터 건별 상세 메타데이터 — 제목·생산처/생산자·생산시기·입수처(+입수처 링크:
+    NARA 재수집본이면 catalog.archives.gov NAID 원본 직결)·열람 및 이용조건(권리 판정 근거).
+    koreanwar_search 후 사용; 이용조건 행은 judge_rights에 투입."""
+    url = f"{_KW_BASE}/searchDetail.do?archRfcd=" + _up.quote(ref_code.strip())
+    try:
+        b = _kw_text(url)
+        h2s = [_clean(m) for m in re.findall(r"<h2[^>]*>(.{1,300}?)</h2>", b, re.S)]
+        h2s = [t for t in h2s if t and "KOREAN WAR ARCHIVE" not in t.upper()]
+        rows = [( _clean(k), _clean(v)) for k, v in re.findall(r"<dt[^>]*>\s*(.{1,60}?)\s*</dt>\s*<dd[^>]*>(.{0,400}?)</dd>", b, re.S)]
+        rows = [(k, v) for k, v in rows if k and v and v != "~"]
+        if not h2s and not rows:
+            return _agent_browse("6·25전쟁 아카이브센터", ref_code, url, "상세 메타 미검출 — 참조코드 확인")
+        allv = " ".join(v for _, v in rows)
+        naid = (re.search(r"catalog\.archives\.gov/id/(\d+)", allv) or [None, ""])[1]
+        rg = (re.search(r"Record Group (\d+)", allv) or [None, ""])[1]
+        out = f"6·25전쟁 아카이브센터 [{ref_code}]\n제목: {h2s[0] if h2s else '?'}\n"
+        out += "\n".join(f"· {k}: {v[:200]}" for k, v in rows)
+        if naid:
+            out += (f"\n↔ NARA 원본 NAID {naid} (입수처 링크 직결) — "
+                    f"https://catalog.archives.gov/id/{naid} 에서 고해상 원본·상세 기술 확인")
+        if rg:
+            out += f"\n↔ NARA RG {rg} — nara_search(record_group={rg})로 시리즈 확장 검색"
+        return out + (f"\n{url}\n※ '열람 및 이용조건' 행을 judge_rights에 투입해 권리 초판 판정. "
+                      "협약기관 — 출처 표기 필수.")
+    except Exception as e:
+        return _agent_browse("6·25전쟁 아카이브센터", ref_code, url, f"자동조회 실패({e})")
+
+
+@mcp.tool()
+def koreanwar_adjacent_mine(reference: str, radius: int = 3) -> str:
+    """6·25전쟁 아카이브센터 인접 확장 채굴 — 검증된 archRfcd의 말미 일련번호를 ±radius 순회해 동일
+    시리즈 미발굴 건을 찾는다(TNA tna_adjacent_mine 방식). 예: 2022-US-02-AV-D-00207 → 00204~00210.
+    협약기관 정중 호출(건당 지연 적용)."""
+    import time as _t
+    m = re.match(r"^(.+-)(\d+)$", reference.strip())
+    if not m:
+        return "참조코드 형식 오류 — 예: 2022-US-02-AV-D-00207 (말미가 일련번호)"
+    prefix, serial_s = m.group(1), m.group(2)
+    serial, width = int(serial_s), len(serial_s)
+    radius = max(1, min(radius, 8))
+    lines = []
+    for s in range(max(0, serial - radius), serial + radius + 1):
+        ref = prefix + str(s).zfill(width)
+        try:
+            b = _kw_text(f"{_KW_BASE}/searchDetail.do?archRfcd=" + _up.quote(ref))
+            ts = [_clean(x) for x in re.findall(r"<h2[^>]*>(.{1,300}?)</h2>", b, re.S)]
+            ts = [t for t in ts if t and "KOREAN WAR ARCHIVE" not in t.upper()]
+            mark = "●" if s == serial else "○"
+            lines.append(f"{mark} {ref} | {ts[0][:90]}" if ts else f"  {ref} | (없음)")
+        except Exception as e:
+            lines.append(f"  {ref} | ERROR {e}")
+        _t.sleep(0.3)
+    return (f"인접 채굴 {prefix}{str(serial).zfill(width)} ±{radius} (● 기준 · ○ 인접 발굴):\n"
+            + "\n".join(lines) + "\n※ 발굴 건은 koreanwar_detail로 메타 확인.")
+
+
+@mcp.tool()
+def koreanwar_battle(battle: str = "", unit: str = "") -> str:
+    """6·25전쟁 전투정보 DB(/warList.do) — 전투 단위 finding aid. 사이트의 warNm 필터는 JS 전용이라
+    서버가 전체 전투 목록(~69건)을 받아 전투명(battle)·추가 키워드(unit, AND)로 로컬 필터한다.
+    현재 DB는 개전 초기 '북한군의 남침과 방어작전(1950.6.25~9.14)' 단계 수록 — 이후 시기 전투 0건은
+    미수록일 수 있음(0건 ≠ 부재). 전투명·시기·장소를 앵커로 TNA WO 281·NARA RG 407과 교차검증."""
+    list_url = _KW_BASE + "/warList.do"
+    try:
+        b = _kw_text(list_url)
+        cards = []
+        for blk in b.split("/warDetail.do?warIdx=")[1:]:
+            mi = re.match(r"^(\d+)", blk)
+            if not mi:
+                continue
+            nm = re.search(r'<span class="text">(.*?)</span>', blk, re.S)
+            metas = [f"{_clean(k)}:{_clean(v)}" for k, v in
+                     re.findall(r"<dt>(.{1,30}?)</dt>\s*<dd>(.{0,120}?)</dd>", blk[:2500], re.S)]
+            cards.append({"idx": mi.group(1), "name": _clean(nm.group(1)) if nm else "?",
+                          "meta": " · ".join(metas)})
+        terms = [t.strip() for t in (battle, unit) if t.strip()]
+        matched = [c for c in cards if all(t in (c["name"] + " " + c["meta"]) for t in terms)] if terms else cards
+        q = " + ".join(terms) or "(전체)"
+        if matched:
+            lines = [f"- [warIdx {c['idx']}] {c['name']}{' | ' + c['meta'] if c['meta'] else ''}\n"
+                     f"  {_KW_BASE}/warDetail.do?warIdx={c['idx']}" for c in matched[:25]]
+            return (f"6·25 전투정보 '{q}' — {len(matched)}/{len(cards)}건:\n" + "\n".join(lines)
+                    + "\n※ 전투명·시기·장소를 앵커로 TNA WO 281(영연방 전투일지)·NARA RG 407(부대기록)·"
+                      "koreanwar_search와 교차. DB는 개전 초기 단계 수록(확장 중).")
+        return (f"6·25 전투정보 '{q}' — 0건 (전체 {len(cards)}건 중). 현재 DB는 개전 초기(1950.6.25~9.14) "
+                f"전투만 수록 — 이후 시기(백마고지 1952 등)는 미수록. koreanwar_search('{q}')로 자료 검색은 가능."
+                + _browse(list_url))
+    except Exception as e:
+        return _agent_browse("6·25 전투정보", " ".join([battle, unit]).strip(), list_url, f"자동조회 실패({e})")
+
+
 @mcp.tool()
 def foia_search(query: str) -> str:
     """대한민국 정보공개포털(open.go.kr) — 원문정보공개(정부 결재문서 원문)·사전정보공표·정보공개청구.
@@ -829,9 +1056,10 @@ def scrape_plan(url: str) -> str:
 @mcp.tool()
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> str:
     """여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb). 해외(tna·ia·gallica·europeana)는 키 불요, 국내
-    (nara·archives·nlk)는 서버 키, nedb는 NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처
-    표기 — 복수 출처는 교차확인된 record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로."""
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar). 해외(tna·ia·gallica·europeana)와
+    koreanwar(6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
+    NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
+    record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로."""
     want = (list(_COLLECT.keys()) if sources.strip().lower() == "all"
             else [s.strip().lower() for s in sources.split(",") if s.strip().lower() in _COLLECT])
     if not want:

@@ -43,12 +43,13 @@ NARA 카드 카탈로그 750만 장 대부분 미전산화. 온라인 0건은 "�
 - **서울기록원**(archives.seoul.go.kr, 도구 seoul_archives_search): 서울시 지방기록물 — 전문검색 URL + cheliped. 지역사 필수 교차 소스.
 - **지방 정보공개·기록원**(도구 local_gov_search): source='seoul_opengov'(서울정보소통광장 결재문서)·'sen'(서울시교육청)·'gyeongnam'(경상남도기록원). 결재문서 원문·지방기록물 — cheliped. 지역사 발굴 핵심.
 - **전쟁기념관 아카이브**(archives.warmemo.or.kr, 도구 warmemo_search): 한국전쟁·군사사 기록·사진·구술 — cheliped 2단계. 해외 한국전쟁 기록과 교차검증.
+- **6·25전쟁 아카이브센터**(koreanwar.or.kr:8443, 전쟁기념관재단 — **협약기관**, 도구 koreanwar_search·koreanwar_detail·koreanwar_adjacent_mine·koreanwar_battle): 55,000+ 건. NARA RG 111/342 미군 시청각 원본의 **한글 재기술본**이라 한글 키워드로 해외 원본 발굴 가능 — 상위계층 breadcrumb에서 RG를 추출해 nara_search 역추적, 상세페이지 입수처 링크는 catalog.archives.gov NAID 직결. 생산연도·수집구분(수집/기증 등) 서버측 필터, archRfcd 일련번호 ±N 인접 채굴, 전투정보 DB(개전 초기 69전투). OpenAPI(KOREANWAR_API_TOKEN 승인 시)로 KOGL 권리 메타 병행. 자료유형·연대·이용조건 코드표는 source_profile('koreanwar') 참조.
 - **robots 차단·JS 렌더 사이트**: 도구 scrape_plan(url)이 robots를 판정하고 cheliped-skills 실행 명령을 생성.
   국내 수집기(nedb_search·archives_search·nlk_search·seoul_archives_search·warmemo_search·local_gov_search)는 이제 서버가 각 사이트를 직접 조회해 실제 결과(항목·건수·매칭 DB/컬렉션)를 반환한다. 서버 페치가 안 되는 사이트(정보공개포털·서울교육청·경남기록원)는 scrape_plan/agent 안내에 따라 에이전트의 브라우저 도구로 열어 읽는다. 키가 필요한데 없는 기관(국가기록원 ARCHIVES_API_KEY·국립중앙도서관 NLK_API_KEY)은 도구가 '웹검색으로 결과를 가져와 정리하라'는 지시를 반환하므로, 에이전트는 WebSearch로 결과를 수집해 표로 제시한다(v1.10).
   스크래핑 시 이용약관·저작권을 준수하고 과도한 요청을 피할 것.
 
 ## MCP 도구가 있으면 (korea-archive 서버)
-tna_search → tna_adjacent_mine → nara_search(RG 교차) → ia_search → gallica_search(프랑스어) → europeana_search → nedb_search(한국사DB)·archives_search(국가기록원)·nlk_search(국립중앙도서관)·foia_search(정보공개포털)·seoul_archives_search(서울기록원)·local_gov_search(지방 정보공개·기록원)·warmemo_search(전쟁기념관) 국내 교차검증 → scrape_plan(cheliped 폴백) → judge_rights → report_template(HTML) 순.
+tna_search → tna_adjacent_mine → nara_search(RG 교차) → ia_search → gallica_search(프랑스어) → europeana_search → nedb_search(한국사DB)·archives_search(국가기록원)·nlk_search(국립중앙도서관)·foia_search(정보공개포털)·seoul_archives_search(서울기록원)·local_gov_search(지방 정보공개·기록원)·warmemo_search(전쟁기념관)·koreanwar_search→koreanwar_detail→koreanwar_adjacent_mine·koreanwar_battle(6·25전쟁 아카이브센터 — 한글로 NARA 원본 발굴·NAID 직결) 국내 교차검증 → scrape_plan(cheliped 폴백) → judge_rights → report_template(HTML) 순.
 없으면 위 규칙대로 웹 검색·카탈로그 직접 조회로 수행.
 
 ## 산출 형식

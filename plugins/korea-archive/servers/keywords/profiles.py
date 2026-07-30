@@ -14,6 +14,7 @@ import profile_archives
 import profile_nlk
 import profile_seoul
 import profile_warmemo
+import profile_koreanwar
 import profile_foia
 
 PROFILES = {
@@ -27,6 +28,7 @@ PROFILES = {
     "nlk": profile_nlk.PROFILE,
     "seoul": profile_seoul.PROFILE,
     "warmemo": profile_warmemo.PROFILE,
+    "koreanwar": profile_koreanwar.PROFILE,
     "foia": profile_foia.PROFILE,
 }
 

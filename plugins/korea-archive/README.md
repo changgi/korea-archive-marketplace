@@ -1,12 +1,12 @@
-# korea-archive (Claude plugin) — v1.10
+# korea-archive (Claude plugin) — v1.12
 
-해외 5곳 + 국내 9곳, 총 **18개 도구**로 한국 관련 기록(1860–1960)을 발굴하는 클로드 플러그인.
+해외 5곳 + 국내 10곳, 총 **24개 도구**로 한국 관련 기록(1860–1960)을 발굴하는 클로드 플러그인.
 
 ## 도구
 
 **해외** `tna_search` · `tna_adjacent_mine` · `nara_search` · `ia_search` · `ia_metadata` · `gallica_search` · `europeana_search`
-**국내** `nedb_search`(한국사DB) · `archives_search`(국가기록원) · `nlk_search`(국립중앙도서관 6컬렉션) · `seoul_archives_search`(서울기록원) · `foia_search`(정보공개포털) · `local_gov_search`(서울정보소통광장·서울교육청·경남기록원) · `warmemo_search`(전쟁기념관)
-**유틸** `query_bank`(1,943 키워드) · `judge_rights`(A~D 권리) · `scrape_plan` · `report_template`(HTML 보고서)
+**국내** `nedb_search`(한국사DB) · `archives_search`(국가기록원) · `nlk_search`(국립중앙도서관 6컬렉션) · `seoul_archives_search`(서울기록원) · `foia_search`(정보공개포털) · `local_gov_search`(서울정보소통광장·서울교육청·경남기록원) · `warmemo_search`(전쟁기념관) · **`koreanwar_search`·`koreanwar_detail`·`koreanwar_adjacent_mine`·`koreanwar_battle`**(6·25전쟁 아카이브센터 — 협약기관, TNA식 구조화 도구셋: 통합검색+생산연도·수집구분 필터, NARA NAID 원본 직결, 참조코드 인접 채굴, 전투정보 DB)
+**유틸** `query_bank`(1,943+252 키워드) · `judge_rights`(A~D 권리) · `scrape_plan` · `report_template`(HTML 보고서) · `cross_search`(동시 교차수집) · `source_profile`(기관 프로파일)
 **스킬** `korea-archive-discovery` — 표기 변형·RG 교차·인접 마이닝·국내 교차검증·권리판정·HTML 보고서 전략을 자동 적용.
 
 ## 자동 브라우징 (v1.9–v1.10)
@@ -21,6 +21,6 @@
 
 ## 선택 환경변수
 
-`NARA_API_KEY` · `EUROPEANA_API_KEY` · `ARCHIVES_API_KEY`(data.go.kr 15000153) · `NLK_API_KEY`(www.nl.go.kr Open API). 모두 선택.
+`NARA_API_KEY` · `EUROPEANA_API_KEY` · `ARCHIVES_API_KEY`(data.go.kr 15000153) · `NLK_API_KEY`(www.nl.go.kr Open API) · `KOREANWAR_API_TOKEN`(6·25전쟁 아카이브센터 OpenAPI — Q&A 게시판 'API 문의'로 신청, 승인 시 토큰+허용 IP 등록; 승인 전에도 통합검색은 키 없이 동작). 모두 선택.
 
 라이선스 MIT · 공업연구사 송창기.
