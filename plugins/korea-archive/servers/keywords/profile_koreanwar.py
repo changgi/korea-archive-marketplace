@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""profile_koreanwar — 6·25전쟁 아카이브센터 (Korean War Archive Center, 전쟁기념관재단·협약기관) 자료·이용·활용구조 프로파일."""
+"""profile_koreanwar — 6·25전쟁 아카이브센터 (KOREAN WAR ARCHIVES — 정식 명칭, 전쟁기념관재단·협약기관) 자료·이용·활용구조 프로파일."""
 
 PROFILE = {
  "name_ko": "6·25전쟁 아카이브센터",
- "name_en": "Korean War Archive Center",
+ "name_en": "KOREAN WAR ARCHIVES",
  "category": "domestic",
  "data": {
   "hierarchy": "6·25전쟁(1950–53) 특화 디지털 아카이브 — 전쟁기념관재단 운영. 3축 탐색 구조: (1)시기별 1950~1953 연도 컬렉션(13,600건+) (2)장소별 국내 도(道)+해외 지역 (3)인물별 군인(35,128)·정부(6,452)·민간인(27,168). 분류체계는 depth1~depth6 6단계 트리(예: 수집 > 미국 > 국립문서기록관리청(NARA) > Record Group 111 > Moving Images… > 하위) — 즉 출처주의 계층을 유지한 채 재수집한 구조. 최소 단위 = 아카이브 자료 건(archRfcd 1건) + 도서자료(bookId). 총 55,206건 규모.",

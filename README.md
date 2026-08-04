@@ -13,7 +13,7 @@
 웹·모바일(클로드 웹앱)은 MCP 커넥터로 연결: 설정 → 커넥터 → 커스텀 커넥터 추가 →
 `https://korea-archive-mcp.vercel.app/api/mcp`
 
-> **v1.12** — **6·25전쟁 아카이브센터**(koreanwar.or.kr, 전쟁기념관재단 — **협약기관**) TNA식 구조화 도구: `koreanwar_search`(통합검색+생산연도·수집구분 필터+전투정보 scope+OpenAPI 이중채널) · `koreanwar_item`(건별 메타 — NARA NAID 원본 직결 + radius 인접 채굴). **PlayMCP 개발가이드 준수: 도구 통합으로 총 20개**(ia_metadata→ia_search, local_gov→foia 흡수) + 전 도구 annotations.
+> **v1.12** — **KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터**(koreanwar.or.kr, 전쟁기념관재단 — **협약기관**) TNA식 구조화 도구: `koreanwar_search`(통합검색+생산연도·수집구분 필터+전투정보 scope+OpenAPI 이중채널) · `koreanwar_item`(건별 메타 — NARA NAID 원본 직결 + radius 인접 채굴). **PlayMCP 개발가이드 준수: 도구 통합으로 총 20개**(ia_metadata→ia_search, local_gov→foia 흡수) + 전 도구 annotations.
 > **v1.11** — `cross_search`(여러 아카이브 동시 교차수집·병합) · `source_profile`(기관 자료·이용·활용구조 프로파일) · 국내 3대 부정합 검증 키워드셋 252종 · nlk 이중채널 · nedb 공식 개방파일(KOGL) 수집.
 
 ---
@@ -51,7 +51,7 @@ This plugin packages a **peer-validated discovery methodology** — Song (2026):
 | `seoul_archives_search` | 서울기록원 — Seoul municipal records / photos / oral histories. |
 | `foia_search` | FOIA hub — 정보공개포털 (open.go.kr) + 서울정보소통광장 (city decision documents) · 서울시교육청 · 경상남도기록원 via `source`. |
 | `warmemo_search` | 전쟁기념관 아카이브 — Korean War / military-history records, photos, oral histories. |
-| `koreanwar_search` | **6·25전쟁 아카이브센터 (MOU 협약기관)** — 55,000+ items; NARA RG extraction from provenance breadcrumbs, 생산연도·수집구분 server-side filters, `scope=battle` for the battle-info DB (TNA WO 281 / NARA RG 407 anchor), OpenAPI official-metadata channel (`KOREANWAR_API_TOKEN`). |
+| `koreanwar_search` | **KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 (MOU 협약기관)** — 55,000+ items; NARA RG extraction from provenance breadcrumbs, 생산연도·수집구분 server-side filters, `scope=battle` for the battle-info DB (TNA WO 281 / NARA RG 407 anchor), OpenAPI official-metadata channel (`KOREANWAR_API_TOKEN`). |
 | `koreanwar_item` | Per-item metadata — producer, dates, acquisition source (**direct NARA catalog NAID link** for re-collected US items), 열람/이용조건 for rights triage; `radius=1-8` runs *Adaptive Mining* on archRfcd serials (±N, polite parallel batches). |
 
 **Utility (across all)**

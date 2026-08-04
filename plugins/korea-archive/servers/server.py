@@ -7,7 +7,7 @@
 국내(9): nedb_search(한국사DB) · archives_search(국가기록원) · nlk_search(국립중앙도서관)
          seoul_archives_search(서울기록원) · foia_search(정보공개포털+지방 정보공개·기록원 통합)
          warmemo_search(전쟁기념관) · koreanwar_search(통합검색+전투정보 scope)·koreanwar_item
-         (건별 메타+radius 인접 채굴) (6·25전쟁 아카이브센터 — 협약기관) · scrape_plan(폴백)
+         (건별 메타+radius 인접 채굴) (KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 — 협약기관) · scrape_plan(폴백)
 유틸(5): query_bank · judge_rights · report_template · cross_search(동시 교차수집·병합) · source_profile(기관 프로파일)
 총 20개 — PlayMCP 개발가이드(서버당 도구 20개 이하) 준수.
 설치·연결 방법은 README.md 참조. 표준 의존성: pip install mcp
@@ -564,7 +564,7 @@ def _c_nedb(q, n):
     return _nedb_file_search(recs, q, n) if recs else []
 
 
-# ══════════ 6·25전쟁 아카이브센터 (koreanwar.or.kr:8443 — 전쟁기념관재단, 협약기관) ══════════
+# ══════════ KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 (koreanwar.or.kr:8443 — 전쟁기념관재단, 협약기관) ══════════
 # MOU 협약: 모든 요청에 프로그램 식별 UA를 싣고 정중한 호출량을 유지한다
 # (robots.txt 404 = 지시 부재; OpenAPI 약관상 대량 크롤링 금지 — 페이지 스캔은 소량으로).
 _KW_BASE = "https://www.koreanwar.or.kr:8443"
@@ -828,7 +828,7 @@ def warmemo_search(query: str) -> str:
         return _agent_browse("전쟁기념관", query, url, f"자동조회 실패({e})")
 
 
-# ── 6·25전쟁 아카이브센터 (협약기관 — MOU) : TNA-style structured toolset ──
+# ── KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 (협약기관 — MOU) : TNA-style structured toolset ──
 _KW_DEPTH1 = {"수집": "00001041", "기증": "00001042", "기타": "00001047", "구입": "00001054",
               "기탁": "00001073", "제작": "00001125", "이관": "00001179", "차입": "00001410"}
 
@@ -836,7 +836,7 @@ _KW_DEPTH1 = {"수집": "00001041", "기증": "00001042", "기타": "00001047", 
 @mcp.tool()
 def koreanwar_search(query: str, scope: str = "archive", page: int = 1, max_results: int = 10,
                      year_from: int = 0, year_to: int = 0, acquisition: str = "") -> str:
-    """6·25전쟁 아카이브센터(koreanwar.or.kr, 전쟁기념관재단 — 협약기관) 통합검색을 서버에서 직접 조회.
+    """KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터(koreanwar.or.kr, 전쟁기념관재단 — 협약기관) 통합검색을 서버에서 직접 조회.
     결과카드(제목·archRfcd 영속 참조코드·생산기관·상위계층)를 파싱하며, 상위계층의 NARA Record Group을
     추출해 원본 역추적 링크를 제공한다. 55,000여 건: 문서·지도·사진·필름·음원·구술.
     서버측 필터(실측 검증): year_from/year_to=생산연도 범위, acquisition=수집구분(수집·기증·구입·기탁·
@@ -913,7 +913,7 @@ def koreanwar_search(query: str, scope: str = "archive", page: int = 1, max_resu
         else:
             out += ("\n※ OpenAPI(공식 메타·KOGL 권리정보 채널)는 토큰 승인 후 KOREANWAR_API_TOKEN 설정 시 "
                     "자동 병행 활성 (승인 대기 중에도 이 검색은 정상 동작).")
-        return (out + "\n협약기관 — 출처 표기 필수: 6·25전쟁 아카이브센터(전쟁기념관재단). "
+        return (out + "\n협약기관 — 출처 표기 필수: KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터(전쟁기념관재단). "
                 "건별 메타·인접 채굴: koreanwar_item."
                 f"\n도서자료 포함 전체·상세검색폼(자료유형·연대·이용조건 코드 필터는 브라우저에서): {browse}")
     except Exception as e:
@@ -928,7 +928,7 @@ def _kw_item_title(page_html):
 
 @mcp.tool()
 def koreanwar_item(ref_code: str, radius: int = 0) -> str:
-    """6·25전쟁 아카이브센터 건별 상세 메타데이터 — 제목·생산처/생산자·생산시기·입수처(+입수처 링크:
+    """KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 건별 상세 메타데이터 — 제목·생산처/생산자·생산시기·입수처(+입수처 링크:
     NARA 재수집본이면 catalog.archives.gov NAID 원본 직결)·열람 및 이용조건(judge_rights 투입용).
     radius=1~8이면 인접 확장 채굴: archRfcd 말미 일련번호 ±radius를 순회해 동일 시리즈 미발굴 건을
     찾는다(TNA 방식, 정중한 3건 배치 병렬). 협약기관 — 출처 표기 필수."""
@@ -1050,7 +1050,7 @@ def scrape_plan(url: str) -> str:
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> str:
     """여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
     (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar). 해외(tna·ia·gallica·europeana)와
-    koreanwar(6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
+    koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로."""
     want = (list(_COLLECT.keys()) if sources.strip().lower() == "all"
