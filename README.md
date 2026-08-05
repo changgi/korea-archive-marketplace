@@ -117,6 +117,24 @@ When a source needs a key that isn't set, the tool **instructs Claude to gather 
 
 ---
 
+## insta-carousel 스킬 쇼케이스 / Skill Showcase (v1.13)
+
+발굴한 기록을 그대로 **인스타그램 캐러셀 카드뉴스(1080×1080 PNG)** 로 만드는 스킬.
+"○○ 기록 찾아서 캐러셀 만들어줘" 한 문장이면 조사→이미지 소싱(라이선스 판정)→디자인→렌더링→캡션까지.
+아래는 실전 제작 사례(8·15 광복 81주년 시리즈) 중 6장 — 전부 퍼블릭 도메인 실물 기록으로 제작.
+
+*One sentence — "find records about X and make a carousel" — runs discovery → licensed image
+sourcing → design → headless-Chrome PNG render → hooking caption. Six real cards below,
+all built from public-domain records.*
+
+| | | |
+|---|---|---|
+| ![실사 커버](docs/carousel/showcase_01_cover.png) | ![파노라마](docs/carousel/showcase_02_pano.png) | ![지도 여정](docs/carousel/showcase_03_map.png) |
+| ![부채꼴 스택](docs/carousel/showcase_04_stack.png) | ![인물 카드](docs/carousel/showcase_05_person.png) | ![문서 판독](docs/carousel/showcase_06_document.png) |
+
+01 실사 풀블리드 커버(1945 개성, NARA 필름 프레임) · 02 파노라마 필름스트립 · 03 지도 여정(SVG)
+· 04 부채꼴 스택(미공개 기록 목록) · 05 인물 카드(유관순) · 06 문서 판독(관보 제1호 '대한민국 30년').
+
 ## Gallery / 카드뉴스
 
 능력·국내 소스·자동 브라우징·실전(라이브)·설치를 담은 카드 18장 (`docs/cards/`).
