@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>카드뉴스 디자인 시스템 v2 — 시작 템플릿</title>
+<!--
+  검증된 고대비 디자인 시스템. 이 파일을 복사해 카드를 채운다.
+  팔레트는 :root만 바꾸면 전체 적용 (기본: 순흑+크림+크림슨/골드 — 아카이브·스토리텔링 무드.
+  밝은 브랜드면 --bg를 밝게, --cream을 잉크색으로 뒤집는다).
+  이미지는 {{img:경로|maxdim=760|q=72}} 토큰 (scripts/make_carousel.py가 처리).
+  레이아웃 선택 기준은 references/layouts.md 참조.
+
+  ★ 핵심 안전 규칙 ★
+  - 모든 카드 콘텐츠는 <div class="col"> 안에 — 하단 안전영역 150px가 페이지번호·브랜드
+    겹침을 구조적으로 막는다 (이 겹침이 실전에서 가장 잦은 결함이었다)
+  - credit에 margin-top:auto 금지 — 고정 마진 사용
+  - 이미지는 고정 height + object-fit:cover
+-->
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#14171d; --crimson:#e03540; --gold:#e8b45a; --cream:#faf3e3;
+    --sub:#8d94a2; --green:#5fd07f; --amber:#e8b45a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#000; font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif; padding:40px; color:var(--cream);}
+  .card{width:1080px; height:1080px; margin:0 auto 56px; position:relative; overflow:hidden;
+        background:var(--bg); box-shadow:0 10px 60px rgba(0,0,0,.7);}
+  /* 콘텐츠 컬럼 — 하단 안전영역 150px (brand/pageno와 절대 안 겹침) */
+  .col{position:relative; z-index:4; height:100%; display:flex; flex-direction:column; padding:70px 86px 150px;}
+  /* 장식 */
+  .grain{position:absolute; inset:0; pointer-events:none; opacity:.45; mix-blend-mode:overlay;
+    background-image:repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px);}
+  .frame{position:absolute; inset:24px; border:2px solid rgba(232,180,90,.55); pointer-events:none;}
+  .corner{position:absolute; width:34px; height:34px; border:4px solid var(--gold);}
+  .c-tl{top:16px; left:16px; border-right:none; border-bottom:none;}
+  .c-tr{top:16px; right:16px; border-left:none; border-bottom:none;}
+  .c-bl{bottom:16px; left:16px; border-right:none; border-top:none;}
+  .c-br{bottom:16px; right:16px; border-left:none; border-top:none;}
+  /* 타이포 */
+  .kicker{display:inline-block; background:var(--crimson); color:#fff; font-weight:900;
+          letter-spacing:.28em; font-size:24px; padding:13px 30px 13px 36px;}
+  h1{font-size:80px; line-height:1.24; font-weight:900; word-break:keep-all; color:#fff;}
+  h2{font-size:54px; line-height:1.27; font-weight:900; word-break:keep-all; color:#fff;}
+  .gold{color:var(--gold);} .red{color:var(--crimson);}
+  .lead{font-size:31px; line-height:1.6; word-break:keep-all; color:#e5ddc9;}
+  .lead b{color:var(--gold);}
+  .credit{font-size:19px; color:var(--sub); line-height:1.5;}
+  .divider{height:6px; width:150px; background:linear-gradient(90deg,var(--gold),var(--crimson)); margin:24px 0;}
+  .years{font-size:26px; color:var(--gold); font-weight:700; letter-spacing:.05em; margin:4px 0 12px; word-break:keep-all;}
+  /* 하단 고정 표기 */
+  .pageno{position:absolute; bottom:46px; right:76px; font-size:23px; color:var(--sub); letter-spacing:.12em; z-index:9;}
+  .brand{position:absolute; bottom:46px; left:76px; font-size:23px; color:var(--sub); z-index:9;}
+  .stamp{position:absolute; border:5px solid var(--crimson); color:var(--crimson); border-radius:10px;
+         padding:10px 22px; font-weight:900; font-size:28px; letter-spacing:.1em;
+         transform:rotate(-8deg); background:rgba(224,53,64,.08); z-index:6;}
+  /* 사진 프레임 */
+  .polaroid{background:#fbf8f1; padding:14px 14px 0; box-shadow:0 14px 34px rgba(0,0,0,.55);}
+  .polaroid img{display:block; width:100%;}
+  .polaroid .cap{font-size:20px; color:#3a3f49; padding:10px 4px 12px; font-weight:700; text-align:center; word-break:keep-all;}
+  .tape{position:absolute; width:140px; height:38px; background:rgba(232,180,90,.75); box-shadow:0 2px 8px rgba(0,0,0,.3); z-index:3;}
+  .shot{background:#fff; padding:10px; box-shadow:0 18px 44px rgba(0,0,0,.7);}
+  .shot img{display:block; width:100%;}
+  .shot .cap{font-size:20px; color:#3a3f49; padding:10px 4px 4px; font-weight:700; text-align:center; word-break:keep-all;}
+  /* 파노라마 필름스트립 */
+  .pano{border-top:16px solid #000; border-bottom:16px solid #000; background:#000; position:relative;
+        box-shadow:0 14px 40px rgba(0,0,0,.6);}
+  .pano:before,.pano:after{content:''; position:absolute; left:0; right:0; height:14px;
+    background-image:repeating-linear-gradient(90deg, #fff 0 22px, transparent 22px 44px); opacity:.9;}
+  .pano:before{top:-15px;} .pano:after{bottom:-15px;}
+  .pano .row{display:flex; gap:6px;}
+  .pano img{flex:1; height:300px; object-fit:cover; display:block; filter:contrast(1.15) brightness(1.05);}
+  /* 시리즈 스트립 */
+  .strip{display:flex; gap:10px;}
+  .strip img{flex:1; height:130px; object-fit:cover; border:2px solid #3a4152;}
+  /* 목록·상태 */
+  .reel{background:var(--panel); border:1px solid #262b35; border-left:10px solid var(--gold); padding:16px 24px; margin:11px 0;}
+  .reel .no{font-size:24px; font-weight:900; color:var(--gold); letter-spacing:.06em; font-family:Consolas,Menlo,monospace;}
+  .reel .t{font-size:26px; font-weight:700; margin-top:4px; word-break:keep-all; line-height:1.4; color:#f2ecdb;}
+  .reel .d{font-size:20px; color:var(--sub); margin-top:4px; word-break:keep-all;}
+  .reel.locked{border-left-color:var(--crimson);}
+  .badge{display:inline-block; border-radius:30px; padding:4px 16px; font-size:19px; font-weight:900; margin-left:8px; vertical-align:middle;}
+  .b-lock{background:#38151a; color:#ff7a83; border:1px solid #ff7a83;}
+  .b-half{background:#3a2c12; color:var(--amber); border:1px solid var(--amber);}
+  .b-open{background:#153019; color:var(--green); border:1px solid var(--green);}
+  .org{background:var(--panel); border:1px solid #262b35; border-left:8px solid var(--gold);
+       padding:13px 22px; margin:10px 0; display:flex; justify-content:space-between; align-items:center; gap:16px;}
+  .org .name{font-size:28px; font-weight:900; word-break:keep-all;}
+  .org .name small{display:block; font-size:19px; color:var(--sub); font-weight:400; margin-top:2px;}
+  .org .hits{font-size:26px; font-weight:900; white-space:nowrap;}
+  .hit-y{color:var(--green);} .hit-w{color:var(--amber);} .hit-n{color:#ff7a83;}
+  /* 3단계 분류 */
+  .tier{flex:1; background:var(--panel); border:1px solid #262b35; border-top:10px solid; padding:24px;}
+  .tier .icon{font-size:52px;}
+  .tier .t{font-size:29px; font-weight:900; margin-top:10px; word-break:keep-all;}
+  .tier .d{font-size:21px; color:var(--sub); margin-top:6px; line-height:1.5; word-break:keep-all;}
+  /* 타임라인 */
+  .tl{border-left:5px solid var(--gold); margin:20px 0 0 24px; padding-left:36px;}
+  .tl .ev{margin:0 0 24px; position:relative;}
+  .tl .ev:before{content:''; position:absolute; left:-47px; top:8px; width:18px; height:18px; border-radius:50%;
+    background:var(--crimson); border:4px solid var(--bg); box-shadow:0 0 0 3px var(--gold);}
+  .tl .yr{font-size:29px; font-weight:900; color:var(--gold); letter-spacing:.04em;}
+  .tl .tx{font-size:27px; line-height:1.5; color:#e5ddc9; word-break:keep-all; margin-top:2px;}
+  /* 인용 */
+  .quote{border-left:6px solid var(--gold); padding:14px 22px; margin-top:20px;
+         font-size:29px; line-height:1.55; color:#f2ecdb; font-style:italic; word-break:keep-all; background:rgba(232,180,90,.07);}
+  .docquote{border-left:6px solid var(--gold); padding:16px 24px; margin-top:18px;
+            font-size:30px; line-height:1.6; color:#f2ecdb; word-break:keep-all; background:rgba(232,180,90,.07);}
+  .docquote small{display:block; font-size:21px; color:var(--sub); margin-top:8px; font-style:normal;}
+  /* 빅넘버 */
+  .bignum{font-size:190px; font-weight:900; color:var(--gold); line-height:1; letter-spacing:-.02em;}
+  /* 번호 리스트 */
+  .li{display:flex; gap:22px; align-items:flex-start; margin:22px 0; font-size:31px; line-height:1.5; word-break:keep-all; color:#eee6d2;}
+  .li .n{flex:0 0 54px; height:54px; border-radius:50%; background:var(--crimson); color:#fff;
+         font-weight:900; font-size:27px; display:flex; align-items:center; justify-content:center;}
+  .li b{color:var(--gold);}
+  /* 부채꼴 스택 — 제목 아래에만 배치할 것 */
+  .fanwrap{position:relative; height:480px;}
+  .fcard{position:absolute; width:600px; background:#f5efdf; color:#20242c; padding:22px 26px;
+         box-shadow:0 18px 40px rgba(0,0,0,.65); border:1px solid #d8d0bc;}
+  .fcard .no{font-family:Consolas,Menlo,monospace; font-weight:900; font-size:25px; color:#b3262f;}
+  .fcard .t{font-size:25px; font-weight:900; margin-top:4px; line-height:1.35; word-break:keep-all;}
+  .fcard .d{font-size:19px; color:#5a6070; margin-top:4px;}
+</style>
+</head>
+<body>
+
+<!-- 예시 1 · 풀블리드 커버: 실물 이미지 + 그라디언트 + 훅 -->
+<div class="card">
+  <img src="{{img:cover.jpg|maxdim=1000|q=76}}" alt=""
+       style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 30%; filter:contrast(1.2) brightness(.95) sepia(.2);">
+  <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.92) 68%);"></div>
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col">
+    <div><span class="kicker">키커 문구</span></div>
+    <div class="stamp" style="top:142px; right:82px;">도장</div>
+    <div style="margin-top:auto;">
+      <h1>훅 첫 줄,</h1>
+      <h1 class="gold">숫자·반전이 있는 둘째 줄</h1>
+      <div class="divider"></div>
+      <p class="lead">부제 — <b>핵심어</b> 강조. 이미지의 정체와 연결.</p>
+      <p class="credit" style="margin-top:16px;">출처: (정식 명칭, 라이선스)</p>
+    </div>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">1 / 10</div>
+</div>
+
+<!-- 예시 2 · 파노라마 필름스트립 -->
+<div class="card">
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col">
+    <div><span class="kicker">장면 ①</span></div>
+    <h2 style="margin:22px 0 8px;">제목 — <span class="gold">세 컷을 펼치다</span></h2>
+    <div class="pano" style="margin-top:20px;">
+      <div class="row">
+        <img src="{{img:f1.jpg|maxdim=600|q=74}}"><img src="{{img:f2.jpg|maxdim=600|q=74}}"><img src="{{img:f3.jpg|maxdim=600|q=74}}">
+      </div>
+    </div>
+    <p class="lead" style="margin-top:24px; font-size:29px;">컷1 — 컷2 — 컷3.<br>한 문장 해설로 <b>움직임</b>을 전달.</p>
+    <p class="credit" style="margin-top:16px;">출처 · 링크</p>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">4 / 10</div>
+</div>
+
+<!-- 예시 3 · 부채꼴 스택 (제목 아래에만!) -->
+<div class="card">
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col" style="padding-bottom:140px;">
+    <div><span class="kicker">🔴 잠긴 기록</span></div>
+    <h2 style="margin:20px 0 6px;">제목은 스택 위에,<br><span class="red">스택은 제목 아래에</span></h2>
+    <div class="fanwrap" style="height:500px; margin-top:30px;">
+      <div class="fcard" style="top:300px; left:0; transform:rotate(-6deg);"><div class="no">ID-004</div><div class="t">네 번째 기록</div><div class="d">부가 정보</div></div>
+      <div class="fcard" style="top:210px; left:120px; transform:rotate(4deg); z-index:2;"><div class="no">ID-003</div><div class="t">세 번째 기록</div><div class="d">부가 정보</div></div>
+      <div class="fcard" style="top:115px; left:230px; transform:rotate(-3deg); z-index:3;"><div class="no">ID-002 <span class="badge b-lock">미공개</span></div><div class="t">두 번째 기록</div><div class="d">부가 정보</div></div>
+      <div class="fcard" style="top:20px; left:330px; transform:rotate(5deg); z-index:4;"><div class="no">ID-001 <span class="badge b-lock">미공개</span></div><div class="t">맨 위 카드는 정보 전부 보이게</div><div class="d">아래 카드는 일부만 보여도 OK</div></div>
+    </div>
+    <p class="lead" style="margin-top:16px; font-size:27px;">마무리 한 줄.</p>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">7 / 10</div>
+</div>
+
+<!-- 예시 4 · 인물 카드 -->
+<div class="card">
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col">
+    <div><span class="kicker">첫 번째 이름</span></div>
+    <div style="display:flex; gap:40px; margin-top:28px; align-items:flex-start;">
+      <div style="position:relative; flex:0 0 380px;">
+        <div class="tape" style="top:-16px; left:32%; transform:rotate(-4deg);"></div>
+        <div class="polaroid"><img src="{{img:person.jpg|maxdim=760|q=75}}" style="height:520px; object-fit:cover; object-position:center 15%;"><div class="cap">사진 캡션</div></div>
+      </div>
+      <div style="flex:1; padding-top:6px;">
+        <h2><span class="gold">이름</span></h2>
+        <div class="years">1900 – 1950 · 직함</div>
+        <p class="lead" style="font-size:29px;">업적 3~4줄.<br><b>핵심</b>만 강조.</p>
+        <div class="quote">"실증된 어록만.<br>전승이면 '전해지는 말' 표기."</div>
+      </div>
+    </div>
+    <p class="credit" style="margin-top:20px;">출처: (라이선스)</p>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">2 / 10</div>
+</div>
+
+<!-- 예시 5 · 지도 여정 (SVG 약식 지도 + 마커 + 목록 병치) -->
+<div class="card">
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col" style="padding-bottom:140px;">
+    <div><span class="kicker">지도 위의 여정</span></div>
+    <h2 style="margin:20px 0 4px;">지점들을 <span class="gold">한 장</span>에</h2>
+    <div style="display:flex; gap:30px; align-items:center; margin-top:6px;">
+      <svg viewBox="0 0 380 560" style="flex:0 0 380px; height:600px;">
+        <path d="M150 30 L235 46 L300 70 L306 108 L282 196 L322 268 L296 322 L282 392 L240 444 L188 462 L142 478 L120 400 L108 288 L100 176 L126 92 Z"
+              fill="#14171d" stroke="#e8b45a" stroke-width="3"/>
+        <line x1="70" y1="218" x2="330" y2="218" stroke="#e03540" stroke-width="3" stroke-dasharray="14 10"/>
+        <circle cx="152" cy="208" r="13" fill="#5fd07f"/>
+        <text x="30" y="168" fill="#5fd07f" font-size="24" font-weight="bold">지점A</text>
+        <circle cx="170" cy="248" r="13" fill="#e03540"/>
+        <text x="200" y="258" fill="#ff7a83" font-size="24" font-weight="bold">지점B</text>
+        <path d="M152 208 Q150 230 170 248" stroke="#faf3e3" stroke-width="2" stroke-dasharray="4 6" fill="none"/>
+      </svg>
+      <div style="flex:1;">
+        <div class="reel" style="margin-top:0;"><div class="no">지점A</div><div class="t">설명</div><div class="d">🟢 상태</div></div>
+        <div class="reel"><div class="no">지점B</div><div class="t">설명</div><div class="d">🔴 상태</div></div>
+        <p class="credit" style="margin-top:14px;">라벨은 마커와 안 겹치게 — 렌더 후 확인</p>
+      </div>
+    </div>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">3 / 10</div>
+</div>
+
+</body>
+</html>
