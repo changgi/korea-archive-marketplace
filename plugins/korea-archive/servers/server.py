@@ -172,13 +172,50 @@ def judge_rights(rg_series: str, title: str = "", archive: str = "") -> str:
     return f"등급: {cls}\n근거: {note}\n※ 자동 초기판정 — 공개 전 수동 확정 필수, D등급 공개 금지"
 
 
+# Gallica 한국어→프랑스어 자동 변환 — Gallica는 프랑스어 색인이라 한국어 질의는 0건
+# ("병인양요 선교사" 0 vs "expédition de Corée 1866 missionnaires" 5,853, 실측).
+_GALLICA_KO_FR = [
+    (r"병인양요|병인박해", "expédition de Corée 1866"),
+    (r"신미양요", "Corée expédition américaine 1871"),
+    (r"강화도|강화", "île Kanghoa"),
+    (r"파리\s?외방전교회", "Missions étrangères de Paris"),
+    (r"선교사", "missionnaires"),
+    (r"천주교|가톨릭|순교", "catholique Corée"),
+    (r"한국전쟁|6[·.]25", "guerre de Corée"),
+    (r"러일전쟁", "guerre russo-japonaise"),
+    (r"서울|한양", "Séoul"),
+    (r"부산", "Fusan"),
+    (r"인천|제물포", "Chemulpo"),
+    (r"제주", "Quelpaert"),
+    (r"지도", "carte"),
+    (r"사진", "photographie"),
+    (r"신문", "journal"),
+    (r"조선|한국|대한제국|고려", "Corée"),
+    (r"기록|자료|문서|영상|관련", " "),
+]
+
+def _gallica_ko_fr(q):
+    if not re.search(r"[가-힣]", q):
+        return None
+    f = q
+    for pat, fr in _GALLICA_KO_FR:
+        f = re.sub(pat, fr, f)
+    f = re.sub(r"\s+", " ", re.sub(r"[가-힣]+", " ", f)).strip()
+    if not re.search(r"cor[ée]e|séoul|fusan|chemulpo|quelpaert|missionnaires|tchosen", f, re.I):
+        f = ("Corée " + f).strip()
+    return f or "Corée"
+
+
 @mcp.tool()
 def gallica_search(query: str, max_results: int = 15) -> str:
-    """프랑스 국립도서관 Gallica 검색 (SRU API, 키 불요). 프랑스어 키워드 사용 —
-    'Corée'(한국), 'guerre de Corée'(한국전쟁), 'Séoul', 'Tchosen'. 구한말 프랑스
-    선교사·외교 문헌과 사진의 보고. 예: gallica_search('Corée missionnaires')"""
+    """프랑스 국립도서관 Gallica 검색 (SRU API, 키 불요). 한국어 질의는 프랑스어 검색어로
+    자동 변환된다(병인양요→expédition de Corée 1866, 선교사→missionnaires, 조선→Corée …).
+    프랑스어 직접 입력도 가능 — 'Corée', 'guerre de Corée', 'Séoul', 'Tchosen'. 구한말
+    프랑스 선교사·외교 문헌과 사진의 보고. 예: gallica_search('병인양요 선교사')"""
     import urllib.parse, urllib.request, xml.etree.ElementTree as ET
-    q = urllib.parse.quote(f'gallica all "{query}"' if '"' not in query else f'gallica all {query}')
+    fr = _gallica_ko_fr(query)
+    eff = fr or query
+    q = urllib.parse.quote(f'gallica all "{eff}"' if '"' not in eff else f'gallica all {eff}')
     url = (f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2"
            f"&query={q}&maximumRecords={min(max_results,50)}")
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -192,7 +229,8 @@ def gallica_search(query: str, max_results: int = 15) -> str:
             e = rec.find(f".//dc:{tag}", ns)
             return (e.text or "").strip() if e is not None and e.text else ""
         lines.append(f"- {g('title')[:100]} ({g('date')}) [{g('type')[:20]}] {g('identifier')}")
-    return (f"Gallica '{query}' — 총 {total.text if total is not None else '?'}건:\n"
+    return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "")
+            + f" — 총 {total.text if total is not None else '?'}건:\n"
             + ("\n".join(lines) or "(0건)")
             + "\n팁: 프랑스어 변형 — Corée·Coréens·Séoul·Fusan·guerre de Corée·Tchosen")
 
@@ -465,6 +503,7 @@ def _c_ia(q, n):
 
 def _c_gallica(q, n):
     import urllib.parse, urllib.request
+    q = _gallica_ko_fr(q) or q
     qq = urllib.parse.quote('gallica all "' + q.replace('"', '') + '"')
     url = f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query={qq}&maximumRecords={n}"
     req = urllib.request.Request(url, headers={"User-Agent": _UA_KO})
