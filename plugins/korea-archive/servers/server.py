@@ -50,15 +50,55 @@ def _fmt(recs: list[dict], limit: int) -> str:
                    f" ({r.get('date','')}) {r.get('url','')}")
     return "\n".join(out) or "(0건)"
 
+# ── 영어권 아카이브(TNA·NARA·archive.org·Europeana) 한국어→영어 자동 변환 ──
+# 한국어 질의는 영어 색인에서 0건이거나 대폭 축소된다(실측: IA 장진호 1건 vs
+# "Chosin Reservoir" 139건, 흥남철수 0 vs 26, 인천상륙작전 4 vs 151).
+_KO_EN = [
+    (r"장진호", "Chosin Reservoir"), (r"흥남\s?철수|흥남", "Hungnam evacuation"),
+    (r"인천\s?상륙\s?작전|인천\s?상륙", "Inchon landing"), (r"백마고지", "White Horse Hill Korea"),
+    (r"단장의\s?능선", "Heartbreak Ridge"), (r"펀치볼", "Punchbowl Korea"),
+    (r"임진강", "Imjin River"), (r"그로스터|글로스터", "Gloucestershire Regiment Korea"),
+    (r"거제도", "Koje Island"), (r"판문점", "Panmunjom"),
+    (r"휴전\s?협정|정전\s?협정|휴전|정전", "Korea armistice"),
+    (r"포로", "prisoners of war Korea"), (r"노획", "captured Korea"),
+    (r"병인양요|병인박해", "French expedition Korea 1866"),
+    (r"신미양요", "United States expedition Korea 1871"), (r"강화도|강화", "Kanghwa"),
+    (r"선교사", "missionaries Korea"), (r"맥아더", "MacArthur"),
+    (r"이승만", "Syngman Rhee"), (r"김일성", "Kim Il Sung"),
+    (r"한국전쟁|6[·.]25", "Korean War"), (r"일제\s?강점기|조선총독부", "Chosen Japan colonial"),
+    (r"대한제국", "Korean Empire Corea"), (r"압록강", "Yalu"), (r"낙동강", "Naktong"),
+    (r"서울|한양", "Seoul"), (r"부산", "Pusan"), (r"평양", "Pyongyang"),
+    (r"제주", "Cheju Quelpart"), (r"해방", "Korea liberation 1945"),
+    (r"영상|필름", "film"), (r"사진", "photograph"), (r"지도", "map"), (r"전투", "battle"),
+    (r"조선|한국", "Korea"), (r"기록|자료|문서|관련", " "),
+]
+
+def _ko_en(q):
+    if not re.search(r"[가-힣]", q):
+        return None
+    e = q
+    for pat, en in _KO_EN:
+        e = re.sub(pat, en, e)
+    e = re.sub(r"\s+", " ", re.sub(r"[가-힣]+", " ", e)).strip()
+    if not re.search(r"korea|corea|chosen|chosin|seoul|pusan|inchon|hungnam|panmunjom|imjin|koje"
+                     r"|yalu|naktong|kanghwa|pyongyang|macarthur|rhee|kim il", e, re.I):
+        e = ("Korea " + e).strip()
+    return e or "Korea"
+
+
 @mcp.tool()
 def tna_search(query: str, max_results: int = 20) -> str:
-    """영국 국립기록관(TNA) Discovery에서 한국 관련 기록 검색. 참조코드('FO 371/84053')는
-    자동으로 정확구 처리. 예: 'Korea armistice', 'FO 371 FK1015', 'WO 281 Glosters'"""
-    q = f'"{query}"' if re.match(r"^[A-Z]+ \d+/\d+$", query.strip()) else query
+    """영국 국립기록관(TNA) Discovery에서 한국 관련 기록 검색. 한국어 질의는 영문 검색어로
+    자동 변환(임진강→Imjin River, 그로스터→Gloucestershire Regiment …). 참조코드('FO 371/84053')는
+    자동으로 정확구 처리. 예: '임진강 전투', 'Korea armistice', 'FO 371 FK1015'"""
+    en = _ko_en(query)
+    eff = en or query
+    q = f'"{eff}"' if re.match(r"^[A-Z]+ \d+/\d+$", eff.strip()) else eff
     recs = []
     for batch, total in T._search(q, page_size=min(max_results, 100), max_pages=1, sleep=0):
-        recs += [T._extract(r, "mcp", query) for r in batch]
-    return f"TNA 검색 '{query}' — 총 {total}건 중 {len(recs[:max_results])}건:\n" + _fmt(recs, max_results)
+        recs += [T._extract(r, "mcp", eff) for r in batch]
+    tag = f" → 영문 자동 변환 '{eff}'" if en else ""
+    return f"TNA 검색 '{query}'{tag} — 총 {total}건 중 {len(recs[:max_results])}건:\n" + _fmt(recs, max_results)
 
 @mcp.tool()
 def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
@@ -89,6 +129,8 @@ def nara_search(query: str, record_group: int | None = None,
     record_group으로 RG 교차 정밀검색(예: 242), moving_images_only로 영상 한정."""
     key = os.environ.get("NARA_API_KEY")
     if not key: return "NARA_API_KEY 미설정 — Catalog_API@nara.gov 로 무료 발급(이름+이메일)."
+    _en = _ko_en(query)
+    query = _en or query
     params = {"q": query, "limit": min(max_results, 100), "page": 1}
     if record_group: params["recordGroupNumber"] = record_group
     if moving_images_only: params["typeOfMaterials"] = "Moving Images"
@@ -117,6 +159,7 @@ def ia_search(query: str = "", identifier: str = "", max_results: int = 15) -> s
                 "원본 파일:\n" + "\n".join(f"- {f['name']} ({int(f.get('size',0))/1e6:.1f}MB)" for f in files))
     if not query:
         return "query 또는 identifier 중 하나는 필수."
+    query = _ko_en(query) or query
     import urllib.parse
     data = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(query) +
                      f"&fl[]=identifier&fl[]=title&fl[]=date&rows={max_results}&output=json")
@@ -242,6 +285,7 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
     import urllib.parse, json as _json, urllib.request
     key = os.environ.get("EUROPEANA_API_KEY") or "api2demo"
     demo = not os.environ.get("EUROPEANA_API_KEY")
+    query = _ko_en(query) or query
     params = {"wskey": key, "query": query, "rows": min(max_results, 50), "profile": "standard"}
     if media_type: params["qf"] = f"TYPE:{media_type.upper()}"
     url = "https://api.europeana.eu/record/v2/search.json?" + urllib.parse.urlencode(params)
@@ -484,6 +528,7 @@ def _collect_merged(collectors):
     return list(merged.values()), stats
 
 def _c_tna(q, n):
+    q = _ko_en(q) or q
     query = f'"{q.strip()}"' if re.match(r"^[A-Z]+ \d+/\d+$", q.strip()) else q
     out = []
     for batch, _t in T._search(query, page_size=min(n, 50), max_pages=1, sleep=0):
@@ -495,6 +540,7 @@ def _c_tna(q, n):
 
 def _c_ia(q, n):
     import urllib.parse
+    q = _ko_en(q) or q
     d = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(q) +
                   f"&fl[]=identifier&fl[]=title&fl[]=date&rows={n}&output=json")
     return [{"title": str(x.get("title", "")), "date": x.get("date", ""), "id": x.get("identifier"),
@@ -519,6 +565,7 @@ def _c_gallica(q, n):
 
 def _c_europeana(q, n):
     import urllib.parse
+    q = _ko_en(q) or q
     key = os.environ.get("EUROPEANA_API_KEY") or "api2demo"
     d = http_json("https://api.europeana.eu/record/v2/search.json?" +
                   urllib.parse.urlencode({"wskey": key, "query": q, "rows": n, "profile": "standard"}))
@@ -529,6 +576,7 @@ def _c_nara(q, n):
     key = os.environ.get("NARA_API_KEY")
     if not key:
         return []
+    q = _ko_en(q) or q
     data = http_json("https://catalog.archives.gov/api/v2/records/search?" + qs({"q": q, "limit": n, "page": 1}),
                      headers={"x-api-key": key})
     hits = (((data.get("body") or {}).get("hits") or {}).get("hits")) or []
