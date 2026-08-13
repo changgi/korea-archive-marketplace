@@ -323,11 +323,11 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
 
 
 
-REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (15) — 잡지·저널급 편집 기준
+REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (17) — 잡지·저널급 편집 기준
 1. 파일명: [주제영문]_records_[연도범위].html — 조사 완료 시 기본 산출물
 2. 지면 구조(잡지형): masthead → kicker → 표제(h1) → standfirst → byline(기관 chip) → 목차(nav.toc) → 히어로 figure → Ⅰ서사 → Ⅱ핵심 기록 카드 → Ⅲ영상 필름스트립 → Ⅳ전수 목록 표 → Ⅴ재현 쿼리(details) → Ⅵ권리·게재 윤리 → 출처 총람(.sources) → footer
 3. 서사 우선: 표만 나열 금지 — 발굴 경위·의미를 에세이로 서술(리드 문단 .lead 드롭캡, 풀인용 .pull 1개 이상). 문체는 담백·구체 — 과장어(놀라운·혁신적 등)와 AI투 금지
-4. 실물 이미지 필수: 게재 가능(권리 A/B + 게재윤리 1·2단계) 기록은 실물을 base64로 임베드 — 히어로 1장 + 핵심 기록마다. 한 장도 못 실으면 그 사유(권리 C/D·비식별 불가·미디지털화)를 Ⅵ절에 명기
+4. 실물 이미지 필수: 게재 가능(권리 A/B + 게재윤리 1·2단계) 기록은 기관 공개 원본에서 수집해 base64로 임베드 — 히어로 1장 + 핵심 기록마다. 기관이 비식별(블러)판을 제공하면 그것을 우선 사용. 한 장도 못 실으면 그 사유(권리 C/D·비식별 불가·미디지털화)를 Ⅵ절에 명기
 5. 모든 이미지에 figcaption + .credit 필수: "출처: 기관 정식명(국가) · 식별자 · 촬영자/생산자 · 원본 링크" — 출처 없는 이미지는 싣지 않는다
 6. 영상 기록은 .film 필름스트립: 장면 전환마다 프레임을 충분히 추출(권장 8~16장)해 타임코드(.tc)+한 줄 설명으로 나열 — 표제가 가린 장면(ETC 뒤)을 드러내 원본을 직접 보고 싶게 만든다. 슬레이트·표지판 판독 프레임은 별도 확대 figure. 블록 끝에 .cta "▶ 원본 영상 보기 — [기관] 카탈로그"
 7. 핵심 기록 3~6건은 .record 카드로: 이미지 + 한국어 제목(원제 병기) + .prov 출처 계보(국가→기관→RG/시리즈→상자→식별자) + 요약 + 바로가기 버튼 + 권리 배지
@@ -338,7 +338,9 @@ REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (15) — 잡지·저널급
 12. Ⅵ 권리 절: 법적 근거(17 U.S.C. §105 · 36 CFR 1254.62 · Crown/OGL · domaine public · KOGL) + '출판 전 인간 최종 확인 필수' + D등급 공개 금지. 민감 주제(위안부·포로·학살)는 피해자 존엄 문구와 게재윤리 4단계(거부할 수 없었던 처지의 촬영 = 화면 미사용) 적용
 13. 링크·수치는 도구 호출로 실확인한 것만 — 추정 URL 금지, footer에 '모든 링크 [날짜] 접속 확인' 명기
 14. 연표·지도·관계도는 인라인 svg로 직접 작성 가능. 외부 리소스 금지 — 폰트·CDN·이미지 핫링크 없이 단일 HTML 파일 자기완결
-15. 인쇄 대응: 템플릿의 @media print 유지 — 보고서는 그대로 출판물처럼 인쇄 가능해야 한다"""
+15. 인쇄 대응: 템플릿의 @media print 유지 — 보고서는 그대로 출판물처럼 인쇄 가능해야 한다
+16. 링크 신뢰장치: 주요 링크는 대상 페이지 캡쳐본(헤드리스 브라우저 스크린샷)을 figure+credit(갈무리 일자)로 임베드해 링크 내용이 실재함을 보인다. 자동화 차단(WAF 등) 시 그 사실을 명기하고 카탈로그 API 기술 원문 인용표로 대체. 훈격·날짜·건수 등 핵심 사실은 API/원문 대조 후 '검증 기록'으로 수록 — 초판 오류가 있었으면 정정 이력을 남긴다
+17. 카드뉴스 병행: 보고서와 함께 insta-carousel 스킬로 캐러셀(기본 8장, 1080×1080)을 제작하고, 보고서 말미 '카드뉴스' 절(fig-grid)에 축소 임베드한다 — 커버는 히어로와 같은 실물 이미지, 검증 노트·따라하기 카드 포함, 보고서와 출처 대장 공유. PNG 원본·caption.txt·sources.txt를 보고서와 함께 납품"""
 
 REPORT_TEMPLATE = """<!DOCTYPE html>
 <html lang="ko">
@@ -467,7 +469,7 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
   <span class="chip">🇺🇸 {{NARA · RG 111}}</span><span class="chip">🇬🇧 {{TNA · FO 371}}</span><span class="chip">🇰🇷 {{KOREAN WAR ARCHIVES}}</span>
   <!-- 조사한 기관 전부를 chip으로: 🇫🇷 BnF Gallica · 🇪🇺 Europeana · 🇺🇸 archive.org · 🇰🇷 국가기록원 … -->
 </div>
-<nav class="toc sans"><a href="#s1">서사</a><a href="#s2">핵심 기록</a><a href="#s3">영상</a><a href="#s4">전수 목록</a><a href="#s5">재현 쿼리</a><a href="#s6">권리·출처</a></nav>
+<nav class="toc sans"><a href="#s1">서사</a><a href="#s2">핵심 기록</a><a href="#s3">영상</a><a href="#s4">전수 목록</a><a href="#s5">재현 쿼리</a><a href="#s6">권리·출처</a><a href="#s7">카드뉴스</a></nav>
 
 <!-- 히어로: 가장 강한 실물 이미지 1장(권리 A/B + 게재윤리 통과). 반드시 credit. -->
 <figure>
@@ -541,6 +543,15 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 자동 초판이므로 <strong>출판 전 인간 최종 확인 필수</strong>이며, <span class="badge b-D">D등급</span>은 공개 금지입니다.
 {{민감 주제(위안부·포로·학살 등)면: 피해자 존엄·윤리적 사용 기준, 게재윤리 4단계(거부할 수 없었던 처지의 촬영 = 화면 미사용) 적용 문구}}</p>
 
+<!-- Ⅶ(선택) 카드뉴스 갤러리 — insta-carousel 스킬로 병행 제작한 카드를 축소 임베드. 미제작 시 절·toc 링크 삭제 -->
+<h2 id="s7"><span class="no">VII.</span> 카드뉴스 — 이 발굴을 {{N}}장으로</h2>
+<p>{{카드뉴스 소개 1~2문장 — 커버는 히어로와 같은 실물 이미지, 보고서와 같은 출처 대장 공유}}</p>
+<div class="fig-grid">
+  <figure><img src="data:image/jpeg;base64,{{카드1 축소본}}" alt="카드 1 — 커버"></figure>
+  <!-- 카드 반복 (권장 8장, 축소 maxdim 540) -->
+</div>
+<p class="small">게시용 1080×1080 PNG 원본 + 캡션(caption.txt) + 이미지 출처 대장(sources.txt)을 보고서와 함께 납품.</p>
+
 <div class="sources">
   <h2 style="margin:0 0 10px;font-size:17px">기록 출처 <span class="small">Archives cited</span></h2>
   <ul class="src">
@@ -562,7 +573,7 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 @mcp.tool()
 def report_template() -> str:
     """발굴 조사를 마친 뒤 결과를 HTML 보고서로 만들 때 호출 (조사 마무리 단계의 기본 산출물).
-    잡지·저널급 보고서 골격(HTML/CSS)과 15개 작성 규칙을 반환한다 — 편집 지면(masthead·
+    잡지·저널급 보고서 골격(HTML/CSS)과 17개 작성 규칙을 반환한다 — 편집 지면(masthead·
     standfirst·드롭캡·풀인용·기록 카드), 실물 이미지 base64 임베드+이미지별 출처 크레디트 필수,
     영상은 타임코드 필름스트립+원본 시청 CTA, 기관별 출처 chip(국기+정식명)과 인용 기관 총람.
     {{플레이스홀더}}를 검증된 발굴 결과로 채워 [주제영문]_records_[연도범위].html로 저장할 것."""
