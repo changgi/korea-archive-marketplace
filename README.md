@@ -67,6 +67,8 @@ This plugin packages a **peer-validated discovery methodology** — Song (2026):
 
 Plus the **skill** `korea-archive-discovery`: search strategy Claude applies automatically (spelling variants, broad→narrow phasing, TNA codes, adjacent mining, domestic cross-check, rights triage, HTML report).
 
+And the **skill** `archival-discovery-pipeline` (v1.14): once discovery secures an identifier·URL, this pipeline **opens the item** — frame-level video/image analysis, text-region detection + OCR + VLM cross-checked reading (slates·signs·banners), period place-name/unit identification, redescription, 4-step publication-ethics triage, RiC-O/CIDOC-CRM ontology + KARDA node/edge export, paper figures, and consistency checks. Discovery finds; the pipeline reads.
+
 ### Auto-browsing (v1.9–v1.10)
 
 Korean sites are JS-rendered or login-gated. The domestic tools now **fetch and parse each site server-side**, returning real results:
@@ -91,7 +93,9 @@ When a source needs a key that isn't set, the tool **instructs Claude to gather 
 
 **"Seoul"**로 검색하면 식민기 자료 대부분을 놓칩니다 — 1910~45년 서울은 **"Keijo"**로 색인됐으니까요. 부산은 *Fusan*, 인천은 *Jinsen·Chemulpo*, 한국은 *Chosen·Corea*. 국내 사이트는 자바스크립트·로그인·API 키라는 두 번째 벽까지 있습니다.
 
-이 플러그인은 검증된 발굴 방법론(송창기 2026, F1 = 0.931)을 클로드가 자동으로 쓰는 **20개 도구**로 담았고, 이제 해외와 국내 아카이브를 모두 아우릅니다(여러 아카이브 동시 교차수집·기관 프로파일·6·25전쟁 아카이브센터 협약 연계 포함).
+이 플러그인은 검증된 발굴 방법론(송창기 2026, F1 = 0.931)을 클로드가 자동으로 쓰는 **20개 도구**로 담았고, 이제 해외와 국내 아카이브를 모두 아우릅니다(여러 아카이브 동시 교차수집·기관 프로파일·KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 협약 연계 포함).
+
+**archival-discovery-pipeline 스킬(v1.14)** 이 발굴 다음을 잇습니다. 발굴이 식별자·URL을 확보하면, 이 파이프라인이 **실물을 엽니다** — 프레임 단위 분석, 문자 영역 탐지·OCR·VLM 교차검증 판독(슬레이트·표지판·현수막), 당대 지명·부대 식별, 재기술, 게재 윤리 4단계 판정, RiC-O/CIDOC-CRM 온톨로지·KARDA 노드엣지 변환, 논문 도판, 정합 검사. "영상 분석해줘", "슬레이트 판독해줘", "재기술해줘" 한 문장으로 시작합니다.
 
 ### 자동 브라우징 (v1.9–v1.10)
 
