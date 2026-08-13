@@ -323,163 +323,249 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
 
 
 
-REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (12가지)
-1. 파일명: [주제영문]_records_[연도범위].html — 조사 완료 시 기본 산출물로 생성
-2. header: "[주제] — 자료 발굴 보고" + meta(작성일 · 대상 시기 · 대상 아카이브)
-3. highlight 박스: 가장 중요한 발굴 1건 요약 (식별자·경위·구성·연구사적 의의)
-4. 표① 문서 사료 / 표② 사진·영상 사료: 식별자·원제 / 연대 / 소장처·청구정보(RG·Entry·Box) / 관련 내용 / 바로가기(원문→해제→카탈로그 순, target=_blank) / 권리초판 배지(b-A 공개확정 · b-B 공개가능추정 · b-C 허가필요 · b-D 지위불명)
-5. 재현용 검색 쿼리 표: 목적 / 쿼리 / URL 인코딩된 실행 링크 — 실제 실행해 본 쿼리만
-6. '0건 ≠ 부재' note: 미전산화 수준 설명 + 인접 상자(Box ±2)·피스(참조코드 ±15) 추가 조사 권고
-7. 종합 색인·최신 연구 목록 (ul.src)
-8. 권리 판정 절: 법적 근거(17 U.S.C. §105 · 36 CFR 1254.62 · Crown/OGL · domaine public) + '출판 전 인간 최종 확인 필수' + D등급 공개 금지
-9. footer: 방법론 한 줄 + '모든 링크는 [날짜] 기준 접속 확인됨'
-10. 링크는 도구 호출·열람으로 실재 확인한 URL만 기재 — 추정 URL 금지
-11. 민감 주제(위안부·포로·학살·희생자)는 피해자 존엄·윤리적 사용 문구를 권리 절에 포함
-12. 그림(선택, 없으면 생략): 대표 이미지·지도·연표·다이어그램을 <figure>로 본문에 삽입해 시각화. 자료 사진은 <img src="data:image/jpeg;base64,…">로 base64 임베드(외부 이미지 링크 금지 — 단일 HTML 파일 자기완결), 연표·관계도 등 도해는 인라인 <svg>로 직접 작성 가능. 각 그림에 <figcaption>그림 N. 설명</figcaption>. figure는 어느 절 사이에나 배치 가능"""
+REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (15) — 잡지·저널급 편집 기준
+1. 파일명: [주제영문]_records_[연도범위].html — 조사 완료 시 기본 산출물
+2. 지면 구조(잡지형): masthead → kicker → 표제(h1) → standfirst → byline(기관 chip) → 목차(nav.toc) → 히어로 figure → Ⅰ서사 → Ⅱ핵심 기록 카드 → Ⅲ영상 필름스트립 → Ⅳ전수 목록 표 → Ⅴ재현 쿼리(details) → Ⅵ권리·게재 윤리 → 출처 총람(.sources) → footer
+3. 서사 우선: 표만 나열 금지 — 발굴 경위·의미를 에세이로 서술(리드 문단 .lead 드롭캡, 풀인용 .pull 1개 이상). 문체는 담백·구체 — 과장어(놀라운·혁신적 등)와 AI투 금지
+4. 실물 이미지 필수: 게재 가능(권리 A/B + 게재윤리 1·2단계) 기록은 실물을 base64로 임베드 — 히어로 1장 + 핵심 기록마다. 한 장도 못 실으면 그 사유(권리 C/D·비식별 불가·미디지털화)를 Ⅵ절에 명기
+5. 모든 이미지에 figcaption + .credit 필수: "출처: 기관 정식명(국가) · 식별자 · 촬영자/생산자 · 원본 링크" — 출처 없는 이미지는 싣지 않는다
+6. 영상 기록은 .film 필름스트립: 장면 전환마다 프레임을 충분히 추출(권장 8~16장)해 타임코드(.tc)+한 줄 설명으로 나열 — 표제가 가린 장면(ETC 뒤)을 드러내 원본을 직접 보고 싶게 만든다. 슬레이트·표지판 판독 프레임은 별도 확대 figure. 블록 끝에 .cta "▶ 원본 영상 보기 — [기관] 카탈로그"
+7. 핵심 기록 3~6건은 .record 카드로: 이미지 + 한국어 제목(원제 병기) + .prov 출처 계보(국가→기관→RG/시리즈→상자→식별자) + 요약 + 바로가기 버튼 + 권리 배지
+8. 전수 목록 표(부록형): 식별자·원제 / 연대 / 소장처·청구정보(RG·Entry·Box) / 내용 / 바로가기(원문→해제→카탈로그) / 권리초판 배지(b-A 공개확정 · b-B PD추정 · b-C 허가필요 · b-D 지위불명)
+9. 출처 명시(전 지면): byline·본문에 기관 chip(국기 이모지+정식명 — 🇺🇸 NARA · 🇬🇧 TNA · 🇫🇷 BnF Gallica · 🇪🇺 Europeana · 🇺🇸 archive.org · 🇰🇷 국가기록원 · 🇰🇷 KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 등), 말미 .sources에 인용 기관 총람(국기·정식명·청구정보·이용조건·링크)
+10. 재현 쿼리는 details 접이식 — 실제 실행한 쿼리만(목적/쿼리/URL 인코딩 실행 링크). '0건 ≠ 부재' note(인접 상자 ±2·피스 ±15 권고) 포함
+11. 종합 색인·최신 연구 목록(ul.src) — details로 접어도 된다
+12. Ⅵ 권리 절: 법적 근거(17 U.S.C. §105 · 36 CFR 1254.62 · Crown/OGL · domaine public · KOGL) + '출판 전 인간 최종 확인 필수' + D등급 공개 금지. 민감 주제(위안부·포로·학살)는 피해자 존엄 문구와 게재윤리 4단계(거부할 수 없었던 처지의 촬영 = 화면 미사용) 적용
+13. 링크·수치는 도구 호출로 실확인한 것만 — 추정 URL 금지, footer에 '모든 링크 [날짜] 접속 확인' 명기
+14. 연표·지도·관계도는 인라인 svg로 직접 작성 가능. 외부 리소스 금지 — 폰트·CDN·이미지 핫링크 없이 단일 HTML 파일 자기완결
+15. 인쇄 대응: 템플릿의 @media print 유지 — 보고서는 그대로 출판물처럼 인쇄 가능해야 한다"""
 
 REPORT_TEMPLATE = """<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{제목}} — 자료 발굴 보고</title>
+<title>{{제목}} — 기록 발굴 보고</title>
 <style>
   :root{
-    --ink:#1a1d23; --sub:#5a6070; --line:#e3e5ea; --bg:#f7f8fa;
-    --accent:#8a3033; --accent-soft:#f7eeee; --card:#ffffff;
+    --paper:#f5f1e8; --card:#fffdf7; --ink:#211d18; --sub:#6b6257; --faint:#8d8477;
+    --line:#dcd4c5; --hair:#c8beac; --accent:#8a3033; --deep:#5f1f22; --gold:#a8853c; --blue:#1d5fa8;
   }
-  *{box-sizing:border-box;}
-  body{margin:0; font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif; color:var(--ink); background:var(--bg); line-height:1.65;}
-  .wrap{max-width:1000px; margin:0 auto; padding:40px 24px 80px;}
-  header{border-bottom:3px solid var(--accent); padding-bottom:20px; margin-bottom:32px;}
-  h1{font-size:26px; margin:0 0 8px;}
-  .meta{color:var(--sub); font-size:14px;}
-  h2{font-size:20px; margin:40px 0 12px; padding-left:12px; border-left:4px solid var(--accent);}
-  p{margin:10px 0;}
-  .highlight{background:var(--accent-soft); border:1px solid #e8d5d5; border-radius:10px; padding:18px 20px; margin:20px 0;}
-  .highlight strong{color:var(--accent);}
-  table{width:100%; border-collapse:collapse; background:var(--card); font-size:14px; margin:16px 0; border:1px solid var(--line);}
-  th{background:#2d3340; color:#fff; padding:10px 12px; text-align:left; font-weight:600; white-space:nowrap;}
-  td{padding:10px 12px; border-top:1px solid var(--line); vertical-align:top;}
-  tr:nth-child(even) td{background:#fafbfc;}
-  a{color:#1d5fa8; text-decoration:none; border-bottom:1px dotted #9ab6d6;}
-  a:hover{color:var(--accent); border-bottom-color:var(--accent);}
-  .badge{display:inline-block; padding:2px 8px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap;}
-  .b-A{background:#e3f0fb; color:#1d5fa8; border:1px solid #b9d4ee;}
-  .b-B{background:#e6f2e6; color:#2c6e2f; border:1px solid #bcd9bd;}
-  .b-C{background:#fff3df; color:#9a6b15; border:1px solid #ead9b0;}
-  .b-D{background:#fbe7e7; color:#a33333; border:1px solid #e6bcbc;}
-  code{background:#eef0f4; padding:2px 6px; border-radius:4px; font-size:13px; font-family:Consolas,Menlo,monospace;}
-  .note{background:#fff8e6; border:1px solid #eadfb8; border-radius:10px; padding:14px 18px; margin:16px 0; font-size:14px;}
-  ul.src{columns:1; padding-left:20px; font-size:14px;}
-  ul.src li{margin:6px 0;}
-  .small{font-size:13px; color:var(--sub);}
-  figure{margin:22px 0;}
-  figure img{width:100%; display:block; border:1px solid var(--line);}
-  figure svg{width:100%; height:auto; display:block; border:1px solid var(--line); background:var(--card);}
-  figcaption{font-size:13px; color:var(--sub); margin-top:6px;}
-  footer{margin-top:48px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--sub);}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-size:16.5px;line-height:1.78;
+    font-family:'Noto Serif KR','Nanum Myeongjo','Apple Myungjo',Batang,Georgia,'Times New Roman',serif}
+  .wrap{max-width:880px;margin:0 auto;padding:0 26px 90px}
+  .sans{font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif}
+  /* ── 머리지면 ── */
+  .masthead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:24px 0 12px;
+    border-bottom:3px double var(--ink);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--sub)}
+  .masthead b{color:var(--accent)}
+  .kicker{margin:52px 0 10px;font-size:12.5px;letter-spacing:.3em;color:var(--accent);text-transform:uppercase;font-weight:700}
+  h1{margin:0 0 16px;font-size:clamp(30px,5.4vw,46px);line-height:1.22;font-weight:800;letter-spacing:-.01em}
+  .standfirst{font-size:19px;line-height:1.68;color:var(--sub);margin:0 0 22px}
+  .byline{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:13px 0;margin-bottom:6px;
+    border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);font-size:12.5px;color:var(--sub)}
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 30px;font-size:12.5px}
+  nav.toc a{border:1px solid var(--hair);border-radius:999px;padding:4px 13px;color:var(--sub);text-decoration:none}
+  nav.toc a:hover{border-color:var(--accent);color:var(--accent)}
+  /* ── 본문 ── */
+  h2{margin:64px 0 18px;font-size:23px;font-weight:800;scroll-margin-top:20px}
+  h2 .no{font-family:Georgia,serif;font-style:italic;color:var(--accent);margin-right:10px}
+  h2::after{content:"";display:block;width:54px;height:3px;background:var(--accent);margin-top:10px}
+  p{margin:12px 0}
+  .lead::first-letter{float:left;font-size:56px;line-height:.9;padding:7px 10px 0 0;font-weight:800;color:var(--accent)}
+  .pull{margin:34px 8px;padding:4px 0 4px 22px;border-left:3px solid var(--gold);
+    font-size:20.5px;line-height:1.6;color:var(--deep);font-style:italic}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px dotted #9ab6d6}
+  a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+  /* ── 그림·크레디트 ── */
+  figure{margin:34px 0}
+  figure img{width:100%;display:block;border:1px solid var(--line);background:#171412}
+  figure svg{width:100%;height:auto;display:block;border:1px solid var(--line);background:var(--card)}
+  figcaption{font-size:13px;color:var(--sub);margin-top:9px;line-height:1.6}
+  figcaption b{color:var(--ink)}
+  .credit{display:block;font-size:11.5px;color:var(--faint);letter-spacing:.04em;margin-top:3px}
+  .fig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+  .fig-grid figure{margin:0}
+  .fig-grid img{height:100%;object-fit:cover}
+  /* ── 출처 chip ── */
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border:1px solid var(--hair);
+    border-radius:999px;background:var(--card);font-size:12px;color:var(--sub);white-space:nowrap}
+  /* ── 기록 카드 ── */
+  .record{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--accent);
+    margin:26px 0;padding:22px 24px;display:grid;grid-template-columns:210px 1fr;gap:20px}
+  .record>img{width:100%;border:1px solid var(--line);align-self:start}
+  .record h3{margin:0 0 6px;font-size:18px}
+  .record .prov{font-size:12px;color:var(--faint);letter-spacing:.03em;margin:4px 0 10px}
+  .record .prov b{color:var(--sub)}
+  .btns{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
+  .btns a{border:1px solid var(--hair);border-radius:4px;padding:5px 13px;font-size:12.5px;background:var(--paper)}
+  @media (max-width:640px){.record{grid-template-columns:1fr}}
+  /* ── 영상 필름스트립 ── */
+  .film{background:#171412;color:#e9e2d6;border:1px solid #000;margin:38px 0;padding:22px 22px 24px}
+  .film h3{margin:0 0 4px;font-size:19px;color:#f4ecdd}
+  .film .prov{font-size:12px;color:#9d9384;margin-bottom:6px}
+  .film p{color:#cfc5b4;font-size:14.5px}
+  .filmstrip{display:flex;gap:10px;overflow-x:auto;padding:12px 2px 14px;scroll-snap-type:x mandatory}
+  .frame{flex:0 0 200px;scroll-snap-align:start;margin:0}
+  .frame img{width:100%;aspect-ratio:4/3;object-fit:cover;border:1px solid #3a332c;transition:.18s;filter:sepia(.08)}
+  .frame:hover img{filter:none;transform:scale(1.02)}
+  .frame figcaption{font-size:12px;color:#bdb3a2;margin-top:5px}
+  .tc{display:inline-block;font:700 11px/1.7 Consolas,Menlo,monospace;background:#2a241f;color:#d9c691;
+    padding:0 7px;border-radius:3px;margin-right:6px}
+  .cta{display:inline-block;margin-top:14px;padding:11px 24px;background:var(--accent);color:#fff!important;
+    font-weight:700;letter-spacing:.05em;border:none;border-radius:4px}
+  .cta:hover{background:var(--deep)}
+  .hint{font-size:11.5px;color:#7d7466;margin-top:6px}
+  /* ── 표(부록형) ── */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:18px 0;background:var(--card)}
+  th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);text-align:left;
+    padding:10px;border-bottom:2px solid var(--ink);white-space:nowrap}
+  td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .b-A{background:#e3f0fb;color:#1d5fa8;border:1px solid #b9d4ee}
+  .b-B{background:#e6f2e6;color:#2c6e2f;border:1px solid #bcd9bd}
+  .b-C{background:#fff3df;color:#9a6b15;border:1px solid #ead9b0}
+  .b-D{background:#fbe7e7;color:#a33333;border:1px solid #e6bcbc}
+  code{background:#eee9dd;padding:2px 6px;border-radius:4px;font-size:13px;font-family:Consolas,Menlo,monospace}
+  .note{background:#fbf5e3;border:1px solid #e2d5ad;border-radius:8px;padding:14px 18px;margin:16px 0;font-size:14px}
+  ul.src{padding-left:20px;font-size:14px}
+  ul.src li{margin:6px 0}
+  .small{font-size:13px;color:var(--sub)}
+  /* ── 접이식 ── */
+  details{background:var(--card);border:1px solid var(--line);border-radius:6px;margin:14px 0}
+  summary{cursor:pointer;padding:13px 18px;font-weight:700;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸";display:inline-block;color:var(--accent);margin-right:9px;transition:.15s}
+  details[open] summary::before{transform:rotate(90deg)}
+  details .inner{padding:0 18px 16px}
+  /* ── 출처 총람·꼬리 ── */
+  .sources{margin-top:64px;padding:20px 22px;background:var(--card);border:1px solid var(--line)}
+  .sources h2{margin-top:0}
+  .sources li{margin:7px 0;font-size:13.5px}
+  footer{margin-top:44px;border-top:3px double var(--ink);padding-top:14px;font-size:12px;color:var(--sub)}
+  @media print{
+    body{background:#fff;font-size:11pt}
+    .wrap{max-width:100%;padding:0}
+    nav.toc,.hint{display:none}
+    .film{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    details{border:none}details .inner{display:block}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<header>
-  <h1>{{제목}} — 자료 발굴 보고</h1>
-  <div class="meta">작성일: {{작성일}} · 대상 시기: {{대상시기}} · 대상 아카이브: {{아카이브 목록}}</div>
-</header>
+<div class="masthead sans"><span><b>KOREA ARCHIVE</b> 통합검색 — 기록 발굴 보고</span><span>{{호수 또는 시리즈명}} · {{작성일}}</span></div>
 
-<!-- 그림(선택) — 대표 이미지·지도·연표·다이어그램. 없으면 이 <figure> 블록 삭제. figure는 어느 절 사이에나 넣을 수 있음. -->
+<div class="kicker sans">{{분류 킥커 — 예: 발굴 보고 · 1950 한국전쟁 영상}}</div>
+<h1>{{표제 — 신문 표제처럼, 발굴의 핵심을 한 문장으로}}</h1>
+<p class="standfirst">{{스탠드퍼스트 2~3문장 — 무엇을, 어디서, 왜 중요한지. 잡지 데크처럼 서술형으로.}}</p>
+<div class="byline sans">
+  <span>대상 시기 <b>{{대상시기}}</b></span> · <span>조사 도구 <b>KOREA ARCHIVE 통합검색</b></span>
+  <span class="chip">🇺🇸 {{NARA · RG 111}}</span><span class="chip">🇬🇧 {{TNA · FO 371}}</span><span class="chip">🇰🇷 {{KOREAN WAR ARCHIVES}}</span>
+  <!-- 조사한 기관 전부를 chip으로: 🇫🇷 BnF Gallica · 🇪🇺 Europeana · 🇺🇸 archive.org · 🇰🇷 국가기록원 … -->
+</div>
+<nav class="toc sans"><a href="#s1">서사</a><a href="#s2">핵심 기록</a><a href="#s3">영상</a><a href="#s4">전수 목록</a><a href="#s5">재현 쿼리</a><a href="#s6">권리·출처</a></nav>
+
+<!-- 히어로: 가장 강한 실물 이미지 1장(권리 A/B + 게재윤리 통과). 반드시 credit. -->
 <figure>
-  <img src="data:image/jpeg;base64,{{BASE64 이미지 데이터 — 외부 링크 금지, 자기완결}}" alt="{{대체 텍스트}}">
-  <figcaption>그림 1. {{그림 설명}}</figcaption>
+  <img src="data:image/jpeg;base64,{{BASE64}}" alt="{{대체 텍스트}}">
+  <figcaption><b>그림 1.</b> {{한 줄 설명 — 보는 이가 멈추게 되는 이유}}
+  <span class="credit">출처: {{기관 정식명}}({{국가}}) · {{식별자}} · {{촬영자/생산자, 연도}} · <a href="{{원본URL}}">원본</a></span></figcaption>
 </figure>
 
-<div class="highlight">
-  <p><strong>핵심 발굴</strong> — {{가장 중요한 발굴 1건: 식별자·원제·경위·구성·연구사적 의의를 문단으로 요약}}</p>
+<h2 id="s1"><span class="no">I.</span> {{서사 절 제목 — 발굴 경위}}</h2>
+<p class="lead">{{리드 문단(드롭캡) — 어떤 질문에서 출발해 무엇을 찾았는가. 카탈로그의 부실한 표제가 무엇을 가리고 있었는가.}}</p>
+<p>{{본문 서사 — 검색 전략(표기 변형·인접 채굴), 결정적 단서, 판독 과정. 확인한 것과 추정을 구분해 담백하게.}}</p>
+<blockquote class="pull">{{풀인용 — 슬레이트 판독문·문서 원문·핵심 발견 한 구절}}</blockquote>
+<p>{{서사 계속. 이미지가 있으면 figure를 절 사이 어디든 추가(각각 credit 필수).}}</p>
+
+<h2 id="s2"><span class="no">II.</span> 핵심 기록</h2>
+<!-- 가장 중요한 기록 3~6건을 카드로. 이미지 없으면 <img> 줄 생략 -->
+<div class="record">
+  <img src="data:image/jpeg;base64,{{BASE64}}" alt="{{설명}}">
+  <div>
+    <h3>{{한국어 제목 — 원제 병기}}</h3>
+    <div class="prov sans">{{🇺🇸 미국}} → <b>{{NARA}}</b> → {{RG 111 · Entry NM-xx · Box nn}} → <b>{{식별자}}</b></div>
+    <p>{{내용 요약 2~3문장 — 한국 관련 핵심. 표제가 가린 내용이 있으면 그것부터.}}</p>
+    <div class="btns sans"><a href="{{원문URL}}">원문 보기</a><a href="{{카탈로그URL}}">카탈로그</a><span class="badge b-B">B · PD 추정</span></div>
+  </div>
 </div>
 
-<h2>1. 발굴 문서 목록 (문서 사료)</h2>
-<table>
-  <thead>
-    <tr><th>#</th><th>식별자 · 원제</th><th>연대</th><th>소장처 / 청구정보</th><th>관련 내용</th><th>바로가기</th><th>권리초판</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td><strong>{{원제}}</strong><br><span class="small">{{생산기관·시리즈}}</span></td>
-      <td>{{연대}}</td>
-      <td>{{소장처}} <strong>{{RG/참조코드}}</strong>{{, Entry·Box 등}}</td>
-      <td>{{한국 관련 핵심 내용}}</td>
-      <td><a href="{{원문URL}}" target="_blank">원문</a><br><a href="{{해제URL}}" target="_blank">해제</a><br><a href="{{카탈로그검색URL}}" target="_blank">카탈로그 검색</a></td>
-      <td><span class="badge b-B">B · PD 추정</span></td>
-    </tr>
-    <!-- 행 반복. 권리 배지: b-A(공개 확정)·b-B(공개 가능 추정)·b-C(허가 필요)·b-D(지위 불명·공개 금지) -->
-  </tbody>
-</table>
-
-<h2>2. 사진 · 영상 사료</h2>
-<!-- 사진·영상이 없으면 이 절 전체 삭제 -->
-<table>
-  <thead>
-    <tr><th>#</th><th>식별자</th><th>연대</th><th>촬영자/생산자</th><th>내용</th><th>바로가기</th><th>권리초판</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>P1</td>
-      <td><strong>{{예: 111-SC-000000}}</strong><br><span class="small">{{소장처·RG}}</span></td>
-      <td>{{연대}}</td>
-      <td>{{촬영자}}</td>
-      <td>{{내용}}</td>
-      <td><a href="{{URL}}" target="_blank">{{링크명}}</a></td>
-      <td><span class="badge b-B">B</span></td>
-    </tr>
-  </tbody>
-</table>
-
-<h2>3. 재현용 검색 쿼리</h2>
-<p>{{카탈로그명·링크}}에서 아래 쿼리로 재현할 수 있습니다. 전전(戰前) 자료 표기 규칙상
-<code>Korea</code> 외에 <code>Chosen</code> · <code>Corea</code> 등 당대 표기를 병렬 투입하십시오.</p>
-<table>
-  <thead><tr><th>목적</th><th>쿼리</th><th>실행 링크</th></tr></thead>
-  <tbody>
-    <tr><td>{{목적}}</td><td><code>{{쿼리}}</code></td><td><a href="{{URL인코딩된 검색URL}}" target="_blank">검색 실행</a></td></tr>
-    <!-- 행 반복: 실제 실행해 본 쿼리만 기재 -->
-  </tbody>
-</table>
-
-<div class="note">
-  <strong>⚠ 0건 ≠ 부재.</strong> {{미전산화 상황 설명 — 해당 RG/시리즈의 전산화 수준, 인접 상자·피스(예: Box NNN±2, 참조코드 ±15) 추가 조사 권고, 현지 열람·복사 대행 안내}}
+<h2 id="s3"><span class="no">III.</span> 영상 기록 — 프레임으로 먼저 본다</h2>
+<!-- 영상 1건당 .film 블록 1개. 프레임은 장면 전환마다 추출(권장 8~16장, analyze_video.py auto/zoom).
+     표제가 가린 장면(ETC 뒤)을 프레임으로 드러내 원본을 직접 보고 싶게 만드는 것이 목적. -->
+<div class="film">
+  <h3>{{영상 제목 (원제)}}</h3>
+  <div class="prov sans">{{🇺🇸 NARA · RG 111 · 식별자}} · {{러닝타임}} · {{연대}} · 촬영 {{부대/촬영자}}</div>
+  <p>{{이 영상이 왜 중요한가 — 카탈로그 표제와 실제 내용의 간극을 중심으로 2~3문장.}}</p>
+  <div class="filmstrip">
+    <figure class="frame"><img src="data:image/jpeg;base64,{{BASE64}}" alt="{{장면}}"><figcaption><span class="tc">{{00:00:12}}</span>{{한 줄 장면 설명}}</figcaption></figure>
+    <figure class="frame"><img src="data:image/jpeg;base64,{{BASE64}}" alt="{{장면}}"><figcaption><span class="tc">{{00:01:05}}</span>{{슬레이트 — 날짜·부대 판독}}</figcaption></figure>
+    <!-- 프레임 반복 -->
+  </div>
+  <div class="hint sans">← 좌우로 넘겨 보세요 · 프레임 {{N}}장 / 전체 {{러닝타임}}</div>
+  <a class="cta sans" href="{{원본영상URL}}">▶ 원본 영상 보기 — {{기관}} 카탈로그</a>
 </div>
 
-<h2>4. 종합 색인 · 최신 연구</h2>
-<ul class="src">
-  <li><a href="{{URL}}" target="_blank">{{색인·데이터베이스·연구 제목}}</a> — {{한 줄 설명}}</li>
-  <!-- 항목 반복 -->
-</ul>
+<h2 id="s4"><span class="no">IV.</span> 발굴 기록 전수 목록</h2>
+<table>
+  <thead><tr><th>#</th><th>식별자 · 원제</th><th>연대</th><th>소장처 / 청구정보</th><th>관련 내용</th><th>바로가기</th><th>권리초판</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><strong>{{원제}}</strong><br><span class="small">{{생산기관·시리즈}}</span></td><td>{{연대}}</td><td>{{소장처}} <strong>{{RG/참조코드}}</strong>{{, Entry·Box}}</td><td>{{핵심 내용}}</td><td><a href="{{원문URL}}">원문</a> · <a href="{{카탈로그URL}}">카탈로그</a></td><td><span class="badge b-B">B</span></td></tr>
+    <!-- 행 반복. 사진·영상 사료가 많으면 표②로 분리 -->
+  </tbody>
+</table>
 
-<h2>5. 권리 등급 판정 (초판)</h2>
-<p>{{판정 요약: 근거 법령(17 U.S.C. §105 연방 직무저작물, 36 CFR 1254.62, Crown copyright/OGL,
-domaine public 등)과 함께 표별 등급 설명}}.
+<h2 id="s5"><span class="no">V.</span> 재현 가능한 조사</h2>
+<details open>
+  <summary>재현용 검색 쿼리 — 실제 실행분만</summary>
+  <div class="inner">
+  <p class="small">전전(戰前) 자료는 <code>Korea</code> 외 <code>Chosen</code>·<code>Corea</code>·<code>Keijo</code> 등 당대 표기를 병렬 투입.</p>
+  <table>
+    <thead><tr><th>목적</th><th>쿼리</th><th>실행</th></tr></thead>
+    <tbody><tr><td>{{목적}}</td><td><code>{{쿼리}}</code></td><td><a href="{{URL인코딩된 검색URL}}">검색 실행</a></td></tr></tbody>
+  </table>
+  </div>
+</details>
+<div class="note"><strong>0건 ≠ 부재.</strong> {{미전산화 상황 + 인접 상자(Box ±2)·피스(참조코드 ±15) 추가 조사 권고}}</div>
+<details>
+  <summary>종합 색인 · 최신 연구</summary>
+  <div class="inner"><ul class="src"><li><a href="{{URL}}">{{제목}}</a> — {{한 줄 설명}}</li></ul></div>
+</details>
+
+<h2 id="s6"><span class="no">VI.</span> 권리 판정과 게재 윤리</h2>
+<p>{{판정 요약 + 법적 근거(17 U.S.C. §105 · 36 CFR 1254.62 · Crown/OGL · domaine public · KOGL)}}.
 자동 초판이므로 <strong>출판 전 인간 최종 확인 필수</strong>이며, <span class="badge b-D">D등급</span>은 공개 금지입니다.
-{{민감 주제(위안부·포로·학살 등)인 경우: 피해자·생존자의 존엄을 고려한 윤리적 사용 기준 검토 문구 필수}}</p>
+{{민감 주제(위안부·포로·학살 등)면: 피해자 존엄·윤리적 사용 기준, 게재윤리 4단계(거부할 수 없었던 처지의 촬영 = 화면 미사용) 적용 문구}}</p>
+
+<div class="sources">
+  <h2 style="margin:0 0 10px;font-size:17px">기록 출처 <span class="small">Archives cited</span></h2>
+  <ul class="src">
+    <li>🇺🇸 <b>{{National Archives and Records Administration (NARA)}}</b> — {{RG·시리즈, 이용조건 요약}} · <a href="{{URL}}">catalog.archives.gov</a></li>
+    <li>🇰🇷 <b>{{KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터(전쟁기념관재단)}}</b> — {{출처 표기 필수 조건}} · <a href="{{URL}}">koreanwar.or.kr</a></li>
+    <!-- 인용한 모든 기관: 국기 · 정식명 · 청구정보 · 이용조건 · 링크 -->
+  </ul>
+</div>
 
 <footer>
-  발굴 방법론: 해외 아카이브 한국 기록 발굴 스킬(표기 변형 병렬 투입 · RG 교차 검색 · 인접 확장 · 권리 초판 판정) 기반 ·
-  본 보고서의 모든 링크는 {{확인일}} 기준 접속 확인됨.
+  발굴 방법론: KOREA ARCHIVE 통합검색(표기 변형 병렬 투입 · RG 교차 검색 · 인접 확장 · 권리 초판 판정) ·
+  본 보고서의 모든 링크와 수치는 {{확인일}} 기준 도구 호출로 확인됨 · 이미지는 각 기관 원본의 재현이며 출처 표기를 유지할 것.
 </footer>
-
 </div>
 </body>
-</html>
-"""
+</html>"""
 
 
 @mcp.tool()
 def report_template() -> str:
     """발굴 조사를 마친 뒤 결과를 HTML 보고서로 만들 때 호출 (조사 마무리 단계의 기본 산출물).
-    보고서 골격(HTML/CSS 템플릿)과 11가지 작성 규칙을 반환한다. {{플레이스홀더}}를 검증된
-    발굴 결과로 채워 [주제영문]_records_[연도범위].html 파일로 저장할 것."""
+    잡지·저널급 보고서 골격(HTML/CSS)과 15개 작성 규칙을 반환한다 — 편집 지면(masthead·
+    standfirst·드롭캡·풀인용·기록 카드), 실물 이미지 base64 임베드+이미지별 출처 크레디트 필수,
+    영상은 타임코드 필름스트립+원본 시청 CTA, 기관별 출처 chip(국기+정식명)과 인용 기관 총람.
+    {{플레이스홀더}}를 검증된 발굴 결과로 채워 [주제영문]_records_[연도범위].html로 저장할 것."""
     return REPORT_RULES + "\n\n===== HTML TEMPLATE ({{플레이스홀더}}를 채울 것) =====\n" + REPORT_TEMPLATE
 
 
