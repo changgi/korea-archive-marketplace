@@ -966,6 +966,26 @@ Footer: 전체 보고서 QR/URL {{링크}} · 출처 총람 요약 · {{확인�
 4. 겹침·줄바꿈·폰트(필기체 라틴) 검수 → 교정 → commit
 5. 출처 크레디트 존재 확인 — 없으면 add_text로 추가"""
 
+FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물까지 한 번에 (매직 키워드: "풀패키지" · "전부 다 만들어줘")
+입력은 주제 하나면 충분하다. 아래 순서를 전부 수행해 모든 산출물을 함께 납품한다.
+
+1. 발굴 조사: cross_search + 전문 도구(tna_search/nara_search/koreanwar_search/gallica_search…) — 표기 변형 병렬,
+   시리즈 특정+tna_adjacent_mine 인접 채굴(±5~15), 국내 협약기관 교차검증, 카탈로그 API 원문으로 훈격·날짜·건수 검증
+   (정정 발생 시 이력 기록), judge_rights 권리 초판.
+2. 실물 이미지 수집: 기관 공개 원본 전량(비식별판 우선) + digitised 기록의 카탈로그 무료 미리보기.
+   수집 즉시 출처 대장(sources.txt) 기록. AI 생성 인물·역사 장면 절대 금지.
+3. HTML 보고서: report_template(kind='report') 18규칙 전부 — 히어로 실물·인라인 도판·콘택트시트·원문 미리보기·
+   검증 기록·전수 목록·재현 쿼리·더 보기·카드뉴스 갤러리. 수치는 모든 산출물에서 동일해야 한다.
+4. 캐러셀 8장: report_template(kind='carousel') 12규칙 — 커버는 보고서 히어로와 같은 실물, 검증 노트·따라하기 포함.
+   렌더는 환경별: 로컬=헤드리스 렌더 / 웹·모바일=Canva 커넥터 생성→페이지별 PNG 내보내기. 전 장 육안 검수 생략 금지.
+   caption.txt + sources.txt 동봉.
+5. Canva 산출물(커넥터 연결 시): 캐러셀 편집본 + report_template(kind='canva_prompts') 1번 템플릿으로 포스터 1종 —
+   생성 직후 전 한국어 문구를 검증 카피로 교정(replace_text) 후 저장.
+6. 납품: 보고서 HTML + 카드 8장 + caption/sources + Canva 링크. SNS 게시·공개 푸시는 사용자 확인 후.
+
+품질 게이트: 수치 정합 · 전 이미지 캡션+출처(기관 정식명·국가·식별자·링크) · 실확인 링크만(확인일 명기) ·
+게재윤리 4단계(포로·사망자 존엄) · 협약기관 출처 표기 필수."""
+
 
 @mcp.tool()
 def report_template(kind: str = "report") -> str:
@@ -977,7 +997,11 @@ def report_template(kind: str = "report") -> str:
     kind="carousel"이면 카드뉴스 캐러셀 디자인 시스템을 반환 — 검증된 1080×1080 카드 CSS 컴포넌트
     + 제작 12규칙(서사 아크·실물 이미지·출처 캡션·겹침 방지·육안 검수). 어디서든 같은 품질 재현용.
     kind="canva_prompts"면 Canva AI(generate-design) 홍보물 프롬프트 6종(포스터·행사·시리즈 예고·인물·
-    영상 알림·A4 리플릿)과 실전 검증된 환각 교정 절차를 반환한다."""
+    영상 알림·A4 리플릿)과 실전 검증된 환각 교정 절차를 반환한다.
+    사용자가 "풀패키지"라고 하면 kind="full_package"를 먼저 호출 — 조사→보고서→캐러셀→포스터
+    전 산출물 제작 순서를 받아 그대로 수행한다."""
+    if kind == "full_package":
+        return FULL_PACKAGE
     if kind == "canva_prompts":
         return CANVA_PROMPTS
     if kind == "carousel":
