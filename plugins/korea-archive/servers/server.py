@@ -50,47 +50,92 @@ def _fmt(recs: list[dict], limit: int) -> str:
                    f" ({r.get('date','')}) {r.get('url','')}")
     return "\n".join(out) or "(0건)"
 
-# ── 영어권 아카이브(TNA·NARA·archive.org·Europeana) 한국어→영어 자동 변환 ──
-# 한국어 질의는 영어 색인에서 0건이거나 대폭 축소된다(실측: IA 장진호 1건 vs
-# "Chosin Reservoir" 139건, 흥남철수 0 vs 26, 인천상륙작전 4 vs 151).
-_KO_EN = [
-    (r"장진호", "Chosin Reservoir"), (r"흥남\s?철수|흥남", "Hungnam evacuation"),
-    (r"인천\s?상륙\s?작전|인천\s?상륙", "Inchon landing"), (r"백마고지", "White Horse Hill Korea"),
-    (r"단장의\s?능선", "Heartbreak Ridge"), (r"펀치볼", "Punchbowl Korea"),
-    (r"임진강", "Imjin River"), (r"그로스터|글로스터", "Gloucestershire Regiment Korea"),
-    (r"거제도", "Koje Island"), (r"판문점", "Panmunjom"),
-    (r"휴전\s?협정|정전\s?협정|휴전|정전", "Korea armistice"),
-    (r"포로", "prisoners of war Korea"), (r"노획", "captured Korea"),
-    (r"병인양요|병인박해", "French expedition Korea 1866"),
-    (r"신미양요", "United States expedition Korea 1871"), (r"강화도|강화", "Kanghwa"),
-    (r"선교사", "missionaries Korea"), (r"맥아더", "MacArthur"),
-    (r"이승만", "Syngman Rhee"), (r"김일성", "Kim Il Sung"),
-    (r"한국전쟁|6[·.]25", "Korean War"), (r"일제\s?강점기|조선총독부", "Chosen Japan colonial"),
-    (r"대한제국", "Korean Empire Corea"), (r"압록강", "Yalu"), (r"낙동강", "Naktong"),
-    (r"서울|한양", "Seoul"), (r"부산", "Pusan"), (r"평양", "Pyongyang"),
-    (r"제주", "Cheju Quelpart"), (r"해방", "Korea liberation 1945"),
-    (r"영상|필름", "film"), (r"사진", "photograph"), (r"지도", "map"), (r"전투", "battle"),
-    (r"조선|한국", "Korea"), (r"기록|자료|문서|관련", " "),
+# ── 다국어 주제 사전 → 색인 언어 자동 변환 ──
+# 각 아카이브는 자기 색인 언어로만 검색된다(TNA·NARA·IA·Europeana=영어, Gallica=프랑스어).
+# 한국어·일본어·중국어·러시아어·스페인어·독일어·베트남어·힌디어·히브리어·아랍어·카자흐어·
+# 몽골어 등 어떤 언어로 질의해도 주제 사전이 인식해 대상 색인 언어로 변환한다.
+# 실측: IA 장진호 1건 vs "Chosin Reservoir" 139건, Gallica 병인양요 0 vs 5,853건.
+_TOPICS = [
+    ("인천\\s?상륙\\s?작전|인천\\s?상륙|仁川上陸|仁川登陆|Инчхонская десантная", "Inchon landing", None),
+    ("장진호|長津湖|长津湖", "Chosin Reservoir", None),
+    ("흥남\\s?철수|흥남|興南", "Hungnam evacuation", None),
+    ("백마고지|白馬高地|白马高地", "White Horse Hill Korea", None),
+    ("단장의\\s?능선", "Heartbreak Ridge", None),
+    ("펀치볼", "Punchbowl Korea", None),
+    ("임진강|臨津江|临津江", "Imjin River", None),
+    ("그로스터|글로스터", "Gloucestershire Regiment Korea", None),
+    ("거제도|巨濟島|巨济岛", "Koje Island", None),
+    ("판문점|板門店|板门店|Пханмунджом", "Panmunjom", None),
+    ("38\\s?선|삼팔선|三八線|三八线", "38th parallel Korea", None),
+    ("휴전\\s?협정|정전\\s?협정|휴전|정전|停戦|停战|休戰|перемирие|armisticio|Waffenstillstand", "Korea armistice", None),
+    ("포로|捕虜|战俘|военнопленн\\w*", "prisoners of war Korea", None),
+    ("노획", "captured Korea", None),
+    ("병인양요|丙寅洋擾|병인박해", "French expedition Korea 1866", "expédition de Corée 1866"),
+    ("신미양요|辛未洋擾", "United States expedition Korea 1871", "Corée expédition américaine 1871"),
+    ("강화도|江華島|江华岛|강화", "Kanghwa", "île Kanghoa"),
+    ("파리\\s?외방전교회", "Paris Foreign Missions Korea", "Missions étrangères de Paris"),
+    ("선교사|宣教師|宣教师|传教士|missionnaires?|misioneros|Missionare|миссионер\\w*", "missionaries Korea", "missionnaires"),
+    ("천주교|가톨릭|카톨릭|순교", "Catholic Korea martyrs", "catholique Corée"),
+    ("한국전쟁|6[·.]25|조선전쟁|朝鮮戦争|朝鲜战争|朝鮮戰爭|抗美援朝|Корейская война|Корей соғысы"
+     "|Солонгосын дайн|Chiến tranh Triều Tiên|कोरियाई युद्ध|מלחמת קוריאה|الحرب الكورية"
+     "|Koreakrieg|Guerra de Corea|Guerra da Coreia|Guerre de Corée", "Korean War", "guerre de Corée"),
+    ("러일전쟁|日露戦争|日俄战争", "Russo-Japanese War Korea", "guerre russo-japonaise"),
+    ("청일전쟁|日清戦争|甲午战争", "Sino-Japanese War Korea 1894", None),
+    ("일제\\s?강점기|조선총독부|朝鮮總督府|朝鮮総督府|植民地朝鮮", "Chosen Japan colonial", None),
+    ("대한제국|大韓帝國|大韓帝国", "Korean Empire Corea", "Empire de Corée"),
+    ("맥아더|マッカーサー|麦克阿瑟|Макартур", "MacArthur", None),
+    ("이승만|李承晩|李承晚", "Syngman Rhee", None),
+    ("김일성|金日成", "Kim Il Sung", None),
+    ("압록강|鴨綠江|鸭绿江", "Yalu", None),
+    ("낙동강|洛東江|洛东江", "Naktong", None),
+    ("서울|한양|ソウル|首爾|首尔|漢城|汉城|Сеул|Seúl", "Seoul", "Séoul"),
+    ("부산|釜山|Пусан", "Pusan", "Fusan"),
+    ("평양|平壌|平壤|Пхеньян", "Pyongyang", None),
+    ("인천|제물포|仁川", "Inchon", "Chemulpo"),
+    ("제주|濟州|济州|Чеджу", "Cheju Quelpart", "Quelpaert"),
+    ("해방|解放", "Korea liberation 1945", "Corée libération 1945"),
+    ("영상|필름|映像|フィルム|视频|кинохроника", "film", None),
+    ("사진|寫真|写真|照片|фотографи\\w*", "photograph", "photographie"),
+    ("지도|地圖|地图|карт[аы]\\w*", "map", "carte"),
+    ("신문|新聞|新闻|газет\\w*", "newspaper", "journal"),
+    ("전투|戦闘|战斗|битва|сражение", "battle", "bataille"),
+    # Corea·Coreia 등 라틴 표기는 넣지 않는다: 당대 표기 변형 검색(tna_search "Corea" 등)이
+    # Korea로 강제 치환되면 방법론이 무력화됨. 악상 있는 Corée만 프랑스어 확정으로 사상.
+    ("조선|한국|고려|朝鮮|韓國|韩国|朝鲜|Корея|Коре[еию]|Corée|كوريا|קוריאה"
+     "|कोरिया|Hàn Quốc|Triều Tiên|Солонгос|Корей", "Korea", "Corée"),
+    ("기록|자료|문서|관련|찾아줘|記録|資料|文書|档案|документ\\w*|материал\\w*", " ", " "),
 ]
+_NON_LATIN = re.compile(r"[^\x00-ɏ]+")  # 라틴 확장(악상 포함) 밖 = 대상 색인이 못 읽는 스크립트
+_EN_ANCHOR = re.compile(r"korea|corea|chosen|chosin|seoul|pusan|inchon|hungnam|panmunjom|imjin"
+                        r"|koje|yalu|naktong|kanghwa|pyongyang|macarthur|rhee|kim il", re.I)
+_FR_ANCHOR = re.compile(r"cor[ée]e|séoul|fusan|chemulpo|quelpaert|kanghoa|missionnaires|tchosen", re.I)
+
+def _to_index_lang(q, lang):
+    f = q
+    for pat, en, fr in _TOPICS:
+        f = re.sub(pat, " " + ((fr or en) if lang == "fr" else en) + " ", f, flags=re.I)
+    changed = f != q
+    foreign = bool(_NON_LATIN.search(f))
+    if not changed and not foreign:
+        return None
+    f = _NON_LATIN.sub(" ", f)
+    f = re.sub(r"\(\s*\)|\[\s*\]|\"\s*\"", " ", f)
+    f = re.sub(r"\s+", " ", f).strip()
+    anchor = _FR_ANCHOR if lang == "fr" else _EN_ANCHOR
+    if not anchor.search(f):
+        f = (("Corée " if lang == "fr" else "Korea ") + f).strip()
+    return f or ("Corée" if lang == "fr" else "Korea")
 
 def _ko_en(q):
-    if not re.search(r"[가-힣]", q):
-        return None
-    e = q
-    for pat, en in _KO_EN:
-        e = re.sub(pat, en, e)
-    e = re.sub(r"\s+", " ", re.sub(r"[가-힣]+", " ", e)).strip()
-    if not re.search(r"korea|corea|chosen|chosin|seoul|pusan|inchon|hungnam|panmunjom|imjin|koje"
-                     r"|yalu|naktong|kanghwa|pyongyang|macarthur|rhee|kim il", e, re.I):
-        e = ("Korea " + e).strip()
-    return e or "Korea"
+    return _to_index_lang(q, "en")
 
 
 @mcp.tool()
 def tna_search(query: str, max_results: int = 20) -> str:
-    """영국 국립기록관(TNA) Discovery에서 한국 관련 기록 검색. 한국어 질의는 영문 검색어로
-    자동 변환(임진강→Imjin River, 그로스터→Gloucestershire Regiment …). 참조코드('FO 371/84053')는
-    자동으로 정확구 처리. 예: '임진강 전투', 'Korea armistice', 'FO 371 FK1015'"""
+    """영국 국립기록관(TNA) Discovery에서 한국 관련 기록 검색. 한국어·일본어·중국어·러시아어 등
+    다국어 질의를 영문 색인어로 자동 변환(임진강→Imjin River, 長津湖→Chosin Reservoir,
+    Корейская война→Korean War …). 참조코드('FO 371/84053')는 자동으로 정확구 처리.
+    예: '임진강 전투', 'Korea armistice', 'FO 371 FK1015'"""
     en = _ko_en(query)
     eff = en or query
     q = f'"{eff}"' if re.match(r"^[A-Z]+ \d+/\d+$", eff.strip()) else eff
@@ -126,6 +171,7 @@ def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
 def nara_search(query: str, record_group: int | None = None,
                 moving_images_only: bool = False, max_results: int = 20) -> str:
     """미국 NARA 카탈로그 검색 (환경변수 NARA_API_KEY 필요 — Catalog_API@nara.gov 발급).
+    다국어 질의(한국어·日本語·中文·Русский 등)는 영문 색인어로 자동 변환(장진호/長津湖→Chosin Reservoir …).
     record_group으로 RG 교차 정밀검색(예: 242), moving_images_only로 영상 한정."""
     key = os.environ.get("NARA_API_KEY")
     if not key: return "NARA_API_KEY 미설정 — Catalog_API@nara.gov 로 무료 발급(이름+이메일)."
@@ -148,8 +194,9 @@ def nara_search(query: str, record_group: int | None = None,
 @mcp.tool()
 def ia_search(query: str = "", identifier: str = "", max_results: int = 15) -> str:
     """archive.org 고급 검색. 예: 'identifier:111-adc*', 'collection:universal_newsreels AND korea',
-    'mediatype:movies AND (keijo OR chosen)'. identifier를 주면 해당 아이템의 메타데이터·원본 파일
-    목록(다운로드 전 크기 파악)을 대신 반환한다."""
+    'mediatype:movies AND (keijo OR chosen)'. 다국어 질의(한국어·日本語·中文 등)는 영문 색인어로
+    자동 변환. identifier를 주면 해당 아이템의 메타데이터·원본 파일 목록(다운로드 전 크기 파악)을
+    대신 반환한다."""
     if identifier:
         data = http_json(f"https://archive.org/metadata/{identifier}")
         md = data.get("metadata") or {}
@@ -215,44 +262,14 @@ def judge_rights(rg_series: str, title: str = "", archive: str = "") -> str:
     return f"등급: {cls}\n근거: {note}\n※ 자동 초기판정 — 공개 전 수동 확정 필수, D등급 공개 금지"
 
 
-# Gallica 한국어→프랑스어 자동 변환 — Gallica는 프랑스어 색인이라 한국어 질의는 0건
-# ("병인양요 선교사" 0 vs "expédition de Corée 1866 missionnaires" 5,853, 실측).
-_GALLICA_KO_FR = [
-    (r"병인양요|병인박해", "expédition de Corée 1866"),
-    (r"신미양요", "Corée expédition américaine 1871"),
-    (r"강화도|강화", "île Kanghoa"),
-    (r"파리\s?외방전교회", "Missions étrangères de Paris"),
-    (r"선교사", "missionnaires"),
-    (r"천주교|가톨릭|순교", "catholique Corée"),
-    (r"한국전쟁|6[·.]25", "guerre de Corée"),
-    (r"러일전쟁", "guerre russo-japonaise"),
-    (r"서울|한양", "Séoul"),
-    (r"부산", "Fusan"),
-    (r"인천|제물포", "Chemulpo"),
-    (r"제주", "Quelpaert"),
-    (r"지도", "carte"),
-    (r"사진", "photographie"),
-    (r"신문", "journal"),
-    (r"조선|한국|대한제국|고려", "Corée"),
-    (r"기록|자료|문서|영상|관련", " "),
-]
-
 def _gallica_ko_fr(q):
-    if not re.search(r"[가-힣]", q):
-        return None
-    f = q
-    for pat, fr in _GALLICA_KO_FR:
-        f = re.sub(pat, fr, f)
-    f = re.sub(r"\s+", " ", re.sub(r"[가-힣]+", " ", f)).strip()
-    if not re.search(r"cor[ée]e|séoul|fusan|chemulpo|quelpaert|missionnaires|tchosen", f, re.I):
-        f = ("Corée " + f).strip()
-    return f or "Corée"
+    return _to_index_lang(q, "fr")
 
 
 @mcp.tool()
 def gallica_search(query: str, max_results: int = 15) -> str:
-    """프랑스 국립도서관 Gallica 검색 (SRU API, 키 불요). 한국어 질의는 프랑스어 검색어로
-    자동 변환된다(병인양요→expédition de Corée 1866, 선교사→missionnaires, 조선→Corée …).
+    """프랑스 국립도서관 Gallica 검색 (SRU API, 키 불요). 다국어 질의(한국어·日本語·中文 등)를
+    프랑스어 색인어로 자동 변환(병인양요→expédition de Corée 1866, 선교사→missionnaires, 조선→Corée …).
     프랑스어 직접 입력도 가능 — 'Corée', 'guerre de Corée', 'Séoul', 'Tchosen'. 구한말
     프랑스 선교사·외교 문헌과 사진의 보고. 예: gallica_search('병인양요 선교사')"""
     import urllib.parse, urllib.request, xml.etree.ElementTree as ET
@@ -280,8 +297,8 @@ def gallica_search(query: str, max_results: int = 15) -> str:
 @mcp.tool()
 def europeana_search(query: str, max_results: int = 15, media_type: str | None = None) -> str:
     """유럽 문화유산 통합 검색 Europeana (58개국 4,000+ 기관). 키 없이 즉시 작동(공용 데모 키) —
-    대량 사용 시 apis.europeana.eu 무료 키를 EUROPEANA_API_KEY로.
-    media_type: 'VIDEO'|'IMAGE'|'TEXT'|'SOUND'. 예: europeana_search('Corée', media_type='IMAGE')"""
+    대량 사용 시 apis.europeana.eu 무료 키를 EUROPEANA_API_KEY로. 다국어 질의(한국어·日本語·中文 등)는
+    영문 색인어로 자동 변환. media_type: 'VIDEO'|'IMAGE'|'TEXT'|'SOUND'. 예: europeana_search('Corée', media_type='IMAGE')"""
     import urllib.parse, json as _json, urllib.request
     key = os.environ.get("EUROPEANA_API_KEY") or "api2demo"
     demo = not os.environ.get("EUROPEANA_API_KEY")
