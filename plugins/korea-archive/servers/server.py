@@ -326,8 +326,8 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
 REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (17) — 잡지·저널급 편집 기준
 1. 파일명: [주제영문]_records_[연도범위].html — 조사 완료 시 기본 산출물
 2. 지면 구조(잡지형): masthead → kicker → 표제(h1) → standfirst → byline(기관 chip) → 목차(nav.toc) → 히어로 figure → Ⅰ서사 → Ⅱ핵심 기록 카드 → Ⅲ영상 필름스트립 → Ⅳ전수 목록 표 → Ⅴ재현 쿼리(details) → Ⅵ권리·게재 윤리 → 출처 총람(.sources) → footer
-3. 서사 우선: 표만 나열 금지 — 발굴 경위·의미를 에세이로 서술(리드 문단 .lead 드롭캡, 풀인용 .pull 1개 이상). 문체는 담백·구체 — 과장어(놀라운·혁신적 등)와 AI투 금지
-4. 실물 이미지 필수: 게재 가능(권리 A/B + 게재윤리 1·2단계) 기록은 기관 공개 원본에서 수집해 base64로 임베드 — 히어로 1장 + 핵심 기록마다. 기관이 비식별(블러)판을 제공하면 그것을 우선 사용. 한 장도 못 실으면 그 사유(권리 C/D·비식별 불가·미디지털화)를 Ⅵ절에 명기
+3. 서사 우선: 표만 나열 금지 — 발굴 경위·의미를 에세이로 서술(리드 문단 .lead 드롭캡, 풀인용 .pull 1개 이상). 문단이 실물을 설명하면 그 문단 옆에 인라인 도판(.fig-inline 플로트)을 배치 — 잡지처럼 글과 그림이 같은 화면에 보이게. 문체는 담백·구체 — 과장어(놀라운·혁신적 등)와 AI투 금지
+4. 실물 이미지 필수: 게재 가능(권리 A/B + 게재윤리 1·2단계) 기록은 기관 공개 원본에서 수집해 base64로 임베드 — 히어로 1장 + 핵심 기록마다, 기관이 공개한 컷은 전량 수록(.sheet 콘택트시트, 컷별 라벨). 비식별(블러)판 제공 시 우선 사용. 이미지는 max-width:100% 자동 축소(템플릿 CSS) — 본문 삽입 시 논문·잡지 도판처럼 문단 폭에 맞춘다. 한 장도 못 실으면 그 사유(권리 C/D·비식별 불가·미디지털화)를 Ⅵ절에 명기
 5. 모든 이미지에 figcaption + .credit 필수: "출처: 기관 정식명(국가) · 식별자 · 촬영자/생산자 · 원본 링크" — 출처 없는 이미지는 싣지 않는다
 6. 영상 기록은 .film 필름스트립: 장면 전환마다 프레임을 충분히 추출(권장 8~16장)해 타임코드(.tc)+한 줄 설명으로 나열 — 표제가 가린 장면(ETC 뒤)을 드러내 원본을 직접 보고 싶게 만든다. 슬레이트·표지판 판독 프레임은 별도 확대 figure. 블록 끝에 .cta "▶ 원본 영상 보기 — [기관] 카탈로그"
 7. 핵심 기록 3~6건은 .record 카드로: 이미지 + 한국어 제목(원제 병기) + .prov 출처 계보(국가→기관→RG/시리즈→상자→식별자) + 요약 + 바로가기 버튼 + 권리 배지
@@ -340,7 +340,7 @@ REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (17) — 잡지·저널급
 14. 연표·지도·관계도는 인라인 svg로 직접 작성 가능. 외부 리소스 금지 — 폰트·CDN·이미지 핫링크 없이 단일 HTML 파일 자기완결
 15. 인쇄 대응: 템플릿의 @media print 유지 — 보고서는 그대로 출판물처럼 인쇄 가능해야 한다
 16. 링크 신뢰장치: 주요 링크는 대상 페이지 캡쳐본(헤드리스 브라우저 스크린샷)을 figure+credit(갈무리 일자)로 임베드해 링크 내용이 실재함을 보인다. 자동화 차단(WAF 등) 시 그 사실을 명기하고 카탈로그 API 기술 원문 인용표로 대체. 훈격·날짜·건수 등 핵심 사실은 API/원문 대조 후 '검증 기록'으로 수록 — 초판 오류가 있었으면 정정 이력을 남긴다
-17. 카드뉴스 병행: 보고서와 함께 insta-carousel 스킬로 캐러셀(기본 8장, 1080×1080)을 제작하고, 보고서 말미 '카드뉴스' 절(fig-grid)에 축소 임베드한다 — 커버는 히어로와 같은 실물 이미지, 검증 노트·따라하기 카드 포함, 보고서와 출처 대장 공유. PNG 원본·caption.txt·sources.txt를 보고서와 함께 납품"""
+17. 카드뉴스 병행: 보고서와 함께 캐러셀(기본 8장, 1080×1080 — insta-carousel 스킬 또는 report_template(kind='carousel') 참조)을 제작하고, 보고서 말미 '카드뉴스' 절에 .cards-grid로 임베드한다 — 무크롭 전체 노출 + 카드별 figcaption, 잘림·겹침 금지. 커버는 히어로와 같은 실물 이미지, 검증 노트·따라하기 카드 포함, 보고서와 출처 대장 공유. PNG 원본·caption.txt·sources.txt를 보고서와 함께 납품"""
 
 REPORT_TEMPLATE = """<!DOCTYPE html>
 <html lang="ko">
@@ -388,6 +388,23 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
   figcaption{font-size:13px;color:var(--sub);margin-top:9px;line-height:1.6}
   figcaption b{color:var(--ink)}
   .credit{display:block;font-size:11.5px;color:var(--faint);letter-spacing:.04em;margin-top:3px}
+  img{max-width:100%;height:auto}
+  h2{clear:both}
+  /* 인라인 도판 — 문단이 설명하는 실물을 그 문단 옆에 (잡지식 플로트, 화면 좁으면 자동 전폭) */
+  .fig-inline{float:right;width:min(46%,360px);margin:6px 0 14px 26px}
+  .fig-inline.left{float:left;margin:6px 26px 14px 0}
+  @media (max-width:640px){.fig-inline{float:none;width:100%;margin:16px 0}}
+  /* 사진 콘택트시트 — 한 기록의 공개 컷 전량 수록용 (컷별 라벨 .sub + 전체 figcaption) */
+  .sheet{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .sheet figure{margin:0}
+  .sheet img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;border:1px solid var(--line)}
+  .sheet .sub{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.5}
+  @media (max-width:640px){.sheet{grid-template-columns:1fr 1fr}}
+  /* 정방형 카드 갤러리(카드뉴스 등) — 무크롭 전체 노출 + 카드별 figcaption. 잘림·겹침 금지 */
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin:20px 0}
+  .cards-grid figure{margin:0}
+  .cards-grid img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+  .cards-grid figcaption{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.5}
   .fig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
   .fig-grid figure{margin:0}
   .fig-grid img{height:100%;object-fit:cover}
@@ -481,8 +498,15 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 <h2 id="s1"><span class="no">I.</span> {{서사 절 제목 — 발굴 경위}}</h2>
 <p class="lead">{{리드 문단(드롭캡) — 어떤 질문에서 출발해 무엇을 찾았는가. 카탈로그의 부실한 표제가 무엇을 가리고 있었는가.}}</p>
 <p>{{본문 서사 — 검색 전략(표기 변형·인접 채굴), 결정적 단서, 판독 과정. 확인한 것과 추정을 구분해 담백하게.}}</p>
+<!-- 인라인 도판: 문단이 설명하는 실물은 그 문단 '옆'에 .fig-inline으로 — 글과 그림이 같은 화면에 보이게 -->
+<figure class="fig-inline">
+  <img src="data:image/jpeg;base64,{{BASE64}}" alt="{{설명}}">
+  <figcaption><b>그림 N.</b> {{이 문단이 설명하는 실물 — 판독 포인트(새김 문자·손글씨 등)}}
+  <span class="credit">출처: {{기관 정식명(국가) · 식별자 · <a href="{{원본URL}}">원본</a>}}</span></figcaption>
+</figure>
+<p>{{인라인 도판이 붙는 문단 — 도판 속 실물을 직접 설명한다.}}</p>
 <blockquote class="pull">{{풀인용 — 슬레이트 판독문·문서 원문·핵심 발견 한 구절}}</blockquote>
-<p>{{서사 계속. 이미지가 있으면 figure를 절 사이 어디든 추가(각각 credit 필수).}}</p>
+<p>{{서사 계속. 문단이 실물을 설명하면 반드시 그 옆에 figure 배치(각각 figcaption+credit 필수).}}</p>
 
 <h2 id="s2"><span class="no">II.</span> 핵심 기록</h2>
 <!-- 가장 중요한 기록 3~6건을 카드로. 이미지 없으면 <img> 줄 생략 -->
@@ -546,9 +570,9 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 <!-- Ⅶ(선택) 카드뉴스 갤러리 — insta-carousel 스킬로 병행 제작한 카드를 축소 임베드. 미제작 시 절·toc 링크 삭제 -->
 <h2 id="s7"><span class="no">VII.</span> 카드뉴스 — 이 발굴을 {{N}}장으로</h2>
 <p>{{카드뉴스 소개 1~2문장 — 커버는 히어로와 같은 실물 이미지, 보고서와 같은 출처 대장 공유}}</p>
-<div class="fig-grid">
-  <figure><img src="data:image/jpeg;base64,{{카드1 축소본}}" alt="카드 1 — 커버"></figure>
-  <!-- 카드 반복 (권장 8장, 축소 maxdim 540) -->
+<div class="cards-grid">
+  <figure><img src="data:image/jpeg;base64,{{카드1 축소본}}" alt="카드 1 — 커버"><figcaption>{{1 — 커버 한 줄 설명}}</figcaption></figure>
+  <!-- 카드 반복 (권장 8장, 축소 maxdim 540) — 무크롭 전체 노출·카드별 figcaption 필수, 잘림·겹침 금지 -->
 </div>
 <p class="small">게시용 1080×1080 PNG 원본 + 캡션(caption.txt) + 이미지 출처 대장(sources.txt)을 보고서와 함께 납품.</p>
 
@@ -569,14 +593,264 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 </body>
 </html>"""
 
+CAROUSEL_RULES = """인스타 캐러셀 카드뉴스 제작 규칙 (12) — 1080×1080 PNG 6~10장 + 캡션·출처 대장
+1. 파이프라인: 재료 파악 → 발굴조사(실존 대상이면) → 실물 이미지 소싱·라이선스 판정 → 서사 설계 → HTML 카드 작성 → 1080×1080 렌더 → 전 카드 육안 검수(생략 금지) → 캡션·해시태그
+2. 서사 아크(장수에 맞게 병합, 기본 8장): ①커버 후킹(실물 풀블리드+숫자·반전 훅) ②디테일/원리 확대 ③~⑥증거(실물 이미지 카드 — 심장) ⑦정리(표·지도·타임라인) ⑧검증 노트 ⑨따라하기(재현 단계) ⑩CTA(행동 1개+댓글 유도+출처·권리 고지)
+3. 실물 이미지가 신뢰를 만든다: 주제가 실존 대상(기관·유물·사건·인물)이면 퍼블릭 도메인/공공누리 실물을 능동 발굴해 쓴다. 기관 비식별(블러)판 제공 시 우선 사용
+4. 이미지 카드마다 출처 캡션(.credit) 필수: "출처: 기관 정식명, 식별번호 (라이선스)" — 식별번호를 알면서 생략하면 부정확한 출처다. 이미지별 출처 대장(sources.txt) 동봉, 라이선스 미확정이면 '게시 전 [권리자] 확인' 안내
+5. 사실 검증: 제목만 믿지 않는다 — 생산일자·원판번호·카탈로그 API 원문까지 대조. 실증 안 된 어록 금지(전승은 '전해지는 말'). 검증 불가한 비교 대신 산술
+6. 레이아웃 다양화: 같은 아키타입 반복 금지 — 한 캐러셀에 3개 이상 혼합(풀블리드 커버·타임라인·인물+폴라로이드·문서 인용 docquote·빅넘버·목록 reel·파노라마 필름스트립·부채꼴 스택)
+7. 겹침·잘림 절대 금지(최다 결함): 모든 콘텐츠는 .col(하단 안전영역 150px) 안에 — 페이지번호·브랜드와 구조적으로 안 겹치게. credit에 margin-top:auto 금지(고정 마진). 이미지는 고정 높이+object-fit:cover. 세로 예산: 키커+제목 제외 콘텐츠 가용 ~650px — 초과하면 잘린다
+8. 검증 노트 카드가 차별점: 조사 중 발견한 반전(오표기·훈격 정정·인접 발굴)을 한 장으로 — 콘텐츠의 백미이자 신뢰 장치
+9. 민감 주제(포로·사망자·학살·희생자): 존엄을 지키는 서술 + 보수적 이미지 선택 + 캡션에 존엄 문구
+10. 캡션(caption.txt): 본문은 한 줄 한 호흡(긴 문단 금지), 질문형 오프닝, 한두 문장마다 빈 줄, 이모지 불릿 — 스크롤을 멈추는 시각 리듬. 릴스용 짧은 버전 + 해시태그(본문 ~20+첫 댓글 확장) + 게시 전 체크리스트
+11. 렌더·검수: 아래 디자인 시스템의 .card(1080×1080)를 그대로 복사해 채우고, 카드별로 1080×1080 이미지로 캡처한다(헤드리스 브라우저·스크린샷 도구·HTML 아티팩트 등 가용 수단). 렌더 후 전 장을 눈으로 검수 — 하단 겹침·세로 넘침·이미지 적합성(빈 컷·워터마크·무관 컷)·어색한 줄바꿈. 결함 카드만 수정해 재렌더
+12. 납품: 순서 번호 PNG 전체 + caption.txt + sources.txt + 자기완결 carousel.html. 발굴 보고서와 병행 제작 시 보고서 '카드뉴스' 절에 무크롭(.cards-grid)으로 임베드 — report_template(kind='report') 규칙 17 참조"""
+
+CAROUSEL_TEMPLATE = """<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>카드뉴스 디자인 시스템 v2 — 시작 템플릿</title>
+<!--
+  검증된 고대비 디자인 시스템. 이 파일을 복사해 카드를 채운다.
+  팔레트는 :root만 바꾸면 전체 적용 (기본: 순흑+크림+크림슨/골드 — 아카이브·스토리텔링 무드.
+  밝은 브랜드면 --bg를 밝게, --cream을 잉크색으로 뒤집는다).
+  이미지는 {{img:경로|maxdim=760|q=72}} 토큰 (scripts/make_carousel.py가 처리).
+  레이아웃 선택 기준은 references/layouts.md 참조.
+
+  ★ 핵심 안전 규칙 ★
+  - 모든 카드 콘텐츠는 <div class="col"> 안에 — 하단 안전영역 150px가 페이지번호·브랜드
+    겹침을 구조적으로 막는다 (이 겹침이 실전에서 가장 잦은 결함이었다)
+  - credit에 margin-top:auto 금지 — 고정 마진 사용
+  - 이미지는 고정 height + object-fit:cover
+-->
+<style>
+  :root{
+    --bg:#0a0c10; --panel:#14171d; --crimson:#e03540; --gold:#e8b45a; --cream:#faf3e3;
+    --sub:#8d94a2; --green:#5fd07f; --amber:#e8b45a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#000; font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif; padding:40px; color:var(--cream);}
+  .card{width:1080px; height:1080px; margin:0 auto 56px; position:relative; overflow:hidden;
+        background:var(--bg); box-shadow:0 10px 60px rgba(0,0,0,.7);}
+  /* 콘텐츠 컬럼 — 하단 안전영역 150px (brand/pageno와 절대 안 겹침) */
+  .col{position:relative; z-index:4; height:100%; display:flex; flex-direction:column; padding:70px 86px 150px;}
+  /* 장식 */
+  .grain{position:absolute; inset:0; pointer-events:none; opacity:.45; mix-blend-mode:overlay;
+    background-image:repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px);}
+  .frame{position:absolute; inset:24px; border:2px solid rgba(232,180,90,.55); pointer-events:none;}
+  .corner{position:absolute; width:34px; height:34px; border:4px solid var(--gold);}
+  .c-tl{top:16px; left:16px; border-right:none; border-bottom:none;}
+  .c-tr{top:16px; right:16px; border-left:none; border-bottom:none;}
+  .c-bl{bottom:16px; left:16px; border-right:none; border-top:none;}
+  .c-br{bottom:16px; right:16px; border-left:none; border-top:none;}
+  /* 타이포 */
+  .kicker{display:inline-block; background:var(--crimson); color:#fff; font-weight:900;
+          letter-spacing:.28em; font-size:24px; padding:13px 30px 13px 36px;}
+  h1{font-size:80px; line-height:1.24; font-weight:900; word-break:keep-all; color:#fff;}
+  h2{font-size:54px; line-height:1.27; font-weight:900; word-break:keep-all; color:#fff;}
+  .gold{color:var(--gold);} .red{color:var(--crimson);}
+  .lead{font-size:31px; line-height:1.6; word-break:keep-all; color:#e5ddc9;}
+  .lead b{color:var(--gold);}
+  .credit{font-size:19px; color:var(--sub); line-height:1.5;}
+  .divider{height:6px; width:150px; background:linear-gradient(90deg,var(--gold),var(--crimson)); margin:24px 0;}
+  .years{font-size:26px; color:var(--gold); font-weight:700; letter-spacing:.05em; margin:4px 0 12px; word-break:keep-all;}
+  /* 하단 고정 표기 */
+  .pageno{position:absolute; bottom:46px; right:76px; font-size:23px; color:var(--sub); letter-spacing:.12em; z-index:9;}
+  .brand{position:absolute; bottom:46px; left:76px; font-size:23px; color:var(--sub); z-index:9;}
+  .stamp{position:absolute; border:5px solid var(--crimson); color:var(--crimson); border-radius:10px;
+         padding:10px 22px; font-weight:900; font-size:28px; letter-spacing:.1em;
+         transform:rotate(-8deg); background:rgba(224,53,64,.08); z-index:6;}
+  /* 사진 프레임 */
+  .polaroid{background:#fbf8f1; padding:14px 14px 0; box-shadow:0 14px 34px rgba(0,0,0,.55);}
+  .polaroid img{display:block; width:100%;}
+  .polaroid .cap{font-size:20px; color:#3a3f49; padding:10px 4px 12px; font-weight:700; text-align:center; word-break:keep-all;}
+  .tape{position:absolute; width:140px; height:38px; background:rgba(232,180,90,.75); box-shadow:0 2px 8px rgba(0,0,0,.3); z-index:3;}
+  .shot{background:#fff; padding:10px; box-shadow:0 18px 44px rgba(0,0,0,.7);}
+  .shot img{display:block; width:100%;}
+  .shot .cap{font-size:20px; color:#3a3f49; padding:10px 4px 4px; font-weight:700; text-align:center; word-break:keep-all;}
+  /* 파노라마 필름스트립 */
+  .pano{border-top:16px solid #000; border-bottom:16px solid #000; background:#000; position:relative;
+        box-shadow:0 14px 40px rgba(0,0,0,.6);}
+  .pano:before,.pano:after{content:''; position:absolute; left:0; right:0; height:14px;
+    background-image:repeating-linear-gradient(90deg, #fff 0 22px, transparent 22px 44px); opacity:.9;}
+  .pano:before{top:-15px;} .pano:after{bottom:-15px;}
+  .pano .row{display:flex; gap:6px;}
+  .pano img{flex:1; height:300px; object-fit:cover; display:block; filter:contrast(1.15) brightness(1.05);}
+  /* 시리즈 스트립 */
+  .strip{display:flex; gap:10px;}
+  .strip img{flex:1; height:130px; object-fit:cover; border:2px solid #3a4152;}
+  /* 목록·상태 */
+  .reel{background:var(--panel); border:1px solid #262b35; border-left:10px solid var(--gold); padding:16px 24px; margin:11px 0;}
+  .reel .no{font-size:24px; font-weight:900; color:var(--gold); letter-spacing:.06em; font-family:Consolas,Menlo,monospace;}
+  .reel .t{font-size:26px; font-weight:700; margin-top:4px; word-break:keep-all; line-height:1.4; color:#f2ecdb;}
+  .reel .d{font-size:20px; color:var(--sub); margin-top:4px; word-break:keep-all;}
+  .reel.locked{border-left-color:var(--crimson);}
+  .badge{display:inline-block; border-radius:30px; padding:4px 16px; font-size:19px; font-weight:900; margin-left:8px; vertical-align:middle;}
+  .b-lock{background:#38151a; color:#ff7a83; border:1px solid #ff7a83;}
+  .b-half{background:#3a2c12; color:var(--amber); border:1px solid var(--amber);}
+  .b-open{background:#153019; color:var(--green); border:1px solid var(--green);}
+  .org{background:var(--panel); border:1px solid #262b35; border-left:8px solid var(--gold);
+       padding:13px 22px; margin:10px 0; display:flex; justify-content:space-between; align-items:center; gap:16px;}
+  .org .name{font-size:28px; font-weight:900; word-break:keep-all;}
+  .org .name small{display:block; font-size:19px; color:var(--sub); font-weight:400; margin-top:2px;}
+  .org .hits{font-size:26px; font-weight:900; white-space:nowrap;}
+  .hit-y{color:var(--green);} .hit-w{color:var(--amber);} .hit-n{color:#ff7a83;}
+  /* 3단계 분류 */
+  .tier{flex:1; background:var(--panel); border:1px solid #262b35; border-top:10px solid; padding:24px;}
+  .tier .icon{font-size:52px;}
+  .tier .t{font-size:29px; font-weight:900; margin-top:10px; word-break:keep-all;}
+  .tier .d{font-size:21px; color:var(--sub); margin-top:6px; line-height:1.5; word-break:keep-all;}
+  /* 타임라인 */
+  .tl{border-left:5px solid var(--gold); margin:20px 0 0 24px; padding-left:36px;}
+  .tl .ev{margin:0 0 24px; position:relative;}
+  .tl .ev:before{content:''; position:absolute; left:-47px; top:8px; width:18px; height:18px; border-radius:50%;
+    background:var(--crimson); border:4px solid var(--bg); box-shadow:0 0 0 3px var(--gold);}
+  .tl .yr{font-size:29px; font-weight:900; color:var(--gold); letter-spacing:.04em;}
+  .tl .tx{font-size:27px; line-height:1.5; color:#e5ddc9; word-break:keep-all; margin-top:2px;}
+  /* 인용 */
+  .quote{border-left:6px solid var(--gold); padding:14px 22px; margin-top:20px;
+         font-size:29px; line-height:1.55; color:#f2ecdb; font-style:italic; word-break:keep-all; background:rgba(232,180,90,.07);}
+  .docquote{border-left:6px solid var(--gold); padding:16px 24px; margin-top:18px;
+            font-size:30px; line-height:1.6; color:#f2ecdb; word-break:keep-all; background:rgba(232,180,90,.07);}
+  .docquote small{display:block; font-size:21px; color:var(--sub); margin-top:8px; font-style:normal;}
+  /* 빅넘버 */
+  .bignum{font-size:190px; font-weight:900; color:var(--gold); line-height:1; letter-spacing:-.02em;}
+  /* 번호 리스트 */
+  .li{display:flex; gap:22px; align-items:flex-start; margin:22px 0; font-size:31px; line-height:1.5; word-break:keep-all; color:#eee6d2;}
+  .li .n{flex:0 0 54px; height:54px; border-radius:50%; background:var(--crimson); color:#fff;
+         font-weight:900; font-size:27px; display:flex; align-items:center; justify-content:center;}
+  .li b{color:var(--gold);}
+  /* 부채꼴 스택 — 제목 아래에만 배치할 것 */
+  .fanwrap{position:relative; height:480px;}
+  .fcard{position:absolute; width:600px; background:#f5efdf; color:#20242c; padding:22px 26px;
+         box-shadow:0 18px 40px rgba(0,0,0,.65); border:1px solid #d8d0bc;}
+  .fcard .no{font-family:Consolas,Menlo,monospace; font-weight:900; font-size:25px; color:#b3262f;}
+  .fcard .t{font-size:25px; font-weight:900; margin-top:4px; line-height:1.35; word-break:keep-all;}
+  .fcard .d{font-size:19px; color:#5a6070; margin-top:4px;}
+</style>
+</head>
+<body>
+
+<!-- 예시 1 · 풀블리드 커버: 실물 이미지 + 그라디언트 + 훅 -->
+<div class="card">
+  <img src="{{img:cover.jpg|maxdim=1000|q=76}}" alt=""
+       style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 30%; filter:contrast(1.2) brightness(.95) sepia(.2);">
+  <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.92) 68%);"></div>
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col">
+    <div><span class="kicker">키커 문구</span></div>
+    <div class="stamp" style="top:142px; right:82px;">도장</div>
+    <div style="margin-top:auto;">
+      <h1>훅 첫 줄,</h1>
+      <h1 class="gold">숫자·반전이 있는 둘째 줄</h1>
+      <div class="divider"></div>
+      <p class="lead">부제 — <b>핵심어</b> 강조. 이미지의 정체와 연결.</p>
+      <p class="credit" style="margin-top:16px;">출처: (정식 명칭, 라이선스)</p>
+    </div>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">1 / 10</div>
+</div>
+
+<!-- 예시 2 · 파노라마 필름스트립 -->
+<div class="card">
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col">
+    <div><span class="kicker">장면 ①</span></div>
+    <h2 style="margin:22px 0 8px;">제목 — <span class="gold">세 컷을 펼치다</span></h2>
+    <div class="pano" style="margin-top:20px;">
+      <div class="row">
+        <img src="{{img:f1.jpg|maxdim=600|q=74}}"><img src="{{img:f2.jpg|maxdim=600|q=74}}"><img src="{{img:f3.jpg|maxdim=600|q=74}}">
+      </div>
+    </div>
+    <p class="lead" style="margin-top:24px; font-size:29px;">컷1 — 컷2 — 컷3.<br>한 문장 해설로 <b>움직임</b>을 전달.</p>
+    <p class="credit" style="margin-top:16px;">출처 · 링크</p>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">4 / 10</div>
+</div>
+
+<!-- 예시 3 · 부채꼴 스택 (제목 아래에만!) -->
+<div class="card">
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col" style="padding-bottom:140px;">
+    <div><span class="kicker">🔴 잠긴 기록</span></div>
+    <h2 style="margin:20px 0 6px;">제목은 스택 위에,<br><span class="red">스택은 제목 아래에</span></h2>
+    <div class="fanwrap" style="height:500px; margin-top:30px;">
+      <div class="fcard" style="top:300px; left:0; transform:rotate(-6deg);"><div class="no">ID-004</div><div class="t">네 번째 기록</div><div class="d">부가 정보</div></div>
+      <div class="fcard" style="top:210px; left:120px; transform:rotate(4deg); z-index:2;"><div class="no">ID-003</div><div class="t">세 번째 기록</div><div class="d">부가 정보</div></div>
+      <div class="fcard" style="top:115px; left:230px; transform:rotate(-3deg); z-index:3;"><div class="no">ID-002 <span class="badge b-lock">미공개</span></div><div class="t">두 번째 기록</div><div class="d">부가 정보</div></div>
+      <div class="fcard" style="top:20px; left:330px; transform:rotate(5deg); z-index:4;"><div class="no">ID-001 <span class="badge b-lock">미공개</span></div><div class="t">맨 위 카드는 정보 전부 보이게</div><div class="d">아래 카드는 일부만 보여도 OK</div></div>
+    </div>
+    <p class="lead" style="margin-top:16px; font-size:27px;">마무리 한 줄.</p>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">7 / 10</div>
+</div>
+
+<!-- 예시 4 · 인물 카드 -->
+<div class="card">
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col">
+    <div><span class="kicker">첫 번째 이름</span></div>
+    <div style="display:flex; gap:40px; margin-top:28px; align-items:flex-start;">
+      <div style="position:relative; flex:0 0 380px;">
+        <div class="tape" style="top:-16px; left:32%; transform:rotate(-4deg);"></div>
+        <div class="polaroid"><img src="{{img:person.jpg|maxdim=760|q=75}}" style="height:520px; object-fit:cover; object-position:center 15%;"><div class="cap">사진 캡션</div></div>
+      </div>
+      <div style="flex:1; padding-top:6px;">
+        <h2><span class="gold">이름</span></h2>
+        <div class="years">1900 – 1950 · 직함</div>
+        <p class="lead" style="font-size:29px;">업적 3~4줄.<br><b>핵심</b>만 강조.</p>
+        <div class="quote">"실증된 어록만.<br>전승이면 '전해지는 말' 표기."</div>
+      </div>
+    </div>
+    <p class="credit" style="margin-top:20px;">출처: (라이선스)</p>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">2 / 10</div>
+</div>
+
+<!-- 예시 5 · 지도 여정 (SVG 약식 지도 + 마커 + 목록 병치) -->
+<div class="card">
+  <div class="grain"></div><div class="frame"></div>
+  <div class="col" style="padding-bottom:140px;">
+    <div><span class="kicker">지도 위의 여정</span></div>
+    <h2 style="margin:20px 0 4px;">지점들을 <span class="gold">한 장</span>에</h2>
+    <div style="display:flex; gap:30px; align-items:center; margin-top:6px;">
+      <svg viewBox="0 0 380 560" style="flex:0 0 380px; height:600px;">
+        <path d="M150 30 L235 46 L300 70 L306 108 L282 196 L322 268 L296 322 L282 392 L240 444 L188 462 L142 478 L120 400 L108 288 L100 176 L126 92 Z"
+              fill="#14171d" stroke="#e8b45a" stroke-width="3"/>
+        <line x1="70" y1="218" x2="330" y2="218" stroke="#e03540" stroke-width="3" stroke-dasharray="14 10"/>
+        <circle cx="152" cy="208" r="13" fill="#5fd07f"/>
+        <text x="30" y="168" fill="#5fd07f" font-size="24" font-weight="bold">지점A</text>
+        <circle cx="170" cy="248" r="13" fill="#e03540"/>
+        <text x="200" y="258" fill="#ff7a83" font-size="24" font-weight="bold">지점B</text>
+        <path d="M152 208 Q150 230 170 248" stroke="#faf3e3" stroke-width="2" stroke-dasharray="4 6" fill="none"/>
+      </svg>
+      <div style="flex:1;">
+        <div class="reel" style="margin-top:0;"><div class="no">지점A</div><div class="t">설명</div><div class="d">🟢 상태</div></div>
+        <div class="reel"><div class="no">지점B</div><div class="t">설명</div><div class="d">🔴 상태</div></div>
+        <p class="credit" style="margin-top:14px;">라벨은 마커와 안 겹치게 — 렌더 후 확인</p>
+      </div>
+    </div>
+  </div>
+  <div class="brand">브랜드명</div><div class="pageno">3 / 10</div>
+</div>
+
+</body>
+</html>"""
+
 
 @mcp.tool()
-def report_template() -> str:
+def report_template(kind: str = "report") -> str:
     """발굴 조사를 마친 뒤 결과를 HTML 보고서로 만들 때 호출 (조사 마무리 단계의 기본 산출물).
     잡지·저널급 보고서 골격(HTML/CSS)과 17개 작성 규칙을 반환한다 — 편집 지면(masthead·
     standfirst·드롭캡·풀인용·기록 카드), 실물 이미지 base64 임베드+이미지별 출처 크레디트 필수,
     영상은 타임코드 필름스트립+원본 시청 CTA, 기관별 출처 chip(국기+정식명)과 인용 기관 총람.
-    {{플레이스홀더}}를 검증된 발굴 결과로 채워 [주제영문]_records_[연도범위].html로 저장할 것."""
+    {{플레이스홀더}}를 검증된 발굴 결과로 채워 [주제영문]_records_[연도범위].html로 저장할 것.
+    kind="carousel"이면 카드뉴스 캐러셀 디자인 시스템을 반환 — 검증된 1080×1080 카드 CSS 컴포넌트
+    + 제작 12규칙(서사 아크·실물 이미지·출처 캡션·겹침 방지·육안 검수). 어디서든 같은 품질 재현용."""
+    if kind == "carousel":
+        return CAROUSEL_RULES + "\n\n===== CARD DESIGN SYSTEM (1080×1080 — .card를 그대로 복사해 채울 것) =====\n" + CAROUSEL_TEMPLATE
     return REPORT_RULES + "\n\n===== HTML TEMPLATE ({{플레이스홀더}}를 채울 것) =====\n" + REPORT_TEMPLATE
 
 

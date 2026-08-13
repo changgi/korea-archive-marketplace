@@ -44,6 +44,23 @@
   figcaption{font-size:13px;color:var(--sub);margin-top:9px;line-height:1.6}
   figcaption b{color:var(--ink)}
   .credit{display:block;font-size:11.5px;color:var(--faint);letter-spacing:.04em;margin-top:3px}
+  img{max-width:100%;height:auto}
+  h2{clear:both}
+  /* 인라인 도판 — 문단이 설명하는 실물을 그 문단 옆에 (잡지식 플로트, 화면 좁으면 자동 전폭) */
+  .fig-inline{float:right;width:min(46%,360px);margin:6px 0 14px 26px}
+  .fig-inline.left{float:left;margin:6px 26px 14px 0}
+  @media (max-width:640px){.fig-inline{float:none;width:100%;margin:16px 0}}
+  /* 사진 콘택트시트 — 한 기록의 공개 컷 전량 수록용 (컷별 라벨 .sub + 전체 figcaption) */
+  .sheet{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .sheet figure{margin:0}
+  .sheet img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;border:1px solid var(--line)}
+  .sheet .sub{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.5}
+  @media (max-width:640px){.sheet{grid-template-columns:1fr 1fr}}
+  /* 정방형 카드 갤러리(카드뉴스 등) — 무크롭 전체 노출 + 카드별 figcaption. 잘림·겹침 금지 */
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin:20px 0}
+  .cards-grid figure{margin:0}
+  .cards-grid img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+  .cards-grid figcaption{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.5}
   .fig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
   .fig-grid figure{margin:0}
   .fig-grid img{height:100%;object-fit:cover}
@@ -137,8 +154,15 @@
 <h2 id="s1"><span class="no">I.</span> {{서사 절 제목 — 발굴 경위}}</h2>
 <p class="lead">{{리드 문단(드롭캡) — 어떤 질문에서 출발해 무엇을 찾았는가. 카탈로그의 부실한 표제가 무엇을 가리고 있었는가.}}</p>
 <p>{{본문 서사 — 검색 전략(표기 변형·인접 채굴), 결정적 단서, 판독 과정. 확인한 것과 추정을 구분해 담백하게.}}</p>
+<!-- 인라인 도판: 문단이 설명하는 실물은 그 문단 '옆'에 .fig-inline으로 — 글과 그림이 같은 화면에 보이게 -->
+<figure class="fig-inline">
+  <img src="data:image/jpeg;base64,{{BASE64}}" alt="{{설명}}">
+  <figcaption><b>그림 N.</b> {{이 문단이 설명하는 실물 — 판독 포인트(새김 문자·손글씨 등)}}
+  <span class="credit">출처: {{기관 정식명(국가) · 식별자 · <a href="{{원본URL}}">원본</a>}}</span></figcaption>
+</figure>
+<p>{{인라인 도판이 붙는 문단 — 도판 속 실물을 직접 설명한다.}}</p>
 <blockquote class="pull">{{풀인용 — 슬레이트 판독문·문서 원문·핵심 발견 한 구절}}</blockquote>
-<p>{{서사 계속. 이미지가 있으면 figure를 절 사이 어디든 추가(각각 credit 필수).}}</p>
+<p>{{서사 계속. 문단이 실물을 설명하면 반드시 그 옆에 figure 배치(각각 figcaption+credit 필수).}}</p>
 
 <h2 id="s2"><span class="no">II.</span> 핵심 기록</h2>
 <!-- 가장 중요한 기록 3~6건을 카드로. 이미지 없으면 <img> 줄 생략 -->
@@ -202,9 +226,9 @@
 <!-- Ⅶ(선택) 카드뉴스 갤러리 — insta-carousel 스킬로 병행 제작한 카드를 축소 임베드. 미제작 시 절·toc 링크 삭제 -->
 <h2 id="s7"><span class="no">VII.</span> 카드뉴스 — 이 발굴을 {{N}}장으로</h2>
 <p>{{카드뉴스 소개 1~2문장 — 커버는 히어로와 같은 실물 이미지, 보고서와 같은 출처 대장 공유}}</p>
-<div class="fig-grid">
-  <figure><img src="data:image/jpeg;base64,{{카드1 축소본}}" alt="카드 1 — 커버"></figure>
-  <!-- 카드 반복 (권장 8장, 축소 maxdim 540) -->
+<div class="cards-grid">
+  <figure><img src="data:image/jpeg;base64,{{카드1 축소본}}" alt="카드 1 — 커버"><figcaption>{{1 — 커버 한 줄 설명}}</figcaption></figure>
+  <!-- 카드 반복 (권장 8장, 축소 maxdim 540) — 무크롭 전체 노출·카드별 figcaption 필수, 잘림·겹침 금지 -->
 </div>
 <p class="small">게시용 1080×1080 PNG 원본 + 캡션(caption.txt) + 이미지 출처 대장(sources.txt)을 보고서와 함께 납품.</p>
 
