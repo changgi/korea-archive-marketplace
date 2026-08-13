@@ -964,7 +964,17 @@ Footer: 전체 보고서 QR/URL {{링크}} · 출처 총람 요약 · {{확인�
 2. 채택본 create-design-from-candidate → read-design(open_transaction)
 3. **모든 한국어 문구를 검증 카피로 replace_text** (환각 문구는 반드시 있다)
 4. 겹침·줄바꿈·폰트(필기체 라틴) 검수 → 교정 → commit
-5. 출처 크레디트 존재 확인 — 없으면 add_text로 추가"""
+5. 출처 크레디트 존재 확인 — 없으면 add_text로 추가
+
+# 7. 커머셜 임팩트 포스터 (design_type: poster) — 화려·그래픽·패셔너블
+
+Create a BOLD, commercial, fashion-forward vertical poster — streetwear-drop / fashion-magazine energy, maximalist, NOT quiet.
+Color blocking: deep crimson #8a3033 + warm gold #e8b45a + cream #f5f1e8 + black. Oversized Korean display typography,
+the provided REAL photo as duotone hero inside a bold geometric frame, graphic accents (waves, starbursts, sticker badges,
+thick rules, halftone). CRITICAL: only provided real photos — no AI people or history scenes.
+Top badge: {{발굴 완료}} / Huge headline: {{찾았다, N건}} / Sub: {{훅 한 줄}} / Stat badges 3: {{검증 수치}} /
+CTA bar: 발굴 보고서 공개 — KOREA ARCHIVE 통합검색 / Tiny credit: {{사진 출처·식별자}}
+검증 실측: 후보 4개 중 3개가 가짜 이미지 — 실물 사용 후보만 채택하고 환각 문구는 전량 교정할 것."""
 
 FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물까지 한 번에 (매직 키워드: "풀패키지" · "전부 다 만들어줘")
 입력은 주제 하나면 충분하다. 아래 순서를 전부 수행해 모든 산출물을 함께 납품한다.

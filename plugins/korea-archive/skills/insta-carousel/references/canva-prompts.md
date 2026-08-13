@@ -108,6 +108,16 @@ Photo band: provided real photos with captions
 Footer: 전체 보고서 QR/URL {{링크}} · 출처 총람 요약 · {{확인일}}
 ```
 
+## 7. 커머셜 임팩트 포스터 (design_type: poster) — 화려·그래픽·패셔너블
+
+Create a BOLD, commercial, fashion-forward vertical poster — streetwear-drop / fashion-magazine energy, maximalist, NOT quiet.
+Color blocking: deep crimson #8a3033 + warm gold #e8b45a + cream #f5f1e8 + black. Oversized Korean display typography,
+the provided REAL photo as duotone hero inside a bold geometric frame, graphic accents (waves, starbursts, sticker badges,
+thick rules, halftone). CRITICAL: only provided real photos — no AI people or history scenes.
+Top badge: {{발굴 완료}} / Huge headline: {{찾았다, N건}} / Sub: {{훅 한 줄}} / Stat badges 3: {{검증 수치}} /
+CTA bar: 발굴 보고서 공개 — KOREA ARCHIVE 통합검색 / Tiny credit: {{사진 출처·식별자}}
+검증 실측: 후보 4개 중 3개가 가짜 이미지 — 실물 사용 후보만 채택하고 환각 문구는 전량 교정할 것.
+
 ## 생성 후 체크리스트 (생략 금지)
 
 1. 후보 전부 썸네일 검수 — 실물 자산 사용 여부·가짜 이미지 혼입 확인
