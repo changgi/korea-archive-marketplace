@@ -975,7 +975,7 @@ FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물�
 2. 실물 이미지 수집: 기관 공개 원본 전량(비식별판 우선) + digitised 기록의 카탈로그 무료 미리보기.
    수집 즉시 출처 대장(sources.txt) 기록. AI 생성 인물·역사 장면 절대 금지.
 3. HTML 보고서: report_template(kind='report') 18규칙 전부 — 히어로 실물·인라인 도판·콘택트시트·원문 미리보기·
-   검증 기록·전수 목록·재현 쿼리·더 보기·카드뉴스 갤러리. 수치는 모든 산출물에서 동일해야 한다.
+   검증 기록·전수 목록·재현 쿼리·더 보기·카드뉴스 갤러리. 매거진 완성판은 kind=magazine 확장팩(표지=포스터 겸용·목차·뒷표지·KA 검증 낙관·테마 5종)을 덧입힌다. 수치는 모든 산출물에서 동일해야 한다.
 4. 캐러셀 8장: report_template(kind='carousel') 12규칙 — 커버는 보고서 히어로와 같은 실물, 검증 노트·따라하기 포함.
    렌더는 환경별: 로컬=헤드리스 렌더 / 웹·모바일=Canva 커넥터 생성→페이지별 PNG 내보내기. 전 장 육안 검수 생략 금지.
    caption.txt + sources.txt 동봉.
@@ -985,6 +985,46 @@ FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물�
 
 품질 게이트: 수치 정합 · 전 이미지 캡션+출처(기관 정식명·국가·식별자·링크) · 실확인 링크만(확인일 명기) ·
 게재윤리 4단계(포로·사망자 존엄) · 협약기관 출처 표기 필수."""
+
+MAGAZINE_PACK = """매거진 확장팩 — kind='report' 보고서에 덧입히는 표지·목차·뒷표지·시그니처·테마 (일류 저널급)
+사용법: 보고서 골격(kind='report') 완성 후 아래를 추가한다. 표지는 발굴 포스터를 겸한다(별도 포스터 제작 시 같은 구성).
+
+[구조] <body> 직후: <section class='cover'> → <section class='contents'> → 기존 .wrap 본문 → </div> 뒤 <section class='backcover'>
+[표지] 실물 히어로 사진 풀블리드 배경(.bg data URI)+그라디언트(.shade) 위에: KA인장+매스트헤드(제N호·날짜) /
+ 킥커 / 대형 제호 h1 / 훅 문장 .sub / 검증 팩트 3줄 .facts(골드 좌보더) / .foot "표지 겸 발굴 포스터 — 실물 사진과 검증 카피로만 구성"+사진 출처
+[목차] .contents: CONTENTS 라벨 / 차례 ol — 각 항목: 로마숫자(.no2 이탤릭 세리프)+절 제목 앵커+우측 한 줄 설명(.d)
+[뒷표지] .backcover(다크): KA인장+워드마크 / 서비스 소개 2줄 / 이 호의 기록 출처(국기+정식명) / 함께 나온 산출물 / 커넥터 URL+매직 키워드 '풀패키지' / 확인일
+[스프레드 폴리시] h2 고스트 로마숫자(.no 64px opacity .13)+골드 틱(::before 26×3px) / figcaption b는 스몰캡스 /
+ 절 사이 풀블리드 포토 브레이크 .photobreak(실물 배경+어두운 오버레이+이탤릭 인용+출처 한 줄)
+[시그니처 — KA 인장·검증 낙관] 인장 SVG(72 viewBox): 크림슨 라운드 사각 + 크림 이중 테두리 + K·A 스트로크 모노그램 + 상하좌우 조준 틱.
+ 검증 낙관 .ka-verified: 크림슨 2.5px 보더 라운드 박스 -1.2도 회전, 인장+"검증 낙관 — KOREA ARCHIVE"+
+ "실물 이미지·훈격·건수·링크는 기관 원본 수집과 API 원문 대조를 마쳤습니다. 정정 이력은 Ⅴ절 공개 · [확인일]" — Ⅵ 권리절 끝에 배치. 검증 없이 낙관 금지.
+[테마 5종 — data-theme 속성, CSS 변수 오버라이드] 기본 Injang(시그니처: 크림 종이+크림슨+골드 세리프) /
+ minimal(화이트·#0071e3·산세리프, 애플풍) / dark(#0b0d12·#4c8dff, 삼성풍) / pop(#fee500 포인트, 카카오풍) / blue(#0064e0·산세리프, 메타풍).
+ 우하단 고정 .themebar(반투명 필, 5색 원 버튼, onclick으로 documentElement data-theme 토글, @media print 숨김)
+
+[핵심 CSS — 그대로 복사]
+.cover{position:relative;min-height:100vh;display:flex;flex-direction:column;background:#171412;color:#f4ecdd;overflow:hidden}
+.cover .bg{position:absolute;inset:0;background-size:cover;background-position:70% center}
+.cover .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,6,.35),rgba(10,8,6,.94) 70%)}
+.cover .in{position:relative;z-index:2;display:flex;flex-direction:column;flex:1;max-width:880px;width:100%;margin:0 auto;padding:34px 26px 48px}
+.cover .mast{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#cbbfa8;border-bottom:3px double rgba(232,224,205,.6);padding-bottom:12px}
+.cover .kick{margin-top:auto;font-size:13px;letter-spacing:.3em;color:#e8b45a;font-weight:700}
+.cover h1{font-size:clamp(38px,7.5vw,68px);line-height:1.18;margin:10px 0 16px;color:#fff}
+.cover .facts li{margin:6px 0;padding-left:16px;border-left:2px solid #a8853c;list-style:none}
+.contents li{display:flex;gap:16px;align-items:baseline;padding:13px 2px;border-bottom:1px solid var(--line)}
+.contents .no2{font-family:Georgia,serif;font-style:italic;color:var(--accent);flex:0 0 34px;font-size:19px}
+.contents .d{color:var(--sub);font-size:13px;margin-left:auto;text-align:right;max-width:46%}
+.backcover{background:#171412;color:#cbbfa8;margin-top:70px;padding:70px 26px 60px}
+.photobreak{position:relative;margin:70px calc(50% - 50vw);padding:110px 26px;background-size:cover;color:#f4ecdd;text-align:center}
+.photobreak::before{content:'';position:absolute;inset:0;background:rgba(12,9,7,.62)}
+.photobreak blockquote{position:relative;z-index:1;max-width:640px;margin:0 auto;font-size:clamp(22px,3.4vw,30px);font-style:italic}
+.ka-verified{display:flex;gap:16px;align-items:center;margin-top:26px;padding:16px 20px;border:2.5px solid var(--accent);border-radius:8px;max-width:560px;transform:rotate(-1.2deg)}
+h2 .no{font-size:64px;position:absolute;top:-14px;left:-6px;opacity:.13}
+@media print{.cover{page-break-after:always}.contents{page-break-after:always}.themebar{display:none}}
+
+[KA 인장 SVG — 그대로 복사]
+<svg class='ka-seal' viewBox='0 0 72 72' width='30' height='30'><path d='M36 1v6M36 65v6M1 36h6M65 36h6' stroke='#8a3033' stroke-width='2.6'/><rect x='9' y='9' width='54' height='54' rx='7' fill='#8a3033'/><rect x='13.5' y='13.5' width='45' height='45' rx='4.5' fill='none' stroke='#f5f1e8' stroke-width='1.6' opacity='.75'/><path d='M22 22v28M22 36l11-14M22 36l11 14' stroke='#f5f1e8' stroke-width='4.6' fill='none' stroke-linecap='square'/><path d='M38 50l7-28 7 28M41 41h8' stroke='#f5f1e8' stroke-width='4.6' fill='none' stroke-linecap='square'/></svg>"""
 
 
 @mcp.tool()
@@ -1000,6 +1040,8 @@ def report_template(kind: str = "report") -> str:
     영상 알림·A4 리플릿)과 실전 검증된 환각 교정 절차를 반환한다.
     사용자가 "풀패키지"라고 하면 kind="full_package"를 먼저 호출 — 조사→보고서→캐러셀→포스터
     전 산출물 제작 순서를 받아 그대로 수행한다."""
+    if kind == "magazine":
+        return MAGAZINE_PACK
     if kind == "full_package":
         return FULL_PACKAGE
     if kind == "canva_prompts":

@@ -17,7 +17,9 @@ description: 매직 키워드 "풀패키지" — 발굴 조사부터 모든 산�
    AI 생성 인물·역사 장면 절대 금지.
 3. **HTML 보고서** — `report_template(kind='report')` 18규칙 전부: 히어로 실물·인라인 도판(.fig-inline)·
    콘택트시트(.sheet)·원문 미리보기 figure·검증 기록(정정 이력)·전수 목록·재현 쿼리·더 보기 절·
-   카드뉴스 갤러리(.cards-grid). 정합 검사: 수치가 제목·본문·표·카드에서 동일해야 한다.
+   카드뉴스 갤러리(.cards-grid). **매거진 완성판**은 `kind='magazine'` 확장팩을 덧입힌다 —
+   표지(포스터 겸용)·목차·뒷표지·KA 인장·검증 낙관·브랜드 테마 5종(Injang/minimal/dark/pop/blue) 스위처.
+   정합 검사: 수치가 제목·본문·표·카드에서 동일해야 한다.
 4. **캐러셀 8장** — `insta-carousel` 스킬 + `report_template(kind='carousel')` 12규칙.
    커버=보고서 히어로와 같은 실물, 검증 노트·따라하기 카드 포함.
    렌더: 로컬=`make_carousel.py --expect 8` / 웹=Canva 경유. **전 장 육안 검수 생략 금지.**
