@@ -323,11 +323,11 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
 
 
 
-REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (17) — 잡지·저널급 편집 기준
+REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (18) — 잡지·저널급 편집 기준
 1. 파일명: [주제영문]_records_[연도범위].html — 조사 완료 시 기본 산출물
 2. 지면 구조(잡지형): masthead → kicker → 표제(h1) → standfirst → byline(기관 chip) → 목차(nav.toc) → 히어로 figure → Ⅰ서사 → Ⅱ핵심 기록 카드 → Ⅲ영상 필름스트립 → Ⅳ전수 목록 표 → Ⅴ재현 쿼리(details) → Ⅵ권리·게재 윤리 → 출처 총람(.sources) → footer
 3. 서사 우선: 표만 나열 금지 — 발굴 경위·의미를 에세이로 서술(리드 문단 .lead 드롭캡, 풀인용 .pull 1개 이상). 문단이 실물을 설명하면 그 문단 옆에 인라인 도판(.fig-inline 플로트)을 배치 — 잡지처럼 글과 그림이 같은 화면에 보이게. 문체는 담백·구체 — 과장어(놀라운·혁신적 등)와 AI투 금지
-4. 실물 이미지 필수: 게재 가능(권리 A/B + 게재윤리 1·2단계) 기록은 기관 공개 원본에서 수집해 base64로 임베드 — 히어로 1장 + 핵심 기록마다, 기관이 공개한 컷은 전량 수록(.sheet 콘택트시트, 컷별 라벨). 비식별(블러)판 제공 시 우선 사용. 이미지는 max-width:100% 자동 축소(템플릿 CSS) — 본문 삽입 시 논문·잡지 도판처럼 문단 폭에 맞춘다. 한 장도 못 실으면 그 사유(권리 C/D·비식별 불가·미디지털화)를 Ⅵ절에 명기
+4. 실물 이미지 필수: 게재 가능(권리 A/B+게재윤리 1·2단계) 기록은 기관 공개 원본을 base64 임베드 — 히어로 1장+핵심 기록마다, 공개 컷은 전량(.sheet 콘택트시트·컷별 라벨). 비식별판 우선. 이미지는 max-width:100% 자동 축소 — 논문·잡지 도판처럼 문단 폭에 맞춘다. 한 장도 못 실으면 사유를 Ⅵ절에 명기
 5. 모든 이미지에 figcaption + .credit 필수: "출처: 기관 정식명(국가) · 식별자 · 촬영자/생산자 · 원본 링크" — 출처 없는 이미지는 싣지 않는다
 6. 영상 기록은 .film 필름스트립: 장면 전환마다 프레임을 충분히 추출(권장 8~16장)해 타임코드(.tc)+한 줄 설명으로 나열 — 표제가 가린 장면(ETC 뒤)을 드러내 원본을 직접 보고 싶게 만든다. 슬레이트·표지판 판독 프레임은 별도 확대 figure. 블록 끝에 .cta "▶ 원본 영상 보기 — [기관] 카탈로그"
 7. 핵심 기록 3~6건은 .record 카드로: 이미지 + 한국어 제목(원제 병기) + .prov 출처 계보(국가→기관→RG/시리즈→상자→식별자) + 요약 + 바로가기 버튼 + 권리 배지
@@ -339,8 +339,9 @@ REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (17) — 잡지·저널급
 13. 링크·수치는 도구 호출로 실확인한 것만 — 추정 URL 금지, footer에 '모든 링크 [날짜] 접속 확인' 명기
 14. 연표·지도·관계도는 인라인 svg로 직접 작성 가능. 외부 리소스 금지 — 폰트·CDN·이미지 핫링크 없이 단일 HTML 파일 자기완결
 15. 인쇄 대응: 템플릿의 @media print 유지 — 보고서는 그대로 출판물처럼 인쇄 가능해야 한다
-16. 링크 신뢰장치: 주요 링크는 대상 페이지 캡쳐본(헤드리스 브라우저 스크린샷)을 figure+credit(갈무리 일자)로 임베드해 링크 내용이 실재함을 보인다. 자동화 차단(WAF 등) 시 그 사실을 명기하고 카탈로그 API 기술 원문 인용표로 대체. 훈격·날짜·건수 등 핵심 사실은 API/원문 대조 후 '검증 기록'으로 수록 — 초판 오류가 있었으면 정정 이력을 남긴다
-17. 카드뉴스 병행: 보고서와 함께 캐러셀(기본 8장, 1080×1080 — insta-carousel 스킬 또는 report_template(kind='carousel') 참조)을 제작하고, 보고서 말미 '카드뉴스' 절에 .cards-grid로 임베드한다 — 무크롭 전체 노출 + 카드별 figcaption, 잘림·겹침 금지. 커버는 히어로와 같은 실물 이미지, 검증 노트·따라하기 카드 포함, 보고서와 출처 대장 공유. PNG 원본·caption.txt·sources.txt를 보고서와 함께 납품"""
+16. 링크 신뢰장치: ①digitised 기록은 카탈로그 무료 미리보기 이미지를 공식 엔드포인트로 확보해 원문 figure로 임베드(예: TNA /image/getimage — 워터마크 원상태, 유료 전체본은 안내만) ②그 외 주요 링크는 페이지 캡쳐본 figure+credit(갈무리 일자) ③자동화 차단 시 명기하고 API 기술 원문 인용표로 대체. 훈격·날짜·건수는 API 원문 대조 '검증 기록'으로 — 초판 오류는 정정 이력을 남긴다
+17. 카드뉴스 병행: 보고서와 함께 캐러셀(기본 8장, 1080×1080 — insta-carousel 스킬 또는 report_template(kind='carousel') 참조)을 제작하고, 보고서 말미 '카드뉴스' 절에 .cards-grid로 임베드한다 — 무크롭 전체 노출 + 카드별 figcaption, 잘림·겹침 금지. 커버는 히어로와 같은 실물 이미지, 검증 노트·따라하기 카드 포함, 보고서와 출처 대장 공유. PNG 원본·caption.txt·sources.txt를 보고서와 함께 납품
+18. 더 보기 절(Ⅷ): 출처 총람 직전에 관련 공개 콘텐츠 소개 — 뉴스(📰)·기관 아카이브(🏛️)·해설/백과(📚)·SNS/영상 등을 카테고리 이모지+한 줄 설명으로. 접속 확인한 링크만(확인일 명기), 미확보 카테고리는 그 사실+추천 검색어 명시 — 발굴을 현재의 기억과 잇는 절"""
 
 REPORT_TEMPLATE = """<!DOCTYPE html>
 <html lang="ko">
@@ -390,24 +391,21 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
   .credit{display:block;font-size:11.5px;color:var(--faint);letter-spacing:.04em;margin-top:3px}
   img{max-width:100%;height:auto}
   h2{clear:both}
-  /* 인라인 도판 — 문단이 설명하는 실물을 그 문단 옆에 (잡지식 플로트, 화면 좁으면 자동 전폭) */
+  /* 인라인 도판 — 문단 옆 플로트, 좁으면 전폭 */
   .fig-inline{float:right;width:min(46%,360px);margin:6px 0 14px 26px}
   .fig-inline.left{float:left;margin:6px 26px 14px 0}
   @media (max-width:640px){.fig-inline{float:none;width:100%;margin:16px 0}}
-  /* 사진 콘택트시트 — 한 기록의 공개 컷 전량 수록용 (컷별 라벨 .sub + 전체 figcaption) */
+  /* 콘택트시트 — 공개 컷 전량 수록(.sub 라벨) */
   .sheet{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .sheet figure{margin:0}
   .sheet img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;border:1px solid var(--line)}
   .sheet .sub{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.5}
   @media (max-width:640px){.sheet{grid-template-columns:1fr 1fr}}
-  /* 정방형 카드 갤러리(카드뉴스 등) — 무크롭 전체 노출 + 카드별 figcaption. 잘림·겹침 금지 */
+  /* 카드 갤러리 — 무크롭+카드별 캡션, 잘림 금지 */
   .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin:20px 0}
   .cards-grid figure{margin:0}
   .cards-grid img{width:100%;height:auto;display:block;border:1px solid var(--line)}
   .cards-grid figcaption{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.5}
-  .fig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
-  .fig-grid figure{margin:0}
-  .fig-grid img{height:100%;object-fit:cover}
   /* ── 출처 chip ── */
   .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border:1px solid var(--hair);
     border-radius:999px;background:var(--card);font-size:12px;color:var(--sub);white-space:nowrap}
@@ -486,7 +484,7 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
   <span class="chip">🇺🇸 {{NARA · RG 111}}</span><span class="chip">🇬🇧 {{TNA · FO 371}}</span><span class="chip">🇰🇷 {{KOREAN WAR ARCHIVES}}</span>
   <!-- 조사한 기관 전부를 chip으로: 🇫🇷 BnF Gallica · 🇪🇺 Europeana · 🇺🇸 archive.org · 🇰🇷 국가기록원 … -->
 </div>
-<nav class="toc sans"><a href="#s1">서사</a><a href="#s2">핵심 기록</a><a href="#s3">영상</a><a href="#s4">전수 목록</a><a href="#s5">재현 쿼리</a><a href="#s6">권리·출처</a><a href="#s7">카드뉴스</a></nav>
+<nav class="toc sans"><a href="#s1">서사</a><a href="#s2">핵심 기록</a><a href="#s3">영상</a><a href="#s4">전수 목록</a><a href="#s5">재현 쿼리</a><a href="#s6">권리·출처</a><a href="#s7">카드뉴스</a><a href="#s8">더 보기</a></nav>
 
 <!-- 히어로: 가장 강한 실물 이미지 1장(권리 A/B + 게재윤리 통과). 반드시 credit. -->
 <figure>
@@ -498,7 +496,7 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 <h2 id="s1"><span class="no">I.</span> {{서사 절 제목 — 발굴 경위}}</h2>
 <p class="lead">{{리드 문단(드롭캡) — 어떤 질문에서 출발해 무엇을 찾았는가. 카탈로그의 부실한 표제가 무엇을 가리고 있었는가.}}</p>
 <p>{{본문 서사 — 검색 전략(표기 변형·인접 채굴), 결정적 단서, 판독 과정. 확인한 것과 추정을 구분해 담백하게.}}</p>
-<!-- 인라인 도판: 문단이 설명하는 실물은 그 문단 '옆'에 .fig-inline으로 — 글과 그림이 같은 화면에 보이게 -->
+<!-- 인라인 도판: 설명하는 문단 옆에 배치 -->
 <figure class="fig-inline">
   <img src="data:image/jpeg;base64,{{BASE64}}" alt="{{설명}}">
   <figcaption><b>그림 N.</b> {{이 문단이 설명하는 실물 — 판독 포인트(새김 문자·손글씨 등)}}
@@ -567,7 +565,7 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 자동 초판이므로 <strong>출판 전 인간 최종 확인 필수</strong>이며, <span class="badge b-D">D등급</span>은 공개 금지입니다.
 {{민감 주제(위안부·포로·학살 등)면: 피해자 존엄·윤리적 사용 기준, 게재윤리 4단계(거부할 수 없었던 처지의 촬영 = 화면 미사용) 적용 문구}}</p>
 
-<!-- Ⅶ(선택) 카드뉴스 갤러리 — insta-carousel 스킬로 병행 제작한 카드를 축소 임베드. 미제작 시 절·toc 링크 삭제 -->
+<!-- Ⅶ(선택) 카드뉴스 갤러리 — 미제작 시 절·toc 삭제 -->
 <h2 id="s7"><span class="no">VII.</span> 카드뉴스 — 이 발굴을 {{N}}장으로</h2>
 <p>{{카드뉴스 소개 1~2문장 — 커버는 히어로와 같은 실물 이미지, 보고서와 같은 출처 대장 공유}}</p>
 <div class="cards-grid">
@@ -575,6 +573,17 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
   <!-- 카드 반복 (권장 8장, 축소 maxdim 540) — 무크롭 전체 노출·카드별 figcaption 필수, 잘림·겹침 금지 -->
 </div>
 <p class="small">게시용 1080×1080 PNG 원본 + 캡션(caption.txt) + 이미지 출처 대장(sources.txt)을 보고서와 함께 납품.</p>
+
+<!-- Ⅷ 더 보기 — 접속 확인 링크만, 미확보 카테고리는 명시 -->
+<h2 id="s8"><span class="no">VIII.</span> 더 보기 — 관련 기사·콘텐츠</h2>
+<p>{{한 줄 소개 — 이 발굴이 현재의 기억(추모·전시·보도)과 어떻게 이어지는지}}</p>
+<ul class="src">
+  <li>📰 <a href="{{URL}}">{{기사 제목}}</a> — {{매체(보도일)}} · {{한 줄 설명}}</li>
+  <li>🏛️ <a href="{{URL}}">{{기관 아카이브·현장 기록}}</a> — {{기관명}}</li>
+  <li>📚 <a href="{{URL}}">{{해설·백과}}</a> — {{한 줄 설명}}</li>
+  <!-- 유튜브·인스타 등 SNS/영상: 검증된 공식 게시물만. 미확보 시 아래 문구로 대체 -->
+</ul>
+<p class="small">※ {{미확보 카테고리 명시 + 추천 검색어}} · 전부 {{확인일}} 접속 확인.</p>
 
 <div class="sources">
   <h2 style="margin:0 0 10px;font-size:17px">기록 출처 <span class="small">Archives cited</span></h2>
