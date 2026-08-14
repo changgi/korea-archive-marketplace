@@ -29,7 +29,9 @@ description: 매직 키워드 "풀패키지" — 발굴 조사부터 모든 산�
    검증 카피로 교정(replace_text)** → commit.
 6. **납품** — 보고서 HTML + 카드 PNG 8장 + 포스터 시리즈 + caption.txt + sources.txt + Canva 링크.
    **ZIP 패키지**: 전체를 [주제영문]_fullpackage_[날짜].zip으로 묶어 함께 납품 —
-   구조: report/ cards/ posters/ canva/ manifest.txt(산출물 목록+검증 요약+편집 링크).
+   구조: report/ cards/ posters/ canva/ pptx/ manifest.txt(산출물 목록+검증 요약+편집 링크).
+   **발표자료 PPTX**: 16:9 슬라이드 12~16장(발표 노트 전 장 필수·도판별 출처 표기·저해상 프레임은
+   필름스트립 다컷 배치) — python-pptx 제작, 공개 쇼케이스 URL 경유 Canva import로 편집본 링크 제공.
    저장소 쇼케이스 푸시·SNS 게시 등 **공개 행위는 사용자 확인 후**.
 7. **작업 로그 + 분석** — `activity_log.md`를 zip에 포함:
    - 행위 내역 표(시간순): 단계 · 행위 · 도구/쿼리 · 결과 건수 · 응답 규모
@@ -52,3 +54,4 @@ description: 매직 키워드 "풀패키지" — 발굴 조사부터 모든 산�
 - [ ] 핵심 기록 카드마다 이미지(수집 실물 우선, 자료 화면 대체 시 명기)
 - [ ] placeholder·주석 잔존 0건 — 갤러리·절은 실제 임베드 확인
 - [ ] 홍보 카드뉴스는 실제 지면 캡쳐 다수 수록(표지·차례·스프레드·필름스트립·갤러리·낙관) — 텍스트 위주 금지
+- [ ] 발표자료 pptx — 전 슬라이드 발표 노트·출처 표기, 슬라이드 이미지 육안 검수, Canva 편집 링크 확인
