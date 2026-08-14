@@ -29,8 +29,7 @@ description: 매직 키워드 "풀패키지" — 발굴 조사부터 모든 산�
    검증 카피로 교정(replace_text)** → commit.
 6. **납품** — 보고서 HTML + 카드 PNG 8장 + 포스터 시리즈 + caption.txt + sources.txt + Canva 링크.
    **ZIP 패키지**: 전체를 [주제영문]_fullpackage_[날짜].zip으로 묶어 함께 납품 —
-   구조: 
-eport/ cards/ posters/ canva/ manifest.txt(산출물 목록+검증 요약+편집 링크).
+   구조: report/ cards/ posters/ canva/ manifest.txt(산출물 목록+검증 요약+편집 링크).
    저장소 쇼케이스 푸시·SNS 게시 등 **공개 행위는 사용자 확인 후**.
 
 ## 품질 게이트 (납품 전 체크)
