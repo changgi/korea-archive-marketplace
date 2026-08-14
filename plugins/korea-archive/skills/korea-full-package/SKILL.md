@@ -36,6 +36,10 @@ description: 매직 키워드 "풀패키지" — 발굴 조사부터 모든 산�
    - 분석 절: 도구·채널별 통계와 성과, 0건→방법 전환 회수율, 검증 정정률, 소요·병목, 산출물 규모
    - 토큰은 정확 집계 불가(클라이언트 영역) — 대리 지표로 기록하고 명시
    - 로그 + 보고서 Ⅴ절 + manifest = 감사 추적 3종 세트
+8. **KARDA 온톨로지 산출물** — kad/ 폴더를 zip에 포함 (make_metadata.py 규격):
+   - karda_nodes.csv (record/agent/unit/place/event) + karda_edges.csv (관계마다 basis·confidence)
+   - 신뢰도 필터: 확정(API·원문 판독)·높음만 그래프 수록 — 부분 이하는 tentative로 readme 명기
+   - 관계의 근거(basis)를 반드시 남긴다 — 연구 재검증 가능성이 KARDA 입력의 품질이다
 
 ## 품질 게이트 (납품 전 체크)
 
