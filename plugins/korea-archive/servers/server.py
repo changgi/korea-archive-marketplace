@@ -327,7 +327,7 @@ REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (18) — 잡지·저널급
 1. 파일명: [주제영문]_records_[연도범위].html — 조사 완료 시 기본 산출물
 2. 지면 구조(잡지형): masthead → kicker → 표제(h1) → standfirst → byline(기관 chip) → 목차(nav.toc) → 히어로 figure → Ⅰ서사 → Ⅱ핵심 기록 카드 → Ⅲ영상 필름스트립 → Ⅳ전수 목록 표 → Ⅴ재현 쿼리(details) → Ⅵ권리·게재 윤리 → 출처 총람(.sources) → footer
 3. 서사 우선: 표만 나열 금지 — 발굴 경위·의미를 에세이로 서술(리드 문단 .lead 드롭캡, 풀인용 .pull 1개 이상). 문단이 실물을 설명하면 그 문단 옆에 인라인 도판(.fig-inline 플로트)을 배치 — 잡지처럼 글과 그림이 같은 화면에 보이게. 문체는 담백·구체 — 과장어(놀라운·혁신적 등)와 AI투 금지
-4. 실물 이미지 필수: 게재 가능(권리 A/B+게재윤리 1·2단계) 기록은 기관 공개 원본을 base64 임베드 — 히어로 1장+핵심 기록마다, 공개 컷은 전량(.sheet 콘택트시트·컷별 라벨). 비식별판 우선. 이미지는 max-width:100% 자동 축소 — 논문·잡지 도판처럼 문단 폭에 맞춘다. 한 장도 못 실으면 사유를 Ⅵ절에 명기
+4. 실물 이미지 필수: 게재 가능(권리 A/B+게재윤리 1·2단계) 기록은 기관 공개 원본을 base64 임베드 — 히어로 1장+핵심 기록마다, 공개 컷은 전량(.sheet 콘택트시트·컷별 라벨). 비식별판 우선. 이미지는 max-width:100% 자동 축소. 환경별: 로컬=base64 임베드 / 웹·모바일(파일·base64 불가)=기관 공개 원본 URL을 img src로 직접 참조하고 footer에 그 사실을 명기. 한 장도 못 실으면 사유를 Ⅵ절에 명기
 5. 모든 이미지에 figcaption + .credit 필수: "출처: 기관 정식명(국가) · 식별자 · 촬영자/생산자 · 원본 링크" — 출처 없는 이미지는 싣지 않는다
 6. 영상 기록은 .film 필름스트립: 장면 전환마다 프레임을 충분히 추출(권장 8~16장)해 타임코드(.tc)+한 줄 설명으로 나열 — 표제가 가린 장면(ETC 뒤)을 드러내 원본을 직접 보고 싶게 만든다. 슬레이트·표지판 판독 프레임은 별도 확대 figure. 블록 끝에 .cta "▶ 원본 영상 보기 — [기관] 카탈로그"
 7. 핵심 기록 3~6건은 .record 카드로: 이미지 + 한국어 제목(원제 병기) + .prov 출처 계보(국가→기관→RG/시리즈→상자→식별자) + 요약 + 바로가기 버튼 + 권리 배지
@@ -337,7 +337,7 @@ REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (18) — 잡지·저널급
 11. 종합 색인·최신 연구 목록(ul.src) — details로 접어도 된다
 12. Ⅵ 권리 절: 법적 근거(17 U.S.C. §105 · 36 CFR 1254.62 · Crown/OGL · domaine public · KOGL) + '출판 전 인간 최종 확인 필수' + D등급 공개 금지. 민감 주제(위안부·포로·학살)는 피해자 존엄 문구와 게재윤리 4단계(거부할 수 없었던 처지의 촬영 = 화면 미사용) 적용
 13. 링크·수치는 도구 호출로 실확인한 것만 — 추정 URL 금지, footer에 '모든 링크 [날짜] 접속 확인' 명기
-14. 연표·지도·관계도는 인라인 svg로 직접 작성 가능. 외부 리소스 금지 — 폰트·CDN·이미지 핫링크 없이 단일 HTML 파일 자기완결
+14. 연표·지도·관계도는 인라인 svg로 직접 작성 가능. 외부 리소스 금지(폰트·CDN) — 로컬은 단일 파일 자기완결(base64), 웹·모바일 산출만 기관 공개 이미지 URL 참조 예외 허용
 15. 인쇄 대응: 템플릿의 @media print 유지 — 보고서는 그대로 출판물처럼 인쇄 가능해야 한다
 16. 링크 신뢰장치: ①digitised 기록은 카탈로그 무료 미리보기 이미지를 공식 엔드포인트로 확보해 원문 figure로 임베드(예: TNA /image/getimage — 워터마크 원상태, 유료 전체본은 안내만) ②그 외 주요 링크는 페이지 캡쳐본 figure+credit(갈무리 일자) ③자동화 차단 시 명기하고 API 기술 원문 인용표로 대체. 훈격·날짜·건수는 API 원문 대조 '검증 기록'으로 — 초판 오류는 정정 이력을 남긴다
 17. 카드뉴스·포스터 병행: 보고서와 함께 캐러셀(기본 8장, 1080×1080)과 포스터 시리즈(1080×1350 세로형 4~6장 — 표제·인물·문서·검증·초대의 연작 서사, 같은 검수 기준 — insta-carousel 스킬 또는 report_template(kind='carousel') 참조)을 제작하고, 보고서 말미 '카드뉴스' 절에 .cards-grid로 임베드한다 — 무크롭 전체 노출 + 카드별 figcaption, 잘림·겹침 금지. 커버는 히어로와 같은 실물 이미지, 검증 노트·따라하기 카드 포함, 보고서와 출처 대장 공유. PNG 원본·caption.txt·sources.txt를 보고서와 함께 납품
@@ -478,15 +478,15 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 
 <div class="kicker sans">{{분류 킥커 — 예: 발굴 보고 · 1950 한국전쟁 영상}}</div>
 <h1>{{표제 — 신문 표제처럼, 발굴의 핵심을 한 문장으로}}</h1>
-<p class="standfirst">{{스탠드퍼스트 2~3문장 — 무엇을, 어디서, 왜 중요한지. 잡지 데크처럼 서술형으로.}}</p>
+<p class="standfirst">{{스탠드퍼스트 2~3문장 — 무엇을·어디서·왜}}</p>
 <div class="byline sans">
   <span>대상 시기 <b>{{대상시기}}</b></span> · <span>조사 도구 <b>KOREA ARCHIVE 통합검색</b></span>
   <span class="chip">🇺🇸 {{NARA · RG 111}}</span><span class="chip">🇬🇧 {{TNA · FO 371}}</span><span class="chip">🇰🇷 {{KOREAN WAR ARCHIVES}}</span>
-  <!-- 조사한 기관 전부를 chip으로: 🇫🇷 BnF Gallica · 🇪🇺 Europeana · 🇺🇸 archive.org · 🇰🇷 국가기록원 … -->
+  <!-- 조사 기관 전부 chip -->
 </div>
 <nav class="toc sans"><a href="#s1">서사</a><a href="#s2">핵심 기록</a><a href="#s3">영상</a><a href="#s4">전수 목록</a><a href="#s5">재현 쿼리</a><a href="#s6">권리·출처</a><a href="#s7">카드뉴스</a><a href="#s8">더 보기</a></nav>
 
-<!-- 히어로: 가장 강한 실물 이미지 1장(권리 A/B + 게재윤리 통과). 반드시 credit. -->
+<!-- 히어로: 실물 1장(권리·윤리 통과), credit 필수 -->
 <figure>
   <img src="data:image/jpeg;base64,{{BASE64}}" alt="{{대체 텍스트}}">
   <figcaption><b>그림 1.</b> {{한 줄 설명 — 보는 이가 멈추게 되는 이유}}
@@ -494,8 +494,8 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 </figure>
 
 <h2 id="s1"><span class="no">I.</span> {{서사 절 제목 — 발굴 경위}}</h2>
-<p class="lead">{{리드 문단(드롭캡) — 어떤 질문에서 출발해 무엇을 찾았는가. 카탈로그의 부실한 표제가 무엇을 가리고 있었는가.}}</p>
-<p>{{본문 서사 — 검색 전략(표기 변형·인접 채굴), 결정적 단서, 판독 과정. 확인한 것과 추정을 구분해 담백하게.}}</p>
+<p class="lead">{{리드(드롭캡) — 질문에서 발견까지}}</p>
+<p>{{서사 — 전략·단서·판독, 확인/추정 구분}}</p>
 <!-- 인라인 도판: 설명하는 문단 옆에 배치 -->
 <figure class="fig-inline">
   <img src="data:image/jpeg;base64,{{BASE64}}" alt="{{설명}}">
@@ -507,30 +507,28 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 <p>{{서사 계속. 문단이 실물을 설명하면 반드시 그 옆에 figure 배치(각각 figcaption+credit 필수).}}</p>
 
 <h2 id="s2"><span class="no">II.</span> 핵심 기록</h2>
-<!-- 가장 중요한 기록 3~6건을 카드로. 이미지 없으면 <img> 줄 생략 -->
+<!-- 핵심 3~6건 카드. 이미지 없으면 img 생략 -->
 <div class="record">
   <img src="data:image/jpeg;base64,{{BASE64}}" alt="{{설명}}">
   <div>
     <h3>{{한국어 제목 — 원제 병기}}</h3>
     <div class="prov sans">{{🇺🇸 미국}} → <b>{{NARA}}</b> → {{RG 111 · Entry NM-xx · Box nn}} → <b>{{식별자}}</b></div>
-    <p>{{내용 요약 2~3문장 — 한국 관련 핵심. 표제가 가린 내용이 있으면 그것부터.}}</p>
+    <p>{{요약 2문장 — 표제가 가린 것부터}}</p>
     <div class="btns sans"><a href="{{원문URL}}">원문 보기</a><a href="{{카탈로그URL}}">카탈로그</a><span class="badge b-B">B · PD 추정</span></div>
   </div>
 </div>
 
 <h2 id="s3"><span class="no">III.</span> 영상 기록 — 프레임으로 먼저 본다</h2>
-<!-- 영상 1건당 .film 블록 1개. 프레임은 장면 전환마다 추출(권장 8~16장, analyze_video.py auto/zoom).
-     표제가 가린 장면(ETC 뒤)을 프레임으로 드러내 원본을 직접 보고 싶게 만드는 것이 목적. -->
+<!-- 영상 1건당 .film 1개 — 프레임 8~16장, 표제가 가린 장면을 드러낸다 -->
 <div class="film">
   <h3>{{영상 제목 (원제)}}</h3>
   <div class="prov sans">{{🇺🇸 NARA · RG 111 · 식별자}} · {{러닝타임}} · {{연대}} · 촬영 {{부대/촬영자}}</div>
-  <p>{{이 영상이 왜 중요한가 — 카탈로그 표제와 실제 내용의 간극을 중심으로 2~3문장.}}</p>
+  <p>{{왜 중요한가 — 표제와 실제의 간극 2문장}}</p>
   <div class="filmstrip">
     <figure class="frame"><img src="data:image/jpeg;base64,{{BASE64}}" alt="{{장면}}"><figcaption><span class="tc">{{00:00:12}}</span>{{한 줄 장면 설명}}</figcaption></figure>
-    <figure class="frame"><img src="data:image/jpeg;base64,{{BASE64}}" alt="{{장면}}"><figcaption><span class="tc">{{00:01:05}}</span>{{슬레이트 — 날짜·부대 판독}}</figcaption></figure>
-    <!-- 프레임 반복 -->
+    <!-- 프레임 반복 (tc 타임코드+한 줄 설명) -->
   </div>
-  <div class="hint sans">← 좌우로 넘겨 보세요 · 프레임 {{N}}장 / 전체 {{러닝타임}}</div>
+  <div class="hint sans">← 좌우 스크롤 · {{N}}장</div>
   <a class="cta sans" href="{{원본영상URL}}">▶ 원본 영상 보기 — {{기관}} 카탈로그</a>
 </div>
 
@@ -547,27 +545,24 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 <details open>
   <summary>재현용 검색 쿼리 — 실제 실행분만</summary>
   <div class="inner">
-  <p class="small">전전(戰前) 자료는 <code>Korea</code> 외 <code>Chosen</code>·<code>Corea</code>·<code>Keijo</code> 등 당대 표기를 병렬 투입.</p>
   <table>
     <thead><tr><th>목적</th><th>쿼리</th><th>실행</th></tr></thead>
     <tbody><tr><td>{{목적}}</td><td><code>{{쿼리}}</code></td><td><a href="{{URL인코딩된 검색URL}}">검색 실행</a></td></tr></tbody>
   </table>
   </div>
 </details>
-<div class="note"><strong>0건 ≠ 부재.</strong> {{미전산화 상황 + 인접 상자(Box ±2)·피스(참조코드 ±15) 추가 조사 권고}}</div>
+<div class="note"><strong>0건 ≠ 부재.</strong> {{미전산화 + 인접 상자·피스 추가 조사 권고}}</div>
 <details>
   <summary>종합 색인 · 최신 연구</summary>
   <div class="inner"><ul class="src"><li><a href="{{URL}}">{{제목}}</a> — {{한 줄 설명}}</li></ul></div>
 </details>
 
 <h2 id="s6"><span class="no">VI.</span> 권리 판정과 게재 윤리</h2>
-<p>{{판정 요약 + 법적 근거(17 U.S.C. §105 · 36 CFR 1254.62 · Crown/OGL · domaine public · KOGL)}}.
-자동 초판이므로 <strong>출판 전 인간 최종 확인 필수</strong>이며, <span class="badge b-D">D등급</span>은 공개 금지입니다.
-{{민감 주제(위안부·포로·학살 등)면: 피해자 존엄·윤리적 사용 기준, 게재윤리 4단계(거부할 수 없었던 처지의 촬영 = 화면 미사용) 적용 문구}}</p>
+<p>{{판정 요약+법적 근거}}. <strong>출판 전 인간 최종 확인 필수</strong>, <span class="badge b-D">D등급</span> 공개 금지. {{민감 주제면 존엄·게재윤리 4단계 문구}}</p>
 
 <!-- Ⅶ(선택) 카드뉴스 갤러리 — 미제작 시 절·toc 삭제 -->
 <h2 id="s7"><span class="no">VII.</span> 카드뉴스 — 이 발굴을 {{N}}장으로</h2>
-<p>{{카드뉴스 소개 1~2문장 — 커버는 히어로와 같은 실물 이미지, 보고서와 같은 출처 대장 공유}}</p>
+<p>{{소개 1문장 — 커버=히어로 실물, 출처 대장 공유}}</p>
 <div class="cards-grid">
   <figure><img src="data:image/jpeg;base64,{{카드1 축소본}}" alt="카드 1 — 커버"><figcaption>{{1 — 커버 한 줄 설명}}</figcaption></figure>
   <!-- 카드 반복 (권장 8장, 축소 maxdim 540) — 무크롭 전체 노출·카드별 figcaption 필수, 잘림·겹침 금지 -->
@@ -576,7 +571,7 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 
 <!-- Ⅷ 더 보기 — 접속 확인 링크만, 미확보 카테고리는 명시 -->
 <h2 id="s8"><span class="no">VIII.</span> 더 보기 — 관련 기사·콘텐츠</h2>
-<p>{{한 줄 소개 — 이 발굴이 현재의 기억(추모·전시·보도)과 어떻게 이어지는지}}</p>
+<p>{{한 줄 — 발굴과 현재의 기억}}</p>
 <ul class="src">
   <li>📰 <a href="{{URL}}">{{기사 제목}}</a> — {{매체(보도일)}} · {{한 줄 설명}}</li>
   <li>🏛️ <a href="{{URL}}">{{기관 아카이브·현장 기록}}</a> — {{기관명}}</li>
@@ -588,15 +583,13 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 <div class="sources">
   <h2 style="margin:0 0 10px;font-size:17px">기록 출처 <span class="small">Archives cited</span></h2>
   <ul class="src">
-    <li>🇺🇸 <b>{{National Archives and Records Administration (NARA)}}</b> — {{RG·시리즈, 이용조건 요약}} · <a href="{{URL}}">catalog.archives.gov</a></li>
-    <li>🇰🇷 <b>{{KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터(전쟁기념관재단)}}</b> — {{출처 표기 필수 조건}} · <a href="{{URL}}">koreanwar.or.kr</a></li>
-    <!-- 인용한 모든 기관: 국기 · 정식명 · 청구정보 · 이용조건 · 링크 -->
+    <li>{{국기}} <b>{{기관 정식명}}</b> — {{청구정보·이용조건}} · <a href="{{URL}}">{{도메인}}</a></li>
+    <!-- 전 기관: 국기·정식명·청구정보·이용조건·링크 -->
   </ul>
 </div>
 
 <footer>
-  발굴 방법론: KOREA ARCHIVE 통합검색(표기 변형 병렬 투입 · RG 교차 검색 · 인접 확장 · 권리 초판 판정) ·
-  본 보고서의 모든 링크와 수치는 {{확인일}} 기준 도구 호출로 확인됨 · 이미지는 각 기관 원본의 재현이며 출처 표기를 유지할 것.
+  발굴 방법론: KOREA ARCHIVE 통합검색 · 모든 링크·수치 {{확인일}} 도구 확인 · 이미지 출처 표기 유지.{{웹 산출이면: 이미지는 기관 공개 URL 참조임을 명기}}
 </footer>
 </div>
 </body>
@@ -985,7 +978,7 @@ FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물�
 2. 실물 이미지 수집: 기관 공개 원본 전량(비식별판 우선) + digitised 기록의 카탈로그 무료 미리보기.
    수집 즉시 출처 대장(sources.txt) 기록. AI 생성 인물·역사 장면 절대 금지.
 3. HTML 보고서: report_template(kind='report') 18규칙 전부 — 히어로 실물·인라인 도판·콘택트시트·원문 미리보기·
-   검증 기록·전수 목록·재현 쿼리·더 보기·카드뉴스 갤러리. 매거진 완성판은 kind=magazine 확장팩(표지=포스터 겸용·목차·뒷표지·KA 검증 낙관·테마 5종)을 덧입힌다. 수치는 모든 산출물에서 동일해야 한다.
+   검증 기록·전수 목록·재현 쿼리·더 보기·카드뉴스 갤러리. 매거진 완성판은 kind=magazine 확장팩을 덧입힌다. 산출 방식 — 로컬: .html 파일 저장 / 웹·모바일: HTML 아티팩트로 게시(파일 저장 불가), 이미지는 기관 공개 URL 참조. 수치는 모든 산출물에서 동일해야 한다.
 4. 캐러셀 8장: report_template(kind='carousel') 12규칙 — 커버는 보고서 히어로와 같은 실물, 검증 노트·따라하기 포함.
    렌더는 환경별: 로컬=헤드리스 렌더 / 웹·모바일=Canva 커넥터 생성→페이지별 PNG 내보내기. 전 장 육안 검수 생략 금지.
    caption.txt + sources.txt 동봉.
