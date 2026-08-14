@@ -1734,7 +1734,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> s
     (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar). 해외(tna·ia·gallica·europeana)와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
-    record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로."""
+    record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로.
+    사용자가 "풀패키지"(보고서·카드뉴스·포스터 전부)를 원하면 report_template(kind="full_package")를 먼저 호출해 제작 순서를 따른다."""
     want = (list(_COLLECT.keys()) if sources.strip().lower() == "all"
             else [s.strip().lower() for s in sources.split(",") if s.strip().lower() in _COLLECT])
     if not want:
