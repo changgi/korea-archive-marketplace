@@ -984,7 +984,7 @@ FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물�
    caption.txt + sources.txt 동봉.
 5. Canva 산출물(커넥터 연결 시): 캐러셀 편집본 + report_template(kind='canva_prompts') 1번 템플릿으로 포스터 1종 —
    생성 직후 전 한국어 문구를 검증 카피로 교정(replace_text) 후 저장.
-6. 납품: 보고서 HTML + 카드 8장 + caption/sources + Canva 링크. SNS 게시·공개 푸시는 사용자 확인 후.
+6. 납품: 보고서 HTML + 카드 8장 + 포스터 시리즈 + caption/sources + Canva 링크. 로컬: 전체를 [주제영문]_fullpackage_[날짜].zip으로 묶어 함께 납품 — 구조 report/·cards/·posters/·canva/·manifest.txt(산출물 목록+검증 요약). 웹·모바일: zip 생성 불가 — 개별 아티팩트로 제시하고 manifest 목록을 함께 출력. SNS 게시·공개 푸시는 사용자 확인 후.
 
 품질 게이트: 수치 정합 · 전 이미지 캡션+출처(기관 정식명·국가·식별자·링크) · 실확인 링크만(확인일 명기) ·
 게재윤리 4단계(포로·사망자 존엄) · 협약기관 출처 표기 필수."""
