@@ -12,6 +12,9 @@ description: 매직 키워드 "풀패키지" — 발굴 조사부터 모든 산�
 1. **발굴 조사** — `korea-archive-discovery` 스킬 방법론: cross_search + 전문 도구(tna/nara/koreanwar/gallica…),
    표기 변형 병렬·시리즈 특정·인접 채굴(±5~15), 국내 협약기관 교차검증, **카탈로그 API 원문으로 훈격·날짜·건수 검증**
    (정정 발생 시 이력 기록), judge_rights 초판.
+   **조선~대한제국 주제**는 `joseon-source-mining` 스킬 경로 병행 — nedb_search 모드
+   law→★sibling(형제 조 전수)→matrix(부재 발견)→origin→record(座目 필터)→sjw(연대 검증)→kyujanggak.
+   보고서에 제도 재구성 절(다섯 축+제도의 끝)·법전 대조표·자기 정정 이력, 인용 2층위 명기.
 2. **실물 이미지 수집** — 기관 공개 원본 전량(비식별판 우선) + digitised 기록의 무료 미리보기
    (예: TNA `/image/getthumbnail/<id>` → `/image/getimage`). 수집 즉시 출처 대장(sources.txt) 기록.
    AI 생성 인물·역사 장면 절대 금지.

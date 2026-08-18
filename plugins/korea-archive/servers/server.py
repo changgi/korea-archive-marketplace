@@ -974,7 +974,7 @@ FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물�
 
 1. 발굴 조사: cross_search + 전문 도구(tna_search/nara_search/koreanwar_search/gallica_search…) — 표기 변형 병렬,
    시리즈 특정+tna_adjacent_mine 인접 채굴(±5~15), 국내 협약기관 교차검증, 카탈로그 API 원문으로 훈격·날짜·건수 검증
-   (정정 발생 시 이력 기록), judge_rights 권리 초판.
+   (정정 발생 시 이력 기록), judge_rights 권리 초판. 조선~대한제국 주제면 심층 판독 경로 추가: nedb_search 모드 활용 — law(법전 근거)→★sibling(조문을 열었으면 형제 조 전수 — 총론만 읽으면 핵심을 놓친다)→matrix(법전 수록 대조로 부재 발견)→origin(어휘 연원)→record(등록류 — 座目 필터)→sjw(최초 용례로 연대 검증)→kyujanggak(목록+해제). 보고서에 제도 재구성 절(등록·측정·운항·동원·보상 + 제도의 끝)·법전 대조표·자기 정정 이력을 추가하고, 인용은 2층위(법전=원문 인용 가능/등록·일기=국역만·역구성 학술 인용 불가) 명기.
 2. 실물 이미지 수집: 기관 공개 원본 전량(비식별판 우선) + digitised 기록의 카탈로그 무료 미리보기.
    수집 즉시 출처 대장(sources.txt) 기록. AI 생성 인물·역사 장면 절대 금지.
 3. HTML 보고서: report_template(kind='report') 18규칙 전부 — 히어로 실물·인라인 도판·콘택트시트·원문 미리보기·
