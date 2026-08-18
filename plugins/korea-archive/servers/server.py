@@ -969,6 +969,8 @@ Top badge: {{발굴 완료}} / Huge headline: {{찾았다, N건}} / Sub: {{훅 �
 CTA bar: 발굴 보고서 공개 — KOREA ARCHIVE 통합검색 / Tiny credit: {{사진 출처·식별자}}
 검증 실측: 후보 4개 중 3개가 가짜 이미지 — 실물 사용 후보만 채택하고 환각 문구는 전량 교정할 것."""
 
+HELP_GUIDE = '사용 안내 — 매직 키워드 “창기창기 도와줘” (처음 사용자용. 이 내용을 친절한 안내로 정리해 사용자에게 전달하라. 시각 안내 페이지: https://korea-archive-mcp.vercel.app/help.html — 링크를 함께 제공)\n\n■ 무엇을 하는 서비스인가\n국내외 15개 아카이브(미국 NARA·영국 TNA·Internet Archive·프랑스 갈리카·유러피아나·국가기록원·국립중앙도서관·한국사DB·규장각·서울기록원·KOREAN WAR ARCHIVES 협약기관·국가보훈부 등)에서 한국 관련 기록·사진·영상(1860~1960)을 발굴하고, 검증하고, 전파물까지 만들어 준다. 한국어 한 문장이면 충분 — 표기 변형(Corea·Chosen·Corée·한자)과 색인 언어 변환은 자동.\n\n■ 매직 키워드 2개\n① “○○○ 풀패키지로 만들어줘” — 조사→검증→매거진 보고서→카드뉴스 8장→포스터→홍보·입문·메시지 카드→발표 PPTX(대본 포함)→기록 해설→Canva 편집본→KARDA 연구 데이터까지 전 산출물 자동(report_template kind=full_package 순서를 따름).\n② “창기창기 도와줘” — 이 사용 안내.\n\n■ 이렇게 물어보면 된다 (예시)\n· “할아버지가 참전한 글로스터 연대 기록 찾아줘” (실전 1호 — TNA 훈장 추천서 원문까지)\n· “장진호 전투 영상 기록 찾아줘” (실전 2호 — 3개국 3중 소장 실증)\n· “조선시대 한강 나루의 행정을 정리해줘” (법전 판독→형제 조 전수→연대 검증 제도사)\n· “병인양요 프랑스 기록 찾아줘” / “이 참조코드 주변을 더 캐줘”(인접 채굴) / “이 기록 게재 가능한지 판정해줘”\n\n■ 검증 원칙(차별점) — 실물 기록만(AI 생성 인물·장면 금지)·원문 대조·출처 명시·정정 공개. 통과 산출물에만 검증 낙관.\n\n■ 자주 묻는 것\n· 0건 → 부재가 아니다. 표기 변형·인접 채굴·“대상을 관리한 행정”으로 전환.\n· ZIP 일괄 납품은 로컬 환경 전용 — 웹·모바일은 개별 아티팩트+manifest.\n· 이미지: 웹은 기관 공개 URL 참조 — 원본은 항상 기관 링크에서 열람.\n· 조선 주제 → nedb_search 심층 판독 모드(law·sibling·matrix·origin·record·sjw·kyujanggak).\n\n커넥터: korea-archive-mcp.vercel.app/api/mcp · 안내 페이지: korea-archive-mcp.vercel.app/help.html'
+
 FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물까지 한 번에 (매직 키워드: "풀패키지" · "전부 다 만들어줘")
 입력은 주제 하나면 충분하다. 아래 순서를 전부 수행해 모든 산출물을 함께 납품한다.
 
@@ -1044,9 +1046,12 @@ def report_template(kind: str = "report") -> str:
     kind="canva_prompts"면 Canva AI(generate-design) 홍보물 프롬프트 6종(포스터·행사·시리즈 예고·인물·
     영상 알림·A4 리플릿)과 실전 검증된 환각 교정 절차를 반환한다.
     사용자가 "풀패키지"라고 하면 kind="full_package"를 먼저 호출 — 조사→보고서→캐러셀→포스터
-    전 산출물 제작 순서를 받아 그대로 수행한다."""
+    전 산출물 제작 순서를 받아 그대로 수행한다. kind="help"는 매직 키워드 "창기창기 도와줘" —
+    처음 사용자 안내(사용법·예시·FAQ+안내 페이지 링크)를 반환한다."""
     if kind == "magazine":
         return MAGAZINE_PACK
+    if kind == "help":
+        return HELP_GUIDE
     if kind == "full_package":
         return FULL_PACKAGE
     if kind == "canva_prompts":
@@ -1834,7 +1839,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> s
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로.
-    사용자가 "풀패키지"(보고서·카드뉴스·포스터 전부)를 원하면 report_template(kind="full_package")를 먼저 호출해 제작 순서를 따른다."""
+    사용자가 "풀패키지"(보고서·카드뉴스·포스터 전부)를 원하면 report_template(kind="full_package")를 먼저 호출해 제작 순서를 따른다. 사용자가 사용법을 물으면(매직 키워드 "창기창기 도와줘")
+    report_template(kind="help")를 호출해 안내한다."""
     want = (list(_COLLECT.keys()) if sources.strip().lower() == "all"
             else [s.strip().lower() for s in sources.split(",") if s.strip().lower() in _COLLECT])
     if not want:
