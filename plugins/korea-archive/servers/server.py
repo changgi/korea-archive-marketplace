@@ -1832,6 +1832,22 @@ def scrape_plan(url: str) -> str:
             "report_template으로 HTML 보고서화. 과도한 요청은 피할 것.")
 
 
+@mcp.prompt()
+def full_package(topic: str) -> str:
+    """매직 키워드 '풀패키지' — 주제 하나로 발굴 조사부터 전 산출물(매거진 보고서·카드뉴스·포스터·
+    홍보·입문·메시지 카드·발표 PPTX·기록 해설·Canva·KARDA)까지 자동 제작."""
+    return (f"{topic} 풀패키지로 만들어줘. 먼저 report_template(kind='full_package')를 호출해 "
+            "제작 순서와 품질 게이트를 받고, 그 순서를 그대로 따라 전 산출물을 제작해줘.")
+
+
+@mcp.prompt()
+def changgi_help() -> str:
+    """매직 키워드 '창기창기 도와줘' — KOREA ARCHIVE 통합검색 처음 사용자 안내."""
+    return ("창기창기 도와줘. report_template(kind='help')를 호출해 받은 사용 안내를 처음 사용자 "
+            "눈높이로 친절하게 정리해서 알려주고, 안내 페이지 링크"
+            "(https://korea-archive-mcp.vercel.app/help.html)도 함께 줘.")
+
+
 @mcp.tool()
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> str:
     """여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
