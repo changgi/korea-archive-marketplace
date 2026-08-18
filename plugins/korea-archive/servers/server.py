@@ -1276,9 +1276,17 @@ def _kw_search(params):
     mt = re.search(r'totalCount">\s*([\d,]+)', b)
     return (mt.group(1) if mt else "?"), _kw_parse_cards(b)
 
+_KW_API_REFERER = "https://korea-archive-mcp.vercel.app/"  # 발급 토큰이 이 Referer에 바인딩됨(2026-08-19 실측)
+
+def _kw_api_text(url, timeout=20):
+    req = _ur.Request(url, headers={"User-Agent": _KW_UA, "Accept": "application/json",
+                                    "Referer": _KW_API_REFERER})
+    with _ur.urlopen(req, timeout=timeout) as r:
+        return r.read().decode("utf-8", "replace")
+
 def _kw_api_scan(q, max_pages=None):
-    """OpenAPI pbrcList.do — 토큰+IP 인증 JSON 목록(키워드 파라미터 없음 → 페이지 순회+로컬 필터).
-    KOREANWAR_API_TOKEN 설정 즉시 활성(신청 승인 대기 중에는 None 반환으로 무시)."""
+    """OpenAPI pbrcList.do — 토큰 인증 JSON 목록(Referer 바인딩 발급·키워드 파라미터 없음·pageSize 상한 100
+    → 페이지 순회+로컬 필터). KOREANWAR_API_TOKEN 환경변수 설정 시 활성(미설정 시 None 반환으로 무시)."""
     token = os.environ.get("KOREANWAR_API_TOKEN")
     if not token:
         return None
@@ -1286,10 +1294,10 @@ def _kw_api_scan(q, max_pages=None):
     pages = min(int(max_pages or os.environ.get("KOREANWAR_API_PAGES", 3)), 10)
     ql = q.lower(); hits = []; total = 0; checked = 0
     for p in range(1, pages + 1):
-        d = json.loads(_kw_text(f"{_KW_BASE}/openapi/pbrcList.do?token={_up.quote(token)}&page={p}&pageSize=100"))
+        d = json.loads(_kw_api_text(f"{_KW_BASE}/openapi/pbrcList.do?token={_up.quote(token)}&page={p}&pageSize=100"))
         if d.get("resultCode") != "OK":
             raise RuntimeError(f"OpenAPI {d.get('resultCode')}: {d.get('resultMsg', '')}"
-                               " — 토큰 미승인이거나 서버 IP 미등록(승인 후 IP 등록 필요)")
+                               " — 토큰이 Referer(korea-archive-mcp.vercel.app) 바인딩 발급인지 확인")
         total = d.get("totalCount", total)
         lst = d.get("list") or []
         checked += len(lst)
