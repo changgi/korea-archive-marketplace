@@ -1320,11 +1320,107 @@ _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_e
             "koreanwar": _c_koreanwar}
 
 
+
+# ══════════ 조선 사료 심층 판독 (joseon-source-mining 이식 — joseon_tools.py 위임) ══════════
+try:
+    import sys as _jsys, os as _jos
+    _jsys.path.insert(0, _jos.path.dirname(_jos.path.abspath(__file__)))
+    import joseon_tools as _jt
+except Exception:
+    _jt = None
+
+
+def _joseon_mode(query: str, mode: str, span: int, n: int) -> str:
+    if _jt is None:
+        return "조선 심층 판독 모듈(joseon_tools.py)을 찾지 못했습니다 — servers/ 폴더 확인."
+    q = query.strip()
+    try:
+        if mode == "law":
+            r = _jt.joseon_law_search(q, n)
+            lines = [f"- [{x['level_id']}] {x['source']} {x['section']}\n  {x['excerpt'][:150]}\n  {x['url']}"
+                     for x in r.get("results", [])[:n]]
+            out = f"법전·편람 '{q}' — 총 {r.get('total', 0)}건:\n" + ("\n".join(lines) or "(0건)")
+            if r.get("finding"):
+                out += "\n★ " + r["finding"]
+            return out + "\n※ " + r.get("note", "") + " 조문을 열었으면 mode=sibling으로 형제 조 확인."
+        if mode == "record":
+            r = _jt.joseon_record_search(q, max_results=max(n, 50))
+            lines = [f"- [{x['level_id']}] {x['title'][:90]}\n  {x['url']}" for x in r.get("results", [])[:n]]
+            out = (f"등록류 '{q}' — 보고 총계 {r.get('total_hits', 0)}건 · 座目 {r.get('jwamok_filtered', 0)}건 제외"
+                   f" → 실질 {r.get('substantive', 0)}건:\n" + ("\n".join(lines) or "(실질 기사 0건)"))
+            if r.get("warning"):
+                out += "\n★ " + r["warning"]
+            return out + "\n※ " + r.get("note", "")
+        if mode == "item":
+            r = _jt.joseon_item_read(q, max_chars=3000)
+            if r.get("body_status") == "ok":
+                return (f"[{q}] {r.get('title', '')}\n{r['body']}\n({r['chars']}자) {r['url']}"
+                        f"\n※ {r.get('citation_note', '')} 조문이면 mode=sibling으로 형제 조 확인.")
+            return f"[{q}] {r.get('title', '')} — {r.get('body_status')}: {r.get('note', '')} {r.get('url', '')}"
+        if mode == "sibling":
+            r = _jt.joseon_sibling_scan(q, span=span)
+            if r.get("error"):
+                return r["error"]
+            lines = [f"{'●' if x['is_requested'] else '○'} {x['level_id']} [{x['head']}] {x['chars']}자 {x['url']}"
+                     for x in r.get("siblings", [])]
+            out = f"형제 조 전수 스캔 {q} (편: {r.get('parent', '')}):\n" + ("\n".join(lines) or "(형제 조 미검출)")
+            if r.get("alert"):
+                out += "\n★ " + r["alert"]
+            return out
+        if mode == "matrix":
+            terms = [t.strip() for t in q.split(",") if t.strip()][:8]
+            r = _jt.law_presence_matrix(terms)
+            out = "법전 수록 대조표:\n" + "\n".join(
+                f"- {x['term']}: {x['count']}건" + (f" ({x['earliest']})" if x.get("earliest") else "")
+                + (" — " + x["note"] if x.get("note") else "") for x in r.get("matrix", []))
+            if r.get("finding"):
+                out += "\n★ " + r["finding"]
+            return out
+        if mode == "origin":
+            parts = [t.strip() for t in q.split(",")]
+            r = _jt.term_origin_trace(parts[0], parts[1] if len(parts) > 1 else "")
+            out = f"어휘 연원 '{parts[0]}' — 법전 {r.get('total_in_law', 0)}건"
+            if r.get("domains"):
+                out += "\n영역 분포: " + " · ".join(f"{k} {v}" for k, v in r["domains"].items())
+            for x in r.get("representative", [])[:4]:
+                out += f"\n- {x['source']} {x['section']} | {x['excerpt'][:110]}"
+            if r.get("finding"):
+                out += "\n★ " + r["finding"]
+            return out
+        if mode == "sjw":
+            r = _jt.sjw_search(q, n)
+            out = f"승정원일기 '{q}' — 총 {r.get('total', 0)}건"
+            if r.get("reign_distribution"):
+                out += "\n왕대 분포: " + " · ".join(f"{k} {v}" for k, v in r["reign_distribution"].items())
+            if r.get("alert"):
+                out += "\n★ " + r["alert"]
+            return out
+        if mode == "kyujanggak":
+            r = _jt.kyujanggak_search(q, area="both")
+            out = f"규장각 '{q}'"
+            for label, sec in r.get("sections", {}).items():
+                if "error" in sec:
+                    out += f"\n{label}: 오류({sec['error']})"
+                else:
+                    out += f"\n{label}: {sec['count']}건 — " + " ".join(x["call_number"] for x in sec.get("items", [])[:12])
+            if r.get("alert"):
+                out += "\n★ " + r["alert"]
+            return out + "\n※ " + r.get("note", "")
+    except Exception as e:
+        return f"조선 심층 판독({mode}) 실패: {e} — 한국사DB 계열은 전부 POST이며 GET 재현 불가. 잠시 후 재시도."
+    return f"알 수 없는 mode: {mode}"
+
+
 @mcp.tool()
-def nedb_search(query: str, db: str = "", max_results: int = 15) -> str:
-    """국사편찬위원회 한국사데이터베이스(db.history.go.kr) 통합검색을 서버에서 직접 조회. 검색어가
-    등장하는 DB(조선왕조실록·승정원일기·포로신문보고서·독립운동사 등) 목록과 열람 URL을 반환한다.
-    조선~근현대 1차 사료 1,100만+ 건. 인명·기관명은 한자 원표기가 색인 정확도 높음."""
+def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "total", span: int = 8) -> str:
+    """국사편찬위 한국사데이터베이스(db.history.go.kr) 통합검색 + 조선 사료 심층 판독(한강 강배 조사 실측 경로).
+    mode: total=통합검색(기본) · law=법전·편람 조문(원문 제공 여부 판정) · record=등록류(座目 자동 필터) ·
+    item=levelId 본문 판독(미공개/파싱실패 구분) · sibling=★형제 조 전수 스캔(조문을 열었으면 반드시 이어 호출) ·
+    matrix=법전 수록 대조(쉼표구분 어휘 — 부재의 발견) · origin=어휘 연원('용어' 또는 '용어,영역') ·
+    sjw=승정원일기(왕대 분포·최초 용례) · kyujanggak=규장각(목록+해제 동시 — 절목류는 해제에서 발견).
+    판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
+    if mode != "total":
+        return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
     idx = _load_nedb_index()
     if idx:  # NEDB_INDEX_URL 설정 시 공식 개방파일(KOGL) 인덱스 검색 — robots 무관, 라이브 스크래핑 없음
