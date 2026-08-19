@@ -1062,8 +1062,8 @@ def report_template(kind: str = "report") -> str:
     + 제작 12규칙(서사 아크·실물 이미지·출처 캡션·겹침 방지·육안 검수). 어디서든 같은 품질 재현용.
     kind="canva_prompts"면 Canva AI(generate-design) 홍보물 프롬프트 6종(포스터·행사·시리즈 예고·인물·
     영상 알림·A4 리플릿)과 실전 검증된 환각 교정 절차를 반환한다.
-    사용자가 "풀패키지"라고 하면 kind="full_package"를 먼저 호출 — 조사→보고서→캐러셀→포스터
-    전 산출물 제작 순서를 받아 그대로 수행한다. kind="help"는 매직 키워드 "창기창기 도와줘" —
+    사용자가 "풀패키지"(또는 full-package)라고 하면 kind="full_package"를 먼저 호출 — 조사→보고서→캐러셀→포스터
+    전 산출물 제작 순서를 받아 그대로 수행한다. kind="help"는 매직 키워드 "창기창기 도와줘"(또는 changgi-help) —
     처음 사용자 안내(사용법·예시·FAQ+안내 페이지 링크)를 반환한다."""
     if kind == "magazine":
         return MAGAZINE_PACK
