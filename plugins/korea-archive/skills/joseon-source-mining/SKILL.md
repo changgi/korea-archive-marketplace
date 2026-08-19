@@ -300,6 +300,11 @@ GET은 404 또는 400을 낸다. 아래는 실측 확인된 파라미터다.
 
 ## 8. MCP 도구가 있으면 (korea-archive 서버)
 
+★ 정식 korea-archive 서버(korea-archive-mcp.vercel.app)에서는 아래 기능이 **`nedb_search`의 mode 파라미터**로
+통합 노출된다(PlayMCP 20도구 상한): law=joseon_law_search · record=joseon_record_search(座目 필터) ·
+item=joseon_item_read · sibling=joseon_sibling_scan · matrix=law_presence_matrix · origin=term_origin_trace ·
+sjw=sjw_search · kyujanggak=kyujanggak_search(+이미지 패턴 지식). 아래 이름은 단독 실행(joseon_tools.py CLI)용.
+
 ```
 joseon_law_search      법전·편람 조문 검색(조선시대법령자료)
 joseon_record_search   등록류 검색(비변사등록 등) + 좌목 자동 필터

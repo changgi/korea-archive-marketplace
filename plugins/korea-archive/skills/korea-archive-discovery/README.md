@@ -2,6 +2,10 @@
 
 2026년 8월 「Chosen과 Joseon 사이」 강연 준비 과정에서 **79회 검색 · 20개국 · 1672~2003년**을 실측하며 얻은 방법론을 재현 가능한 형태로 묶은 것.
 
+> ★ 정식 서버는 **korea-archive-mcp**(korea-archive-mcp.vercel.app/api/mcp — 도구 20종)이다.
+> 이 폴더의 `mcp/korea_archive_tools.py`는 강연 번들의 **독립 참고 구현**이며 정식 서버와 별개다.
+> v2의 전략 지식은 정식 서버 `query_bank`(walls·identifiers·persons·crosscheck·world·cities)로도 서빙된다.
+
 ## 왜 v2인가
 
 기존 `korea-archive-discovery`는 **1860~1960 영상 중심**이었다. 이번 확장으로:

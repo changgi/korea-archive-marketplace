@@ -1,7 +1,7 @@
 # 🇰🇷 Korea Archive — Claude Plugin Marketplace
 
-**국내외 14곳의 아카이브에 흩어진 한국 관련 기록(1860–1960)을 클로드에서 한 대화로 발굴합니다.**
-**Discover Korea-related records scattered across 14 archives — worldwide and in Korea — from a single Claude conversation.**
+**국내외 15곳의 아카이브에 흩어진 한국 관련 기록(1860–1960)을 클로드에서 한 대화로 발굴합니다.**
+**Discover Korea-related records scattered across 15 archives — worldwide and in Korea — from a single Claude conversation.**
 
 [English](#english) · [한국어](#한국어) · [Gallery / 카드뉴스](#gallery--카드뉴스)
 
@@ -13,6 +13,9 @@
 웹·모바일(클로드 웹앱)은 MCP 커넥터로 연결: 설정 → 커넥터 → 커스텀 커넥터 추가 →
 `https://korea-archive-mcp.vercel.app/api/mcp`
 
+> **v1.15** — **조선 사료 심층 판독**: `nedb_search` 9모드(법전·座目 필터·★형제 조 전수·법전 대조·어휘 연원·승정원일기·규장각) + 도메인 스킬 7종 · **매직 키워드 웹 네이티브화**(MCP prompts `full-package`·`changgi-help`) · `query_bank` 조사 전략 8토픽(11벽·식별자·인명·대조·6개국 서고·도시명 계보·895 지도·성씨 색인) · 전쟁기념관 **OpenAPI 채널**(Referer 바인딩 실측).
+> **v1.14** — 매직 키워드 **"풀패키지"**: 한 문장으로 **산출물 12종**(매거진 보고서·카드뉴스·포스터·홍보/입문/메시지 카드·발표 PPTX·기록 해설·Canva·KARDA·시연 영상·ZIP) 자동 제작 + 품질 게이트. 실전 3편: 글로스터(1호)·장진호(2호)·한강 강배(1485~1986).
+> **웹 서비스** — 사용 안내 [help](https://korea-archive-mcp.vercel.app/help.html)([EN](https://korea-archive-mcp.vercel.app/help-en.html)) · 즉석 검색 [기록잇다](https://korea-archive-mcp.vercel.app/ingitda.html)(6문서고 연합) · 실물 예제 [한강 보고서](https://korea-archive-mcp.vercel.app/examples/hanriver.html)·[강연 풀덱 403장](https://korea-archive-mcp.vercel.app/examples/joseon-deck.html)
 > **v1.12** — **KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터**(koreanwar.or.kr, 전쟁기념관재단 — **협약기관**) TNA식 구조화 도구: `koreanwar_search`(통합검색+생산연도·수집구분 필터+전투정보 scope+OpenAPI 이중채널) · `koreanwar_item`(건별 메타 — NARA NAID 원본 직결 + radius 인접 채굴). **PlayMCP 개발가이드 준수: 도구 통합으로 총 20개**(ia_metadata→ia_search, local_gov→foia 흡수) + 전 도구 annotations.
 > **v1.11** — `cross_search`(여러 아카이브 동시 교차수집·병합) · `source_profile`(기관 자료·이용·활용구조 프로파일) · 국내 3대 부정합 검증 키워드셋 252종 · nlk 이중채널 · nedb 공식 개방파일(KOGL) 수집.
 
@@ -30,7 +33,7 @@ This plugin packages a **peer-validated discovery methodology** — Song (2026):
 
 ### The 15 archives / 20 tools
 
-**Overseas (5)**
+**Overseas (6)**
 
 | Tool | Source |
 |---|---|
