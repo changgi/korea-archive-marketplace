@@ -1,6 +1,6 @@
 {
   "name": "korea-archive",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "description": "국내외 15개 아카이브에서 한국 관련 기록·영상(1860~1960, 조선 사료는 1485~)을 발굴하는 MCP 도구 20종(PlayMCP 준수) + 검증 스킬 10종. 매직 키워드 두 개면 됩니다 — “○○ 풀패키지로 만들어줘”(조사→검증→매거진 보고서→카드뉴스→포스터→홍보/입문/메시지 카드→발표 PPTX→기록 해설→Canva→KARDA 연구 데이터→시연 영상, 산출물 12종 자동) · “창기창기 도와줘”(사용 안내). 해외 6(NARA·TNA·archive.org·Gallica·Europeana): 인접 채굴(Adaptive Mining)·RG 교차검색·다국어 질의 자동 변환. 국내 10(한국사DB·국가기록원·국립중앙도서관·서울기록원·정보공개포털·전쟁기념관·6·25전쟁 아카이브센터[협약기관·OpenAPI]): 서버 사이드 자동 브라우징+검증 키워드셋. 조선 사료 심층 판독 9모드(nedb_search): 법전 조문·座目 필터·★형제 조 전수 스캔·법전 수록 대조(부재의 발견)·어휘 연원·승정원일기 왕대 분포·규장각 — “601건이 아니라 492건이 座目입니다” 판정 우선. 조사 전략 8토픽(query_bank): 열한 겹의 벽·식별자 해독·인명 열쇠·국내외 대조·6개국 서고 지도·도시명 계보·895 코드 지도·성씨 색인. report_template kind 8종: 발굴 보고서 18규칙·캐러셀 디자인 시스템·Canva 프롬프트·풀패키지 오케스트레이션·매거진 확장팩(KA 인장·검증 낙관·테마 5종)·사용 안내·인용 형식(한국사DB·국회도서관)·기록 해설 규칙. 스킬: korea-archive-discovery(v2 — 20개국·11벽·인명 열쇠) · joseon-source-mining/excavation · kyujanggak-images · record-annotation · khdb/nanet-citation · insta-carousel · archival-discovery-pipeline · korea-full-package · changgi-help. 검증 원칙: 실물 기록만(AI 생성 인물·장면 금지)·원문 대조·출처 명시·정정 공개 — 통과 산출물에만 검증 낙관. 실전 3편(글로스터·장진호·한강 강배)으로 전 과정 검증.",
   "author": {
     "name": "Korea Archive Project"
