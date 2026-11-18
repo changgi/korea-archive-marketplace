@@ -374,6 +374,13 @@ def gallica_search(query: str, max_results: int = 15, year_from: int | None = No
     post = False
     if date_clause and total is None:
         root = _sru(base); total = root.find(".//srw:numberOfRecords", ns); post = True
+    if total is None:  # SRU XML 아님 — Cloudflare 차단/점검 (2026-11-18 실측: 서버 IP 403)
+        return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "")
+                + " — 서버 자동 조회가 차단되었습니다(BnF측 봇 차단 — 간헐적).\n"
+                + f"➤ 에이전트 지시: 웹 검색/브라우저 도구로 '{eff}'를 gallica.bnf.fr에서 검색해 "
+                + "상위 결과(제목·연대·ark 링크)를 표로 정리해 제시하라.\n"
+                + "공식 검색: https://gallica.bnf.fr/services/engine/search/sru?operation=searchRetrieve&query="
+                + urllib.parse.quote(eff))
 
     def g(rec, tag):
         e = rec.find(f".//dc:{tag}", ns)
