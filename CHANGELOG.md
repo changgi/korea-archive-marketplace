@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-18 v1.17.1
+- **연대 필터·페이지네이션 표준화(해외 5종)**: `tna_search`·`ia_search`·`gallica_search`·`europeana_search`에 `year_from`/`year_to`(연대 범위)와 `page`, `nara_search`에 `page` 추가. 전 문법 실측 검증 — TNA `sps.dateFrom/To`(Korea 13,533→1950~51 한정 2,553건), IA `date:[A TO B]`+page, Europeana `YEAR:[A TO B]` 열린 범위(*)·다중 qf. Gallica `gallicapublication_date` CQL·startRecord(배포 서버 검증)
+- **cross_search 소스 11종으로 확대**: `warmemo`(전쟁기념관 — 카테고리 건수 신호 채널)·`aks`(한국고문서자료관 소장처 172곳 — 내장 카탈로그, 네트워크 0) 합류. 서울기록원·정보공개포털은 robots 실측(`archives.seoul.go.kr/robots.txt` Disallow `/catalog/`) 확인으로 기존 설계대로 미포함 유지
+- harvester/tna.py `_search`에 `start_page`·`date_from`·`date_to` 옵션 (하위호환)
+
 ## 2026-11-17 v1.17.0
 - **한국고문서자료관(AKS) 서버 노출** — 제1원칙(웹·모바일 동등성) 이행: `nedb_search` **mode='aks'** 신설. 소장처 **172곳 내장 카탈로그**(2026-11-17 treeAjax 전수 실측) 이름 검색 → 분류 트리 → 문서 목록(예: 동춘당 송준길가 교령류 266건) → 건별 면수·UCI·썸네일(imgnode)까지 라이브 조회. 이미지 일괄 수집은 로컬 전용(aks-archive-harvester 스킬 — DZI 타일 복원)·웹은 뷰어 열람으로 대체 경로 명시. 전 경로 라이브 검증 완료(도구 수 20 유지 — enum 모드 흡수)
 - **6·25 후기 단계 전투 앵커 16건**: `koreanwar_search(scope=battle)` — 기관 전투 DB(개전 초기 69건)에 미수록인 인천상륙·장진호·청천강·흥남·지평리·임진강(글로스터)·가평·피의 능선·단장의 능선·백마고지·저격능선·폭찹힐·금성·정전협정 등을 서버 큐레이션 앵커(통설 전사 시기 + TNA WO 281·NARA RG 관 교차검색어)로 보완. "기관 DB 아님" 명시·수치/전과 주장 없음

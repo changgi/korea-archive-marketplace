@@ -174,19 +174,26 @@ def _ko_en(q):
 
 
 @mcp.tool()
-def tna_search(query: str, max_results: int = 20) -> str:
+def tna_search(query: str, max_results: int = 20, year_from: int | None = None,
+               year_to: int | None = None, page: int = 1) -> str:
     """영국 국립기록관(TNA) Discovery에서 한국 관련 기록 검색. 한국어·일본어·중국어·러시아어 등
     다국어 질의를 영문 색인어로 자동 변환(임진강→Imjin River, 長津湖→Chosin Reservoir,
     Корейская война→Korean War …). 참조코드('FO 371/84053')는 자동으로 정확구 처리.
+    year_from/year_to=연대 범위(실측: Korea 13,533→1950~51 한정 2,553건), page=결과 페이지.
     예: '임진강 전투', 'Korea armistice', 'FO 371 FK1015'"""
     en = _ko_en(query)
     eff = en or query
     q = f'"{eff}"' if re.match(r"^[A-Z]+ \d+/\d+$", eff.strip()) else eff
     recs = []
-    for batch, total in T._search(q, page_size=min(max_results, 100), max_pages=1, sleep=0):
+    for batch, total in T._search(q, page_size=min(max_results, 100), max_pages=1, sleep=0,
+                                  start_page=page,
+                                  date_from=f"{year_from}-01-01" if year_from else None,
+                                  date_to=f"{year_to}-12-31" if year_to else None):
         recs += [T._extract(r, "mcp", eff) for r in batch]
     tag = f" → 영문 자동 변환 '{eff}'" if en else ""
-    return f"TNA 검색 '{query}'{tag} — 총 {total}건 중 {len(recs[:max_results])}건:\n" + _fmt(recs, max_results)
+    yt = f" [연대 {year_from or ''}~{year_to or ''}]" if (year_from or year_to) else ""
+    pt = f" (p.{page})" if page > 1 else ""
+    return f"TNA 검색 '{query}'{tag}{yt}{pt} — 총 {total}건 중 {len(recs[:max_results])}건:\n" + _fmt(recs, max_results)
 
 @mcp.tool()
 def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
@@ -212,7 +219,7 @@ def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
 
 @mcp.tool()
 def nara_search(query: str, record_group: int | None = None,
-                moving_images_only: bool = False, max_results: int = 20) -> str:
+                moving_images_only: bool = False, max_results: int = 20, page: int = 1) -> str:
     """미국 NARA 카탈로그 검색 (환경변수 NARA_API_KEY 필요 — Catalog_API@nara.gov 발급).
     다국어 질의(한국어·日本語·中文·Русский 등)는 영문 색인어로 자동 변환(장진호/長津湖→Chosin Reservoir …).
     record_group으로 RG 교차 정밀검색(예: 242), moving_images_only로 영상 한정."""
@@ -220,7 +227,7 @@ def nara_search(query: str, record_group: int | None = None,
     if not key: return "NARA_API_KEY 미설정 — Catalog_API@nara.gov 로 무료 발급(이름+이메일)."
     _en = _ko_en(query)
     query = _en or query
-    params = {"q": query, "limit": min(max_results, 100), "page": 1}
+    params = {"q": query, "limit": min(max_results, 100), "page": page}
     if record_group: params["recordGroupNumber"] = record_group
     if moving_images_only: params["typeOfMaterials"] = "Moving Images"
     data = http_json("https://catalog.archives.gov/api/v2/records/search?" + qs(params),
@@ -235,7 +242,8 @@ def nara_search(query: str, record_group: int | None = None,
     return f"NARA '{query}'" + (f" (RG {record_group})" if record_group else "") + f" — 총 {total}건:\n" + ("\n".join(rows) or "(0건)")
 
 @mcp.tool()
-def ia_search(query: str = "", identifier: str = "", max_results: int = 15) -> str:
+def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
+              year_from: int | None = None, year_to: int | None = None, page: int = 1) -> str:
     """archive.org 고급 검색. 예: 'identifier:111-adc*', 'collection:universal_newsreels AND korea',
     'mediatype:movies AND (keijo OR chosen)'. 다국어 질의(한국어·日本語·中文 등)는 영문 색인어로
     자동 변환. identifier를 주면 해당 아이템의 메타데이터·원본 파일 목록(다운로드 전 크기 파악)을
@@ -249,15 +257,20 @@ def ia_search(query: str = "", identifier: str = "", max_results: int = 15) -> s
                 "원본 파일:\n" + "\n".join(f"- {f['name']} ({int(f.get('size',0))/1e6:.1f}MB)" for f in files))
     if not query:
         return "query 또는 identifier 중 하나는 필수."
+    disp = query
     query = _ko_en(query) or query
+    if year_from or year_to:  # date:[A TO B] + page 실측 검증 (2026-11-18)
+        query = f"({query}) AND date:[{year_from or 1800}-01-01 TO {year_to or 2030}-12-31]"
     import urllib.parse
     data = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(query) +
-                     f"&fl[]=identifier&fl[]=title&fl[]=date&rows={max_results}&output=json")
+                     f"&fl[]=identifier&fl[]=title&fl[]=date&rows={max_results}&page={page}&output=json")
     docs = (data.get("response") or {}).get("docs") or []
     nf = (data.get("response") or {}).get("numFound")
-    return f"archive.org '{query}' — 총 {nf}건:\n" + "\n".join(
+    yt = f" [연대 {year_from or ''}~{year_to or ''}]" if (year_from or year_to) else ""
+    pt = f" (p.{page})" if page > 1 else ""
+    return f"archive.org '{disp}'{yt}{pt} — 총 {nf}건:\n" + "\n".join(
         f"- {d.get('identifier')} | {str(d.get('title'))[:90]} | https://archive.org/details/{d.get('identifier')}"
-        for d in docs) if docs else f"archive.org '{query}' — 0건"
+        for d in docs) if docs else f"archive.org '{disp}'{yt}{pt} — 0건"
 
 JB_STRAT = {
     'walls': "열한 겹의 벽 — 한국 기록이 안 찾아지는 11가지 이유와 대응 (실증 기반)\n1 일본식 독음: 금강산→Soto Kongo — 일제기 자료는 일본식 지명 병렬 / 2 로마자 철자: Corea·Korea 둘 다 / 3 기계번역 함정: 번역이 아니라 대조표(사람이 만들고 조합은 AI) / 4 외래 명명: 원산=Port Lazareff·제주=Quelpaert·거문도=Port Hamilton / 5 인명 표기: topic=persons 참조 / 6 언어 8+개국어 / 7 출처주의 분류: 찍은 사람이 서랍을 정한다(이승만 사진이 해병대 127-R-1438에) / 8 식별자: topic=identifiers / 9 기술심도: 제목만 있고 내용 없음 — 안을 열어야 함 / 10 결락: ①물리 소실(되찾을 수 없음)·②목록에 없는 것(목록에 올리면 되찾음 — 궁내청 의궤 77종 2011 환수 실증) / 11 음력/양력: 조선 기록=음력·서양=양력(대한제국 양력 채택 1896.1.1) — 두 자료를 겹칠 때 사건 순서가 뒤집힐 수 있다.\n부록 — 한자 전사 오류 복원: 연호·간지·서명 3중 교차로 원 한자 확정(예: '한풍원년 신예'→咸豊元年 辛亥, 1851).",
@@ -323,7 +336,8 @@ def _gallica_ko_fr(q):
 
 
 @mcp.tool()
-def gallica_search(query: str, max_results: int = 15) -> str:
+def gallica_search(query: str, max_results: int = 15, year_from: int | None = None,
+                   year_to: int | None = None, page: int = 1) -> str:
     """프랑스 국립도서관 Gallica 검색 (SRU API, 키 불요). 다국어 질의(한국어·日本語·中文 등)를
     프랑스어 색인어로 자동 변환(병인양요→expédition de Corée 1866, 선교사→missionnaires, 조선→Corée …).
     프랑스어 직접 입력도 가능 — 'Corée', 'guerre de Corée', 'Séoul', 'Tchosen'. 구한말
@@ -331,9 +345,13 @@ def gallica_search(query: str, max_results: int = 15) -> str:
     import urllib.parse, urllib.request, xml.etree.ElementTree as ET
     fr = _gallica_ko_fr(query)
     eff = fr or query
-    q = urllib.parse.quote(f'gallica all "{eff}"' if '"' not in eff else f'gallica all {eff}')
+    cql = f'gallica all "{eff}"' if '"' not in eff else f'gallica all {eff}'
+    if year_from: cql += f' and gallicapublication_date>="{year_from}"'
+    if year_to: cql += f' and gallicapublication_date<="{year_to}"'
+    q = urllib.parse.quote(cql)
     url = (f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2"
-           f"&query={q}&maximumRecords={min(max_results,50)}")
+           f"&query={q}&maximumRecords={min(max_results,50)}"
+           f"&startRecord={(page - 1) * max_results + 1}")
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=40) as r:
         root = ET.fromstring(r.read().decode("utf-8", "replace"))
@@ -351,7 +369,8 @@ def gallica_search(query: str, max_results: int = 15) -> str:
             + "\n팁: 프랑스어 변형 — Corée·Coréens·Séoul·Fusan·guerre de Corée·Tchosen")
 
 @mcp.tool()
-def europeana_search(query: str, max_results: int = 15, media_type: str | None = None) -> str:
+def europeana_search(query: str, max_results: int = 15, media_type: str | None = None,
+                     year_from: int | None = None, year_to: int | None = None, page: int = 1) -> str:
     """유럽 문화유산 통합 검색 Europeana (58개국 4,000+ 기관). 키 없이 즉시 작동(공용 데모 키) —
     대량 사용 시 apis.europeana.eu 무료 키를 EUROPEANA_API_KEY로. 다국어 질의(한국어·日本語·中文 등)는
     영문 색인어로 자동 변환. media_type: 'VIDEO'|'IMAGE'|'TEXT'|'SOUND'. 예: europeana_search('Corée', media_type='IMAGE')"""
@@ -359,8 +378,11 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
     key = os.environ.get("EUROPEANA_API_KEY") or "api2demo"
     demo = not os.environ.get("EUROPEANA_API_KEY")
     query = _ko_en(query) or query
-    params = {"wskey": key, "query": query, "rows": min(max_results, 50), "profile": "standard"}
-    if media_type: params["qf"] = f"TYPE:{media_type.upper()}"
+    params = [("wskey", key), ("query", query), ("rows", min(max_results, 50)),
+              ("profile", "standard"), ("start", (page - 1) * max_results + 1)]
+    if media_type: params.append(("qf", f"TYPE:{media_type.upper()}"))
+    # YEAR:[A TO B] 열린 범위(*)·다중 qf 실측 검증 (2026-11-18)
+    if year_from or year_to: params.append(("qf", f"YEAR:[{year_from or '*'} TO {year_to or '*'}]"))
     url = "https://api.europeana.eu/record/v2/search.json?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=40) as r:
@@ -1384,9 +1406,24 @@ def _c_koreanwar(q, n):
     _, cards = _kw_search({"keyword": q, "viewType": "archive"})
     return [{"title": c["title"], "date": "", "id": c["id"], "url": c["url"]} for c in cards[:n]]
 
+def _c_warmemo(q, n):
+    """카테고리별 건수 채널 — 소장 신호 제공(개별 레코드 아님). robots-OK 전용 도구 경로 재사용."""
+    url = "http://archives.warmemo.or.kr/intgsrch/intgsrchArchv.do?MID=UM00045&keyword=" + _up.quote(q)
+    b = _http_text(url, 15)
+    cats = re.findall(r'class="total-breadcrumb">(.*?)</span>\s*<span>\s*총\s*([\d,]+)', b, re.S)
+    return [{"title": f"전쟁기념관 {_clean(c)} {nn}건", "date": "", "id": "", "url": url}
+            for c, nn in cats[:min(n, 5)] if nn != "0"]
+
+def _c_aks(q, n):
+    """한국고문서자료관 소장처 매칭(내장 카탈로그 — 네트워크 0)."""
+    toks = [t for t in q.split() if t]
+    hits = [c for c in _AKS_CAT if toks and all(t in (c["name"] + " " + c["grp"]) for t in toks)]
+    return [{"title": f"[고문서 소장처] {c['name']} ({c['grp']})", "date": "", "id": c["id"],
+             "url": _AKS_BASE + "/viewer/viewer.do"} for c in hits[:n]]
+
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
-            "koreanwar": _c_koreanwar}
+            "koreanwar": _c_koreanwar, "warmemo": _c_warmemo, "aks": _c_aks}
 
 
 
@@ -2205,7 +2242,7 @@ def changgi_help() -> str:
 @mcp.tool()
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar). 해외(tna·ia·gallica·europeana)와
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,warmemo,aks(고문서 소장처)). 해외(tna·ia·gallica·europeana)와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로.
