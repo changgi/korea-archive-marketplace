@@ -201,7 +201,9 @@ def tna_search(query: str, max_results: int = 20, year_from: int | None = None,
     tag = f" → 영문 자동 변환 '{eff}'" if en else ""
     yt = f" [연대 {year_from or ''}~{year_to or ''}]" if (year_from or year_to) else ""
     pt = f" (p.{page})" if page > 1 else ""
-    return f"TNA 검색 '{query}'{tag}{yt}{pt} — 총 {total}건 중 {len(recs[:max_results])}건:\n" + _fmt(recs, max_results)
+    hint = ("\n※ 연대 필터는 연대 미상(Date unknown) 기록을 제외합니다 — 무필터로 재시도해 비교하십시오."
+            if (year_from or year_to) and not recs else "")
+    return f"TNA 검색 '{query}'{tag}{yt}{pt} — 총 {total}건 중 {len(recs[:max_results])}건:\n" + _fmt(recs, max_results) + hint
 
 @mcp.tool()
 def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
@@ -353,26 +355,43 @@ def gallica_search(query: str, max_results: int = 15, year_from: int | None = No
     import urllib.parse, urllib.request, xml.etree.ElementTree as ET
     fr = _gallica_ko_fr(query)
     eff = fr or query
-    cql = f'gallica all "{eff}"' if '"' not in eff else f'gallica all {eff}'
-    if year_from: cql += f' and gallicapublication_date>="{year_from}"'
-    if year_to: cql += f' and gallicapublication_date<="{year_to}"'
-    q = urllib.parse.quote(cql)
-    url = (f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2"
-           f"&query={q}&maximumRecords={min(max_results,50)}"
-           f"&startRecord={(page - 1) * max_results + 1}")
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=40) as r:
-        root = ET.fromstring(r.read().decode("utf-8", "replace"))
+    base = f'gallica all "{eff}"' if '"' not in eff else f'gallica all {eff}'
+    # 연대 필터: BnF 공식 색인 dc.date(>=·<= 지원, api.bnf.fr) — 진단 응답이면 후처리 폴백
+    date_clause = (f' and dc.date >= "{year_from}"' if year_from else "") + \
+                  (f' and dc.date <= "{year_to}"' if year_to else "")
     ns = {"srw": "http://www.loc.gov/zing/srw/", "dc": "http://purl.org/dc/elements/1.1/"}
+
+    def _sru(cql):
+        url = (f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2"
+               f"&query={urllib.parse.quote(cql)}&maximumRecords={min(max_results,50)}"
+               f"&startRecord={(page - 1) * max_results + 1}")
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=40) as r:
+            return ET.fromstring(r.read().decode("utf-8", "replace"))
+
+    root = _sru(base + date_clause)
     total = root.find(".//srw:numberOfRecords", ns)
-    lines = []
-    for rec in root.findall(".//srw:record", ns)[:max_results]:
-        def g(tag):
-            e = rec.find(f".//dc:{tag}", ns)
-            return (e.text or "").strip() if e is not None and e.text else ""
-        lines.append(f"- {g('title')[:100]} ({g('date')}) [{g('type')[:20]}] {g('identifier')}")
-    return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "")
-            + f" — 총 {total.text if total is not None else '?'}건:\n"
+    post = False
+    if date_clause and total is None:
+        root = _sru(base); total = root.find(".//srw:numberOfRecords", ns); post = True
+
+    def g(rec, tag):
+        e = rec.find(f".//dc:{tag}", ns)
+        return (e.text or "").strip() if e is not None and e.text else ""
+    recs = root.findall(".//srw:record", ns)
+    if post:
+        def _y(rec):
+            m = re.search(r"\d{4}", g(rec, "date"))
+            return int(m.group(0)) if m else None
+        recs = [r for r in recs if (_y(r) and (not year_from or _y(r) >= year_from)
+                                    and (not year_to or _y(r) <= year_to))]
+    lines = [f"- {g(r,'title')[:100]} ({g(r,'date')}) [{g(r,'type')[:20]}] {g(r,'identifier')}"
+             for r in recs[:max_results]]
+    yt = (f" [간행 {year_from or ''}~{year_to or ''}" + ("·후처리" if post else "") + "]") if (year_from or year_to) else ""
+    pt = f" (p.{page})" if page > 1 else ""
+    return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "") + yt + pt
+            + f" — 총 {total.text if total is not None else '?'}건"
+            + (f" 중 이 페이지 연대 일치 {len(lines)}건" if post else "") + ":\n"
             + ("\n".join(lines) or "(0건)")
             + "\n팁: 프랑스어 변형 — Corée·Coréens·Séoul·Fusan·guerre de Corée·Tchosen")
 
