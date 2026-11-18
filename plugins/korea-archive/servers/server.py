@@ -1440,6 +1440,33 @@ def _c_warmemo(q, n):
     return [{"title": f"전쟁기념관 {_clean(c)} {nn}건", "date": "", "id": "", "url": url}
             for c, nn in cats[:min(n, 5)] if nn != "0"]
 
+def _c_seoul(q, n):
+    """서울기록원 컬렉션 매칭 — 전용 도구(seoul_archives_search)와 동일 경로."""
+    b = _http_text("https://archives.seoul.go.kr/catalog?search_api_fulltext=" + _up.quote(q), 15)
+    out = []
+    for m in re.finditer(r'href="(/catalog/result\?[^"]*collects=[^"]*)"[^>]*>(.*?)</a>', b, re.S):
+        nm = _clean(m.group(2))
+        if nm and "컬렉션" in nm:
+            out.append({"title": nm, "date": "", "id": "", "url": "https://archives.seoul.go.kr" + m.group(1)})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _c_foia(q, n):
+    """정보공개 원문 라이브 채널: 서울정보소통광장 결재문서 — 전용 도구(foia_search)와 동일 경로."""
+    b = _http_text("https://opengov.seoul.go.kr/sanction/list?searchKeyword=" + _up.quote(q), 15)
+    seen, out = set(), []
+    for m in re.finditer(r'<a[^>]+href="(/sanction/\d+)"[^>]*>(.*?)</a>', b, re.S):
+        t = re.sub(r"^제목\s*:\s*", "", _clean(m.group(2)))
+        if t and m.group(1) not in seen:
+            seen.add(m.group(1))
+            out.append({"title": t, "date": "", "id": "", "url": "https://opengov.seoul.go.kr" + m.group(1)})
+        if len(out) >= n:
+            break
+    return out
+
+
 def _c_aks(q, n):
     """한국고문서자료관 소장처 매칭(내장 카탈로그 — 네트워크 0)."""
     toks = [t for t in q.split() if t]
@@ -1449,7 +1476,8 @@ def _c_aks(q, n):
 
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
-            "koreanwar": _c_koreanwar, "warmemo": _c_warmemo, "aks": _c_aks}
+            "koreanwar": _c_koreanwar, "warmemo": _c_warmemo, "seoul": _c_seoul,
+            "foia": _c_foia, "aks": _c_aks}
 
 
 
@@ -2268,10 +2296,10 @@ def changgi_help() -> str:
 @mcp.tool()
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,warmemo,aks(고문서 소장처)). 해외(tna·ia·gallica·europeana)와
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,warmemo,seoul,foia,aks). 해외(tna·ia·gallica·europeana)와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
-    record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로.
+    record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
     사용자가 "풀패키지"(보고서·카드뉴스·포스터 전부)를 원하면 report_template(kind="full_package")를 먼저 호출해 제작 순서를 따른다. 사용자가 사용법을 물으면(매직 키워드 "창기창기 도와줘")
     report_template(kind="help")를 호출해 안내한다."""
     want = (list(_COLLECT.keys()) if sources.strip().lower() == "all"
@@ -2287,7 +2315,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> s
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
             + "\n※ [출처] 복수 표기 = 교차확인된 record. 국내(nara·archives·nlk)는 서버 키, nedb는 "
-            "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저로.")
+            "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. open.go.kr 본체(브라우저 전용)는 foia_search 전용 도구로.")
 
 
 @mcp.tool()

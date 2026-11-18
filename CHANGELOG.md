@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-18 v1.17.2
+- **cross_search 소스 13종**: 사용자 결정으로 `seoul`(서울기록원 컬렉션)·`foia`(서울정보소통광장 결재문서 원문) 합류 — 각 전용 도구(seoul_archives_search·foia_search)와 동일 접근 경로 재사용. open.go.kr 본체(브라우저 전용)는 전용 도구 경로 유지
+- Gallica 차단 감지 우아한 성능저하(v1.17.1 후속): BnF가 서버 IP 자동 조회를 403 차단(실측) — SRU XML이 아니면 차단 사실·대체 경로(웹 검색/브라우저)를 명시 반환, 연대 필터는 dc.date(BnF 공식 색인)+후처리 폴백으로 교정
+- TNA 연대 필터 0건 시 '연대 미상 기록 제외' 안내
+
 ## 2026-11-18 v1.17.1
 - **연대 필터·페이지네이션 표준화(해외 5종)**: `tna_search`·`ia_search`·`gallica_search`·`europeana_search`에 `year_from`/`year_to`(연대 범위)와 `page`, `nara_search`에 `page` 추가. 전 문법 실측 검증 — TNA `sps.dateFrom/To`(Korea 13,533→1950~51 한정 2,553건), IA `date:[A TO B]`+page, Europeana `YEAR:[A TO B]` 열린 범위(*)·다중 qf. Gallica `gallicapublication_date` CQL·startRecord(배포 서버 검증)
 - **cross_search 소스 11종으로 확대**: `warmemo`(전쟁기념관 — 카테고리 건수 신호 채널)·`aks`(한국고문서자료관 소장처 172곳 — 내장 카탈로그, 네트워크 0) 합류. 서울기록원·정보공개포털은 robots 실측(`archives.seoul.go.kr/robots.txt` Disallow `/catalog/`) 확인으로 기존 설계대로 미포함 유지
