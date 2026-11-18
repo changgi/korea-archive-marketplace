@@ -2418,5 +2418,32 @@ def source_profile(institution: str = "list") -> str:
             f"· 인접확장: {U['adjacent_mining']}\n· 교차검증 조합:\n{combos}\n· 권리판정: {U['rights_rule']}" + vn)
 
 
+# ── PlayMCP 응답 24KB 한도 — UTF-8 바이트 실측 공통 가드(여유 23,800B). route.js 패리티. ──
+_LIMIT_B = 23800
+
+
+def _guard_24k_all():
+    import functools
+    try:
+        tools = mcp._tool_manager._tools  # mcp 1.x 내부 — requirements에서 mcp<2 고정
+    except AttributeError:
+        return
+    for t in tools.values():
+        fn = t.fn
+
+        @functools.wraps(fn)
+        def wrapped(*a, __fn=fn, **k):
+            r = __fn(*a, **k)
+            if isinstance(r, str):
+                b = r.encode("utf-8")
+                if len(b) > _LIMIT_B:
+                    r = (b[:_LIMIT_B].decode("utf-8", "ignore")
+                         + f"\n…[응답 24KB 한도 — {len(b)}B 중 절단. page·max_results로 분할 조회]")
+            return r
+        t.fn = wrapped
+
+
+_guard_24k_all()
+
 if __name__ == "__main__":
     mcp.run()
