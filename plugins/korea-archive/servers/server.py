@@ -241,7 +241,11 @@ def nara_search(query: str, record_group: int | None = None,
         rows.append(f"- [NAID {rec.get('naId')}] {rec.get('title','')[:100]} "
                     f"| {rec.get('localIdentifier','')} | https://catalog.archives.gov/id/{rec.get('naId')}")
     total = hits.get("total", {}); total = total.get("value") if isinstance(total, dict) else total
-    return f"NARA '{query}'" + (f" (RG {record_group})" if record_group else "") + f" — 총 {total}건:\n" + ("\n".join(rows) or "(0건)")
+    rline = ""
+    if record_group:
+        rc, rb = auto_rights({"rg_series": f"RG {record_group}", "archive": "NARA"})
+        rline = f"\n권리 초판정(RG {record_group}): {rc} — {rb}"
+    return f"NARA '{query}'" + (f" (RG {record_group})" if record_group else "") + f" — 총 {total}건:\n" + ("\n".join(rows) or "(0건)") + rline
 
 @mcp.tool()
 def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
@@ -265,14 +269,23 @@ def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
         query = f"({query}) AND date:[{year_from or 1800}-01-01 TO {year_to or 2030}-12-31]"
     import urllib.parse
     data = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(query) +
-                     f"&fl[]=identifier&fl[]=title&fl[]=date&rows={max_results}&page={page}&output=json")
+                     f"&fl[]=identifier&fl[]=title&fl[]=date&fl[]=licenseurl&rows={max_results}&page={page}&output=json")
     docs = (data.get("response") or {}).get("docs") or []
     nf = (data.get("response") or {}).get("numFound")
     yt = f" [연대 {year_from or ''}~{year_to or ''}]" if (year_from or year_to) else ""
     pt = f" (p.{page})" if page > 1 else ""
-    return f"archive.org '{disp}'{yt}{pt} — 총 {nf}건:\n" + "\n".join(
-        f"- {d.get('identifier')} | {str(d.get('title'))[:90]} | https://archive.org/details/{d.get('identifier')}"
-        for d in docs) if docs else f"archive.org '{disp}'{yt}{pt} — 0건"
+
+    def _lshort(lu):
+        m = re.search(r"(publicdomain/(?:mark|zero)|licenses/[a-z-]+)", str(lu or ""))
+        return m.group(1).replace("licenses/", "CC ") if m else ""
+    if not docs:
+        return f"archive.org '{disp}'{yt}{pt} — 0건"
+    body = "\n".join(
+        f"- {d.get('identifier')} | {str(d.get('title'))[:90]}"
+        + (f" | 권리:{_lshort(d.get('licenseurl'))}" if _lshort(d.get('licenseurl')) else "")
+        + f" | https://archive.org/details/{d.get('identifier')}" for d in docs)
+    return (f"archive.org '{disp}'{yt}{pt} — 총 {nf}건:\n" + body
+            + "\n※ 권리 미표기 건은 judge_rights 초판정 — 발굴 우선, 권리는 표시.")
 
 JB_STRAT = {
     'walls': "열한 겹의 벽 — 한국 기록이 안 찾아지는 11가지 이유와 대응 (실증 기반)\n1 일본식 독음: 금강산→Soto Kongo — 일제기 자료는 일본식 지명 병렬 / 2 로마자 철자: Corea·Korea 둘 다 / 3 기계번역 함정: 번역이 아니라 대조표(사람이 만들고 조합은 AI) / 4 외래 명명: 원산=Port Lazareff·제주=Quelpaert·거문도=Port Hamilton / 5 인명 표기: topic=persons 참조 / 6 언어 8+개국어 / 7 출처주의 분류: 찍은 사람이 서랍을 정한다(이승만 사진이 해병대 127-R-1438에) / 8 식별자: topic=identifiers / 9 기술심도: 제목만 있고 내용 없음 — 안을 열어야 함 / 10 결락: ①물리 소실(되찾을 수 없음)·②목록에 없는 것(목록에 올리면 되찾음 — 궁내청 의궤 77종 2011 환수 실증) / 11 음력/양력: 조선 기록=음력·서양=양력(대한제국 양력 채택 1896.1.1) — 두 자료를 겹칠 때 사건 순서가 뒤집힐 수 있다.\n부록 — 한자 전사 오류 복원: 연호·간지·서명 3중 교차로 원 한자 확정(예: '한풍원년 신예'→咸豊元年 辛亥, 1851).",
@@ -328,7 +341,8 @@ def query_bank(topic: str = "list") -> str:
 @mcp.tool()
 def judge_rights(rg_series: str, title: str = "", archive: str = "") -> str:
     """권리 등급 자동 초기판정 (보고서 §30 플로 1~3단계). A/B=공개가능, C=허가필요, D=지위불명.
-    ※ 최종 확정은 사람이 §30 5단계로 서면 판정할 것."""
+    공공누리(KOGL) 제1~4유형 자동 인식 — 어느 필드든 'KOGL 2'·'공공누리 제1유형' 표기 투입 시 조건 판정.
+    발굴 우선, 권리는 표시. ※ 최종 확정은 사람이 §30 5단계로 서면 판정할 것."""
     cls, note = auto_rights({"rg_series": rg_series, "title_orig": title, "archive": archive})
     return f"등급: {cls}\n근거: {note}\n※ 자동 초기판정 — 공개 전 수동 확정 필수, D등급 공개 금지"
 
@@ -414,12 +428,19 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
     with urllib.request.urlopen(req, timeout=40) as r:
         data = _json.loads(r.read().decode())
     items = data.get("items") or []
+
+    def _rshort(r):
+        v = (r[0] if isinstance(r, list) and r else r) or ""
+        m = re.search(r"(publicdomain/(?:mark|zero)|licenses/[a-z-]+|vocab/[A-Za-z-]+)", str(v))
+        return m.group(1).replace("licenses/", "CC ").replace("vocab/", "") if m else ""
     lines = []
     for it in items[:max_results]:
         title = (it.get("title") or ["?"])[0]
         year = (it.get("year") or [""])[0]
         prov = (it.get("dataProvider") or [""])[0]
-        lines.append(f"- {str(title)[:90]} ({year}) — {str(prov)[:40]} | {it.get('guid','')}")
+        rt = _rshort(it.get("rights"))
+        lines.append(f"- {str(title)[:90]} ({year}) — {str(prov)[:40]}"
+                     + (f" | 권리:{rt}" if rt else "") + f" | {it.get('guid','')}")
     return (f"Europeana '{query}'" + (f" [{media_type}]" if media_type else "")
             + f" — 총 {data.get('totalResults')}건:\n" + ("\n".join(lines) or "(0건)")
             + ("\n※ 공용 데모 키(api2demo) 사용 중 — 레이트리밋 시 EUROPEANA_API_KEY 설정 권장." if demo else "")
@@ -2016,7 +2037,15 @@ def warmemo_search(query: str) -> str:
             lines = [f"- {_clean(c)} : {n}건" for c, n in cats[:20]]
             return (f"전쟁기념관 '{query}' — 카테고리별 검색 건수:\n" + "\n".join(lines) + _browse(url)
                     + "\n한국전쟁·군사사 사료 — 해외(NARA·TNA)와 교차검증.")
-        return _agent_browse("전쟁기념관", query, url, "통합검색 결과 미검출")
+        # 구 통합검색 개편(2026-11 실측) → 동일 재단 신 플랫폼(6·25전쟁 아카이브센터)으로 폴백
+        total, cards = _kw_search({"keyword": query, "viewType": "archive"})
+        kl = [f"- [{c['id']}] {c['title'][:90]}\n  {c['url']}" for c in cards[:10]]
+        if kl:
+            return (f"전쟁기념관 구 통합검색(archives.warmemo.or.kr)이 개편되어 결과를 내지 않습니다 — "
+                    f"동일 재단(전쟁기념사업회)의 6·25전쟁 아카이브센터(koreanwar.or.kr, 협약기관)에서 "
+                    f"'{query}' 검색 결과로 대체합니다 (총 {total}건):\n" + "\n".join(kl)
+                    + f"\n※ 상세·인접 채굴: koreanwar_item. 구 사이트 직접 확인: {url}")
+        return _agent_browse("전쟁기념관", query, url, "구 통합검색 개편(결과 구조 소멸) — 신 플랫폼(koreanwar.or.kr)도 0건")
     except Exception as e:
         return _agent_browse("전쟁기념관", query, url, f"자동조회 실패({e})")
 
@@ -2294,7 +2323,7 @@ def changgi_help() -> str:
 
 
 @mcp.tool()
-def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> str:
+def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False) -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
     (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,warmemo,seoul,foia,aks). 해외(tna·ia·gallica·europeana)와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
@@ -2307,7 +2336,24 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> s
     if not want:
         return "sources: 'all' 또는 " + ",".join(_COLLECT.keys())
     n = max(1, min(max_per_source, 30))
-    items, stats = _collect_merged([(s, (lambda s=s: _COLLECT[s](query, n))) for s in want])
+    jobs = [(s, (lambda s=s: _COLLECT[s](query, n))) for s in want]
+    if variants:  # 당대 표기 자동 팬아웃 — query_bank '열한 겹의 벽' 지식의 도구화
+        eff = _ko_en(query) or query
+        SUBS = [("Korean", "Corean"), ("Korea", "Corea"), ("Korea", "Chosen"), ("Seoul", "Keijo"), ("Pusan", "Fusan"),
+                ("Inchon", "Chemulpo"), ("Wonsan", "Gensan"), ("Pyongyang", "Heijo"),
+                ("Cheju", "Quelpaert"), ("Taegu", "Taikyu")]
+        vs = []
+        for a, b in SUBS:
+            if len(vs) >= 2:
+                break
+            if re.search(rf"\b{a}\b", eff, re.I):
+                vs.append((b, re.sub(rf"\b{a}\b", b, eff, count=1, flags=re.I)))
+        for src in ("tna", "ia", "nara", "europeana"):
+            if src not in want:
+                continue
+            for label, vq in vs:
+                jobs.append((f"{src}·{label}", (lambda src=src, vq=vq: _COLLECT[src](vq, n))))
+    items, stats = _collect_merged(jobs)
     items.sort(key=lambda it: -len(it["sources"]))
     lines = [f"- [{'+'.join(it['sources'])}] {it['title'][:95]}"
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")
@@ -2315,15 +2361,35 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> s
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
             + "\n※ [출처] 복수 표기 = 교차확인된 record. 국내(nara·archives·nlk)는 서버 키, nedb는 "
-            "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. open.go.kr 본체(브라우저 전용)는 foia_search 전용 도구로.")
+            "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. open.go.kr 본체(브라우저 전용)는 foia_search 전용 도구로.\n※ 발굴 우선 — 권리는 표시: 게재 전 judge_rights(참조코드·KOGL)로 초판정. variants=True로 당대 표기(Corea·Chosen·Keijo…) 자동 팬아웃.")
 
 
 @mcp.tool()
 def source_profile(institution: str = "list") -> str:
     """기관 자료·이용·활용구조 프로파일 — 발굴 전략 수립용. 자료구조(계층·분류·식별자·메타),
     이용구조(API·인증·쿼리문법·robots·권리), 활용구조(3대 부정합·키워드셋·교차매핑·인접확장·교차검증 조합).
-    institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia)."""
+    institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia);
+    'health'=13채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
     t = (institution or "list").strip().lower()
+    if t == "health":  # 발굴 우선 원칙의 전제: 깨짐을 스스로 발견한다
+        GOLD = {"tna": "Korea", "ia": "Korea", "gallica": "Corée", "europeana": "Korea", "nara": "Korea",
+                "archives": "한국전쟁", "nlk": "한국전쟁", "nedb": "한강", "koreanwar": "장진호",
+                "warmemo": "사진", "seoul": "한강", "foia": "회의", "aks": "문중"}
+        keys = {k: bool(os.environ.get(k)) for k in
+                ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
+                 "KOREANWAR_API_TOKEN", "NEDB_INDEX_URL")}
+        rows = []
+        for k, q in GOLD.items():
+            try:
+                r = _COLLECT[k](q, 3)
+                rows.append(f"{'🟢' if r else '🟡'} {k}: {len(r)}건 (질의 '{q}')"
+                            + ("" if r else " — 연결 정상·결과/파싱 0"))
+            except Exception as e:
+                rows.append(f"🔴 {k}: {str(e)[:70]}")
+        return ("13채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
+                + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
+                + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃). "
+                  "nedb ✗=개방파일 인덱스 미설정.")
     if t == "list" or t not in PROFILES:
         lines = "\n".join(f"- {k} ({v['name_ko']}) [{v['category']}]" for k, v in PROFILES.items())
         extra = f"\n\n('{institution}' 프로파일 없음)" if (t != "list" and t not in PROFILES) else ""

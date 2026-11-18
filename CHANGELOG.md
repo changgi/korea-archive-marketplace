@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-18 v1.18.0
+- **소스 헬스체크**: `source_profile(institution='health')` — 13채널 골든 질의 일괄 실측(🟢건수/🟡연결만/🔴실패) + 서버 키·인덱스 설정 상태. 발굴 우선 원칙의 전제("깨짐을 스스로 발견한다") 도구화
+- **warmemo 복구(신 플랫폼 폴백)**: 전쟁기념관 구 통합검색(archives.warmemo.or.kr)이 개편으로 결과 구조 소멸(실측) → 0건 시 동일 재단 6·25전쟁 아카이브센터(koreanwar.or.kr, 협약기관) 검색으로 자동 대체 + 개편 사실 명시
+- **권리 힌트 자동 표시**: judge_rights에 **공공누리(KOGL) 제1~4유형 자동 판정** 추가(kla/ledger.py 양 사본) · Europeana 건별 rights(CC/InC) 표시 · archive.org 건별 licenseurl 표시 · NARA record_group 지정 시 권리 초판정 라인 자동 부착 — "발굴 우선, 권리는 표시"의 자동화
+- **표기 변형 자동 팬아웃**: `cross_search(variants=True)` — 당대 표기(Corean·Corea·Chosen·Keijo·Fusan·Chemulpo·Gensan·Heijo·Quelpaert·Taikyu) 최대 2종을 해외 4채널(tna·ia·nara·europeana)에 자동 병렬 투입, 채널 태그에 변형 표시(예 ia·Corean) — query_bank '열한 겹의 벽' 지식의 도구화
+
 ## 2026-11-18 v1.17.2
 - **cross_search 소스 13종**: 사용자 결정으로 `seoul`(서울기록원 컬렉션)·`foia`(서울정보소통광장 결재문서 원문) 합류 — 각 전용 도구(seoul_archives_search·foia_search)와 동일 접근 경로 재사용. open.go.kr 본체(브라우저 전용)는 전용 도구 경로 유지
 - Gallica 차단 감지 우아한 성능저하(v1.17.1 후속): BnF가 서버 IP 자동 조회를 403 차단(실측) — SRU XML이 아니면 차단 사실·대체 경로(웹 검색/브라우저)를 명시 반환, 연대 필터는 dc.date(BnF 공식 색인)+후처리 폴백으로 교정

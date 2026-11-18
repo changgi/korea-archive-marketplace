@@ -22,6 +22,16 @@ def auto_rights(rec: dict) -> tuple[str, str]:
         return "B", "[자동초판] Universal Newsreel — MCA가 1970년대 권리를 미 정부에 양도(NARA newsreels 페이지). 릴 내 제3자 콘텐츠 QC 필요"
     if any(x in rg for x in ("RG 111","RG 208","RG 306","RG 342","RG 428","RG 127","111-","208-","306-")):
         return "B", "[자동초판] 미 연방정부 직무저작물 추정(17 U.S.C. §105) — 카탈로그 Use Restriction 'Unrestricted' 확인 시 A로 상향"
+    kogl_src = (rg + " " + (rec.get("title_orig") or "").upper() + " " + arch)
+    import re as _re
+    km = _re.search(r"KOGL[\s-]?(?:제\s?)?([1-4])|공공누리\s*(?:제\s?)?([1-4])\s*유형", kogl_src, _re.I)
+    if km:
+        n = km.group(1) or km.group(2)
+        K = {"1": ("A", "공공누리 제1유형 — 출처표시만으로 자유이용(변경·상업 가능)"),
+             "2": ("B", "공공누리 제2유형 — 출처표시 + 상업적 이용 금지"),
+             "3": ("B", "공공누리 제3유형 — 출처표시 + 변경 금지"),
+             "4": ("B", "공공누리 제4유형 — 출처표시 + 비상업 + 변경 금지")}[n]
+        return K[0], f"[자동초판] {K[1]} (kogl.or.kr 조건 전문 확인)"
     if "KOFA" in arch or "KBS" in arch:
         return "C", "[자동초판] 한국 저작물 — 저작권 존속 전제, 허가 취득 후 공개"
     return "D", "[자동초판] 지위 불명 — §30 플로 수동 수행 필요"
