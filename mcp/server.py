@@ -452,7 +452,7 @@ def gallica_search(query: str, max_results: int = 15, year_from: int | None = No
                                     and (not year_to or _y(r) <= year_to))]
     lines = [f"- {g(r,'title')[:100]} ({g(r,'date')}) [{g(r,'type')[:20]}] {g(r,'identifier')}"
              for r in recs[:max_results]]
-    yt = (f" [간행 {year_from or ''}~{year_to or ''}" + ("·후처리" if post else "") + "]") if (year_from or year_to) else ""
+    yt = (f" [간행 {year_from or ''}~{year_to or ''}" + ("·후처리·연대 미상 제외" if post else "") + "]") if (year_from or year_to) else ""
     pt = f" (p.{page})" if page > 1 else ""
     return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "") + yt + pt
             + f" — 총 {total.text if total is not None else '?'}건"
@@ -1540,14 +1540,6 @@ def _c_koreanwar(q, n):
     _, cards = _kw_search({"keyword": q, "viewType": "archive"})
     return [{"title": c["title"], "date": "", "id": c["id"], "url": c["url"]} for c in cards[:n]]
 
-def _c_warmemo(q, n):
-    """카테고리별 건수 채널 — 소장 신호 제공(개별 레코드 아님). robots-OK 전용 도구 경로 재사용."""
-    url = "http://archives.warmemo.or.kr/intgsrch/intgsrchArchv.do?MID=UM00045&keyword=" + _up.quote(q)
-    b = _http_text(url, 15)
-    cats = re.findall(r'class="total-breadcrumb">(.*?)</span>\s*<span>\s*총\s*([\d,]+)', b, re.S)
-    return [{"title": f"전쟁기념관 {_clean(c)} {nn}건", "date": "", "id": "", "url": url}
-            for c, nn in cats[:min(n, 5)] if nn != "0"]
-
 def _c_seoul(q, n):
     """서울기록원 컬렉션 매칭 — 전용 도구(seoul_archives_search)와 동일 경로."""
     b = _http_text("https://archives.seoul.go.kr/catalog?search_api_fulltext=" + _up.quote(q), 15)
@@ -1584,7 +1576,7 @@ def _c_aks(q, n):
 
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
-            "koreanwar": _c_koreanwar, "warmemo": _c_warmemo, "seoul": _c_seoul,
+            "koreanwar": _c_koreanwar, "seoul": _c_seoul,
             "foia": _c_foia, "aks": _c_aks}
 
 
@@ -1877,15 +1869,16 @@ def _aks_chain(base, suf):
 def _aks_mode(query: str) -> str:
     q = query.strip()
     try:
-        if "/" in q:  # 'L013001F0201/G002+AKS+...' — 문서 노드 면·썸네일(imgnode)
+        if "/" in q:  # '분류ID/G002+AKS+...' — 문서 노드 면·썸네일(imgnode)
             fid, did = q.split("/", 1)
+            exact = next((c for c in _AKS_CAT if c["id"] == fid), None)  # 비표준 ID(공백 포함 4건) 정확일치 우선
             fm = re.match(r"^(L\d{6})(F\d{2,4})?$", fid)
-            col = next((c for c in _AKS_CAT if fm and c["id"] == fm.group(1)), None)
+            col = exact or next((c for c in _AKS_CAT if fm and c["id"] == fm.group(1)), None)
             if not col:
                 return f"'{fid}' — 소장처 ID 불인식. mode=aks에 소장처명으로 먼저 검색하십시오."
-            chain = [fm.group(1)] + _aks_chain(fm.group(1), fm.group(2) or "")
-            up = "^".join([col["up"]] + chain)
-            j = json.loads(_aks_text(f"{_AKS_BASE}/viewer/imgnode.do?itemId=book&gubun=booktree&depth={2 + len(chain) + 1}"
+            up = (col["up"] + "^" + fid) if exact else \
+                "^".join([col["up"], fm.group(1)] + _aks_chain(fm.group(1), fm.group(2) or ""))
+            j = json.loads(_aks_text(f"{_AKS_BASE}/viewer/imgnode.do?itemId=book&gubun=booktree&depth={len(up.split('^')) + 1}"
                                      f"&upPath={_up.quote(up)}&dataId={_up.quote(did)}&itemType="))
             items = j.get("imgItems") or []
             lines = [f"- {i + 1}면: {it.get('filename', '')}"
@@ -1897,16 +1890,18 @@ def _aks_mode(query: str) -> str:
                     + f"\n※ 원본 고해상 이미지 일괄 수집은 로컬 전용(aks-archive-harvester 스킬 — DZI 타일 복원). "
                       f"웹에서는 뷰어 열람: {_AKS_BASE}/viewer/viewer.do"
                     + "\n출처 표기: 한국학중앙연구원 한국고문서자료관. 이미지 재이용은 기관 이용조건 준수.")
-        m = re.match(r"^(L\d{6})(F\d{2,4})?$", q)
-        if m:  # 소장처/분류 노드 → 하위 트리 라이브 조회
-            col = next((c for c in _AKS_CAT if c["id"] == m.group(1)), None)
+        exact_col = next((c for c in _AKS_CAT if c["id"] == q), None)  # 비표준 ID 포함 정확일치 우선
+        m = None if exact_col else re.match(r"^(L\d{6})(F\d{2,4})?$", q)
+        if exact_col or m:  # 소장처/분류 노드 → 하위 트리 라이브 조회
+            col = exact_col or next((c for c in _AKS_CAT if c["id"] == m.group(1)), None)
             if not col:
                 return f"'{q}' — 소장처 목록(172곳)에 없는 ID. mode=aks에 소장처명을 넣어 먼저 검색하십시오."
-            chain = _aks_chain(m.group(1), m.group(2) or "")
-            up = "^".join([col["up"]] + ([m.group(1)] + chain[:-1] if m.group(2) else []))
+            chain = [] if exact_col else _aks_chain(m.group(1), m.group(2) or "")
+            up = col["up"] if exact_col else \
+                "^".join([col["up"]] + ([m.group(1)] + chain[:-1] if m.group(2) else []))
             _aks_url = (f"{_AKS_BASE}/viewer/treeAjax.do?itemId=book&gubun=booktree"
-                        f"&depth={3 + (len(chain) if m.group(2) else 0)}&upPath={_up.quote(up)}&dataId={q}&itemType=")
-            b = _cached_text("aks:" + q, 6 * 3600, lambda: _aks_text(_aks_url))
+                        f"&depth={len(up.split('^')) + 1}&upPath={_up.quote(up)}&dataId={_up.quote(q)}&itemType=")
+            b = _cached_text("aks:" + q, 6 * 3600, lambda: _aks_text(_aks_url), "data-dataId")
             kids = [{"id": k[0], "leaf": "nochild" in k[1], "name": k[2]} for k in
                     re.findall(r"data-dataId='([^']+)'[\s\S]{0,300}?<span(?:\s+class='([^']*)')?\s+title='([^']*)'", b)]
             lines = [(f"- [문서] {k['name']}\n  상세: mode=aks query='{q}/{k['id']}'" if k["leaf"]
@@ -1996,7 +1991,7 @@ def archives_search(query: str, max_results: int = 10,
                 lines = [f"- {t(i,'title')[:90]} ({t(i,'prod_year')}) · {t(i,'prod_name')[:20]} "
                          f"[{'공개' if t(i,'is_open')=='1' else '비공개'}] {t(i,'link')}"
                          for i in items[:max_results]]
-                ytag = f" [생산 {year_from or ''}~{year_to or ''} · 상위 50건 내 후처리]" if yfilt else ""
+                ytag = f" [생산 {year_from or ''}~{year_to or ''} · 상위 50건 내 후처리·연대 미상 제외]" if yfilt else ""
                 return (f"국가기록원 '{query}'{ytag} — 총 {tot}건" + (f" 중 연대 일치 {len(items)}건" if yfilt else "") + ":\n"
                         + ("\n".join(lines) or "(0건)")
                         + "\n공공누리(KOGL) 유형 확인 후 이용. 비공개 항목은 정보공개청구 대상.")
@@ -2055,6 +2050,7 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
                     m = re.search(r"\d{4}", t(it, "pub_year_info") or t(it, "pubYearInfo"))
                     return int(m.group(0)) if m else None
                 items = [it for it in items if (_py(it) and yf <= _py(it) <= yt2)]
+            matched = len(items)
 
             def pick(bl, tags):
                 for tg in tags:
@@ -2075,15 +2071,17 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
                 lines.append("- " + title[:80] + (f" [{typ}]" if typ else "")
                              + (f" · {pub[:20]}" if pub else "") + (f" ({year})" if year else "")
                              + (f" {lk}" if lk else ""))
-            return tot, lines
+            return tot, lines, matched
         try:
             # 이중채널 동시 수집: (A) 전체 소장자료 + (B) 자료유형(category) 정밀 — 상호보완
             total_xml = _http_text(base_api, 20)
             if "<error" in total_xml:
                 m = re.search(r"<msg>(.*?)</msg>", total_xml)
                 return f"NLK OpenAPI 오류: {m.group(1) if m else '?'} — NLK_API_KEY 확인." + _browse(open_url)
-            a_tot, a_lines = parse(total_xml)
-            out = (f"국립중앙도서관 자동검색(전체 소장자료) '{query}' — 총 {a_tot}건:\n"
+            a_tot, a_lines, a_matched = parse(total_xml)
+            ylab = (f" [발행 {year_from or ''}~{year_to or ''} · 상위 50건 내 후처리·연대 미상 제외]" if yfilt else "")
+            out = (f"국립중앙도서관 자동검색(전체 소장자료) '{query}'{ylab} — 총 {a_tot}건"
+                   + (f" 중 연대 일치 {a_matched}건" if yfilt else "") + ":\n"
                    + ("\n".join(a_lines) or "(0건)"))
             if category:
                 try:
@@ -2091,7 +2089,7 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
                 except Exception:
                     cat_xml = "<error/>"
                 if "<error" not in cat_xml:
-                    b_tot, b_lines = parse(cat_xml)
+                    b_tot, b_lines, _bm = parse(cat_xml)
                     out += (f"\n\n[② 자료유형 '{category}' 정밀 채널 — 총 {b_tot}건 (동시 수집)]\n"
                             + ("\n".join(b_lines) or "(0건)") + "\n※ 전체+자료유형 이중채널(상호보완).")
                 else:
@@ -2183,14 +2181,15 @@ _KW_ANCHORS = [
 _TTL_CACHE: dict = {}
 
 
-def _cached_text(key, ttl_s, fn):
+def _cached_text(key, ttl_s, fn, marker=None):
     """느리게 변하는 조회의 인메모리 TTL 캐시 — route.js 패리티."""
     import time as _t
     hit = _TTL_CACHE.get(key)
     if hit and _t.time() - hit[0] < ttl_s:
         return hit[1]
     v = fn()
-    if v and len(v) > 100:
+    # 마커(기대 구조)가 있는 정상 응답만 캐시 — 차단·점검 페이지의 6시간 오염 방지
+    if v and len(v) > 100 and (marker is None or marker in v):
         _TTL_CACHE[key] = (_t.time(), v)
     return v
 
@@ -2216,7 +2215,7 @@ def koreanwar_search(query: str, scope: str = "archive", page: int = 1, max_resu
     if scope.strip().lower() == "battle":
         list_url = _KW_BASE + "/warList.do"
         try:
-            b = _cached_text('kw:warList', 6 * 3600, lambda: _kw_text(list_url))
+            b = _cached_text('kw:warList', 6 * 3600, lambda: _kw_text(list_url), 'warDetail.do?warIdx=')
             cards = []
             for blk in b.split("/warDetail.do?warIdx=")[1:]:
                 mi = re.match(r"^(\d+)", blk)
@@ -2445,7 +2444,7 @@ def changgi_help() -> str:
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False,
                  format: str = "text") -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,warmemo,seoul,foia,aks). 해외(tna·ia·gallica·europeana)와
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,seoul,foia,aks). 해외(tna·ia·gallica·europeana)와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
@@ -2497,12 +2496,12 @@ def source_profile(institution: str = "list") -> str:
     """기관 자료·이용·활용구조 프로파일 — 발굴 전략 수립용. 자료구조(계층·분류·식별자·메타),
     이용구조(API·인증·쿼리문법·robots·권리), 활용구조(3대 부정합·키워드셋·교차매핑·인접확장·교차검증 조합).
     institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia);
-    'health'=13채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
+    'health'=12채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
     t = (institution or "list").strip().lower()
     if t == "health":  # 발굴 우선 원칙의 전제: 깨짐을 스스로 발견한다
         GOLD = {"tna": "Korea", "ia": "Korea", "gallica": "Corée", "europeana": "Korea", "nara": "Korea",
                 "archives": "한국전쟁", "nlk": "한국전쟁", "nedb": "한강", "koreanwar": "장진호",
-                "warmemo": "사진", "seoul": "한강", "foia": "회의", "aks": "문중"}
+                "seoul": "한강", "foia": "회의", "aks": "문중"}
         keys = {k: bool(os.environ.get(k)) for k in
                 ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
                  "KOREANWAR_API_TOKEN", "NEDB_INDEX_URL")}
@@ -2514,7 +2513,7 @@ def source_profile(institution: str = "list") -> str:
                             + ("" if r else " — 연결 정상·결과/파싱 0"))
             except Exception as e:
                 rows.append(f"🔴 {k}: {str(e)[:70]}")
-        return ("13채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
+        return ("12채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
                 + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃). "
                   "nedb ✗=개방파일 인덱스 미설정.")
