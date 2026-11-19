@@ -1621,7 +1621,7 @@ def _c_nlna(q, n):
                               f"&q={_up.quote(en)}&sortBy=_score", 25))
     out = []
     for r in (d.get("results") or [])[:n]:
-        out.append({"title": str(r.get("title", ""))[:95] + (" [문서군]" if r.get("type") == "ARCHIVE" else ""),
+        out.append({"title": _clean(str(r.get("title", "")))[:95] + (" [문서군]" if r.get("type") == "ARCHIVE" else ""),
                     "date": str(r.get("period", "")), "id": str(r.get("id", "")),
                     "url": "https://www.nationaalarchief.nl/onderzoeken/archief/" + _up.quote(str(r.get("id", "")))})
     return out
