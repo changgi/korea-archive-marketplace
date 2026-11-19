@@ -332,6 +332,16 @@ def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
             + "\n※ 권리 미표기 건은 judge_rights 초판정 — 발굴 우선, 권리는 표시.")
 
 JB_STRAT = {
+    'allies': """한국전 참전·지원국 발굴 지도 — 22개국 소스 매핑 (◉=보유 소스 직행 / ○=대체 경로)
+◉ 미국: nara(RG 111·127·242·342·428)·ia·earchive(국내 수집 원문) ◉ 영국: tna(WO 281 부대 전쟁일지·ADM·AIR)
+◉ 호주: awm(사진·유물 — PD 다수, 가평) ◉ 네덜란드: nlna(주한대사관 2.05.202·UN파견대 2.13.56·적십자 2.19.309)
+◉ 프랑스: gallica(차단 시 브라우저) + 지평리·단장의 능선 프랑스대대는 TOPICS 프랑스어 사상 자동
+○ 캐나다: LAC는 Turnstile 차단 — PPCLI(가평)는 awm·tna 영연방 교차로 ○ 터키: nara RG 407 + ia "Turkish Brigade Kunu-ri"
+○ 전투 참전(태국·필리핀·콜롬비아·에티오피아·그리스·벨기에·룩셈부르크·뉴질랜드·남아공): nara(유엔군 RG)·ia에서
+  부대 고유명 영문 병기 — Kagnew Battalion(에티오피아)·PEFTOK/10th BCT(필리핀)·Gloster(영)·Van Heutsz(네)
+○ 의료지원(스웨덴·덴마크·노르웨이·이탈리아·인도·서독): ia·europeana — 병원선 Jutlandia(덴)·NORMASH(노)·
+  60th Parachute Field Ambulance(인도) 등 고유명 검색
+※ 공통 열쇠: 부대 고유명(영문)+Korea 병기 · 유엔군 총괄은 nara RG 333(극동사령부) · UN 아카이브는 챌린지 보류(명세 참조).""",
     'walls': "열한 겹의 벽 — 한국 기록이 안 찾아지는 11가지 이유와 대응 (실증 기반)\n1 일본식 독음: 금강산→Soto Kongo — 일제기 자료는 일본식 지명 병렬 / 2 로마자 철자: Corea·Korea 둘 다 / 3 기계번역 함정: 번역이 아니라 대조표(사람이 만들고 조합은 AI) / 4 외래 명명: 원산=Port Lazareff·제주=Quelpaert·거문도=Port Hamilton / 5 인명 표기: topic=persons 참조 / 6 언어 8+개국어 / 7 출처주의 분류: 찍은 사람이 서랍을 정한다(이승만 사진이 해병대 127-R-1438에) / 8 식별자: topic=identifiers / 9 기술심도: 제목만 있고 내용 없음 — 안을 열어야 함 / 10 결락: ①물리 소실(되찾을 수 없음)·②목록에 없는 것(목록에 올리면 되찾음 — 궁내청 의궤 77종 2011 환수 실증) / 11 음력/양력: 조선 기록=음력·서양=양력(대한제국 양력 채택 1896.1.1) — 두 자료를 겹칠 때 사건 순서가 뒤집힐 수 있다.\n부록 — 한자 전사 오류 복원: 연호·간지·서명 3중 교차로 원 한자 확정(예: '한풍원년 신예'→咸豊元年 辛亥, 1851).",
     'identifiers': "식별자 해독 — 번호가 곧 정보다 (첫 건은 검색어로, 나머지 수십 건은 번호 규칙으로)\n· NARA 참조코드 127-GR-223-A164360 = 기록군-시리즈-주제묶음-낱건. 주제 묶음이 차면 다음 번호(223→226 실증). NAID 간격은 계열마다 다름(사진 3·색인 1) — 하나 찾으면 ±1·±3 다 넣기.\n· 컬렉션 번호대: 같은 컬렉션인데 절반은 Chosen, 절반은 Seoul로 기술 — 검색어로는 절반만 걸린다 → NAID 앞뒤 훑기.\n· 같은 기관 안에서도 표기가 갈린다: 'Log of U.S.S.' vs 'Smooth Log of the USS' → 수식어 빼고 고유명만.\n· TNA 옆 훑기: 계열번호만 넣기(OCB 1→부산항 해도 82건·140년). 금지: 계열번호+주제어 조합(0건). 결락은 X 접미어(FO 881/9951X 병합 선언 등) — 남은 짝으로 우회. 지도는 MPKK·MFQ 등으로 추출 이관 — 원 문서철 번호로 역검색.\n· Gallica ark: btv1b=도판·필사 / bpt6k=인쇄본 — 같은 책이 형태별로 갈린다. · 6·25아카이브: 수집연도-국가-매체-일련(인접 채굴 가능). [8층 코드 지도] 미 국무부 십진분류 895 실전: .00 정치(★625-711 구간=1919.4~1928.6 — 3·1운동·임시정부) · .04 재판·형무소 · .10 공안(치안유지법) · .20 군사 · .40 사회·교육 · .50 경제·이민(하와이·미주) · .60 산업 · .71 통신 — 총독부 재정은 일본 코드 894.51(895가 0건이어도 없는 게 아니다). 검색창에 숫자 그대로.",
     'persons': "인명 열쇠 — 지명은 나라마다 갈리지만 사람 이름은 하나다\n절차: 자료 하나를 찾으면 찍은·쓴·모은·채집한 사람 이름으로 재검색 — 한 건이 컬렉션으로 열린다(Vráz→대한제국 사진 66건: 기관이 지명을 현대 표기 Inchon으로 정비해 Chemulpo 검색은 2건뿐이었다).\n표기 변형 생성: 이=Lee·Yi·Rhee·Ri / 김=Kim·Gim / 박=Park·Pak·Bak + 성명 도치(장면=Myun Chang, Dr. John)·현지 발음(서영해=Seu Ring-Hai).\n색인 함정: NARA Personalities 색인은 알파벳만이 기준 — 편철 제목에 Korea가 없어 '한국 자료'로는 안 걸린다. 구간 경계 이름(Kim·Park)은 두 칸 다 열기. 시기 구간 1940-54/1955-81 별도.\n독립운동가는 독립기념관 인명사전(search.i815.or.kr)이 이명·가명·호를 대신 생성. 채집자명은 체류국 비중 확인 — coreana와 교집합 검색으로 판정. [성씨별 색인 칸 지도·NAID] 최 Choi=109921404 · 정/전/천=109921404-405 · 서/손 Sue-Sun=109921580·Soon=109921572 · 윤 Youn=109921617 · 유/이 Yu=109921751 · 양/안 Y-Yoksi=109921616 · 이 Rhee=109921542 · 호/홍=109921479+480(두 칸 걸침 — 둘 다 열 것).",
@@ -345,7 +355,7 @@ JB_STRAT = {
 def query_bank(topic: str = "list") -> str:
     """검증된 한국 기록 발굴 쿼리 세트 조회. topic: 'list'(그룹 목록) 또는 그룹ID
     (예 'G-07' 구한말, 'G-08' 일제강점기, 'G-17' 간접키워드, 'N-05' NARA 시리즈, 'RG' 교차매핑, 'TNA' 레이어)
-    전략 지식: 'walls'(열한 겹의 벽), 'identifiers'(식별자 해독), 'persons'(인명 열쇠), 'crosscheck'(국내외 대조), 'world'(6개국 서고 지도), 'cities'(도시명 계보)."""
+    전략 지식: 'walls'(열한 겹의 벽), 'identifiers'(식별자 해독), 'persons'(인명 열쇠), 'crosscheck'(국내외 대조), 'world'(6개국 서고 지도), 'cities'(도시명 계보), 'allies'(한국전 참전·지원 22개국 발굴 지도)."""
     if topic == "list":
         lines = [f"{gid}: {ko} ({len(kws)}개)" for gid, ko, _en, _d, kws in KC.COMMON_GROUPS]
         lines += [f"{gid}: {ko} ({len(kws)}개)" for gid, ko, _en, kws in KN.NARA_GROUPS]
@@ -1318,7 +1328,7 @@ def _collect_merged(collectors):
         submitted = [(name, ex.submit(fn)) for name, fn in collectors]
         for name, fut in submitted:
             try:
-                items = fut.result(timeout=45) or []
+                items = fut.result(timeout=12) or []  # 소스별 타임박스 — 최저속 소스가 전체 지연 지배 방지
                 stats.append(f"{name}:{len(items)}")
                 for raw in items:
                     if not _norm(raw.get("title", "")):
@@ -1555,7 +1565,9 @@ def _ko_ja(q):
 
 def _jacar_meta(code):
     try:
-        h = _http_text("https://www.jacar.archives.go.jp/das/meta-en/" + code, 25)
+        h = _cached_text("jacarM:" + code, 24 * 3600,
+                         lambda: _http_text("https://www.jacar.archives.go.jp/das/meta-en/" + code, 25),
+                         "Reference Code")
     except Exception:
         return None
     def g(label):
@@ -1632,7 +1644,7 @@ def _c_awm(q, n):
     out = []
     for cid in ids:
         try:
-            d = _http_text("https://www.awm.gov.au/collection/" + cid, 25)
+            d = _cached_text("awm:" + cid, 24 * 3600, lambda cid=cid: _http_text("https://www.awm.gov.au/collection/" + cid, 25), "<h1")
             h1 = re.search(r"<h1[^>]*>\s*(?:<[^>]+>\s*)*([^<]{3,120})", d)
             acc = re.search(r"(?:Accession Number|ID number)[^A-Z0-9]{0,40}([A-Z0-9/.\-]{3,20})", d)
             pd = bool(re.search(r"Copyright expired - public domain|publicdomain/mark", d))

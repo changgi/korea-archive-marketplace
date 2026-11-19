@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-20 v1.27.0
+- **연합 검색 성능·견고성**: 소스별 **12초 타임박스**(Node Promise.race / Python fut.result) — 차단 대기 소스(갈리카 등)가 전체 'all' 호출을 끌던 실측 21.7초 병목 해소 · AWM 상세·JACAR 메타 **24시간 TTL 캐시**(마커 검증 — 캐시 히트 실측 1.2s→0.36s)
+- **`query_bank(topic='allies')`**: 한국전 참전·지원 22개국 발굴 지도 — 보유 소스 직행(미·영·호·네덜란드·프) vs 대체 경로(캐나다=영연방 교차, 터키=RG 407) 매핑, 부대 고유명 열쇠(Kagnew·PEFTOK·Jutlandia·NORMASH·60th Para Field Ambulance 등)
+
 ## 2026-11-20 v1.26.0
 - **네덜란드 국립문서보관소 합류 — cross_search 20소스**: SPA 셸 뒤의 공개 JSON API(zvt…/api/search/eads)를 Playwright 역추적으로 확보(키 불요). 'Korea' 243건 — 주한 네덜란드 대사관(2.05.202)·한국전 파견부대(2.13.56) 문서군 직행
 - **AWM 심화**: 상세 파싱에 권리 자동 태그(저작권 만료 → `권리:PD`)·Conflict 기간(date) — 해외 소스 권리 표시 1호
