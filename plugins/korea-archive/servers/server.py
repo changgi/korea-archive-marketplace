@@ -1532,6 +1532,26 @@ def _c_koreanwar(q, n):
     _, cards = _kw_search({"keyword": q, "viewType": "archive"})
     return [{"title": c["title"], "date": "", "id": c["id"], "url": c["url"]} for c in cards[:n]]
 
+def _c_earchive(q, n):
+    """국사편찬위 전자사료관 — POST 검색 실측(2026-11-19). NARA 수집 사료(AUS…) 원문 소장. 상세는 세션 기반 — 사료ID 표기."""
+    body = _up.urlencode({"allSearchQuery": q, "searchQuery": q, "searchPageIndex": "1",
+                          "searchPageUnit": str(min(n, 20)), "searchPageSize": "10"}).encode()
+    req = _ur.Request("https://archive.history.go.kr/search/searchResult.do", data=body,
+                      headers={"User-Agent": "Mozilla/5.0",
+                               "Content-Type": "application/x-www-form-urlencoded"})
+    with _ur.urlopen(req, timeout=25) as r:
+        b = r.read().decode("utf-8", "replace")
+    out = []
+    for m in re.finditer(r'fnGoCatalogView\(\'(\d+)\'[^"]*"\s+title="([^"]{3,120})"', b):
+        seg = b[m.start():m.start() + 700]
+        sid = re.search(r"([A-Z]{2,3}\d{3}_[0-9A-Za-z_]{6,})", seg)
+        out.append({"title": _clean(m.group(2)), "date": "", "id": (sid.group(1) if sid else m.group(1)),
+                    "url": "https://archive.history.go.kr"})
+        if len(out) >= n:
+            break
+    return out
+
+
 def _c_jacar(q, n):
     """일본 아시아역사자료센터(JACAR) — GET 검색 실측(2026-11-19, docs/jacar-access-spec.md). 파라미터는 kw."""
     en = _ko_en(q) or q
@@ -1584,7 +1604,7 @@ def _c_aks(q, n):
 
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
-            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "seoul": _c_seoul,
+            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "seoul": _c_seoul,
             "foia": _c_foia, "aks": _c_aks}
 
 
@@ -2456,7 +2476,7 @@ def changgi_help() -> str:
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False,
                  format: str = "text") -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,seoul,foia,aks). 해외(tna·ia·gallica·europeana)와
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,seoul,foia,aks). 해외(tna·ia·gallica·europeana)와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
@@ -2508,12 +2528,12 @@ def source_profile(institution: str = "list") -> str:
     """기관 자료·이용·활용구조 프로파일 — 발굴 전략 수립용. 자료구조(계층·분류·식별자·메타),
     이용구조(API·인증·쿼리문법·robots·권리), 활용구조(3대 부정합·키워드셋·교차매핑·인접확장·교차검증 조합).
     institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia);
-    'health'=13채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
+    'health'=14채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
     t = (institution or "list").strip().lower()
     if t == "health":  # 발굴 우선 원칙의 전제: 깨짐을 스스로 발견한다
         GOLD = {"tna": "Korea", "ia": "Korea", "gallica": "Corée", "europeana": "Korea", "nara": "Korea",
                 "archives": "한국전쟁", "nlk": "한국전쟁", "nedb": "한강", "koreanwar": "장진호",
-                "jacar": "Chosen", "seoul": "한강", "foia": "회의", "aks": "문중"}
+                "jacar": "Chosen", "earchive": "제주도", "seoul": "한강", "foia": "회의", "aks": "문중"}
         keys = {k: bool(os.environ.get(k)) for k in
                 ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
                  "KOREANWAR_API_TOKEN", "NEDB_INDEX_URL")}
@@ -2525,7 +2545,7 @@ def source_profile(institution: str = "list") -> str:
                             + ("" if r else " — 연결 정상·결과/파싱 0"))
             except Exception as e:
                 rows.append(f"🔴 {k}: {str(e)[:70]}")
-        return ("13채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
+        return ("14채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
                 + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃). "
                   "nedb ✗=개방파일 인덱스 미설정.")
