@@ -274,7 +274,8 @@ def nara_search(query: str, record_group: int | None = None,
     rline = ""
     if record_group:
         rc, rb = auto_rights({"rg_series": f"RG {record_group}", "archive": "NARA"})
-        rline = f"\n권리 초판정(RG {record_group}): {rc} — {rb}"
+        rline = (f"\n권리 초판정(RG {record_group}): {rc} — {rb}"
+                 f"\n※ 건별 실확인: judge_rights(naid=<NAID>) — 카탈로그 Use Restriction 실조회로 A/C 확정")
     return f"NARA '{query}'" + (f" (RG {record_group})" if record_group else "") + f" — 총 {total}건:\n" + ("\n".join(rows) or "(0건)") + rline
 
 @mcp.tool()
@@ -1719,10 +1720,16 @@ def _c_jsg(q, n):
 
 
 def _c_kyudb(q, n):
-    """서울대 규장각 — 기존 kyujanggak 코어(joseon_tools) 재사용."""
+    """서울대 규장각 — 기존 kyujanggak 코어(joseon_tools) 재사용.
+    실측 ~10s(12s 타임박스 근접) → 6h TTL 캐시(마커 奎 — 결과 있을 때만 캐시)."""
     if _jt is None:
         return []
-    r = _jt.kyujanggak_search(q, area="both")
+    raw = _cached_text("kyudb:" + q, 6 * 3600,
+                       lambda: json.dumps(_jt.kyujanggak_search(q, area="both"), ensure_ascii=False), "奎")
+    try:
+        r = json.loads(raw)
+    except Exception:
+        return []
     sec = (r.get("sections") or {}) if isinstance(r, dict) else {}
     lst = sec.get("목록")
     if not isinstance(lst, list):
@@ -2769,17 +2776,23 @@ def source_profile(institution: str = "list") -> str:
                 ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
                  "KOREANWAR_API_TOKEN", "NEDB_INDEX_URL")}
         import time as _t
-        rows = []
-        for k, q in GOLD.items():
+        def _probe(kv):  # 20채널 병렬 탐침 (Node Promise.all 패리티 — 순차 실행은 합산 수십 초)
+            k, q = kv
             s = _t.monotonic()
             try:
                 r = _COLLECT[k](q, 3)
-                ms = int((_t.monotonic() - s) * 1000)
-                rows.append(f"{'🟢' if r else '🟡'} {k}: {len(r)}건 · {ms}ms (질의 '{q}')"
-                            + ("" if r else " — 연결 정상·결과/파싱 0"))
+                return (k, q, True, len(r), None, int((_t.monotonic() - s) * 1000))
             except Exception as e:
-                ms = int((_t.monotonic() - s) * 1000)
-                rows.append(f"🔴 {k}: {str(e)[:60]} · {ms}ms")
+                return (k, q, False, 0, str(e)[:60], int((_t.monotonic() - s) * 1000))
+        with _cf.ThreadPoolExecutor(max_workers=8) as ex:
+            probed = list(ex.map(_probe, GOLD.items()))
+        rows = []
+        for k, q, ok, cnt, err, ms in probed:
+            if ok:
+                rows.append(f"{'🟢' if cnt else '🟡'} {k}: {cnt}건 · {ms}ms (질의 '{q}')"
+                            + ("" if cnt else " — 연결 정상·결과/파싱 0"))
+            else:
+                rows.append(f"🔴 {k}: {err} · {ms}ms")
         return ("20채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
                 + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃) · ms=채널 응답시간. "
