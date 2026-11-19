@@ -221,12 +221,28 @@ def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
 
 @mcp.tool()
 def nara_search(query: str, record_group: int | None = None,
-                moving_images_only: bool = False, max_results: int = 20, page: int = 1) -> str:
+                moving_images_only: bool = False, max_results: int = 20, page: int = 1,
+                naid: int | None = None, radius: int = 3) -> str:
     """미국 NARA 카탈로그 검색 (환경변수 NARA_API_KEY 필요 — Catalog_API@nara.gov 발급).
     다국어 질의(한국어·日本語·中文·Русский 등)는 영문 색인어로 자동 변환(장진호/長津湖→Chosin Reservoir …).
     record_group으로 RG 교차 정밀검색(예: 242), moving_images_only로 영상 한정."""
     key = os.environ.get("NARA_API_KEY")
     if not key: return "NARA_API_KEY 미설정 — Catalog_API@nara.gov 로 무료 발급(이름+이메일)."
+    if naid:  # NAID ± 인접 채굴 — 한 호출로 일괄 조회(naIds 콤마 목록). 간격 지식: 사진 ±3·색인 ±1
+        ids = [i for i in range(naid - radius, naid + radius + 1) if i > 0]
+        d2 = http_json("https://catalog.archives.gov/api/v2/records/search?naIds="
+                       + ",".join(map(str, ids)) + f"&limit={len(ids)}", headers={"x-api-key": key})
+        got = {}
+        for h in (((d2.get("body") or {}).get("hits") or {}).get("hits") or []):
+            rec = (h.get("_source") or {}).get("record") or {}
+            if rec.get("naId"):
+                got[int(rec["naId"])] = rec
+        lines = [(f"{'★' if i == naid else ' '} [NAID {i}] {got[i].get('title','')[:95]} | "
+                  f"{got[i].get('localIdentifier','')} | https://catalog.archives.gov/id/{i}")
+                 if i in got else f"  [NAID {i}] (없음)" for i in ids]
+        return (f"NARA NAID 인접 채굴 {naid}±{radius} (★=중심, 한국 관련 여부는 제목으로 판별):\n"
+                + "\n".join(lines)
+                + "\n※ 간격 지식: 사진 계열 ±3·색인 ±1 — 하나 찾으면 양옆을 훑는다(query_bank identifiers).")
     _en = _ko_en(query)
     query = _en or query
     params = {"q": query, "limit": min(max_results, 100), "page": page}
@@ -249,11 +265,33 @@ def nara_search(query: str, record_group: int | None = None,
 
 @mcp.tool()
 def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
-              year_from: int | None = None, year_to: int | None = None, page: int = 1) -> str:
+              year_from: int | None = None, year_to: int | None = None, page: int = 1,
+              radius: int = 0) -> str:
     """archive.org 고급 검색. 예: 'identifier:111-adc*', 'collection:universal_newsreels AND korea',
     'mediatype:movies AND (keijo OR chosen)'. 다국어 질의(한국어·日本語·中文 등)는 영문 색인어로
     자동 변환. identifier를 주면 해당 아이템의 메타데이터·원본 파일 목록(다운로드 전 크기 파악)을
     대신 반환한다."""
+    if identifier and radius > 0:  # 일련번호 인접 채굴 — identifier 말미 숫자 ±N 존재 확인(TNA식)
+        import time as _t
+        m = re.match(r"^(.*?)(\d+)$", identifier)
+        if not m:
+            return f"'{identifier}' — 말미가 숫자가 아니라 인접 채굴 불가. radius=0으로 단건 메타 조회."
+        stem, nums = m.group(1), m.group(2)
+        base_n, pad = int(nums), len(nums)
+        lines = []
+        for i in range(base_n - min(radius, 8), base_n + min(radius, 8) + 1):
+            if i < 0:
+                continue
+            id2 = stem + str(i).zfill(pad)
+            try:
+                md2 = (http_json(f"https://archive.org/metadata/{_up.quote(id2)}") or {}).get("metadata")
+                lines.append(f"{'★' if i == base_n else ' '} {id2} | {str(md2.get('title',''))[:85]} "
+                             f"({md2.get('date','')}) https://archive.org/details/{id2}" if md2 else f"  {id2} (없음)")
+            except Exception:
+                lines.append(f"  {id2} (없음)")
+            _t.sleep(0.2)
+        return (f"archive.org 인접 채굴 {stem}[{base_n}±{min(radius, 8)}] (★=중심):\n" + "\n".join(lines)
+                + "\n※ 같은 컬렉션의 절반이 다른 표기로 기술돼 검색에 안 걸리는 사례 — 번호 옆 훑기로 복구(열한 겹의 벽 §8).")
     if identifier:
         data = http_json(f"https://archive.org/metadata/{identifier}")
         md = data.get("metadata") or {}
@@ -1098,6 +1136,38 @@ CITATION_GUIDE = '인용 형식 가이드 — 한국사DB·국회도서관 (khdb
 
 ANNOTATION_GUIDE = "기록 해설형 어노테이션 규칙 — 상세판 (record-annotation 스킬의 서버판. 웹에서는 HTML/아티팩트로 동일 문법 구현)\n\n1. 영역 표시: 점선 영역 박스(dashed 1.5~2px) + 박스 모서리 바깥 번호 칩 — 점 찍기·내용 가림 금지. 좌표는 %(x,y,w,h)로 기록해 어느 해상도에서도 재현.\n2. 전처리: 레터박스(검은 띠) 자동 크롭 후 원본 비율 유지. 저해상 프레임은 확대 금지 — 원본 크기 근처로 배치.\n3. 메타데이터 표(7행 기준): 제목 · 식별번호(영구 식별자) · 원 제작(판독 근거 병기) · 사본 소재 · 생산시기 · 권리(원판/사본 구분) · 판독 근거.\n4. 범례: 번호 칩 + 굵은 요소명 + 한 줄 해설. 순서는 판독 서사(제작 주체→내용→좌표→판본) 순.\n5. ★추정 금지: 화면·원문에서 직접 읽히는 것만 적는다. 불명은 '판독 불가'로 명기 — '아마도·추정·으로 보임'류 어휘가 해설에 들어가면 재검토.\n6. 원판/사본 계보 필수: 원판 권리(PD 등)와 디지털화본 표시(워터마크·업체)를 구분 명기.\n7. 산출 3형: 보고서 부록 절('기록을 해설해 드립니다') · 카드뉴스(1080 — 범례 압축·2열 허용) · 슬라이드(도형 마커+노트에 판독 해설).\n8. 권리 고지: 기관 정식명·식별자·열람 URL — 협약기관(KOREAN WAR ARCHIVES) 출처 표기 필수, 게재윤리 4단계.\n9. 영상 프레임 판독 보강(슬레이트·화면 속 문자): 슬레이트/타이틀 카드에서 부대·촬영자·날짜·롤 번호·장소 필드를 파싱하고, 당대 지명(일본식 독음·외래 명명)은 현대 지명과 병기. 표지판·현수막·차량 표식 등 화면 속 문자는 OCR과 육안을 교차해 확정 — 불일치·판독 불가는 그대로 표기(추정 금지 원칙 동일)."
 
+EXHIBIT_GUIDE = """고문서 전시형 산출물 규칙 — aks-archive-harvester 스킬 ④매개(Mediate) 단계의 서버판 (웹·모바일 동등성).
+nedb_search(mode=aks)로 발굴한 문중·서원 고문서를 전시 페이지·카드뉴스·학습지로 만드는 규칙.
+
+■ 산출물 4종
+① 전시 페이지(단일 HTML): 표제·도입문(lead) → 시대 타임라인 → 문서별 패널(도판+캡션+이야기) → 출처 고지. 인쇄 시 패널 단위로 나뉘는 구성. 웹=아티팩트 미리보기, 로컬=파일 저장.
+② 카드뉴스(1080×1350): 표지 1장 + 문서별 1장 + 클로징 1장. 문서 카드 = 도판(상단 70%)+캡션 띠(하단). 로컬=헤드리스 크롬 렌더, 웹=아티팩트/Canva 커넥터.
+③ 학습지(A4 1장): "이 문서는 무엇인가"(유형·연대·발급자) · "찾아보기"(도판에서 날짜·수취인 찾기) · "생각해보기"(열린 질문 1개) · 요약 박스.
+④ 게시 문구: 2~3문장 + 해시태그 — 기관명·소장처명 반드시 포함.
+
+■ 캡션·서술 규칙 (추정 금지)
+- 제목·문서유형·육안으로 보이는 것만 서술. 탈초(판독문)·번역·인물 생애는 사용자가 제공·확인한 것만 사실로 기술.
+- 캡션 형식: [연대] [발급자→수취인] [문서유형] — 한 줄. 이야기(2문장 이내)는 주제와의 연결만.
+- 검토 미완(사용자 확인 없는 항목)은 "초안" 표기를 지우지 않는다.
+
+■ 권리·출처 (산출물 전체 공통)
+- 전 산출물에 "자료: 한국학중앙연구원 한국고문서자료관 (archive.aks.ac.kr)" 고지 필수.
+- 이미지 재이용은 기관 이용조건을 따름 — 게재 전 judge_rights로 초판정.
+
+■ 전시 페이지 골격 (채워 쓸 것)
+<!doctype html><html lang=ko><head><meta charset=utf-8><title>{{전시제목}}</title><style>
+body{font-family:'Noto Serif KR',serif;max-width:860px;margin:0 auto;padding:2rem;color:#222}
+.lead{font-size:1.15rem;border-left:4px solid #8a6d3b;padding-left:1rem;margin:1.5rem 0}
+.tl{display:flex;gap:.6rem;flex-wrap:wrap;margin:1rem 0}.tl span{background:#f3ede2;padding:.2rem .7rem;border-radius:1rem;font-size:.85rem}
+.panel{page-break-inside:avoid;margin:2.2rem 0;border-top:1px solid #ddd;padding-top:1.4rem}
+.panel img{width:100%;border:1px solid #ccc}.cap{font-size:.92rem;color:#555;margin:.4rem 0}
+.story{margin:.6rem 0}.draft{color:#b33;font-size:.8rem}
+.src{margin-top:3rem;font-size:.85rem;color:#777;border-top:2px solid #8a6d3b;padding-top:.8rem}
+</style></head><body><h1>{{전시제목}}</h1><p class=lead>{{도입문}}</p>
+<div class=tl>{{<span>연대</span>…}}</div>
+<div class=panel><img src="{{도판URL}}"><p class=cap>{{[연대] [발급자→수취인] [문서유형]}}</p><p class=story>{{이야기}}</p><span class=draft>{{검토 미완 시: 초안}}</span></div>
+<p class=src>자료: 한국학중앙연구원 한국고문서자료관 (archive.aks.ac.kr) · 이미지 재이용은 기관 이용조건 준수</p></body></html>"""
+
 HELP_GUIDE = '사용 안내 — 매직 키워드 “창기창기 도와줘” (처음 사용자용. 이 내용을 친절한 안내로 정리해 사용자에게 전달하라. 시각 안내 페이지: https://korea-archive-mcp.vercel.app/help.html — 링크를 함께 제공)\n\n■ 무엇을 하는 서비스인가\n국내외 15개 아카이브(미국 NARA·영국 TNA·Internet Archive·프랑스 갈리카·유러피아나·국가기록원·국립중앙도서관·한국사DB·규장각·서울기록원·KOREAN WAR ARCHIVES 협약기관·국가보훈부 등)에서 한국 관련 기록·사진·영상(1860~1960)을 발굴하고, 검증하고, 전파물까지 만들어 준다. 한국어 한 문장이면 충분 — 표기 변형(Corea·Chosen·Corée·한자)과 색인 언어 변환은 자동. 카카오 PlayMCP 마켓 등록본으로도 연결 가능(\'KOREA ARCHIVE 통합검색\' 검색 — 같은 서버).\n\n■ 매직 키워드 2개\n① “○○○ 풀패키지로 만들어줘” — 조사→검증→매거진 보고서→카드뉴스 8장→포스터→홍보·입문·메시지 카드→발표 PPTX(대본 포함)→기록 해설→Canva 편집본→KARDA 연구 데이터·시연 영상(데모 GIF)까지 전 산출물 자동(report_template kind=full_package 순서를 따름).\n② “창기창기 도와줘” — 이 사용 안내.\n\n■ 이렇게 물어보면 된다 (예시)\n· “할아버지가 참전한 글로스터 연대 기록 찾아줘” (실전 1호 — TNA 훈장 추천서 원문까지)\n· “장진호 전투 영상 기록 찾아줘” (실전 2호 — 3개국 3중 소장 실증)\n· “조선시대 한강 나루의 행정을 정리해줘” (법전 판독→형제 조 전수→연대 검증 제도사)\n· “병인양요 프랑스 기록 찾아줘” / “이 참조코드 주변을 더 캐줘”(인접 채굴) / “이 기록 게재 가능한지 판정해줘”\n\n■ 검증 원칙(차별점) — 실물 기록만(AI 생성 인물·장면 금지)·원문 대조·출처 명시·정정 공개. 통과 산출물에만 검증 낙관.\n\n■ 자주 묻는 것\n· 0건 → 부재가 아니다. 표기 변형·인접 채굴·“대상을 관리한 행정”으로 전환.\n· ZIP 일괄 납품은 로컬 환경 전용 — 웹·모바일은 개별 아티팩트+manifest.\n· 이미지: 웹은 기관 공개 URL 참조 — 원본은 항상 기관 링크에서 열람.\n· 조선 주제 → nedb_search 심층 판독 모드(law·sibling·matrix·origin·record·sjw·kyujanggak).\n\n커넥터: korea-archive-mcp.vercel.app/api/mcp · 안내 페이지: korea-archive-mcp.vercel.app/help.html'
 
 FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물까지 한 번에 (매직 키워드: "풀패키지" · "전부 다 만들어줘")
@@ -1176,7 +1246,8 @@ def report_template(kind: str = "report") -> str:
     영상 알림·A4 리플릿)과 실전 검증된 환각 교정 절차를 반환한다.
     사용자가 "풀패키지"(또는 full-package)라고 하면 kind="full_package"를 먼저 호출 — 조사→보고서→캐러셀→포스터
     전 산출물 제작 순서를 받아 그대로 수행한다. kind="help"는 매직 키워드 "창기창기 도와줘"(또는 changgi-help) —
-    처음 사용자 안내(사용법·예시·FAQ+안내 페이지 링크)를 반환한다."""
+    처음 사용자 안내(사용법·예시·FAQ+안내 페이지 링크)를 반환한다.
+    kind="exhibit"은 고문서 전시형(AKS 문중·서원 고문서 — 전시 페이지·카드·학습지 규칙+HTML 골격)을 반환한다."""
     if kind == "magazine":
         return MAGAZINE_PACK
     if kind == "help":
@@ -1185,6 +1256,8 @@ def report_template(kind: str = "report") -> str:
         return CITATION_GUIDE
     if kind == "annotation":
         return ANNOTATION_GUIDE
+    if kind == "exhibit":
+        return EXHIBIT_GUIDE
     if kind == "full_package":
         return FULL_PACKAGE
     if kind == "canva_prompts":
@@ -1880,7 +1953,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
 
 
 @mcp.tool()
-def archives_search(query: str, max_results: int = 10) -> str:
+def archives_search(query: str, max_results: int = 10,
+                    year_from: int | None = None, year_to: int | None = None) -> str:
     """국가기록원 국가기록포털(archives.go.kr). 정식 OpenAPI(RSS) — data.go.kr '나라기록물정보 서비스'
     (15000153) 무료 키를 환경변수 ARCHIVES_API_KEY로 설정하면 서버가 자동 검색해 결과를 반환한다.
     키가 없으면 포털 열람 URL을 반환. 노획문서·정부기록. 공공누리(KOGL) 유형 확인 후 이용."""
@@ -1888,8 +1962,9 @@ def archives_search(query: str, max_results: int = 10) -> str:
     portal = "https://www.archives.go.kr/next/newsearch/listSubjectDescription.do?query=" + _up.quote(query)
     if key:
         sk = key if ('%' in key) else _up.quote(key)  # data.go.kr Encoding키는 그대로, Decoding키는 인코딩
+        yfilt = bool(year_from or year_to); yf, yt2 = (year_from or 0), (year_to or 9999)
         api = ("https://apis.data.go.kr/1741050/openapi/searcharc?serviceKey=" + sk
-               + "&query=" + _up.quote(query) + f"&start=1&limit={min(max_results, 50)}")
+               + "&query=" + _up.quote(query) + f"&start=1&limit={50 if yfilt else min(max_results, 50)}")
         try:
             xml = _http_text(api, 20)
             if "searchError" not in xml and "<item>" in xml:
@@ -1898,10 +1973,17 @@ def archives_search(query: str, max_results: int = 10) -> str:
                     return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
                 tot = t(xml, "total") or "?"
                 items = re.findall(r"<item>(.*?)</item>", xml, re.S)
+                if yfilt:
+                    def _py(i):
+                        m = re.search(r"\d{4}", t(i, "prod_year"))
+                        return int(m.group(0)) if m else None
+                    items = [i for i in items if (_py(i) and yf <= _py(i) <= yt2)]
                 lines = [f"- {t(i,'title')[:90]} ({t(i,'prod_year')}) · {t(i,'prod_name')[:20]} "
                          f"[{'공개' if t(i,'is_open')=='1' else '비공개'}] {t(i,'link')}"
                          for i in items[:max_results]]
-                return (f"국가기록원 '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)")
+                ytag = f" [생산 {year_from or ''}~{year_to or ''} · 상위 50건 내 후처리]" if yfilt else ""
+                return (f"국가기록원 '{query}'{ytag} — 총 {tot}건" + (f" 중 연대 일치 {len(items)}건" if yfilt else "") + ":\n"
+                        + ("\n".join(lines) or "(0건)")
                         + "\n공공누리(KOGL) 유형 확인 후 이용. 비공개 항목은 정보공개청구 대상.")
             m = re.search(r"<message>(.*?)</message>", xml, re.S)
             return _agent_browse("국가기록원", query, portal, f"API 오류: {m.group(1).strip() if m else '결과 없음'}")
@@ -1912,7 +1994,8 @@ def archives_search(query: str, max_results: int = 10) -> str:
 
 
 @mcp.tool()
-def nlk_search(query: str, collection: str = "total", category: str = "", max_results: int = 15) -> str:
+def nlk_search(query: str, collection: str = "total", category: str = "", max_results: int = 15,
+               year_from: int | None = None, year_to: int | None = None) -> str:
     """국립중앙도서관(nl.go.kr) 디지털 컬렉션 검색. collection: 'total'(전체 소장자료)·'subject'(주제별)·
     'newspaper'(대한민국신문아카이브 1883-1960 고신문, 저작권만료 자유이용)·'gwanbo'(관보)·'exhibit'(전시)·
     'koreanmemory'(코리안메모리)·'overseas'(해외 한국관련자료). NLK_API_KEY(www.nl.go.kr Open API)를 설정하면
@@ -1940,9 +2023,10 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
     note = NOTE.get(c, "")
     key = os.environ.get("NLK_API_KEY")
     if api_ok and key:
+        yfilt = bool(year_from or year_to); yf, yt2 = (year_from or 0), (year_to or 9999)
         base_api = ("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key)
                     + "&apiType=xml&srchTarget=total&kwd=" + _up.quote(query)
-                    + f"&pageSize={min(max_results, 50)}&pageNum=1")
+                    + f"&pageSize={50 if yfilt else min(max_results, 50)}&pageNum=1")
 
         def t(bl, x):
             m = re.search(rf"<{x}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{x}>", bl, re.S)
@@ -1951,6 +2035,11 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
         def parse(xml):
             tot = t(xml, "total") or "?"
             items = re.findall(r"<item>(.*?)</item>", xml, re.S)
+            if yfilt:
+                def _py(it):
+                    m = re.search(r"\d{4}", t(it, "pub_year_info") or t(it, "pubYearInfo"))
+                    return int(m.group(0)) if m else None
+                items = [it for it in items if (_py(it) and yf <= _py(it) <= yt2)]
 
             def pick(bl, tags):
                 for tg in tags:
@@ -2323,7 +2412,8 @@ def changgi_help() -> str:
 
 
 @mcp.tool()
-def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False) -> str:
+def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False,
+                 format: str = "text") -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
     (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,warmemo,seoul,foia,aks). 해외(tna·ia·gallica·europeana)와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
@@ -2355,6 +2445,14 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 jobs.append((f"{src}·{label}", (lambda src=src, vq=vq: _COLLECT[src](vq, n))))
     items, stats = _collect_merged(jobs)
     items.sort(key=lambda it: -len(it["sources"]))
+    if format == "csv":  # 분석 투입용 구조화 출력 — "자료로써 분석할 수 있게"
+        def esc(v):
+            return '"' + str(v if v is not None else "").replace('"', '""') + '"'
+        rows = [",".join(esc(x) for x in ("+".join(it["sources"]), it["title"], it["date"], it["id"], it["url"]))
+                for it in items[:45]]
+        return (f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
+                + "sources,title,date,id,url\n" + "\n".join(rows)
+                + "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights.")
     lines = [f"- [{'+'.join(it['sources'])}] {it['title'][:95]}"
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")
              for it in items[:45]]

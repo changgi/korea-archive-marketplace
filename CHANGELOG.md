@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-19 v1.19.0
+- **국내 연대 필터**: `archives_search`·`nlk_search`에 year_from/year_to — API가 연대 파라미터를 지원하지 않으므로 상위 50건 내 후처리 필터로 구현하고 라벨에 '후처리' 명시 (koreanwar는 기존 서버사이드 필터 유지)
+- **인접 채굴 일반화**: `nara_search(naid, radius)` — NAID ±N을 naIds 콤마 목록 **한 호출**로 일괄 조회(NARA 공식 문서 기반, 사진 ±3·색인 ±1 간격 지식 안내) · `ia_search(identifier, radius)` — 일련번호 말미 숫자 ±N 존재 확인(실측: 111-adc-10076±2 → 4건 실존). TNA·koreanwar에 이어 4기관째
+- **`cross_search(format='csv')`**: 병합 결과를 sources,title,date,id,url CSV 블록으로 — 스프레드시트·KARDA 온톨로지·통계 분석 직투입("자료로써 분석할 수 있게")
+- **`report_template(kind='exhibit')`**: 고문서 전시형 산출물 규칙+HTML 골격 — aks-archive-harvester 스킬 ④매개 단계의 서버판(전시 페이지·카드 1080×1350·학습지 A4·게시 문구, 추정 금지 캡션 규칙, AKS 출처 고지). 제1원칙(웹·모바일 동등성) 잔여 공백 해소
+
 ## 2026-11-18 v1.18.1
 - **응답 24KB 공통 가드**: server.tool 래퍼(Node)·등록 후 일괄 래핑(Python, mcp<2 전제)에 UTF-8 바이트 실측 트렁케이션(여유 23,800B) — PlayMCP 한도를 도구별 수동 slice가 아니라 구조적으로 보장. 절단 시 분할 조회(page·max_results) 안내 부착
 - **CI 자동화(GitHub Actions)**: 양 저장소 `verify`(push·PR마다 node --check·py_compile·도구 20종·설명 1024자·TOPICS 컴파일·3사본 패리티 diff·런타임 등록) + mcp 저장소 `health`(주간 프로덕션 13채널 골든 질의 실측 — 🔴 3채널 이상이면 실패 알림). 수동 검증 체계의 자동화 — Gallica류 무증상 장애 재발 방지
