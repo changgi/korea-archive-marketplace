@@ -1891,13 +1891,17 @@ def _aks_mode(query: str) -> str:
                       f"웹에서는 뷰어 열람: {_AKS_BASE}/viewer/viewer.do"
                     + "\n출처 표기: 한국학중앙연구원 한국고문서자료관. 이미지 재이용은 기관 이용조건 준수.")
         exact_col = next((c for c in _AKS_CAT if c["id"] == q), None)  # 비표준 ID 포함 정확일치 우선
-        m = None if exact_col else re.match(r"^(L\d{6})(F\d{2,4})?$", q)
-        if exact_col or m:  # 소장처/분류 노드 → 하위 트리 라이브 조회
-            col = exact_col or next((c for c in _AKS_CAT if c["id"] == m.group(1)), None)
+        # 비표준 하위 분류('L0809  F0206' — 공백 포함, 카탈로그 밖): 부모 분류(F02)를 카탈로그에서 유도
+        nm = None if exact_col else re.match(r"^(L\d{4,6})(\s+)(F\d{4})$", q)
+        nm_parent = nm and next((c for c in _AKS_CAT
+                                 if c["id"] == nm.group(1) + nm.group(2) + nm.group(3)[:3]), None)
+        m = None if (exact_col or nm_parent) else re.match(r"^(L\d{6})(F\d{2,4})?$", q)
+        if exact_col or nm_parent or m:  # 소장처/분류 노드 → 하위 트리 라이브 조회
+            col = exact_col or nm_parent or next((c for c in _AKS_CAT if c["id"] == m.group(1)), None)
             if not col:
                 return f"'{q}' — 소장처 목록(172곳)에 없는 ID. mode=aks에 소장처명을 넣어 먼저 검색하십시오."
-            chain = [] if exact_col else _aks_chain(m.group(1), m.group(2) or "")
-            up = col["up"] if exact_col else \
+            chain = [] if (exact_col or nm_parent) else _aks_chain(m.group(1), m.group(2) or "")
+            up = col["up"] if exact_col else (col["up"] + "^" + col["id"]) if nm_parent else \
                 "^".join([col["up"]] + ([m.group(1)] + chain[:-1] if m.group(2) else []))
             _aks_url = (f"{_AKS_BASE}/viewer/treeAjax.do?itemId=book&gubun=booktree"
                         f"&depth={len(up.split('^')) + 1}&upPath={_up.quote(up)}&dataId={_up.quote(q)}&itemType=")
