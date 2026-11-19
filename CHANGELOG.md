@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-19 v1.19.1
+- **문서 현행화**: README(양 저장소)·HELP_GUIDE(창기창기 안내)·mcp/README 도구 표 — v1.17~1.19 신기능(연대 필터·인접 채굴 4기관·cross_search 13소스·variants·csv·health·KOGL·exhibit·24KB 가드) 전면 반영. README에 발굴 우선 원칙 명시
+- **TTL 캐시**: 전투정보 목록(warList)·AKS 분류 트리 6시간 인메모리 캐시(웜 인스턴스) — 오류 응답은 캐시하지 않음
+- **PlayMCP 심사 대응 팩**: docs/playmcp-review-pack.md — 제약 준수 요약·반려 해소 증빙·실측 시연 질의 10선·채널 상태
+
 ## 2026-11-19 v1.19.0
 - **국내 연대 필터**: `archives_search`·`nlk_search`에 year_from/year_to — API가 연대 파라미터를 지원하지 않으므로 상위 50건 내 후처리 필터로 구현하고 라벨에 '후처리' 명시 (koreanwar는 기존 서버사이드 필터 유지)
 - **인접 채굴 일반화**: `nara_search(naid, radius)` — NAID ±N을 naIds 콤마 목록 **한 호출**로 일괄 조회(NARA 공식 문서 기반, 사진 ±3·색인 ±1 간격 지식 안내) · `ia_search(identifier, radius)` — 일련번호 말미 숫자 ±N 존재 확인(실측: 111-adc-10076±2 → 4건 실존). TNA·koreanwar에 이어 4기관째

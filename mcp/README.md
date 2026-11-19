@@ -21,7 +21,7 @@ Claude Desktop / Claude Code / Cowork 등 MCP 지원 에이전트에 한국 기�
 **국내 (9)** — 서버 사이드 자동 브라우징
 | 도구 | 기능 | 키 |
 |---|---|---|
-| `nedb_search` | 국사편찬위 한국사DB (1차 사료 1,100만+) | 불요 |
+| `nedb_search` | 국사편찬위 한국사DB (1차 사료 1,100만+) + 10모드(조선 심층 판독·`aks` 한국고문서자료관 172곳) | 불요 |
 | `archives_search` | 국가기록원 OpenAPI | `ARCHIVES_API_KEY`(data.go.kr 15000153) |
 | `nlk_search` | 국립중앙도서관 6개 컬렉션 | 선택 `NLK_API_KEY` |
 | `seoul_archives_search` | 서울기록원 카탈로그 | 불요 |
@@ -35,10 +35,10 @@ Claude Desktop / Claude Code / Cowork 등 MCP 지원 에이전트에 한국 기�
 | 도구 | 기능 | 키 |
 |---|---|---|
 | `query_bank` | 검증된 쿼리 세트 (44그룹·RG·TNA) + 국내 3대 부정합 키워드셋 252종 (`domestic`) | 불요 |
-| `judge_rights` | 권리 등급 자동 초기판정 (§30) | 불요 |
+| `judge_rights` | 권리 등급 자동 초기판정 (§30) + 공공누리 KOGL 1~4유형 | 불요 |
 | `report_template` | 조사 결과를 HTML 발굴 보고서로 생성 | 불요 |
-| `cross_search` | 여러 아카이브 한 쿼리로 동시 교차수집·병합 (상호보완) | 해외 불요 |
-| `source_profile` | 기관 자료·이용·활용구조 3층 프로파일 (해외 5+국내 6) | 불요 |
+| `cross_search` | 13소스 동시 교차수집·병합 + variants(당대 표기 팬아웃)·format=csv | 해외 불요 |
+| `source_profile` | 기관 3층 프로파일 + `health` 13채널 헬스체크 | 불요 |
 
 ## 설치 (로컬 직접 실행)
 
