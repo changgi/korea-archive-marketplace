@@ -1614,6 +1614,19 @@ def _jacar_mode(q, span, max_results):
         return f"JACAR 조회 실패({e}) — https://www.jacar.archives.go.jp 직접 검색."
 
 
+def _c_nlna(q, n):
+    """네덜란드 국립문서보관소 — 공개 JSON API 실측(2026-11-20, Playwright 역추적). 주한 대사관·파견부대 문서군."""
+    en = _ko_en(q) or q
+    d = json.loads(_http_text(f"https://zvt.nationaalarchief.nl/api/search/eads?page=1&rows={min(n, 10)}"
+                              f"&q={_up.quote(en)}&sortBy=_score", 25))
+    out = []
+    for r in (d.get("results") or [])[:n]:
+        out.append({"title": str(r.get("title", ""))[:95] + (" [문서군]" if r.get("type") == "ARCHIVE" else ""),
+                    "date": str(r.get("period", "")), "id": str(r.get("id", "")),
+                    "url": "https://www.nationaalarchief.nl/onderzoeken/archief/" + _up.quote(str(r.get("id", "")))})
+    return out
+
+
 def _c_awm(q, n):
     """호주 전쟁기념관(AWM) — 검색 모자이크(SSR C-id) → 상세 순차로 제목·수장번호 (2026-11-20 실측)."""
     en = _ko_en(q) or q
@@ -1630,7 +1643,10 @@ def _c_awm(q, n):
             d = _http_text("https://www.awm.gov.au/collection/" + cid, 25)
             h1 = re.search(r"<h1[^>]*>\s*(?:<[^>]+>\s*)*([^<]{3,120})", d)
             acc = re.search(r"(?:Accession Number|ID number)[^A-Z0-9]{0,40}([A-Z0-9/.\-]{3,20})", d)
-            out.append({"title": _clean(h1.group(1)) if h1 else cid, "date": "",
+            pd = bool(re.search(r"Copyright expired - public domain|publicdomain/mark", d))
+            conf = re.search(r"Conflict[^<]*</[a-z0-9]+>\s*<[^>]*>\s*(?:<[^>]+>\s*)*([^<]{4,40})", d)
+            out.append({"title": (_clean(h1.group(1)) if h1 else cid) + (" · 권리:PD(저작권 만료)" if pd else ""),
+                        "date": _clean(conf.group(1)) if conf else "",
                         "id": acc.group(1) if acc else cid,
                         "url": "https://www.awm.gov.au/collection/" + cid})
         except Exception:
@@ -1769,7 +1785,7 @@ def _c_aks(q, n):
 
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
-            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm,
+            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm, "nlna": _c_nlna,
             "ktv": _c_ktv, "seoul": _c_seoul,
             "foia": _c_foia, "aks": _c_aks}
 
@@ -2644,7 +2660,7 @@ def changgi_help() -> str:
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False,
                  format: str = "text") -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,i815,ktv,kyudb,jsg,awm,seoul,foia,aks). 해외와
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,i815,ktv,kyudb,jsg,awm,nlna,seoul,foia,aks). 해외와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
@@ -2696,12 +2712,12 @@ def source_profile(institution: str = "list") -> str:
     """기관 자료·이용·활용구조 프로파일 — 발굴 전략 수립용. 자료구조(계층·분류·식별자·메타),
     이용구조(API·인증·쿼리문법·robots·권리), 활용구조(3대 부정합·키워드셋·교차매핑·인접확장·교차검증 조합).
     institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia);
-    'health'=19채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
+    'health'=20채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
     t = (institution or "list").strip().lower()
     if t == "health":  # 발굴 우선 원칙의 전제: 깨짐을 스스로 발견한다
         GOLD = {"tna": "Korea", "ia": "Korea", "gallica": "Corée", "europeana": "Korea", "nara": "Korea",
                 "archives": "한국전쟁", "nlk": "한국전쟁", "nedb": "한강", "koreanwar": "장진호",
-                "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "ktv": "대한뉴스", "kyudb": "절목", "jsg": "의궤", "awm": "Kapyong",
+                "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "ktv": "대한뉴스", "kyudb": "절목", "jsg": "의궤", "awm": "Kapyong", "nlna": "Korea",
                 "seoul": "한강", "foia": "회의", "aks": "문중"}
         keys = {k: bool(os.environ.get(k)) for k in
                 ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
@@ -2714,7 +2730,7 @@ def source_profile(institution: str = "list") -> str:
                             + ("" if r else " — 연결 정상·결과/파싱 0"))
             except Exception as e:
                 rows.append(f"🔴 {k}: {str(e)[:70]}")
-        return ("19채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
+        return ("20채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
                 + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃). "
                   "nedb ✗=개방파일 인덱스 미설정.")

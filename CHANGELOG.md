@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-20 v1.26.0
+- **네덜란드 국립문서보관소 합류 — cross_search 20소스**: SPA 셸 뒤의 공개 JSON API(zvt…/api/search/eads)를 Playwright 역추적으로 확보(키 불요). 'Korea' 243건 — 주한 네덜란드 대사관(2.05.202)·한국전 파견부대(2.13.56) 문서군 직행
+- **AWM 심화**: 상세 파싱에 권리 자동 태그(저작권 만료 → `권리:PD`)·Conflict 기간(date) — 해외 소스 권리 표시 1호
+- 뉴질랜드 Papers Past는 Incapsula 게이트로 보류 기록
+
 ## 2026-11-20 v1.25.0
 - **호주 전쟁기념관(AWM) 합류 — cross_search 19소스**: 검색 모자이크(SSR C-id)→상세 병렬 2단 수집으로 제목·수장번호 확보(실측: Kapyong → 가평 계곡 1952 항공 조망 147844·파노라마 HOBJ3143~45). 한국전 영연방 축 신설
 - **캐나다·독일·UN 접근 판정 기록**(docs/overseas-expansion-spec.md): LAC=Cloudflare Turnstile 차단(대안: AWM·TNA 교차), UN=자체 JS 챌린지(AtoM — 완화 시 즉시 합류 가능), 독일=DDB 무료 API 키 확보 시 `ddb` 합류 경로 + Europeana가 독일권 기집계
