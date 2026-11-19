@@ -1532,10 +1532,16 @@ def _c_koreanwar(q, n):
     _, cards = _kw_search({"keyword": q, "viewType": "archive"})
     return [{"title": c["title"], "date": "", "id": c["id"], "url": c["url"]} for c in cards[:n]]
 
-_JA_MAP = [("조선총독부", "朝鮮総督府"), ("총독부", "総督府"), ("조선", "朝鮮"), ("경성", "京城"), ("한국", "朝鮮"),
-           ("독립운동", "独立運動"), ("의병", "義兵"), ("위안부", "慰安婦"), ("징용", "徴用"), ("강제동원", "強制動員"),
-           ("관동군", "関東軍"), ("만주", "満州"), ("간도", "間島"), ("임시정부", "臨時政府"), ("안중근", "安重根"),
-           ("이토 히로부미", "伊藤博文")]
+_JA_MAP = [("조선총독부", "朝鮮総督府"), ("이토 히로부미", "伊藤博文"), ("강제동원", "強制動員"), ("인천상륙", "仁川上陸"),
+           ("한국전쟁", "朝鮮戦争"), ("창씨개명", "創氏改名"), ("동양척식", "東洋拓殖"), ("조선은행", "朝鮮銀行"),
+           ("재일조선인", "在日朝鮮人"), ("독립운동", "独立運動"), ("임시정부", "臨時政府"), ("3·1운동", "三・一運動"),
+           ("삼일운동", "三・一運動"), ("만주국", "満州国"), ("관동군", "関東軍"), ("황민화", "皇民化"), ("학도병", "学徒兵"),
+           ("위안소", "慰安所"), ("위안부", "慰安婦"), ("독립군", "独立軍"), ("의열단", "義烈団"), ("광복군", "光復軍"),
+           ("연해주", "沿海州"), ("사할린", "樺太"), ("신의주", "新義州"), ("총독부", "総督府"), ("장진호", "長津湖"),
+           ("안중근", "安重根"), ("윤봉길", "尹奉吉"), ("이봉창", "李奉昌"), ("여운형", "呂運亨"), ("김구", "金九"),
+           ("헌병", "憲兵"), ("특고", "特高"), ("징용", "徴用"), ("의병", "義兵"), ("간도", "間島"), ("만주", "満州"),
+           ("경성", "京城"), ("평양", "平壌"), ("부산", "釜山"), ("인천", "仁川"), ("원산", "元山"), ("청진", "清津"),
+           ("상해", "上海"), ("중경", "重慶"), ("조선", "朝鮮"), ("한국", "朝鮮")]
 
 
 def _ko_ja(q):
@@ -1545,6 +1551,71 @@ def _ko_ja(q):
         if k in out:
             out = out.replace(k, j); hit = True
     return out if hit else None
+
+
+def _jacar_meta(code):
+    try:
+        h = _http_text("https://www.jacar.archives.go.jp/das/meta-en/" + code, 25)
+    except Exception:
+        return None
+    def g(label):
+        m = re.search(label + r"</(?:th|dt)>\s*<(?:td|dd)[^>]*>\s*(?:<[^>]+>\s*)*([^<]{1,160})", h)
+        return _clean(m.group(1)) if m else ""
+    return {"title": g("Title"), "creator": g("Creator"), "imgs": g("Number of Images"),
+            "org": g("Organisation History"), "cls": g("Classification Levels")}
+
+
+def _jacar_mode(q, span, max_results):
+    """JACAR — 검색(한→일 우선)·레퍼런스코드 메타 직행·±span×100 인접 채굴(간격 100 실측)."""
+    import time as _t
+    try:
+        cm = re.match(r"^([A-Z])(\d{11})$", q)
+        if cm:
+            base = _jacar_meta(q)
+            if not base or not base["title"]:
+                return f"JACAR '{q}' — 해당 레퍼런스코드 없음."
+            out = (f"JACAR [{q}] {base['title']}\n생산: {base['creator'] or '-'} | 이미지 {base['imgs'] or '?'}면 | "
+                   f"{base['org']}" + (f" | {base['cls']}" if base["cls"] else "")
+                   + f"\n원문 뷰어: https://www.jacar.archives.go.jp/das/meta/{q}")
+            sp = min(span, 8)
+            n0 = int(cm.group(2)); lines = []
+            for k in range(-sp, sp + 1):
+                if not k:
+                    continue
+                code = cm.group(1) + str(n0 + k * 100).zfill(11)
+                m3 = _jacar_meta(code)
+                lines.append(f"  {code} | {m3['title'][:80]}" if (m3 and m3["title"]) else f"  {code} (없음)")
+                _t.sleep(0.25)
+            out += f"\n\n[인접 채굴 ±{sp}×100 — 簿冊 내 건 번호 간격 100 실측(±1·±10은 404)]\n" + "\n".join(lines)
+            return out + "\n※ 출처 병기: 国立公文書館アジア歴史資料センター(JACAR), Ref. " + q
+        eff = _ko_ja(q) or _ko_en(q) or q
+        b = _http_text("https://www.jacar.archives.go.jp/aj/search-en?kw=" + _up.quote(eff), 30)
+        rows = []
+        for blk in b.split('<li class="archive-result-table__body-item"')[1:]:
+            c = re.search(r'value="aj\d+/([A-Z]\d{11})"', blk)
+            t = re.search(r'id="row-\d+-title"[\s\S]*?<span\s*>([^<]{3,150})', blk)
+            if c and t:
+                rows.append(f"- [{c.group(1)}] {_clean(t.group(1))[:90]}\n  https://www.jacar.archives.go.jp/das/meta-en/{c.group(1)}")
+            if len(rows) >= max_results:
+                break
+        tag = f" → '{eff}'" if eff != q else ""
+        return (f"JACAR '{q}'{tag} — 이 페이지 {len(rows)}건:\n" + ("\n".join(rows) or "(0건 — 일본어 원표기(한자) 병행 권장)")
+                + "\n※ 레퍼런스코드(영문1+숫자11)를 query로 주면 메타 직행 + span 인접 채굴(±span×100). "
+                  "A=공문서관·B=외무성 외교사료관·C=방위연구소.")
+    except Exception as e:
+        return f"JACAR 조회 실패({e}) — https://www.jacar.archives.go.jp 직접 검색."
+
+
+def _c_kyudb(q, n):
+    """서울대 규장각 — 기존 kyujanggak 코어(joseon_tools) 재사용."""
+    if _jt is None:
+        return []
+    r = _jt.kyujanggak_search(q, area="both")
+    sec = (r.get("sections") or {}) if isinstance(r, dict) else {}
+    lst = sec.get("목록")
+    if not isinstance(lst, list):
+        return []
+    return [{"title": str(t), "date": "", "id": "", "url": "https://kyudb.snu.ac.kr"} for t in lst[:n]]
 
 
 def _c_i815(q, n):
@@ -1648,7 +1719,7 @@ def _c_aks(q, n):
 
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
-            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815,
+            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "kyudb": _c_kyudb,
             "ktv": _c_ktv, "seoul": _c_seoul,
             "foia": _c_foia, "aks": _c_aks}
 
@@ -2007,11 +2078,13 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     item=levelId 본문 판독(미공개/파싱실패 구분) · sibling=★형제 조 전수 스캔(조문을 열었으면 반드시 이어 호출) ·
     matrix=법전 수록 대조(쉼표구분 어휘 — 부재의 발견) · origin=어휘 연원('용어' 또는 '용어,영역') ·
     sjw=승정원일기(왕대 분포·최초 용례) · kyujanggak=규장각(목록+해제 동시 — 절목류는 해제에서 발견).
-    aks=한국고문서자료관(archive.aks.ac.kr) 문중·서원 고문서 — 소장처 172곳 검색→분류→문서 면·썸네일
+    aks=한국고문서자료관(소장처 172곳→분류→문서 면·썸네일) · jacar=일본 아시아역사자료센터(한→일 변환 검색·레퍼런스코드 메타 직행·±span×100 인접)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
         return _aks_mode(query)
+    if mode == "jacar":
+        return _jacar_mode(query.strip(), span, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
@@ -2521,7 +2594,7 @@ def changgi_help() -> str:
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False,
                  format: str = "text") -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,i815,ktv,seoul,foia,aks). 해외와
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,i815,ktv,kyudb,seoul,foia,aks). 해외와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
@@ -2573,12 +2646,12 @@ def source_profile(institution: str = "list") -> str:
     """기관 자료·이용·활용구조 프로파일 — 발굴 전략 수립용. 자료구조(계층·분류·식별자·메타),
     이용구조(API·인증·쿼리문법·robots·권리), 활용구조(3대 부정합·키워드셋·교차매핑·인접확장·교차검증 조합).
     institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia);
-    'health'=16채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
+    'health'=17채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
     t = (institution or "list").strip().lower()
     if t == "health":  # 발굴 우선 원칙의 전제: 깨짐을 스스로 발견한다
         GOLD = {"tna": "Korea", "ia": "Korea", "gallica": "Corée", "europeana": "Korea", "nara": "Korea",
                 "archives": "한국전쟁", "nlk": "한국전쟁", "nedb": "한강", "koreanwar": "장진호",
-                "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "ktv": "대한뉴스",
+                "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "ktv": "대한뉴스", "kyudb": "절목",
                 "seoul": "한강", "foia": "회의", "aks": "문중"}
         keys = {k: bool(os.environ.get(k)) for k in
                 ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
@@ -2591,7 +2664,7 @@ def source_profile(institution: str = "list") -> str:
                             + ("" if r else " — 연결 정상·결과/파싱 0"))
             except Exception as e:
                 rows.append(f"🔴 {k}: {str(e)[:70]}")
-        return ("16채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
+        return ("17채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
                 + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃). "
                   "nedb ✗=개방파일 인덱스 미설정.")
