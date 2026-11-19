@@ -236,18 +236,24 @@ def nara_search(query: str, record_group: int | None = None,
     record_group으로 RG 교차 정밀검색(예: 242), moving_images_only로 영상 한정."""
     key = os.environ.get("NARA_API_KEY")
     if not key: return "NARA_API_KEY 미설정 — Catalog_API@nara.gov 로 무료 발급(이름+이메일)."
-    if naid:  # NAID ± 인접 채굴 — 한 호출로 일괄 조회(naIds 콤마 목록). 간격 지식: 사진 ±3·색인 ±1
+    if naid:  # NAID ± 인접 채굴 — v2는 단수 naId만 수용(naIds=400 실측) → 순차 조회. 간격: 사진 ±3·색인 ±1
+        import time as _t
         ids = [i for i in range(naid - radius, naid + radius + 1) if i > 0]
-        d2 = http_json("https://catalog.archives.gov/api/v2/records/search?naIds="
-                       + ",".join(map(str, ids)) + f"&limit={len(ids)}", headers={"x-api-key": key})
-        got = {}
-        for h in (((d2.get("body") or {}).get("hits") or {}).get("hits") or []):
-            rec = (h.get("_source") or {}).get("record") or {}
-            if rec.get("naId"):
-                got[int(rec["naId"])] = rec
-        lines = [(f"{'★' if i == naid else ' '} [NAID {i}] {got[i].get('title','')[:95]} | "
-                  f"{got[i].get('localIdentifier','')} | https://catalog.archives.gov/id/{i}")
-                 if i in got else f"  [NAID {i}] (없음)" for i in ids]
+        lines = []
+        for i in ids:
+            try:
+                d2 = http_json(f"https://catalog.archives.gov/api/v2/records/search?naId={i}&limit=1",
+                               headers={"x-api-key": key})
+                hits2 = (((d2.get("body") or {}).get("hits") or {}).get("hits") or [])
+                rec = ((hits2[0].get("_source") or {}).get("record") or {}) if hits2 else {}
+                if rec.get("naId") and int(rec["naId"]) == i:
+                    lines.append(f"{'★' if i == naid else ' '} [NAID {i}] {rec.get('title','')[:95]} | "
+                                 f"{rec.get('localIdentifier','')} | https://catalog.archives.gov/id/{i}")
+                else:
+                    lines.append(f"  [NAID {i}] (없음)")
+            except Exception as e:
+                lines.append(f"  [NAID {i}] 오류({e})")
+            _t.sleep(0.15)
         return (f"NARA NAID 인접 채굴 {naid}±{radius} (★=중심, 한국 관련 여부는 제목으로 판별):\n"
                 + "\n".join(lines)
                 + "\n※ 간격 지식: 사진 계열 ±3·색인 ±1 — 하나 찾으면 양옆을 훑는다(query_bank identifiers).")
