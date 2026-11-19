@@ -1803,6 +1803,8 @@ def _gonghun_mode(query: str, max_results: int) -> str:
                 mi = re.search(r"수록정보[:\s]*([^)]{3,40}\))", seg)
                 rok_info = mi.group(1) if mi else ""
                 body = re.sub(r"^[\s\S]{0,80}?수록정보[:\s]*[^)]{3,40}\)\s*", "", seg).strip()
+                # 본문 경계: 게시판(감사의 글)·JS 찌꺼기 절단. 수형기록·묘소·현충시설 표는 분석 가치가 있어 유지
+                body = re.sub(r"\$\{\w+\}", "", re.sub(r"function\s+fn[\s\S]*$", "", body.split("감사의 글")[0])).strip()
                 rok = body[:4000] + (f" …(총 {len(body)}자 — 전문은 원문 링크)" if len(body) > 4000 else "")
             if not name and not summary:
                 return f"[mngNo {q}] 공훈전자사료관 상세 파싱 실패 — 관리번호를 확인하거나 mode=gonghun에 이름으로 검색하십시오."
