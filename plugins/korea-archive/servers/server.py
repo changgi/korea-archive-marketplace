@@ -1771,6 +1771,60 @@ def _c_gonghun(q, n):
     return out
 
 
+def _gonghun_mode(query: str, max_results: int) -> str:
+    """공훈전자사료관 심층 — 이름 목록 / mngNo 판독(공적조서·공훈록 본문). Node nedb_search mode='gonghun' 패리티."""
+    import base64 as _b64
+    q = query.strip()
+    b64d = lambda s: (_b64.b64decode(s).decode("utf-8") if s else "")
+    try:
+        if re.match(r"^\d+$", q):  # mngNo 상세
+            b = _cached_text("gonghunD:" + q, 24 * 3600,
+                             lambda: _http_text(f"https://e-gonghun.mpva.go.kr/user/ContribuReportDetail.do?goTocode=20001&mngNo={q}&pageTitle=Report", 28),
+                             "achivement_1")
+            pick = lambda rx: (re.search(rx, b) or [None, ""])[1] or ""
+            try:
+                name = b64d(pick(r"utf8_decode\('([A-Za-z0-9+/=]+)',\s*'#namekoDiv'"))
+            except Exception:
+                name = ""
+            hanja = _clean(pick(r"<th>한자</th>\s*<td>([\s\S]*?)</td>"))
+            alias = _clean(pick(r"<th>이명</th>\s*<td>([\s\S]*?)</td>"))
+            try:
+                birth = b64d(pick(r"utf8_decode\('([A-Za-z0-9+/=]*)',\s*'#birthdayenm'"))
+                death = b64d(pick(r"utf8_decode\('([A-Za-z0-9+/=]*)',\s*'#deathdatenm'"))
+            except Exception:
+                birth = death = ""
+            bon = " ".join(x for x in (b64d(m.group(1)) for m in re.finditer(r"utf8_decode\('([A-Za-z0-9+/=]+)',\s*'#famp\d'", b)) if x)
+            aw = re.search(r"포상년도\s*([\d/]+)\s*훈격\s*(\S{1,30})", _clean(b))
+            summary = _clean(pick(r'id="achivement_1"[^>]*>([\s\S]*?)</div>'))
+            i2 = b.find('id="tab2"')
+            rok = rok_info = ""
+            if i2 >= 0:
+                seg = _clean(b[b.find(">", i2) + 1:i2 + 30000])
+                mi = re.search(r"수록정보[:\s]*([^)]{3,40}\))", seg)
+                rok_info = mi.group(1) if mi else ""
+                body = re.sub(r"^[\s\S]{0,80}?수록정보[:\s]*[^)]{3,40}\)\s*", "", seg).strip()
+                rok = body[:4000] + (f" …(총 {len(body)}자 — 전문은 원문 링크)" if len(body) > 4000 else "")
+            if not name and not summary:
+                return f"[mngNo {q}] 공훈전자사료관 상세 파싱 실패 — 관리번호를 확인하거나 mode=gonghun에 이름으로 검색하십시오."
+            return (f"공훈전자사료관 독립유공자 [관리번호 {q}] {name}{f'({hanja})' if hanja else ''}{f' — 이명: {alias}' if alias else ''}\n"
+                    f"생몰: {birth or '?'} ~ {death or '?'}{f' · 본적: {bon}' if bon else ''}"
+                    + (f"\n포상: {aw.group(1)} {aw.group(2)}" if aw else "") + "\n"
+                    + f"【공적개요(공적조서)】\n{summary or '(없음)'}\n"
+                    + (f"【공훈록{f' — {rok_info}' if rok_info else ''}】\n{rok}\n" if rok else "")
+                    + f"원문: https://e-gonghun.mpva.go.kr/user/ContribuReportDetail.do?goTocode=20001&mngNo={q}&pageTitle=Report\n"
+                    + "※ 출처: 국가보훈부 공훈전자사료관 — 게재 시 출처 표기. 공적조서·공훈록은 원칙적 수정불가 원문(정부포상 결정·전문가 집필). 권리 초판정: judge_rights.")
+        items = _c_gonghun(q, min(max_results, 10))
+        if not items:
+            return (f"공훈전자사료관 '{q}' — 0건. 인명 검색 채널(독립유공자 공훈록)이므로 이름으로 검색하십시오. "
+                    "이명·한자명도 시도 가치(예: 안응칠→안중근).")
+        return (f"공훈전자사료관 독립유공자 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- [mngNo {it['id']}] {it['title']}\n  {it['url']}" for it in items)
+                + "\n※ mngNo 숫자를 mode=gonghun query로 재투입 → 공적조서·공훈록 본문 판독.")
+    except Exception as e:
+        return (f"공훈전자사료관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: "
+                "https://e-gonghun.mpva.go.kr/user/ContribuReportList.do?goTocode=20001")
+
+
 def _c_ktv(q, n):
     """KTV e영상역사관(대한뉴스·기록영상, KOGL) — ktv.go.kr 통합검색 iframe GET 실측(2026-11-19)."""
     b = _http_text("https://www.ktv.go.kr/totalSearch/ehistory?design=new&collection=ehistory&baseKeyword="
@@ -2217,13 +2271,16 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     item=levelId 본문 판독(미공개/파싱실패 구분) · sibling=★형제 조 전수 스캔(조문을 열었으면 반드시 이어 호출) ·
     matrix=법전 수록 대조(쉼표구분 어휘 — 부재의 발견) · origin=어휘 연원('용어' 또는 '용어,영역') ·
     sjw=승정원일기(왕대 분포·최초 용례) · kyujanggak=규장각(목록+해제 동시 — 절목류는 해제에서 발견).
-    aks=한국고문서자료관(소장처 172곳→분류→문서 면·썸네일) · jacar=일본 아시아역사자료센터(한→일 변환 검색·레퍼런스코드 메타 직행·±span×100 인접)
+    aks=한국고문서자료관(소장처 172곳→분류→문서 면·썸네일) · jacar=일본 아시아역사자료센터(한→일 변환 검색·레퍼런스코드 메타 직행·±span×100 인접) ·
+    gonghun=공훈전자사료관 독립유공자(query=이름 검색→mngNo 숫자 투입 시 공적조서·공훈록 본문 판독)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
         return _aks_mode(query)
     if mode == "jacar":
         return _jacar_mode(query.strip(), span, max_results)
+    if mode == "gonghun":
+        return _gonghun_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
