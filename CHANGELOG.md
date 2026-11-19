@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-20 v1.28.0
+- **`judge_rights(naid=…)` NARA 실확인 자동판정**: 카탈로그 v2에서 해당 레코드의 Use Restriction 필드를 실제 조회해 자동판정 — `Unrestricted` 실확인 시 **A 확정**(기존 "확인 시 A 상향" 수동 규칙의 자동화), `Restricted` 계열은 C, 미기재는 RG 초판정 유지. RG 번호는 레코드 ancestors에서 자동 추출. 키 미설정·조회 실패 시 폴백 안내
+- **health 채널별 응답시간(ms)**: 20채널 골든 질의 각 행에 실측 응답시간 표시 — 느려지는 채널(타임박스 근접)을 수치로 조기 발견
+- i815 독립운동가 인명사전(search.i815.or.kr/dictionary)은 연결 리셋·HTTP 500으로 보류 기록
+
 ## 2026-11-20 v1.27.0
 - **연합 검색 성능·견고성**: 소스별 **12초 타임박스**(Node Promise.race / Python fut.result) — 차단 대기 소스(갈리카 등)가 전체 'all' 호출을 끌던 실측 21.7초 병목 해소 · AWM 상세·JACAR 메타 **24시간 TTL 캐시**(마커 검증 — 캐시 히트 실측 1.2s→0.36s)
 - **`query_bank(topic='allies')`**: 한국전 참전·지원 22개국 발굴 지도 — 보유 소스 직행(미·영·호·네덜란드·프) vs 대체 경로(캐나다=영연방 교차, 터키=RG 407) 매핑, 부대 고유명 열쇠(Kagnew·PEFTOK·Jutlandia·NORMASH·60th Para Field Ambulance 등)

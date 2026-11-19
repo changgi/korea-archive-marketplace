@@ -393,10 +393,44 @@ def query_bank(topic: str = "list") -> str:
     return "해당 그룹 없음 — topic='list'(해외 G/N/RG/TNA) 또는 'domestic'"
 
 @mcp.tool()
-def judge_rights(rg_series: str, title: str = "", archive: str = "") -> str:
+def judge_rights(rg_series: str = "", title: str = "", archive: str = "", naid: int | None = None) -> str:
     """권리 등급 자동 초기판정 (보고서 §30 플로 1~3단계). A/B=공개가능, C=허가필요, D=지위불명.
     공공누리(KOGL) 제1~4유형 자동 인식 — 어느 필드든 'KOGL 2'·'공공누리 제1유형' 표기 투입 시 조건 판정.
-    발굴 우선, 권리는 표시. ※ 최종 확정은 사람이 §30 5단계로 서면 판정할 것."""
+    naid 지정 시 NARA 카탈로그 Use Restriction 필드를 실제 조회해 자동판정(Unrestricted 실확인 → A 확정,
+    Restricted → C). 발굴 우선, 권리는 표시. ※ 최종 확정은 사람이 §30 5단계로 서면 판정할 것."""
+    if naid:  # NAID 실확인 자동판정 — "Unrestricted 확인 시 A 상향" 규칙의 자동화
+        import re as _re
+        key = os.environ.get("NARA_API_KEY")
+        if not key:
+            return (f"NAID 실확인은 서버 NARA_API_KEY 필요 — rg_series 초판정을 사용하거나 "
+                    f"catalog.archives.gov/id/{naid} 의 Use Restriction을 직접 확인하십시오.")
+        try:
+            d = http_json(f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1",
+                          headers={"x-api-key": key})
+            hits = (((d.get("body") or {}).get("hits") or {}).get("hits") or [])
+            rec = ((hits[0].get("_source") or {}).get("record") or {}) if hits else {}
+            if not rec.get("naId") or int(rec["naId"]) != naid:
+                return f"[NAID {naid}] 카탈로그에 없음 — NAID를 확인하거나 rg_series 초판정을 사용하십시오."
+            ur = rec.get("useRestriction") or {}
+            urs = ur if isinstance(ur, str) else " · ".join(
+                x for x in [ur.get("status"), ur.get("note"), "/".join(ur.get("specificUseRestrictions") or [])] if x)
+            rgnum = rec.get("recordGroupNumber") or next(
+                (a.get("recordGroupNumber") for a in (rec.get("ancestors") or []) if a.get("recordGroupNumber")), "")
+            cls, basis = auto_rights({"rg_series": f"RG {rgnum}" if rgnum else rg_series,
+                                      "title_orig": rec.get("title") or title, "archive": "NARA"})
+            if _re.search(r"unrestricted", urs, _re.I) and not _re.search(r"restricted\s*[-–]|possibly|fully restricted", urs, _re.I):
+                cls, basis = "A", f"NARA 카탈로그 Use Restriction '{urs}' 실확인 — 제한 없음 확정 (출처 표기 권장)"
+            elif _re.search(r"restricted", urs, _re.I):
+                cls, basis = "C", f"NARA 카탈로그 Use Restriction '{urs}' 실확인 — 제한 표기, 기관 확인 필요"
+            elif urs:
+                basis += f" · Use Restriction '{urs[:80]}' (판정 불변 — 문구 확인 필요)"
+            else:
+                basis += " · 카탈로그에 Use Restriction 미기재 — RG 초판정 유지"
+            return (f"[NAID {naid}] {rec.get('title','')[:95]}\n"
+                    f"{f'RG {rgnum} · ' if rgnum else ''}https://catalog.archives.gov/id/{naid}\n"
+                    f"등급: {cls}\n근거: {basis}\n※ 카탈로그 실확인 기반 자동판정 — 공개 전 수동 확정 필수, D등급 공개 금지")
+        except Exception as e:
+            return f"[NAID {naid}] 카탈로그 조회 실패({str(e)[:60]}) — rg_series 초판정으로 폴백하십시오."
     cls, note = auto_rights({"rg_series": rg_series, "title_orig": title, "archive": archive})
     return f"등급: {cls}\n근거: {note}\n※ 자동 초기판정 — 공개 전 수동 확정 필수, D등급 공개 금지"
 
@@ -2726,17 +2760,21 @@ def source_profile(institution: str = "list") -> str:
         keys = {k: bool(os.environ.get(k)) for k in
                 ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
                  "KOREANWAR_API_TOKEN", "NEDB_INDEX_URL")}
+        import time as _t
         rows = []
         for k, q in GOLD.items():
+            s = _t.monotonic()
             try:
                 r = _COLLECT[k](q, 3)
-                rows.append(f"{'🟢' if r else '🟡'} {k}: {len(r)}건 (질의 '{q}')"
+                ms = int((_t.monotonic() - s) * 1000)
+                rows.append(f"{'🟢' if r else '🟡'} {k}: {len(r)}건 · {ms}ms (질의 '{q}')"
                             + ("" if r else " — 연결 정상·결과/파싱 0"))
             except Exception as e:
-                rows.append(f"🔴 {k}: {str(e)[:70]}")
+                ms = int((_t.monotonic() - s) * 1000)
+                rows.append(f"🔴 {k}: {str(e)[:60]} · {ms}ms")
         return ("20채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
-                + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃). "
+                + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃) · ms=채널 응답시간. "
                   "nedb ✗=개방파일 인덱스 미설정.")
     if t == "list" or t not in PROFILES:
         lines = "\n".join(f"- {k} ({v['name_ko']}) [{v['category']}]" for k, v in PROFILES.items())
