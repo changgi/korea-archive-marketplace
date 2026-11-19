@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-19 v1.22.0
+- **독립기념관·KTV e영상역사관 합류(cross_search 16소스)** — i815: GET 실측(★searchMenu 필수 — 누락 시 500), 카테고리 집계+직행 링크 신호 채널(임시정부·독립운동가 자료·신문자료 등) · ktv: ehistory /search는 iframe 셸, 실체는 ktv.go.kr 통합검색 GET — 대한뉴스·기록영상 딥링크 파싱(판문점 2,641건)
+- **JACAR 한→일 출력 사전(16항)**: 朝鮮総督府 등 일본어 질의가 영어와 다른 결과축을 여는 것을 실측 — jacar 수집기에 한→일 우선 적용
+- 헬스체크 16채널. 접근 명세: docs/i815-ktv-access-spec.md
+
 ## 2026-11-19 v1.21.0
 - **국편 전자사료관 합류(cross_search 14소스)** — archive.history.go.kr POST 검색 실측·역공학(`allSearchQuery` 폼, `fnGoCatalogView`+title 파싱, 사료ID 추출). NARA 수집 사료 원문 창구: '노획' → AUS005 노획 무기·물자 영상 실측. 상세 딥링크는 세션 기반이라 사료ID 표기(docs/earchive-gonghun-access-spec.md)
 - **공훈전자사료관 보류 기록**: 사이트가 자체 오류 상태 — 공공데이터포털 15157239 API 경로를 대안으로 명세(키 확보 시 합류)
