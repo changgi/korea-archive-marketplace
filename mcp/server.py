@@ -1808,6 +1808,41 @@ def _c_gonghun(q, n):
     return out
 
 
+def _ktv_mode(query: str, max_results: int) -> str:
+    """KTV e영상역사관 심층 — 키워드 목록 / ehistory view URL 판독(해설·제작연도·상영시간, KOGL). Node 패리티."""
+    q = query.strip()
+    try:
+        if re.match(r"^https?://www\.ehistory\.go\.kr/view/", q):  # ehistory 도메인 한정(임의 URL 페치 방지)
+            b = _cached_text("ktvD:" + q, 24 * 3600,
+                             lambda: _http_text(_up.quote(q, safe="/?&=:%"), 28), "board_header")
+            pick = lambda rx: _clean((re.search(rx, b) or [None, ""])[1] or "")
+            title = pick(r"board_header[\s\S]*?<h4>\s*<strong>([\s\S]*?)</strong>")
+            pdate = pick(r'<p class="date">[\s\S]*?</strong>([\s\S]*?)</p>')
+            ptime = pick(r'<p class="time">[\s\S]*?</strong>([\s\S]*?)</p>')
+            origin = pick(r'<p class="origin">[\s\S]*?</strong>([\s\S]*?)</p>')
+            raw = (re.search(r'<div class="txt">([\s\S]*?)</div>', b) or [None, ""])[1] or ""
+            body = re.sub(r"<[^>]+>", " ", re.sub(r"<br\s*/?>", "\n", raw, flags=re.I))
+            body = "\n".join(re.sub(r"\s+", " ", l).strip() for l in body.split("\n"))
+            body = re.sub(r"\n{3,}", "\n\n", body).strip()
+            if not title and not body:
+                return f"판독 실패 — 영상 상세 구조 상이. 브라우저로 열람: {q}"
+            if len(body) > 4000:
+                body = body[:4000] + f" …(총 {len(body)}자 — 전문은 원문 링크)"
+            meta = " · ".join(x for x in (f"제작연도: {pdate}" if pdate else "", f"상영시간: {ptime}" if ptime else "",
+                                          f"출처: {origin}" if origin else "") if x)
+            return (f"KTV e영상역사관 영상 판독 — {title or '(제목 미상)'}\n{meta}\n"
+                    + (f"【해설】\n{body}\n" if body else "") + f"원문(영상 재생): {q}\n"
+                    + '※ KTV 콘텐츠는 KOGL(공공누리) — judge_rights에 "KOGL" 표기로 초판정. 게재 시 출처 표기.')
+        items = _c_ktv(q, min(max_results, 10))
+        if not items:
+            return f"KTV e영상역사관 '{q}' — 0건. '대한뉴스'·사건명·인명으로 재시도하십시오."
+        return (f"KTV e영상역사관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}\n  {it['url']}" for it in items)
+                + "\n※ view URL을 mode=ktv query로 재투입 → 영상 해설·제작연도·상영시간 판독.")
+    except Exception as e:
+        return f"KTV 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://www.ehistory.go.kr"
+
+
 def _i815_mode(query: str, max_results: int) -> str:
     """독립기념관 심층 — 키워드 목록 / detail.do URL 본문 판독. Node nedb_search mode='i815' 패리티."""
     q = query.strip()
@@ -1964,7 +1999,8 @@ def _c_seoul(q, n):
 
 def _c_foia(q, n):
     """정보공개 원문 라이브 채널: 서울정보소통광장 결재문서 — 전용 도구(foia_search)와 동일 경로."""
-    b = _http_text("https://opengov.seoul.go.kr/sanction/list?searchKeyword=" + _up.quote(q), 15)
+    # 기지 차단(연결 리셋) — 단발 6s fail-fast로 health·연합 탐침 시간 보호. 복구 시 자동 정상화
+    b = _http_text("https://opengov.seoul.go.kr/sanction/list?searchKeyword=" + _up.quote(q), 6)
     seen, out = set(), []
     for m in re.finditer(r'<a[^>]+href="(/sanction/\d+)"[^>]*>(.*?)</a>', b, re.S):
         t = re.sub(r"^제목\s*:\s*", "", _clean(m.group(2)))
@@ -2346,7 +2382,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     sjw=승정원일기(왕대 분포·최초 용례) · kyujanggak=규장각(목록+해제 동시 — 절목류는 해제에서 발견).
     aks=한국고문서자료관(소장처 172곳→분류→문서 면·썸네일) · jacar=일본 아시아역사자료센터(한→일 변환 검색·레퍼런스코드 메타 직행·±span×100 인접) ·
     gonghun=공훈전자사료관 독립유공자(query=이름 검색→mngNo 숫자 투입 시 공적조서·공훈록 본문 판독) ·
-    i815=독립기념관(query=키워드 목록→detail.do URL 투입 시 당대 신문기사·독립운동가 자료 본문 판독)
+    i815=독립기념관(query=키워드 목록→detail.do URL 투입 시 당대 신문기사·독립운동가 자료 본문 판독) ·
+    ktv=KTV e영상역사관(query=키워드 목록→ehistory view URL 투입 시 영상 해설·제작연도·상영시간 판독, KOGL)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2357,6 +2394,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _gonghun_mode(query, max_results)
     if mode == "i815":
         return _i815_mode(query, max_results)
+    if mode == "ktv":
+        return _ktv_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
