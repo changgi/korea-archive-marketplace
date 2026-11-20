@@ -1457,8 +1457,11 @@ def _c_nlk(q, n):
     key = os.environ.get("NLK_API_KEY")
     if not key:
         return []
-    xml = _http_text("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key) +
-                     "&apiType=xml&srchTarget=total&kwd=" + _up.quote(q) + f"&pageSize={n}&pageNum=1", 20)
+    # 실측 7.7s(최저속 축) — 6h TTL 캐시(마커 <item> — 정상 결과만)
+    xml = _cached_text(f"nlk:{q}:{n}", 6 * 3600,
+                       lambda: _http_text("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key) +
+                                          "&apiType=xml&srchTarget=total&kwd=" + _up.quote(q) + f"&pageSize={n}&pageNum=1", 20),
+                       "<item>")
     out = []
     for it in re.findall(r"<item>(.*?)</item>", xml, re.S):
         lk = _xtag(it, "detail_link") or _xtag(it, "org_link")
@@ -1729,17 +1732,43 @@ def _c_kyudb(q, n):
     return [{"title": str(t), "date": "", "id": "", "url": "https://kyudb.snu.ac.kr"} for t in lst[:n]]
 
 
+_I815_DETAIL = {  # 구분(gubun)→상세 GET 경로 — 목록 contentsFrm(method=get) 역공학(2026-11-20 실측)
+    "2": ("contents/mijooAcademy/mijooAcademyDetailList.do", "mngNo"),
+    "3": ("contents/proGovernment/proGovernmentDetailList.do", "mngNo"),
+    "4": ("contents/independenceFighter/detail.do", "independenceFighterId"),
+    "7": ("contents/missionary/detail.do", "missionaryId"),
+    "8": ("contents/newsPaper/detail.do", "newsPaperId"),
+    "9": ("contents/medicalData/MedicalDataDetailList.do", "mngNo"),
+    "9999": ("contents/microFilm/detail.do", "adminId")}
+
+
 def _c_i815(q, n):
-    """독립기념관 한국독립운동정보시스템 — GET 실측(2026-11-19). 카테고리 집계+직행 링크(신호 채널)."""
-    b = _http_text("https://search.i815.or.kr/main/totalSearch.do?searchWord=" + _up.quote(q) + "&searchMenu=all", 28)
-    out = []
+    """독립기념관 — v1.32 목록 실체화: 최대 카테고리의 실제 자료 제목+GET 딥링크, 나머지는 집계 신호."""
+    base = "https://search.i815.or.kr"
+    b = _http_text(base + "/main/totalSearch.do?searchWord=" + _up.quote(q) + "&searchMenu=all", 28)
+    cats = []
     for m in re.finditer(r'href="(/main/moreContentsSearchList\.do[^"]*)"[^>]*>([^<]+?)\s*([\d,]+)\s*건<', b):
         if m.group(3) == "0":
             continue
-        out.append({"title": f"독립기념관 {_clean(m.group(2))} {m.group(3)}건", "date": "", "id": "",
-                    "url": "https://search.i815.or.kr" + m.group(1).replace("&amp;", "&")})
-        if len(out) >= min(n, 6):
+        cats.append({"u": m.group(1).replace("&amp;", "&"), "name": _clean(m.group(2)),
+                     "cnt": int(m.group(3).replace(",", "")), "disp": m.group(3)})
+    out = []
+    if cats:
+        top = max(cats, key=lambda c: c["cnt"])
+        try:
+            lb = _http_text(base + _up.quote(top["u"], safe="/?&="), 28)  # 한글·공백 인코딩(urllib는 비ASCII URL 거부)
+            for m in re.finditer(r'data-mngno="([^"]+)"[^>]*data-gubun="(\d+)"[^>]*>([\s\S]*?)</strong>', lb):
+                d = _I815_DETAIL.get(m.group(2))
+                url = (f"{base}/{d[0]}?{d[1]}={_up.quote(m.group(1))}&sortNo={m.group(2)}" if d else base + top["u"])
+                out.append({"title": f"[{top['name']}] {_clean(m.group(3))}"[:110], "date": "", "id": m.group(1), "url": url})
+                if len(out) >= max(2, n - 2):
+                    break
+        except Exception:
+            pass  # 목록 실패 — 집계 신호로 폴백
+    for c in cats:
+        if len(out) >= n:
             break
+        out.append({"title": f"독립기념관 {c['name']} {c['disp']}건", "date": "", "id": "", "url": base + c["u"]})
     return out
 
 
