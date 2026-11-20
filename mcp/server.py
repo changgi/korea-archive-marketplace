@@ -1808,6 +1808,40 @@ def _c_gonghun(q, n):
     return out
 
 
+def _i815_mode(query: str, max_results: int) -> str:
+    """독립기념관 심층 — 키워드 목록 / detail.do URL 본문 판독. Node nedb_search mode='i815' 패리티."""
+    q = query.strip()
+    try:
+        if re.match(r"^https?://search\.i815\.or\.kr/", q):  # 상세 판독 — i815 도메인 한정(임의 URL 페치 방지)
+            b = _cached_text("i815D:" + q, 24 * 3600,
+                             lambda: _http_text(_up.quote(q, safe="/?&=:%"), 28), "explain")
+            paras = [_clean(m.group(1)) for m in
+                     re.finditer(r'<(?:strong|p)[^>]*class="explain[^"]*"[^>]*>([\s\S]*?)</(?:strong|p)>', b)]
+            paras = [p for p in paras if p]
+            if not paras:
+                return f"판독 실패 — 본문(explain) 없음(목록형 상세 또는 구조 상이). 브라우저로 열람: {q}"
+            flat = _clean(b)
+            np = re.search(r"신문명\s+(.{1,40}?)\s+발행일\s+([\d.\-]+)", flat)
+            prod = re.search(r"생산정보\s+(\S.{0,60}?)\s+(?:기사제목|자료명|자료내용)", flat)
+            body = "\n".join(paras)
+            if len(body) > 4000:
+                body = body[:4000] + f" …(총 {len(body)}자 — 전문은 원문 링크)"
+            return ("독립기념관 자료 판독\n"
+                    + (f"신문명: {np.group(1)} · 발행일: {np.group(2)}\n" if np else "")
+                    + (f"생산정보: {prod.group(1)}\n" if prod else "")
+                    + f"【자료내용】\n{body}\n원문: {q}\n"
+                    + "※ 출처: 독립기념관 한국독립운동정보시스템 — 게재 시 출처 표기. 원문이미지는 페이지 뷰어에서. 권리 초판정: judge_rights.")
+        items = _c_i815(q, min(max_results, 10))
+        if not items:
+            return (f"독립기념관 '{q}' — 0건. 인명·사건명·부대명 등으로 재시도하거나 "
+                    "cross_search(variants=True)로 표기 변형을 팬아웃하십시오.")
+        return (f"독립기념관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}\n  {it['url']}" for it in items)
+                + "\n※ detail.do URL을 mode=i815 query로 재투입 → 자료 본문 판독.")
+    except Exception as e:
+        return f"독립기념관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://search.i815.or.kr"
+
+
 def _gonghun_mode(query: str, max_results: int) -> str:
     """공훈전자사료관 심층 — 이름 목록 / mngNo 판독(공적조서·공훈록 본문). Node nedb_search mode='gonghun' 패리티."""
     import base64 as _b64
@@ -2311,7 +2345,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     matrix=법전 수록 대조(쉼표구분 어휘 — 부재의 발견) · origin=어휘 연원('용어' 또는 '용어,영역') ·
     sjw=승정원일기(왕대 분포·최초 용례) · kyujanggak=규장각(목록+해제 동시 — 절목류는 해제에서 발견).
     aks=한국고문서자료관(소장처 172곳→분류→문서 면·썸네일) · jacar=일본 아시아역사자료센터(한→일 변환 검색·레퍼런스코드 메타 직행·±span×100 인접) ·
-    gonghun=공훈전자사료관 독립유공자(query=이름 검색→mngNo 숫자 투입 시 공적조서·공훈록 본문 판독)
+    gonghun=공훈전자사료관 독립유공자(query=이름 검색→mngNo 숫자 투입 시 공적조서·공훈록 본문 판독) ·
+    i815=독립기념관(query=키워드 목록→detail.do URL 투입 시 당대 신문기사·독립운동가 자료 본문 판독)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2320,6 +2355,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _jacar_mode(query.strip(), span, max_results)
     if mode == "gonghun":
         return _gonghun_mode(query, max_results)
+    if mode == "i815":
+        return _i815_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
