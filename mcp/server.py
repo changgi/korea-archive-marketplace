@@ -1428,7 +1428,8 @@ def _collect_merged(collectors):
                     else:
                         merged[k] = {"title": _norm(raw.get("title", "")), "date": raw.get("date", ""),
                                      "id": raw.get("id", ""), "url": raw.get("url", ""), "sources": [name],
-                                     **({"series": str(raw["series"])[:80]} if raw.get("series") else {})}
+                                     **({"series": str(raw["series"])[:80]} if raw.get("series") else {}),
+                                     **({"media": str(raw["media"])[:180]} if raw.get("media") else {})}
             except Exception:
                 stats.append(f"{name}:—")
     return list(merged.values()), stats
@@ -1513,8 +1514,10 @@ def _c_nara(q, n):
     for h in hits:
         rec = (h.get("_source") or {}).get("record") or {}
         po = _nara_chain(rec)
+        d0u = str(((rec.get("digitalObjects") or [{}])[0] or {}).get("objectUrl", ""))
         out.append({"title": rec.get("title", ""), "date": _nara_date(rec), "id": f"NAID {rec.get('naId')}",
                     **({"series": po} if po else {}),
+                    **({"media": d0u} if d0u else {}),
                     "url": f"https://catalog.archives.gov/id/{rec.get('naId')}"})
     return out
 
@@ -3965,7 +3968,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         man = {
             "@context": {"dcterms": "http://purl.org/dc/terms/", "rico": "https://www.ica.org/standards/RiC/ontology#",
                          "title": "dcterms:title", "date": "dcterms:date", "identifier": "dcterms:identifier",
-                         "provenance": "dcterms:provenance", "accessUrl": "dcterms:source",
+                         "provenance": "dcterms:provenance", "accessUrl": "dcterms:source", "media": "dcterms:hasFormat",
                          "heldBy": {"@id": "rico:hasOrHadHolder"}, "records": {"@id": "rico:hasRecordSetMember"}},
             "@type": ["DiscoveryManifest", "rico:RecordSet"], "standard": "ISAD(G)/RiC-oriented",
             "identifier": f"kad-{now[:10]}-{h:x}",
@@ -3979,6 +3982,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 "identifier": it.get("id") or None, "title": it["title"], "date": it.get("date") or None,
                 "heldBy": [{"id": k, "name": ARCHIVE_META.get(k, {}).get("n", k), "country": ARCHIVE_META.get(k, {}).get("c", "")} for k in hb],  # 맥락 — 기관 정식명·국가
                 "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}",
+                **({"media": it["media"]} if it.get("media") else {}),  # 다매체 — 원본 매체 직링크(게재 소싱)
                 **({"partOf": _part_of(hb[0], it)} if _part_of(hb[0], it) else {}),
                 **({"deepRead": dr} if dr else {})})(  # 증거성 — 판독 재현 호출문
                 sorted({s.split("·")[0] for s in it["sources"]}),
@@ -3993,7 +3997,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 + f"\nfixity(sha256): {fx} — 위 JSON 바이트의 지문. 전파·보관본 대조 시 불일치=변조/손상."
                 + "\n공개 지문 원장(골든 기록 주간 감시·개정 이력): https://korea-archive-mcp.vercel.app/fixity-ledger.json"
                 + "\n※ 현용기록물로서의 발굴기록: provenance(질의·소스·시각·재현 호출)=증거성 · heldBy·식별자=맥락 · fixity=고정성. 이 JSON을 그대로 기록관리시스템·KARDA에 등재."
-                + "\n※ 다매체 변환 사슬: 이 매니페스트 → report_template(kind=report/carousel/full_package)=보고서·카드뉴스 · format='karda'=지식그래프 · format='csv'=데이터셋."
+                + "\n※ 다매체 변환 사슬: 이 매니페스트 → report_template(kind=report/carousel/full_package)=보고서·카드뉴스 · format='karda'=지식그래프 · format='csv'=데이터셋 · media 필드=원본 매체 직링크(게재 소싱)."
                 + "\n※ 지속가능성: 영속 식별자(archRfcd·NAID·levelId·R번호) 우선 인용 — URL이 썩어도 재발굴 가능. 채널 생존은 source_profile(health)·주간 CI가 감시. 권리는 judge_rights로 기록 단위 표시.")
     if format == "karda":  # 온톨로지 직출력 — 로컬 스킬 전용이던 KARDA 노드·엣지 지식의 서버화(웹·모바일 동등성)
         recs = items[:30]
@@ -4011,6 +4015,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 nd["date"] = it["date"]
             if it.get("url"):
                 nd["url"] = it["url"]
+            if it.get("media"):
+                nd["media"] = it["media"]
             nodes.append(nd)
         edges = []
         ser_seen = set()
@@ -4036,10 +4042,10 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         def ridc(it, i):
             return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
         rows = [",".join(esc(x) for x in (ridc(it, i), "+".join(it["sources"]), it["title"], it["date"], it["id"], it["url"],
-                                           _part_of(it["sources"][0].split("·")[0], it) or ""))
+                                           _part_of(it["sources"][0].split("·")[0], it) or "", it.get("media", "")))
                 for i, it in enumerate(items[:45])]
         return (f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
-                + "node,sources,title,date,id,url,partOf\n" + "\n".join(rows)
+                + "node,sources,title,date,id,url,partOf,media\n" + "\n".join(rows)
                 + "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights.")
     lines = [f"- [{'+'.join(it['sources'])}] {it['title'][:95]}"
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")

@@ -1,6 +1,9 @@
 # Changelog
 
-## 2026-11-21 v1.82.0 — NARA 심층 2차(사용자 지시 "특히 nara 강화" 계속)
+## 2026-11-21 v1.83.0 — NARA 3차: media 파이프라인(다매체×데이터화) + fixity 원장 NARA 등재(지속가능성×증거성)
+- **media 필드 파이프라인**: nara 수집기의 디지털 객체 첫 objectUrl → 병합기 보존 → **CSV media 열·KARDA record 노드 media 속성·manifest media(dcterms:hasFormat)** — 발굴 데이터 3종 매체가 원본 매체 직링크를 내장(게재 소싱이 데이터셋 안에서 끝남). 파이프라인은 일반화 — 어느 채널이든 media를 공급하면 운반
+- **fixity-watch 8종**: NARA 골든 기록 `nara:276537577`(장진호 해병 5연대 127-N-A4560, Class A Unrestricted) — scope note 지문 `5523be38a3df76a5` 프로덕션 실측으로 원장 선등재. 주간 감시는 **GH 시크릿 NARA_API_KEY 설정 시 자동 활성**(미설정 시 건너뜀 — 소음 없음)
+- 보조 골든 실측: naid=535795(나가사키, RG 208)도 scope·지문·Class A 확인(등재는 한국 관련 1종만) — NARA 심층 2차(사용자 지시 "특히 nara 강화" 계속)
 - **목록 맥락**: nara_search·cross_search 수집기에 생산일자(`_nara_date` — productionDates logicalDate·year 폴백), 목록 행에 `원본 n점`(digitalObjects 수 — 매체 유무를 목록에서 판별)
 - **인접 채굴 맥락**: naid ±N 각 행에 계보 — 중심과 같은 시리즈인지 즉시 판별(시리즈 경계 탐지)
 - **판독 심화(judge_rights naid)**: 생산(creators heading·생산일)·**소장단위**(physicalOccurrences.referenceUnits — 열람·복제 청구 좌표)·**디지털 객체 직링크**(첫 objectUrl+유형 — 다매체 제작 직결)
