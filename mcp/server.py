@@ -1395,7 +1395,8 @@ def _collect_merged(collectors):
                             merged[k]["sources"].append(name)
                     else:
                         merged[k] = {"title": _norm(raw.get("title", "")), "date": raw.get("date", ""),
-                                     "id": raw.get("id", ""), "url": raw.get("url", ""), "sources": [name]}
+                                     "id": raw.get("id", ""), "url": raw.get("url", ""), "sources": [name],
+                                     **({"series": str(raw["series"])[:80]} if raw.get("series") else {})}
             except Exception:
                 stats.append(f"{name}:—")
     return list(merged.values()), stats
@@ -1860,7 +1861,10 @@ def _c_nzarch(q, n):
                     return str(e["custom"][k]["value"][0]["value"])
                 except Exception:
                     return ""
-            out.append(_row(str(e.get("id") or ""), _clean(str(e.get("name") or "(무제)")), cf("accessStatus"), cf("resultDate")))
+            row = _row(str(e.get("id") or ""), _clean(str(e.get("name") or "(무제)")), cf("accessStatus"), cf("resultDate"))
+            if cf("series"):
+                row["series"] = cf("series")
+            out.append(row)
         return out
     except Exception:  # 간헐 Incapsula — GH 주간 수확 정적 인덱스 폴백(자체 도메인)
         ix = _cached_text("nzIdx", 6 * 3600, lambda: _http_text("https://korea-archive-mcp.vercel.app/nz-index.json", 20), '"records"')
@@ -2818,6 +2822,21 @@ DEEP_READ = {
     "nara": lambda it: it.get("id") and ("judge_rights(naid=" + re.sub(r"\D", "", str(it["id"])) + ")"),
     "seoul": lambda it: it.get("url") and f"seoul_archives_search(query='{it['url']}')",
 }
+# 데이터화×맥락 강화(v1.72): 레코드의 상위 계층(partOf) 추출
+def _part_of(ch, it):
+    if ch == "nzarch" and it.get("series"):
+        return f"Series: {it['series']}"
+    if ch == "koreanwar":
+        m = re.match(r"^(\d{4})-([A-Z]{2})-(\d{2})-([A-Z]+)-([A-Z])-\d+$", str(it.get("id") or ""))
+        if m:
+            return f"수집 {m.group(1)} › {m.group(2)} › {m.group(4)}-{m.group(5)}"
+    if ch == "jacar":
+        o = {"A": "국립공문서관", "B": "외무성 외교사료관", "C": "방위성 방위연구소"}.get(str(it.get("id") or "")[:1])
+        if o:
+            return f"JACAR › {o}"
+    return None
+
+
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
             "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "gonghun": _c_gonghun, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm, "nlna": _c_nlna, "dnz": _c_dnz, "nzarch": _c_nzarch, "commons": _c_commons, "un": _c_un, "ndl": _c_ndl, "oldnews": _c_oldnews, "much": _c_much, "indy": _c_indy, "heritage": _c_heritage,
@@ -3807,6 +3826,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 "identifier": it.get("id") or None, "title": it["title"], "date": it.get("date") or None,
                 "heldBy": [{"id": k, "name": ARCHIVE_META.get(k, {}).get("n", k), "country": ARCHIVE_META.get(k, {}).get("c", "")} for k in hb],  # 맥락 — 기관 정식명·국가
                 "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}",
+                **({"partOf": _part_of(hb[0], it)} if _part_of(hb[0], it) else {}),
                 **({"deepRead": dr} if dr else {})})(  # 증거성 — 판독 재현 호출문
                 sorted({s.split("·")[0] for s in it["sources"]}),
                 (DEEP_READ.get(sorted({s.split("·")[0] for s in it["sources"]})[0], lambda _: None)(it)))
@@ -3840,8 +3860,16 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 nd["url"] = it["url"]
             nodes.append(nd)
         edges = []
+        ser_seen = set()
         for i, it in enumerate(recs):
             edges.append({"from": "topic:" + query, "to": rid(it, i), "rel": "FOUND"})
+            po = _part_of(it["sources"][0].split("·")[0], it)
+            if po:  # 계층 맥락 — series 노드·PART_OF 엣지(v1.72)
+                sid = "series:" + po
+                if sid not in ser_seen:
+                    ser_seen.add(sid)
+                    nodes.append({"id": sid, "type": "series", "label": po})
+                edges.append({"from": rid(it, i), "to": sid, "rel": "PART_OF"})
             for s in sorted({x.split("·")[0] for x in it["sources"]}):
                 edges.append({"from": rid(it, i), "to": "archive:" + s, "rel": "HELD_BY"})
         return (f"교차수집 '{query}' KARDA 온톨로지 — 채널별 [{' · '.join(stats)}] → "

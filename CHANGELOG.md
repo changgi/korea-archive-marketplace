@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.72.0 (데이터화×맥락 — 상위 계층 partOf)
+- **PART_OF 추출기**: NZ(Series 명+parentId — collectMerged가 series 필드 보존하도록 확장)·koreanwar(식별자 분해: 수집연도›국가›매체 — '2022-US-02-AV-D-00329'→'수집 2022 › US › AV-D')·JACAR(소장관 코드: A=국립공문서관·B=외무성 외교사료관·C=방위성 방위연구소)
+- manifest 레코드에 `partOf`, karda 그래프에 **series 노드(type:'series')+PART_OF 엣지** — 기록이 어느 수집·시리즈·소장관 아래 있는지가 데이터 구조로
+
 ## 2026-11-21 v1.71.0 (사용자 4축 지시 — 맥락·증거성·데이터화·다매체 강화)
 - **맥락**: manifest heldBy를 채널키→{id, 기관 정식명, 국가}로 격상 — 30채널 ARCHIVE_META 상수(karda archive 노드에도 동일 주입)
 - **증거성**: 레코드별 `deepRead`(심층 판독 재현 호출문 — 15채널 매핑) — 발굴→판독 증거 사슬이 기록 내장
