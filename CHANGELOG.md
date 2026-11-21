@@ -1,6 +1,9 @@
 # Changelog
 
-## 2026-11-21 v1.79.0 — 계층 구축 3차(최종): partOf 22채널
+## 2026-11-21 v1.80.0 — NARA 집중 강화(사용자 지시): 계층 합류 23채널 + 판독 지문
+- **nara 목록 계층 합류**: 카탈로그 API `ancestors` 실존 확인(judge_rights 기존 코드가 RG 추출에 사용 중) → `naraChain`/`_nara_chain` 공용 헬퍼 — "RG n › 시리즈" 체인을 cross_search 수집기 series·nara_search 목록 행(계보:)·karda/csv/manifest partOf(`NARA › RG n › …`)에 일괄 주입. v1.79의 "잔여 8" 중 nara는 재료가 실재했음을 교정 — **23/30채널**
+- **judge_rights(naid) 판독 심화**: ① 계보 전 층 체인(RG›시리즈›파일단위, 각 층 NAID = 상·하위 항행 좌표) ② 【범위·내용】 scope note 발췌 + **본문 지문(sha256-16)** — 지문 채널 9→10 ③ 인접 채굴 안내 푸터. DEEP_READ.nara(judge_rights 재현 호출문)의 증거 사슬이 계보·지문까지 상속
+- 3사본 패리티(route.js·server.py·mcp/server.py) + ci-verify·ci-parity 통과 — 계층 구축 3차(최종): partOf 22채널
 - **jsg 四部 분류**(청구기호 K1~K4 = 經·史·子·集 — K2-3556 史部 실측 정합)·**kyudb 소장 문고**(제목 청구기호 접두: 奎 규장각도서·古 고도서·想白 상백문고·一簑 일사문고)
 - 목록 레벨 계층 구축 **완결**: 22/30채널. 잔여 8(nara·commons·awm·nlna·ndl·earchive·foia·nedb)은 응답에 재료 부재 — 상세 판독 단계 제공이 정직한 설계
 - v1.78.1 재실측: archives 전 레코드 유일 키 + 같은 파일 낱건(진주 재건 사진첩 1~13)이 파일 번호로 자연 군집(인접 채굴 구조 가시화)

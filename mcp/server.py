@@ -268,8 +268,10 @@ def nara_search(query: str, record_group: int | None = None,
     rows = []
     for h in (hits.get("hits") or [])[:max_results]:
         rec = (h.get("_source") or {}).get("record") or {}
+        po = _nara_chain(rec)
         rows.append(f"- [NAID {rec.get('naId')}] {rec.get('title','')[:100]} "
-                    f"| {rec.get('localIdentifier','')} | https://catalog.archives.gov/id/{rec.get('naId')}")
+                    f"| {rec.get('localIdentifier','')} | https://catalog.archives.gov/id/{rec.get('naId')}"
+                    + (f"\n  계보: {po}" if po else ""))
     total = hits.get("total", {}); total = total.get("value") if isinstance(total, dict) else total
     rline = ""
     if record_group:
@@ -445,9 +447,23 @@ def judge_rights(rg_series: str = "", title: str = "", archive: str = "", naid: 
                 basis += f" · Use Restriction '{urs[:80]}' (판정 불변 — 문구 확인 필요)"
             else:
                 basis += " · 카탈로그에 Use Restriction 미기재 — RG 초판정 유지"
+            # 맥락(v1.80): ancestors 전 계층 체인 — RG › 시리즈 › 파일단위, 각 층 NAID 포함(상·하위 항행 좌표)
+            chain = " › ".join(
+                (f"{_re.sub(r'recordGroup', 'RG', str(a.get('levelOfDescription') or ''), flags=_re.I)} "
+                 f"{a.get('recordGroupNumber') or ''}"
+                 + (" " + str(a.get("title"))[:60] if a.get("title") else "")
+                 + (f" [NAID {a.get('naId')}]" if a.get("naId") else "")).strip()
+                for a in (rec.get("ancestors") or []))
+            # 증거성(v1.80): 범위·내용 기술(scope note) 발췌 + 판독 시점 본문 지문
+            import hashlib as _hs
+            scope = str(rec.get("scopeAndContentNote") or "").strip()
+            sfp = _hs.sha256(scope.encode("utf-8")).hexdigest()[:16] if scope else ""
             return (f"[NAID {naid}] {rec.get('title','')[:95]}\n"
                     f"{f'RG {rgnum} · ' if rgnum else ''}https://catalog.archives.gov/id/{naid}\n"
-                    f"등급: {cls}\n근거: {basis}\n※ 카탈로그 실확인 기반 자동판정 — 공개 전 수동 확정 필수, D등급 공개 금지")
+                    + (f"계보: {chain[:280]}\n" if chain else "")
+                    + (f"【범위·내용】 {scope[:400]}\n본문 지문(sha256-16): {sfp} — 판독 시점 기술(記述) 전문 기준. 재판독 지문 불일치=카탈로그 기술 개정 발생.\n" if scope else "")
+                    + f"등급: {cls}\n근거: {basis}\n※ 카탈로그 실확인 기반 자동판정 — 공개 전 수동 확정 필수, D등급 공개 금지\n"
+                    + f"※ 인접 채굴: nara_search(naid={naid}, radius=3) — 사진 ±3·색인 ±1 간격.")
         except Exception as e:
             return f"[NAID {naid}] 카탈로그 조회 실패({str(e)[:60]}) — rg_series 초판정으로 폴백하십시오."
     cls, note = auto_rights({"rg_series": rg_series, "title_orig": title, "archive": archive})
@@ -1457,6 +1473,13 @@ def _c_europeana(q, n):
              **({"series": (it.get("dataProvider") or [""])[0]} if (it.get("dataProvider") or [""])[0] else {}),
              "url": it.get("guid", "")} for it in (d.get("items") or [])]
 
+def _nara_chain(rec):
+    # NARA 계보(v1.80): ancestors → "RG n › 시리즈" 축약 체인 (수집기·전용 도구·판정 공용)
+    anc = rec.get("ancestors") or []
+    rg = rec.get("recordGroupNumber") or next((a.get("recordGroupNumber") for a in anc if a.get("recordGroupNumber")), "")
+    ser = next((a.get("title") for a in anc if re.search(r"series", str(a.get("levelOfDescription") or ""), re.I) and a.get("title")), "")
+    return " › ".join(x for x in [f"RG {rg}" if rg else "", ser] if x)[:80]
+
 def _c_nara(q, n):
     key = os.environ.get("NARA_API_KEY")
     if not key:
@@ -1468,7 +1491,9 @@ def _c_nara(q, n):
     out = []
     for h in hits:
         rec = (h.get("_source") or {}).get("record") or {}
+        po = _nara_chain(rec)
         out.append({"title": rec.get("title", ""), "date": "", "id": f"NAID {rec.get('naId')}",
+                    **({"series": po} if po else {}),
                     "url": f"https://catalog.archives.gov/id/{rec.get('naId')}"})
     return out
 
@@ -2854,6 +2879,8 @@ DEEP_READ = {
 }
 # 데이터화×맥락 강화(v1.72): 레코드의 상위 계층(partOf) 추출
 def _part_of(ch, it):
+    if ch == "nara" and it.get("series"):
+        return f"NARA › {it['series']}"
     if ch == "nzarch" and it.get("series"):
         return f"Series: {it['series']}"
     if ch == "koreanwar":
