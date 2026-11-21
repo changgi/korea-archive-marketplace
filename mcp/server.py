@@ -591,7 +591,7 @@ REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (19) — 잡지·저널급
 1. 파일명: [주제영문]_records_[연도범위].html — 조사 완료 시 기본 산출물
 2. 지면 구조(잡지형): masthead → kicker → 표제(h1) → standfirst → byline(기관 chip) → 목차(nav.toc) → 히어로 figure → Ⅰ서사 → Ⅱ핵심 기록 카드 → Ⅲ영상 필름스트립 → Ⅳ전수 목록 표 → Ⅴ재현 쿼리(details) → Ⅵ권리·게재 윤리 → 출처 총람(.sources) → footer
 3. 서사 우선: 표만 나열 금지 — 발굴 경위·의미를 에세이로 서술(리드 문단 .lead 드롭캡, 풀인용 .pull 1개 이상). 문단이 실물을 설명하면 그 문단 옆에 인라인 도판(.fig-inline 플로트)을 배치 — 잡지처럼 글과 그림이 같은 화면에 보이게. 문체는 담백·구체 — 과장어(놀라운·혁신적 등)와 AI투 금지
-4. 실물 이미지 필수: 게재 가능(권리 A/B+게재윤리 1·2단계) 기록은 기관 공개 원본을 base64 임베드 — 히어로 1장+핵심 기록마다, 공개 컷은 전량(.sheet 콘택트시트·컷별 라벨). 비식별판 우선. 이미지는 max-width:100% 자동 축소. 환경별: 로컬=base64 임베드 / 웹·모바일(파일·base64 불가)=기관 공개 원본 URL을 img src로 직접 참조하고 footer에 그 사실을 명기. 한 장도 못 실으면 사유를 Ⅵ절에 명기
+4. 실물 이미지 필수: 게재 가능(권리 A/B+게재윤리 1·2단계) 기록은 기관 공개 원본을 base64 임베드 — 히어로 1장+핵심 기록마다, 공개 컷은 전량(.sheet 콘택트시트·컷별 라벨). 비식별판 우선. 이미지는 max-width:100% 자동 축소. 원본 URL은 cross_search(format='csv'·'manifest')의 media 열(실조회 검증 직링크 — NARA·commons 등)을 우선 사용. 환경별: 로컬=base64 임베드 / 웹·모바일(파일·base64 불가)=기관 공개 원본 URL을 img src로 직접 참조하고 footer에 그 사실을 명기. 한 장도 못 실으면 사유를 Ⅵ절에 명기
 5. 모든 이미지에 figcaption + .credit 필수: "출처: 기관 정식명(국가) · 식별자 · 촬영자/생산자 · 원본 링크" — 출처 없는 이미지는 싣지 않는다
 6. 영상 기록은 .film 필름스트립: 장면 전환마다 프레임을 충분히 추출(권장 8~16장)해 타임코드(.tc)+한 줄 설명으로 나열 — 표제가 가린 장면(ETC 뒤)을 드러내 원본을 직접 보고 싶게 만든다. 슬레이트·표지판 판독 프레임은 별도 확대 figure. 블록 끝에 .cta "▶ 원본 영상 보기 — [기관] 카탈로그"
 7. 핵심 기록 3~6건은 .record 카드로: 이미지 + 한국어 제목(원제 병기) + .prov 출처 계보(국가→기관→RG/시리즈→상자→식별자) + 요약 + 바로가기 버튼 + 권리 배지 — .prov의 시리즈 층은 cross_search(format='csv'·'manifest')의 partOf 값을 그대로 옮긴다(수기 재구성 금지 — 지면과 데이터의 계보 일치)
@@ -863,7 +863,7 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 CAROUSEL_RULES = """인스타 캐러셀 카드뉴스 제작 규칙 (12) — 1080×1080 PNG 6~10장 + 캡션·출처 대장
 1. 파이프라인: 재료 파악 → 발굴조사(실존 대상이면) → 실물 이미지 소싱·라이선스 판정 → 서사 설계 → HTML 카드 작성 → 1080×1080 렌더 → 전 카드 육안 검수(생략 금지) → 캡션·해시태그
 2. 서사 아크(장수에 맞게 병합, 기본 8장): ①커버 후킹(실물 풀블리드+숫자·반전 훅) ②디테일/원리 확대 ③~⑥증거(실물 이미지 카드 — 심장) ⑦정리(표·지도·타임라인) ⑧검증 노트 ⑨따라하기(재현 단계) ⑩CTA(행동 1개+댓글 유도+출처·권리 고지)
-3. 실물 이미지가 신뢰를 만든다: 주제가 실존 대상(기관·유물·사건·인물)이면 퍼블릭 도메인/공공누리 실물을 능동 발굴해 쓴다. 기관 비식별(블러)판 제공 시 우선 사용
+3. 실물 이미지가 신뢰를 만든다: 주제가 실존 대상(기관·유물·사건·인물)이면 퍼블릭 도메인/공공누리 실물을 능동 발굴해 쓴다. cross_search media 열의 직링크(실조회 검증 원본) 우선, 기관 비식별(블러)판 제공 시 우선 사용
 4. 이미지 카드마다 출처 캡션(.credit) 필수: "출처: 기관 정식명, 식별번호 (라이선스)" — 식별번호를 알면서 생략하면 부정확한 출처다. 시리즈 계보(partOf)를 알면 "기관 › 시리즈" 1줄 병기(데이터의 partOf 값 그대로). 이미지별 출처 대장(sources.txt) 동봉, 라이선스 미확정이면 '게시 전 [권리자] 확인' 안내
 5. 사실 검증: 제목만 믿지 않는다 — 생산일자·원판번호·카탈로그 API 원문까지 대조. 실증 안 된 어록 금지(전승은 '전해지는 말'). 검증 불가한 비교 대신 산술
 6. 레이아웃 다양화: 같은 아키타입 반복 금지 — 한 캐러셀에 3개 이상 혼합(풀블리드 커버·타임라인·인물+폴라로이드·문서 인용 docquote·빅넘버·목록 reel·파노라마 필름스트립·부채꼴 스택)
@@ -1663,7 +1663,10 @@ def _kw_api_scan(q, max_pages=None):
 
 def _c_koreanwar(q, n):
     _, cards = _kw_search({"keyword": q, "viewType": "archive"})
-    return [{"title": c["title"], "date": "", "id": c["id"], "url": c["url"]} for c in cards[:n]]
+    # v1.84: 사이트 상위계층 실값 승격(없으면 _part_of가 id 패턴 폴백)
+    return [{"title": c["title"], "date": "", "id": c["id"],
+             **({"series": c["hierarchy"]} if c.get("hierarchy") else {}),
+             "url": c["url"]} for c in cards[:n]]
 
 _JA_MAP = [("조선총독부", "朝鮮総督府"), ("이토 히로부미", "伊藤博文"), ("강제동원", "強制動員"), ("인천상륙", "仁川上陸"),
            ("한국전쟁", "朝鮮戦争"), ("창씨개명", "創氏改名"), ("동양척식", "東洋拓殖"), ("조선은행", "朝鮮銀行"),
@@ -1814,6 +1817,7 @@ def _c_heritage(q, n):
                 + (f" — {g('ccbaCtcdNm')} {g('ccsiName')}" if g("ccbaCtcdNm") else "")
         out.append({"title": title[:110], "date": "", "id": raw_id,
                     **({"series": g("ccmaName")} if g("ccmaName") else {}),
+                    **({"media": g("imageUrl")} if g("imageUrl") else {}),
                     "url": (f"https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}" if cpno else "https://www.heritage.go.kr")})
         if len(out) >= n:
             break
@@ -1885,15 +1889,17 @@ def _c_commons(q, n):
     en = _to_index_lang(q, "en") or q
     # v1.81: list=search → generator=search + prop=categories 1콜 전환 — 소속 카테고리(큐레이션 계층)를 목록 레벨에서 확보
     d = http_json("https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&format=json"
-                  f"&gsrlimit={min(n, 10)}&gsrsearch=" + _up.quote(en) + "&prop=categories&clshow=!hidden&cllimit=3",
+                  f"&gsrlimit={min(n, 10)}&gsrsearch=" + _up.quote(en) + "&prop=categories%7Cimageinfo&clshow=!hidden&cllimit=3&iiprop=url",
                   headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp; archival discovery)"})
     pages = sorted(((d.get("query", {}) or {}).get("pages") or {}).values(), key=lambda p: p.get("index", 0))
     out = []
     for it in pages:
         t = str(it.get("title", ""))
         cat = str(((it.get("categories") or [{}])[0] or {}).get("title", "")).removeprefix("Category:")
+        iiu = str(((it.get("imageinfo") or [{}])[0] or {}).get("url", ""))  # v1.84: 원본 파일 직링크(다매체)
         out.append({"title": t.removeprefix("File:")[:110], "date": "", "id": "",
                     **({"series": cat[:80]} if cat else {}),
+                    **({"media": iiu} if iiu else {}),
                     "url": "https://commons.wikimedia.org/wiki/" + _up.quote(t.replace(" ", "_"))})
     return out
 
@@ -2945,6 +2951,8 @@ def _part_of(ch, it):
     if ch == "nzarch" and it.get("series"):
         return f"Series: {it['series']}"
     if ch == "koreanwar":
+        if it.get("series"):
+            return f"협약 › {it['series']}"
         m = re.match(r"^(\d{4})-([A-Z]{2})-(\d{2})-([A-Z]+)-([A-Z])-\d+$", str(it.get("id") or ""))
         if m:
             return f"수집 {m.group(1)} › {m.group(2)} › {m.group(4)}-{m.group(5)}"

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-21 v1.84.0 — media 공급 확장 + 협약기관 실계층 승격
+- **media 공급 3채널 확장**: commons `prop=categories|imageinfo`(1콜 유지 — PD 사진 원본 파일 직링크)·heritage `imageUrl` 방어적 수집·(v1.83 nara와 함께 media 공급 3채널)
+- **koreanwar 실계층 승격**: kwParseCards가 이미 추출하던 `상위계층`(사이트 실값)을 수집기가 버리고 있던 것을 교정 — `협약 › <상위계층>` 우선, 기존 id 패턴(수집 Y › CC › MED)은 폴백으로 유지
+- **전파물 규칙 media 상속**: 보고서 규칙 4·캐러셀 규칙 3에 "cross_search media 열의 실조회 검증 직링크 우선 소싱" 명시 — 데이터→지면의 이미지 계보 일치
+
 ## 2026-11-21 v1.83.0 — NARA 3차: media 파이프라인(다매체×데이터화) + fixity 원장 NARA 등재(지속가능성×증거성)
 - **media 필드 파이프라인**: nara 수집기의 디지털 객체 첫 objectUrl → 병합기 보존 → **CSV media 열·KARDA record 노드 media 속성·manifest media(dcterms:hasFormat)** — 발굴 데이터 3종 매체가 원본 매체 직링크를 내장(게재 소싱이 데이터셋 안에서 끝남). 파이프라인은 일반화 — 어느 채널이든 media를 공급하면 운반
 - **fixity-watch 8종**: NARA 골든 기록 `nara:276537577`(장진호 해병 5연대 127-N-A4560, Class A Unrestricted) — scope note 지문 `5523be38a3df76a5` 프로덕션 실측으로 원장 선등재. 주간 감시는 **GH 시크릿 NARA_API_KEY 설정 시 자동 활성**(미설정 시 건너뜀 — 소음 없음)
