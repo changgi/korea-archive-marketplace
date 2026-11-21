@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-21 v1.38.0
+- **`nedb_search(mode='commons')` 파일 판독**: File URL(또는 File:제목) 투입 시 라이선스(PD/CC → A/B/D 초판정 자동)·작가·**출처(원 소장처 크레딧 — NH·NARA 번호)**·촬영일·설명·원본 해상도 판독. 24h 캐시·도메인 한정. 실측: NH 96379 서울 수복(1950-09-29, 해병대 Ed Barnum 병장 촬영, PD → A)
+- 심층 판독 모드 7종 완성(jacar·gonghun·i815·ktv·earchive·commons + seoul 전용도구) — 발굴→판독→권리 실확인 전 구간이 도구 응답 안에서 완결
+- nedb_search 설명 1024자 준수 재축약(ci-verify가 검출)
+
 ## 2026-11-21 v1.37.0
 - **위키미디어 공용 합류 — cross_search 22소스**: 키 불요 검색 API(한→영 자동 변환) — PD 사진·NARA/해군 재수집본의 원 소장처 역추적 창구. 'Seoul 1950' 791건 실측(해군역사센터 NH 시리즈 등). 공유 IP 429 가능성은 health가 상시 실측
 - **cross_search 푸터에 심층 판독 이어가기 안내**: 소스 태그→판독 경로 8종([i815]→mode=i815 … [nara]→judge_rights(naid)) — 연합 검색에서 본문 판독까지 끊김 없이

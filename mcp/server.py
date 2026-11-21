@@ -1822,6 +1822,52 @@ def _c_gonghun(q, n):
     return out
 
 
+def _commons_mode(query: str, max_results: int) -> str:
+    """위키미디어 공용 심층 — 키워드 목록 / File URL 판독(라이선스·원 소장처·설명). Node 패리티."""
+    q = query.strip()
+    try:
+        fm = re.match(r"^https?://commons\.wikimedia\.org/wiki/(File:.+)$", q, re.I) or re.match(r"^(File:.+)$", q, re.I)
+        if fm:
+            title = _up.unquote(fm.group(1)).replace("_", " ")
+            raw = _cached_text("commonsD:" + title, 24 * 3600,
+                               lambda: json.dumps(http_json(
+                                   "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo"
+                                   "&iiprop=url%7Cextmetadata%7Csize&format=json&titles=" + _up.quote(title),
+                                   headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp; archival discovery)"}),
+                                   ensure_ascii=False), "imageinfo")
+            d = json.loads(raw)
+            page = list(((d.get("query", {}) or {}).get("pages", {}) or {"_": {}}).values())[0]
+            ii = (page.get("imageinfo") or [{}])[0]
+            em = ii.get("extmetadata", {}) or {}
+            g = lambda k: _clean(str((em.get(k) or {}).get("value", "")))
+            lic = g("LicenseShortName")
+            if not ii.get("url") and not lic:
+                return f"'{title}' — 파일 미발견 또는 메타 없음. File: 제목/URL을 확인하십시오."
+            rights = ("A(퍼블릭 도메인 표기)" if re.search(r"public domain", lic, re.I)
+                      else f"B({lic} — 조건 준수 시 이용)" if re.match(r"^cc", lic, re.I)
+                      else f"D('{lic or '미표기'}' — 확인 필요)")
+            meta = " · ".join(x for x in (
+                f"촬영/제작: {g('DateTimeOriginal')[:40]}" if g("DateTimeOriginal") else "",
+                f"작가: {g('Artist')[:70]}" if g("Artist") else "",
+                f"원본 {ii.get('width')}×{ii.get('height')}" if ii.get("width") else "") if x)
+            return (f"위키미디어 공용 파일 판독 — {title.removeprefix('File:')}\n{meta}\n"
+                    f"라이선스: {lic or '(미표기)'} → 권리 초판정 {rights}\n"
+                    + (f"출처(원 소장처): {g('Credit')[:160]}\n" if g("Credit") else "")
+                    + (f"【설명】\n{g('ImageDescription')[:1200]}\n" if g("ImageDescription") else "")
+                    + (f"원본 이미지: {ii.get('url')}\n" if ii.get("url") else "")
+                    + "파일 페이지: https://commons.wikimedia.org/wiki/" + _up.quote(title.replace(" ", "_")) + "\n"
+                    + "※ 라이선스는 업로더 기재 — 게재 전 원 소장처(NH·NARA 번호 등) 카탈로그와 교차검증(nara_search·judge_rights).")
+        items = _c_commons(q, min(max_results, 10))
+        if not items:
+            return f"위키미디어 공용 '{q}' — 0건. 영문 지명·사건명으로 재시도하십시오."
+        return (f"위키미디어 공용 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}\n  {it['url']}" for it in items)
+                + "\n※ 파일 URL(또는 File:제목)을 mode=commons query로 재투입 → 라이선스·원 소장처·설명 판독.")
+    except Exception as e:
+        return (f"위키미디어 공용 오류({str(e)[:60]}) — 공유 IP 요청 제한(429)일 수 있음. "
+                "잠시 후 재시도 또는 브라우저: https://commons.wikimedia.org")
+
+
 def _earchive_mode(query: str, max_results: int) -> str:
     """국편 전자사료관 심층 — 키워드 목록 / '키워드|순번' 세션 상세(검색 폼+searchPosition 재제출). Node 패리티."""
     import http.cookiejar as _cj
@@ -2467,7 +2513,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     gonghun=공훈전자사료관 독립유공자(query=이름 검색→mngNo 숫자 투입 시 공적조서·공훈록 본문 판독) ·
     i815=독립기념관(query=키워드 목록→detail.do URL 투입 시 당대 신문기사·독립운동가 자료 본문 판독) ·
     ktv=KTV e영상역사관(키워드 목록→ehistory view URL 투입 시 영상 해설·상영정보 판독, KOGL) ·
-    earchive=국편 전자사료관(키워드 목록→'키워드|순번' 투입 시 상세: 열람·이용조건·등록번호)
+    earchive=국편 전자사료관(키워드 목록→'키워드|순번' 투입 시 상세: 열람·이용조건·등록번호) ·
+    commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2482,6 +2529,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _ktv_mode(query, max_results)
     if mode == "earchive":
         return _earchive_mode(query, max_results)
+    if mode == "commons":
+        return _commons_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
