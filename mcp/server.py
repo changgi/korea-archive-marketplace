@@ -1440,7 +1440,10 @@ def _c_gallica(q, n):
         def g(t, _b=b):
             m = re.search(rf"<dc:{t}[^>]*>([^<]*)<", _b)
             return m.group(1).strip() if m else ""
-        out.append({"title": g("title"), "date": g("date"), "id": g("identifier"), "url": g("identifier")})
+        akm = re.search(r"ark:/12148/(btv|bpt6k|bd6t)", g("identifier"))
+        akn = {"btv": "도판·사진(btv)", "bpt6k": "인쇄본(bpt6k)", "bd6t": "정기간행물(bd6t)"}.get(akm.group(1)) if akm else None
+        out.append({"title": g("title"), "date": g("date"), "id": g("identifier"),
+                    **({"series": akn} if akn else {}), "url": g("identifier")})
     return out
 
 def _c_europeana(q, n):
@@ -1732,7 +1735,9 @@ def _c_un(q, n):
         sym = sf(seg, "191", "a")
         title = _clean(sf(seg, "245", "a") + " " + sf(seg, "245", "b")).rstrip(" /:")
         out.append({"title": (f"[{sym}] " if sym else "") + title[:110], "date": sf(seg, "269", "a") or sf(seg, "260", "c"),
-                    "id": sym or rm.group(1), "url": "https://digitallibrary.un.org/record/" + rm.group(1)})
+                    "id": sym or rm.group(1),
+                    **({"series": "/".join(sym.split("/")[:2])} if sym and "/" in sym else {}),
+                    "url": "https://digitallibrary.un.org/record/" + rm.group(1)})
         if len(out) >= n:
             break
     return out
@@ -1754,6 +1759,7 @@ def _c_heritage(q, n):
         title = name + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + (f" [{g('ccmaName')}]" if g("ccmaName") else "") \
                 + (f" — {g('ccbaCtcdNm')} {g('ccsiName')}" if g("ccbaCtcdNm") else "")
         out.append({"title": title[:110], "date": "", "id": raw_id,
+                    **({"series": g("ccmaName")} if g("ccmaName") else {}),
                     "url": (f"https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}" if cpno else "https://www.heritage.go.kr")})
         if len(out) >= n:
             break
@@ -1767,6 +1773,7 @@ def _c_indy(q, n):
     out = []
     for m in re.finditer(r'<a href="(/next/indy/viewIndyDetail\.do[^"]+)">\s*<span>\s*([^<]+?)\s*</span>[\s\S]{0,400}?<td class="left">([^<]*)</td>\s*<td>(\d{8})</td>\s*<td class="left">([^<]*)</td>', b):
         out.append({"title": f"[판결문] {_clean(m.group(2))} — {_clean(m.group(3))} · {_clean(m.group(5))[:40]}"[:115],
+                    **({"series": _clean(m.group(3))} if _clean(m.group(3)) else {}),
                     "date": m.group(4), "id": "",
                     "url": "https://theme.archives.go.kr" + m.group(1).replace("&amp;", "&")})
         if len(out) >= n:
@@ -1783,7 +1790,9 @@ def _c_much(q, n):
     out = []
     for m in re.finditer(r'<a href="(/archive/[\w/]+view\.do\?idnbr=[^"]+)">[\s\S]{0,420}?<strong>([\s\S]*?)</strong>[\s\S]{0,320}?자료연대\s*:\s*([^<]{1,20})', b):
         idm = re.search(r"idnbr=([\w\-]+)", m.group(1))
+        seg_cat = (m.group(1).split("/") + ["", "", ""])[2]
         out.append({"title": _clean(m.group(2))[:110], "date": _clean(m.group(3)), "id": idm.group(1) if idm else "",
+                    **({"series": seg_cat} if seg_cat else {}),
                     "url": "https://archive.much.go.kr" + m.group(1)})
         if len(out) >= n:
             break
@@ -2082,6 +2091,7 @@ def _c_gonghun(q, n):
             return tds[i] if len(tds) > i else ""
         title = re.sub(r"\s+", " ", f"{name}{f'({g(0)})' if g(0) else ''} {g(1)} · {g(2)} · {g(3)} {g(4)}").strip()
         out.append({"title": title, "date": g(3), "id": mn.group(1),
+                    **({"series": g(2)} if g(2) else {}),
                     "url": f"https://e-gonghun.mpva.go.kr/user/ContribuReportDetail.do?goTocode=20001&mngNo={mn.group(1)}&pageTitle=Report"})
         if len(out) >= n:
             break
@@ -2856,6 +2866,18 @@ def _part_of(ch, it):
         return f"TNA › {it['series']}"
     if ch == "europeana" and it.get("series"):
         return f"Europeana › {it['series']}"
+    if ch == "gonghun" and it.get("series"):
+        return f"운동계열 › {it['series']}"
+    if ch == "indy" and it.get("series"):
+        return f"판결기관 › {it['series']}"
+    if ch == "heritage" and it.get("series"):
+        return f"지정 › {it['series']}"
+    if ch == "un" and it.get("series"):
+        return f"UN › {it['series']}"
+    if ch == "gallica" and it.get("series"):
+        return f"Gallica › {it['series']}"
+    if ch == "much" and it.get("series"):
+        return f"박물관 › {it['series']}"
     return None
 
 
