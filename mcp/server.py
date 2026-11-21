@@ -1972,24 +1972,35 @@ def _oldnews_mode(query: str, max_results: int) -> str:
     """신문아카이브 심층 — 키워드 목록 / CNTS·URL 판독(색인어·관련기사·주제어). Node 패리티."""
     q = query.strip()
     try:
-        bm = re.match(r"^본문[:：]\s*(.+)$", q)
-        if bm:  # OCR 본문 전문 검색 — search_bodytext.do 역공학(2026-11-21)
+        bm = re.match(r"^본문[:：]\s*(.+?)(?:\|(\d{4})\s*[-~]\s*(\d{4}))?$", q)
+        if bm:  # OCR 본문 전문('본문:키워드' 또는 '|1905-1910' 연대 한정 — 서버 faceted는 연결 거부라 후처리 필터)
             kw = bm.group(1).strip()
+            y1 = int(bm.group(2)) if bm.group(2) else 0
+            y2 = int(bm.group(3)) if bm.group(3) else 9999
             req = _ur.Request("https://nl.go.kr/newspaper/search_bodytext.do",
-                              data=json.dumps({"search_keyword": kw, "page_size": min(max_results, 10), "page_no": 1}).encode(),
+                              data=json.dumps({"search_keyword": kw, "page_size": (30 if y1 else min(max_results, 10)), "page_no": 1}).encode(),
                               headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json",
                                        "Referer": "https://nl.go.kr/newspaper/bodytext_search.do"})
             with _ur.urlopen(req, timeout=25) as r:
                 d2 = json.loads(r.read().decode("utf-8", "replace"))
             f1 = lambda v: (v[0] if isinstance(v, list) and v else v) or ""
+            dist = " · ".join(f"{k}:{v}" for k, v in sorted((d2.get("by_issuedYear") or {}).items(), key=lambda x: -x[1])[:6])
+            hits2 = [h for h in (d2.get("hits") or [])
+                     if y1 <= (int(str(h.get("issued_date") or "")[:4] or 0)) <= y2][:min(max_results, 10)]
             rows = []
-            for h in (d2.get("hits") or []):
+            for h in hits2:
                 ex = _clean(str(f1(h.get("highlight_abstract")) or f1(h.get("abstract")) or ""))
                 link = f"https://nl.go.kr/newspaper/detail.do?content_id={f1(h.get('uri'))}" if f1(h.get("uri")) else ""
                 rows.append(f"- {f1(h.get('label'))} — {f1(h.get('newspaperKorName'))} ({h.get('issued_date') or ''})\n  발췌: {ex[:180]}\n  {link}")
             if not rows:
-                return f"신문아카이브 본문검색 '{kw}' — 0건. 당대 표기(국한문·옛 한글)로 재시도하십시오."
-            return (f"신문아카이브 OCR 본문검색 '{kw}' — 총 {d2.get('total_count') or len(rows)}건(상위 {len(rows)}):\n"
+                rng = f" ({y1}~{y2})" if y1 else ""
+                return (f"신문아카이브 본문검색 '{kw}'{rng} — 0건."
+                        + (" 상위 30건 내 해당 연대 없음 — 범위를 넓히거나" if y1 else "")
+                        + " 당대 표기(국한문·옛 한글)로 재시도하십시오."
+                        + (f"\n연도 분포(전체): {dist}" if dist else ""))
+            rng = f" (연대 {y1}~{y2} 한정)" if y1 else ""
+            return (f"신문아카이브 OCR 본문검색 '{kw}'{rng} — 전체 {d2.get('total_count') or len(rows)}건"
+                    + (f" · 연도 분포 {dist}" if dist else "") + f"\n표시 {len(rows)}건:\n"
                     + "\n".join(rows)
                     + "\n※ 발췌는 OCR 원문(국한문 그대로). CNTS를 mode=oldnews로 재투입 → 색인어·관련기사 연쇄.")
         cm = re.search(r"content_id=(CNTS-\d+)", q) or re.match(r"^(CNTS-\d+)$", q)
@@ -2804,7 +2815,7 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독) ·
     jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독) ·
     un=UN 디지털도서관(키워드 목록→recid/URL 투입 시 요약·주제·언어별 PDF 직링크) ·
-    oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 · '본문:키워드'=OCR 전문) ·
+    oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 · '본문:키워드[|1905-1910]'=OCR 전문+연대) ·
     much=역사박물관(키워드 목록→idnbr/URL 투입 시 재질·크기·공공누리 유형·설명 판독)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
