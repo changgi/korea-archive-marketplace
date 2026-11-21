@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-11-21 v1.73.0 — partOf 5채널 확대
+- **oldnews(신문명)·aks(문중>지역 분류)** 계층 노출 — 당대 기사가 '신문 › 대한매일신보', 고문서 소장처가 '고문서 › 문중>충청남도' 시리즈 노드 아래 묶임. karda 그래프에서 **같은 신문·같은 문중 기록이 토폴로지로 군집**
+
 ## 2026-11-21 v1.72.0 (데이터화×맥락 — 상위 계층 partOf)
 - **PART_OF 추출기**: NZ(Series 명+parentId — collectMerged가 series 필드 보존하도록 확장)·koreanwar(식별자 분해: 수집연도›국가›매체 — '2022-US-02-AV-D-00329'→'수집 2022 › US › AV-D')·JACAR(소장관 코드: A=국립공문서관·B=외무성 외교사료관·C=방위성 방위연구소)
 - manifest 레코드에 `partOf`, karda 그래프에 **series 노드(type:'series')+PART_OF 엣지** — 기록이 어느 수집·시리즈·소장관 아래 있는지가 데이터 구조로

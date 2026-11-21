@@ -1796,6 +1796,7 @@ def _c_oldnews(q, n):
         uri = first(h.get("uri"))
         out.append({"title": f"{first(h.get('label'))} — {first(h.get('newspaperKorName'))}"[:110],
                     "date": str(h.get("issued_date") or ""), "id": uri,
+                    **({"series": first(h.get("newspaperKorName"))} if first(h.get("newspaperKorName")) else {}),
                     "url": (f"https://nl.go.kr/newspaper/detail.do?content_id={uri}" if uri else "https://nl.go.kr/newspaper/")})
     return out
 
@@ -2775,7 +2776,7 @@ def _c_aks(q, n):
     toks = [t for t in q.split() if t]
     hits = [c for c in _AKS_CAT if toks and all(t in (c["name"] + " " + c["grp"]) for t in toks)]
     return [{"title": f"[고문서 소장처] {c['name']} ({c['grp']})", "date": "", "id": c["id"],
-             "url": _AKS_BASE + "/viewer/viewer.do"} for c in hits[:n]]
+             "series": c["grp"], "url": _AKS_BASE + "/viewer/viewer.do"} for c in hits[:n]]
 
 # 소장기관 정식명·국가 — 맥락 강화(v1.71)
 ARCHIVE_META = {
@@ -2826,6 +2827,10 @@ def _part_of(ch, it):
         o = {"A": "국립공문서관", "B": "외무성 외교사료관", "C": "방위성 방위연구소"}.get(str(it.get("id") or "")[:1])
         if o:
             return f"JACAR › {o}"
+    if ch == "oldnews" and it.get("series"):
+        return f"신문 › {it['series']}"
+    if ch == "aks" and it.get("series"):
+        return f"고문서 › {it['series']}"
     return None
 
 
