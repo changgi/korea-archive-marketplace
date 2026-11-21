@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.56.1~2 (mcp 저장소)
+- **dclean 확장 엔티티 디코드**: 인명사전 전기에 &amp;lsquo;·&amp;middot; 리터럴 노출 — Node만 기본 5종 처리(Python html.unescape 비대칭). 인용부호·가운뎃점·수치참조 추가, 프로덕션 재실측 정상
+- **retry-blocked 2차 실행 수렴**: LAC(403)·UN AtoM(마커) 오탐 제거 확인. Archives NZ는 GH IP에 실페이지 서빙 확인 — 단 Arena JS SPA+개발망 Incapsula로 합류 불능이므로 **관찰 전용**(비발화) 전환, 주간 false alarm 제거
+
 ## 2026-11-21 v1.56.0
 - **한국독립운동인명사전 합류 — `nedb_search(mode='i815', '사전:…')`**: retry-blocked 1차 실행이 감지한 복구 중 유일한 진짜(4건 중 3건은 오탐 — 아래). '사전:이름'=검색(이름·한자·운동계열·주요활동·항목번호), '사전:번호'=상세(기본정보 — 생몰·본관·이명·출신지·포상훈격 + **전기 전문** 3,200자 컷). detail.do는 폼 파라미터 5종 전체 필수(id만으론 500) — searchResult.do?searchType=all&searchWord= 확정. 공공저작물(출처 표기) 고지 내장. 실측: 유관순(614) — 이명 冠順·대한민국장(2019)·전기 4,092자
 - **retry-blocked 탐침 오탐 교정**: 1차 실행 실측 교훈 반영 — curl은 403에도 exit 0이므로 **HTTP 코드 실측**(-w %{http_code}) 추가, 마커를 차단 페이지에 없는 문자열로 강화(UN AtoM 'search-result' — JS 챌린지의 URL 에코 'informationobject' 오탐 제거 · LAC 'Library and Archives Canada' — 403 보안확인 페이지 오탐 제거 · NZ 'Archives New Zealand' — Incapsula 오탐 제거). i815 인명사전은 합류로 목록 제외(7곳)
