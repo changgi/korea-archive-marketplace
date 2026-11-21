@@ -1870,6 +1870,50 @@ def _c_nzarch(q, n):
                 for r in (j.get("records") or []) if ql in str(r.get("title") or "").lower() or str(r.get("id") or "").lower() == ql][:n]
 
 
+def _nzarch_mode(query: str) -> str:
+    """Archives NZ 상세 판독 — R번호 투입 시 entity 전체 메타 + 메타 지문. Node nedb_search mode='nzarch' 패리티."""
+    q = query.strip()
+    m = re.match(r"^[Rr](\d{5,9})$", q) or re.match(r"^(\d{5,9})$", q)
+    if not m:
+        return "nzarch 판독: R번호(예 R17717658)를 입력하십시오. 번호는 cross_search(sources='nzarch')가 제공."
+    rn = "R" + m.group(1)
+    try:
+        b = _http_text("https://collections.archives.govt.nz/federated-search/customers/aims/search"
+                       "?size=3&facetSize=0&start=0&isFuzzy=false&sourceId=aims-archive&q=" + rn, 25)
+        line = next((l for l in b.split("\n") if l.startswith("data:") and '"totalHits"' in l), None)
+        if not line:
+            return (f"[{rn}] 간헐 차단 — 잠시 후 재시도 또는 브라우저: "
+                    f"https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/{rn}")
+        j = json.loads(line[5:])
+        hits = j.get("hits") or []
+        h = next((x for x in hits if (x.get("entity") or {}).get("id") == rn), hits[0] if hits else None)
+        if not h:
+            return f"[{rn}] 레코드 미발견 — 번호를 확인하십시오."
+        e = h.get("entity") or {}
+
+        def cf(k):
+            try:
+                return " | ".join(str(v["value"]) for v in e["custom"][k]["value"])
+            except Exception:
+                return ""
+        mfp = _hl.sha256((str(e.get("name") or "") + "\n" + json.dumps(e.get("custom") or {}, ensure_ascii=False, sort_keys=True)).encode("utf-8")).hexdigest()[:16]
+        meta = " · ".join(x for x in (
+            f"기술계층 {e.get('descriptionLevel')}" if e.get("descriptionLevel") else "",
+            f"형태 {cf('itemLevel')}" if cf("itemLevel") else "",
+            f"연대 {cf('resultDate')}" if cf("resultDate") else "",
+            f"소장 {e.get('holdingsLocation')}" if e.get("holdingsLocation") else "") if x)
+        return (f"Archives NZ(Te Rua Mahara) 판독 — {e.get('id') or rn}\n제목: {e.get('name') or '(무제)'}\n{meta}\n"
+                + (f"시리즈: {cf('series')}" + (f" (Series {e.get('parentId')})" if e.get("parentId") else "") + "\n" if cf("series") else "")
+                + (f"생산 기관: {re.sub(r'^Agency:\\s*', '', cf('resultField4'))}\n" if cf("resultField4") else "")
+                + (f"접근 상태: {cf('accessStatus')} — 발굴 우선: 권리는 표시 대상\n" if cf("accessStatus") else "")
+                + (f"열람 방법: {' · '.join(e.get('orderType') or [])}\n" if e.get("orderType") else "")
+                + f"메타 지문(sha256-16): {mfp} — 판독 시점 기술(記述) 전체 기준. 재판독 지문 불일치=기술 개정 발생.\n"
+                + f"레코드: https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/{e.get('id') or rn}\n"
+                + "※ 출처: Archives New Zealand Te Rua Mahara o te Kāwanatanga — 게재 시 출처 표기. May be restricted는 기관 열람 신청 대상.")
+    except Exception as err:
+        return f"Archives NZ 오류({str(err)[:60]}) — 잠시 후 재시도."
+
+
 def _c_dnz(q, n):
     """DigitalNZ 집계 API(무키 JSON) — v1.57 합류: Papers Past(직접 차단 — 본 API로 우회 복구)·터닝불도서관·Te Papa 등 NZ 30+기관."""
     en = _ko_en(q) or q
@@ -3096,6 +3140,7 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 · '본문:키워드[|1905-1910]'=OCR 전문+연대) ·
     much=역사박물관(→idnbr/URL 투입 시 재질·공공누리·설명) ·
     indy=판결문(이름→상세 URL 투입 시 죄명·주문·사건개요·원문 뷰어) ·
+    nzarch=NZ기록원(R번호=상세 메타) ·
     heritage=국가유산(키워드 목록 — 국보·보물·사적+딥링크. cpno 상세는 기관 식별 편차로 일부만)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
@@ -3123,6 +3168,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _much_mode(query, max_results)
     if mode == "indy":
         return _indy_mode(query, max_results)
+    if mode == "nzarch":
+        return _nzarch_mode(query)
     if mode == "heritage":
         return _heritage_mode(query, max_results)
     if mode != "total":
