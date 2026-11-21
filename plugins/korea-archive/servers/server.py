@@ -446,6 +446,7 @@ def judge_rights(rg_series: str = "", title: str = "", archive: str = "", naid: 
                  + (" " + str(a.get("title"))[:60] if a.get("title") else "")
                  + (f" [NAID {a.get('naId')}]" if a.get("naId") else "")).strip()
                 for a in (rec.get("ancestors") or []))
+            chain = _re.sub(r"\s+", " ", chain)
             # 증거성(v1.80): 범위·내용 기술(scope note) 발췌 + 판독 시점 본문 지문
             import hashlib as _hs
             scope = str(rec.get("scopeAndContentNote") or "").strip()
