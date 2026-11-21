@@ -1340,7 +1340,7 @@ def report_template(kind: str = "report") -> str:
 
 
 # ══════════ 국내 아카이브 수집기 — 자동 브라우징(서버 사이드 fetch·파싱) v1.9.0 ══════════
-import urllib.parse as _up, urllib.request as _ur, html as _html, datetime as _dt
+import urllib.parse as _up, urllib.request as _ur, html as _html, datetime as _dt, hashlib as _hl
 
 _UA_KO = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
 
@@ -2462,9 +2462,11 @@ def _i815_mode(query: str, max_results: int) -> str:
                 cut = re.search(r"참고문헌|저작권 안내", bio)
                 if cut and cut.start() > 0:
                     bio = bio[:cut.start()].strip()
+                fp = _hl.sha256((head + "\n" + bio).encode("utf-8")).hexdigest()[:16]  # 판독 시점 본문 지문(고정성)
                 if len(bio) > 3200:
                     bio = bio[:3200] + f" …(전기 총 {len(bio)}자 — 전문은 원문)"
                 return (f"독립기념관 한국독립운동인명사전 — 항목 {t}\n【기본정보】 {head}\n【전기】\n{bio}\n원문: {du}\n"
+                        + f"본문 지문(sha256-16): {fp} — 판독 시점 전문(기본정보+전기) 기준. 재판독 지문 불일치=원문 개정 발생(인용 검증용).\n"
                         "※ 공공저작물 — 출처 표기(독립기념관 한국독립운동인명사전) 시 이용 가능. "
                         "이명·한자명은 gonghun·jacar·oldnews(\"본문:이명\") 재검색에 투입.")
             b = _http_text("https://search.i815.or.kr/dictionary/searchResult.do?searchType=all&searchWord="
@@ -2571,7 +2573,7 @@ def _gonghun_mode(query: str, max_results: int) -> str:
             aw = re.search(r"포상년도\s*([\d/]+)\s*훈격\s*(\S{1,30})", _clean(b))
             summary = _clean(pick(r'id="achivement_1"[^>]*>([\s\S]*?)</div>'))
             i2 = b.find('id="tab2"')
-            rok = rok_info = ""
+            rok = rok_info = gfp = ""
             if i2 >= 0:
                 seg = _clean(b[b.find(">", i2) + 1:i2 + 30000])
                 mi = re.search(r"수록정보[:\s]*([^)]{3,40}\))", seg)
@@ -2580,6 +2582,7 @@ def _gonghun_mode(query: str, max_results: int) -> str:
                 # 본문 경계: 게시판(감사의 글)·JS 찌꺼기 절단. 수형기록·묘소·현충시설 표는 분석 가치가 있어 유지
                 body = re.sub(r"\$\{\w+\}", "", re.sub(r"function\s+fn[\s\S]*$", "", body.split("감사의 글")[0])).strip()
                 rok = body[:4000] + (f" …(총 {len(body)}자 — 전문은 원문 링크)" if len(body) > 4000 else "")
+                gfp = _hl.sha256(((summary or "") + "\n" + body).encode("utf-8")).hexdigest()[:16]  # 판독 시점 본문 지문(고정성)
             if not name and not summary:
                 return f"[mngNo {q}] 공훈전자사료관 상세 파싱 실패 — 관리번호를 확인하거나 mode=gonghun에 이름으로 검색하십시오."
             return (f"공훈전자사료관 독립유공자 [관리번호 {q}] {name}{f'({hanja})' if hanja else ''}{f' — 이명: {alias}' if alias else ''}\n"
@@ -2588,6 +2591,7 @@ def _gonghun_mode(query: str, max_results: int) -> str:
                     + f"【공적개요(공적조서)】\n{summary or '(없음)'}\n"
                     + (f"【공훈록{f' — {rok_info}' if rok_info else ''}】\n{rok}\n" if rok else "")
                     + f"원문: https://e-gonghun.mpva.go.kr/user/ContribuReportDetail.do?goTocode=20001&mngNo={q}&pageTitle=Report\n"
+                    + (f"본문 지문(sha256-16): {gfp} — 판독 시점 전문(공적조서+공훈록) 기준. 재판독 지문 불일치=원문 개정 발생(인용 검증용).\n" if gfp else "")
                     + "※ 출처: 국가보훈부 공훈전자사료관 — 게재 시 출처 표기. 공적조서·공훈록은 원칙적 수정불가 원문(정부포상 결정·전문가 집필). 권리 초판정: judge_rights.")
         items = _c_gonghun(q, min(max_results, 10))
         if not items:
@@ -3696,9 +3700,12 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 "heldBy": sorted({s.split("·")[0] for s in it["sources"]}),  # 맥락 — 소장기관(복수=교차확인)
                 "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}"} for i, it in enumerate(recs)],
         }
+        mj = json.dumps(man, ensure_ascii=False)
+        fx = _hl.sha256(mj.encode("utf-8")).hexdigest()  # 고정성(fixity) — 전파 중 변조 검증
         return (f"발굴 수집기록 매니페스트 '{query}' — {len(recs)}건 (재현 가능·기관 등재용):\n"
-                + "```json\n" + json.dumps(man, ensure_ascii=False) + "\n```"
-                + "\n※ 현용기록물로서의 발굴기록: provenance(질의·소스·시각·재현 호출)=증거성 · heldBy·식별자=맥락. 이 JSON을 그대로 기록관리시스템·KARDA에 등재."
+                + "```json\n" + mj + "\n```"
+                + f"\nfixity(sha256): {fx} — 위 JSON 바이트의 지문. 전파·보관본 대조 시 불일치=변조/손상."
+                + "\n※ 현용기록물로서의 발굴기록: provenance(질의·소스·시각·재현 호출)=증거성 · heldBy·식별자=맥락 · fixity=고정성. 이 JSON을 그대로 기록관리시스템·KARDA에 등재."
                 + "\n※ 다매체 변환 사슬: 이 매니페스트 → report_template(kind=report/carousel/full_package)=보고서·카드뉴스 · format='karda'=지식그래프 · format='csv'=데이터셋."
                 + "\n※ 지속가능성: 영속 식별자(archRfcd·NAID·levelId·R번호) 우선 인용 — URL이 썩어도 재발굴 가능. 채널 생존은 source_profile(health)·주간 CI가 감시. 권리는 judge_rights로 기록 단위 표시.")
     if format == "karda":  # 온톨로지 직출력 — 로컬 스킬 전용이던 KARDA 노드·엣지 지식의 서버화(웹·모바일 동등성)
