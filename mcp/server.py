@@ -1979,7 +1979,8 @@ def _heritage_mode(query: str, max_results: int) -> str:
             g = lambda t: _clean(((re.search(f"<{t}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</{t}>", b) or [None, ""])[1] or ""))
             name = g("ccbaMnm1")
             if not name:
-                return f"[{cpno}] 상세 미발견 — ccbaCpno를 확인하거나 mode=heritage에 키워드를 넣으십시오."
+                return (f"[{cpno}] 상세 API 미매칭(기관 식별 편차 — 2026-11-21 명세 기록). "
+                        f"해설은 포털에서: https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}")
             content = g("content")
             if len(content) > 3500:
                 content = content[:3500] + f" …(총 {len(content)}자 — 전문은 포털)"
@@ -2931,7 +2932,7 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 · '본문:키워드[|1905-1910]'=OCR 전문+연대) ·
     much=역사박물관(→idnbr/URL 투입 시 재질·공공누리·설명) ·
     indy=판결문(이름→상세 URL 투입 시 죄명·주문·사건개요·원문 뷰어) ·
-    heritage=국가유산(키워드 목록→ccbaCpno 13자리 투입 시 해설·시대·소유/관리 판독)
+    heritage=국가유산(키워드 목록 — 국보·보물·사적+딥링크. cpno 상세는 기관 식별 편차로 일부만)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
