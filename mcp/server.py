@@ -2032,6 +2032,7 @@ def _heritage_mode(query: str, max_results: int) -> str:
             if not name:
                 return f"[{q}] 상세 미매칭 — 포털에서 열람하십시오(목록의 딥링크)."
             content = g("content")
+            hfp = _hl.sha256(content.encode("utf-8")).hexdigest()[:16] if content else ""  # 판독 시점 해설 지문
             if len(content) > 3500:
                 content = content[:3500] + f" …(총 {len(content)}자 — 전문은 포털)"
             meta = " · ".join(x for x in (f"소유 {g('ccbaPoss')}" if g("ccbaPoss") else "",
@@ -2040,6 +2041,7 @@ def _heritage_mode(query: str, max_results: int) -> str:
                                           f"소재 {g('ccbaLcad')[:60]}" if g("ccbaLcad") else "") if x)
             return (f"국가유산 판독 — {name}" + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + f" [{g('ccmaName')}]"
                     + f"\n{meta}\n" + (f"【해설】\n{content}\n" if content else "")
+                    + (f"본문 지문(sha256-16): {hfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if hfp else "")
                     + "※ 출처: 국가유산청 국가유산포털 — 게재 시 출처 표기. 사진 이용은 공공누리 유형 확인.")
         hm = re.search(r"ccbaCpno=(\d{13})", q) or re.match(r"^(\d{13})$", q)
         if hm:
@@ -2060,6 +2062,7 @@ def _heritage_mode(query: str, max_results: int) -> str:
                 return (f"[{cpno}] 상세 API 미매칭(기관 식별 편차 — 2026-11-21 명세 기록). "
                         f"해설은 포털에서: https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}")
             content = g("content")
+            hfp = _hl.sha256(content.encode("utf-8")).hexdigest()[:16] if content else ""  # 판독 시점 해설 지문
             if len(content) > 3500:
                 content = content[:3500] + f" …(총 {len(content)}자 — 전문은 포털)"
             meta = " · ".join(x for x in (f"소유 {g('ccbaPoss')}" if g("ccbaPoss") else "",
@@ -2070,6 +2073,7 @@ def _heritage_mode(query: str, max_results: int) -> str:
                     + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + f" [{g('ccmaName')}]"
                     + f"\n{meta}\n"
                     + (f"【해설】\n{content}\n" if content else "")
+                    + (f"본문 지문(sha256-16): {hfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if hfp else "")
                     + f"포털 상세: https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}\n"
                     + "※ 출처: 국가유산청 국가유산포털 — 게재 시 출처 표기(해설문 인용 시 포털 명기). 사진 이용은 공공누리 유형 확인.")
         items = _c_heritage(q, min(max_results, 15))
@@ -2106,6 +2110,7 @@ def _indy_mode(query: str, max_results: int) -> str:
             return (f"독립운동판결문 판독 — {name}{f' (당시 {age})' if age else ''}\n{meta}\n"
                     + (f"죄명: {crime}\n" if crime else "") + (f"주문: {sent}\n" if sent else "")
                     + (f"【사건개요】\n{kase}\n" if kase else "")
+                    + (f"본문 지문(sha256-16): {_hl.sha256((kase + chr(10) + (sent or '')).encode('utf-8')).hexdigest()[:16]} — 판독 시점 사건개요·주문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if kase else "")
                     + (f"판결문 원문 뷰어: https://theme.archives.go.kr/viewer/common/archWebViewer.do?archiveEventId={evnt}\n" if evnt else "")
                     + "※ 출처: 국가기록원 독립운동판결문 — 게재 시 출처 표기. 수형 사실의 존엄 고려(게재윤리). gonghun 수형기록과 교차검증 권장.")
         items = _c_indy(q, min(max_results, 15))
@@ -2289,8 +2294,10 @@ def _jsg_mode(query: str, max_results: int) -> str:
             cm = re.search(r"유형분류\s*(\S{2,20})\s*주제분류\s*(\S{2,30})\s*수집분류\s*(\S{2,30})", flat)
             i0 = flat.find("정의 ")
             haeje = ""
+            jfp = ""
             if i0 >= 0:
                 haeje = re.split(r"집필자|관련 멀티미디어|장서각 디지털아카이브 바로가기", flat[i0:i0 + 6000])[0].strip()
+                jfp = _hl.sha256(haeje.encode("utf-8")).hexdigest()[:16]  # 판독 시점 해제 지문
                 if len(haeje) > 4000:
                     haeje = haeje[:4000] + f" …(총 {len(haeje)}자 — 전문은 원문 링크)"
             if not callno and not haeje:
@@ -2299,6 +2306,7 @@ def _jsg_mode(query: str, max_results: int) -> str:
                                           cm.group(1) if cm else "", cm.group(2) if cm else "") if x)
             return (f"장서각 서지·해제 판독 — {name or did}\n{meta}\n"
                     + (f"【해제】\n{haeje}\n" if haeje else "")
+                    + (f"본문 지문(sha256-16): {jfp} — 판독 시점 해제 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if haeje else "")
                     + f"원문·이미지: https://jsg.aks.ac.kr/dir/view?dataId={_up.quote(did)}\n"
                     + "※ 출처: 한국학중앙연구원 장서각 — 게재 시 출처 표기, 이미지 재이용은 기관 이용조건 준수. "
                     "해제 인용은 국역·해설(학술 인용 시 집필 해제임을 명기).")
