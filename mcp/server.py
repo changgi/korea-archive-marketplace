@@ -1429,10 +1429,27 @@ def _collect_merged(collectors):
                         merged[k] = {"title": _norm(raw.get("title", "")), "date": raw.get("date", ""),
                                      "id": raw.get("id", ""), "url": raw.get("url", ""), "sources": [name],
                                      **({"series": str(raw["series"])[:80]} if raw.get("series") else {}),
-                                     **({"media": str(raw["media"])[:180]} if raw.get("media") else {})}
+                                     **({"media": str(raw["media"])[:180]} if raw.get("media") else {}),
+                                     **({"sameAs": str(raw["sameAs"])} if raw.get("sameAs") else {})}
             except Exception:
                 stats.append(f"{name}:—")
-    return list(merged.values()), stats
+    # v1.86: 동일 기록 병합 — sameAs(원본 식별자)가 다른 레코드의 id와 같으면 한 건으로 합치고 출처를 모두 남긴다
+    items = list(merged.values())
+    by_id = {str(it["id"]): it for it in items if it.get("id")}
+    drop = set()
+    for it in items:
+        tgt = by_id.get(it.get("sameAs") or "")
+        if not tgt or tgt is it:
+            continue
+        for s2 in it["sources"]:
+            if s2 not in tgt["sources"]:
+                tgt["sources"].append(s2)
+        tgt["sameAs"] = f"{it['sources'][0].split('·')[0]}:{it['id']}"
+        tgt["altTitle"] = it["title"][:110]
+        if not tgt.get("date") and it.get("date"):
+            tgt["date"] = it["date"]
+        drop.add(id(it))
+    return [it for it in items if id(it) not in drop], stats
 
 def _c_tna(q, n):
     q = _ko_en(q) or q
@@ -1661,12 +1678,41 @@ def _kw_api_scan(q, max_pages=None):
         _t.sleep(0.2)
     return {"total": total, "checked": checked, "hits": hits}
 
+def _kw_detail(ref):
+    """v1.86: 협약기관 상세 → 원본 연결 메타(입수처 NARA NAID·생산시기). 국내 재수집본↔해외 원본 동일성 확정용."""
+    if not ref or ref.startswith("book:"):
+        return None
+    b = _cached_text("kwd:" + ref, 24 * 3600, lambda: _kw_text(f"{_KW_BASE}/searchDetail.do?archRfcd=" + _up.quote(ref)), "<dt")
+    rows = [(_clean(k), _clean(v)) for k, v in re.findall(r"<dt[^>]*>\s*(.{1,60}?)\s*</dt>\s*<dd[^>]*>(.{0,400}?)</dd>", b, re.S)]
+    allv = " ".join(v for _, v in rows)
+    naid = (re.search(r"catalog\.archives\.gov/id/(\d+)", allv) or [None, ""])[1]
+    pv = next((v for k, v in rows if "생산시기" in k), "")
+    pm = re.search(r"\d{4}(?:-\d{2}){0,2}", pv)
+    return {"naid": naid, "date": pm.group(0) if pm else ""}
+
 def _c_koreanwar(q, n):
     _, cards = _kw_search({"keyword": q, "viewType": "archive"})
-    # v1.84: 사이트 상위계층 실값 승격(없으면 _part_of가 id 패턴 폴백)
-    return [{"title": c["title"], "date": "", "id": c["id"],
-             **({"series": c["hierarchy"]} if c.get("hierarchy") else {}),
-             "url": c["url"]} for c in cards[:n]]
+    cards = cards[:n]
+    # v1.86: 상위 5건 상세 병렬 조회(24h 캐시·6s 상한) — 원본 NAID(sameAs)·생산시기 확보 → NARA 원본과 동일 기록 병합
+    det = [None] * len(cards)
+    try:
+        with _cf.ThreadPoolExecutor(max_workers=5) as ex:
+            futs = {ex.submit(_kw_detail, c["id"]): i for i, c in enumerate(cards[:5])}
+            for f in _cf.as_completed(futs, timeout=6):
+                try:
+                    det[futs[f]] = f.result()
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    out = []
+    for i, c in enumerate(cards):
+        d = det[i] or {}
+        out.append({"title": c["title"], "date": d.get("date", ""), "id": c["id"],
+                    **({"series": c["hierarchy"]} if c.get("hierarchy") else {}),  # v1.84: 상위계층 실값 승격
+                    **({"sameAs": f"NAID {d['naid']}"} if d.get("naid") else {}),
+                    "url": c["url"]})
+    return out
 
 _JA_MAP = [("조선총독부", "朝鮮総督府"), ("이토 히로부미", "伊藤博文"), ("강제동원", "強制動員"), ("인천상륙", "仁川上陸"),
            ("한국전쟁", "朝鮮戦争"), ("창씨개명", "創氏改名"), ("동양척식", "東洋拓殖"), ("조선은행", "朝鮮銀行"),
@@ -3978,6 +4024,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
             "@context": {"dcterms": "http://purl.org/dc/terms/", "rico": "https://www.ica.org/standards/RiC/ontology#",
                          "title": "dcterms:title", "date": "dcterms:date", "identifier": "dcterms:identifier",
                          "provenance": "dcterms:provenance", "accessUrl": "dcterms:source", "media": "dcterms:hasFormat",
+                         "sameAs": "http://www.w3.org/2002/07/owl#sameAs", "altTitle": "dcterms:alternative",
                          "heldBy": {"@id": "rico:hasOrHadHolder"}, "records": {"@id": "rico:hasRecordSetMember"}},
             "@type": ["DiscoveryManifest", "rico:RecordSet"], "standard": "ISAD(G)/RiC-oriented",
             "identifier": f"kad-{now[:10]}-{h:x}",
@@ -3992,6 +4039,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 "heldBy": [{"id": k, "name": ARCHIVE_META.get(k, {}).get("n", k), "country": ARCHIVE_META.get(k, {}).get("c", "")} for k in hb],  # 맥락 — 기관 정식명·국가
                 "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}",
                 **({"media": it["media"]} if it.get("media") else {}),  # 다매체 — 원본 매체 직링크(게재 소싱)
+                **({"sameAs": it["sameAs"]} if it.get("sameAs") else {}),
+                **({"altTitle": it["altTitle"]} if it.get("altTitle") else {}),  # 맥락·증거성 — 기관 간 동일 기록
                 **({"partOf": _part_of(hb[0], it)} if _part_of(hb[0], it) else {}),
                 **({"deepRead": dr} if dr else {})})(  # 증거성 — 판독 재현 호출문
                 sorted({s.split("·")[0] for s in it["sources"]}),
@@ -4026,6 +4075,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 nd["url"] = it["url"]
             if it.get("media"):
                 nd["media"] = it["media"]
+            if it.get("altTitle"):
+                nd["altTitle"] = it["altTitle"]
             nodes.append(nd)
         edges = []
         ser_seen = set()
@@ -4040,6 +4091,12 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 edges.append({"from": rid(it, i), "to": sid, "rel": "PART_OF"})
             for s in sorted({x.split("·")[0] for x in it["sources"]}):
                 edges.append({"from": rid(it, i), "to": "archive:" + s, "rel": "HELD_BY"})
+            if it.get("sameAs"):  # v1.86 기관 간 동일 기록
+                sa = "ext:" + it["sameAs"]
+                if sa not in ser_seen:
+                    ser_seen.add(sa)
+                    nodes.append({"id": sa, "type": "identifier", "label": it["sameAs"]})
+                edges.append({"from": rid(it, i), "to": sa, "rel": "SAME_AS"})
         return (f"교차수집 '{query}' KARDA 온톨로지 — 채널별 [{' · '.join(stats)}] → "
                 f"노드 {len(nodes)}·엣지 {len(edges)} (레코드 {len(recs)}건, 상한 30):\n"
                 + "```json\n" + json.dumps({"nodes": nodes, "edges": edges}, ensure_ascii=False) + "\n```"
@@ -4051,13 +4108,15 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         def ridc(it, i):
             return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
         rows = [",".join(esc(x) for x in (ridc(it, i), "+".join(it["sources"]), it["title"], it["date"], it["id"], it["url"],
-                                           _part_of(it["sources"][0].split("·")[0], it) or "", it.get("media", "")))
+                                           _part_of(it["sources"][0].split("·")[0], it) or "", it.get("media", ""), it.get("sameAs", "")))
                 for i, it in enumerate(items[:45])]
         return (f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
-                + "node,sources,title,date,id,url,partOf,media\n" + "\n".join(rows)
+                + "node,sources,title,date,id,url,partOf,media,sameAs\n" + "\n".join(rows)
                 + "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights.")
     lines = [f"- [{'+'.join(it['sources'])}] {it['title'][:95]}"
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")
+             + (f"\n  ↔ 동일 기록: {it['altTitle'][:80]} ({it['sameAs']})" if it.get("altTitle")
+                else (f"\n  ↔ 원본: {it['sameAs']}" if it.get("sameAs") else ""))
              for it in items[:45]]
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
