@@ -1869,7 +1869,8 @@ def _c_oldnews(q, n):
     out = []
     for h in (d.get("hits") or [])[:n]:
         uri = first(h.get("uri"))
-        out.append({"title": f"{first(h.get('label'))} — {first(h.get('newspaperKorName'))}"[:110],
+        out.append({"title": (f"{first(h.get('label'))} — {first(h.get('newspaperKorName'))}"
+                              + (f" [{first(h.get('newsposition'))}]" if first(h.get('newsposition')) else ""))[:110],  # v1.85: 지면 위치(n면 n단) — 신문 인용 좌표
                     "date": str(h.get("issued_date") or ""), "id": uri,
                     **({"series": first(h.get("newspaperKorName"))} if first(h.get("newspaperKorName")) else {}),
                     "url": (f"https://nl.go.kr/newspaper/detail.do?content_id={uri}" if uri else "https://nl.go.kr/newspaper/")})
