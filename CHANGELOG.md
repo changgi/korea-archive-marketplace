@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-11-21 v1.74.0 — partOf 7채널
+- **dnz**(기관 › 컬렉션 — 'Alexander Turnbull Library › TAPUHI')·**ia**(Internet Archive 컬렉션 — fl[]=collection 추가 수집: 'CSPAN3'·'prelinger' 등) 계층 승격 — 해외 양대 집계·미러 채널의 수집 맥락이 그래프 군집으로
+
 ## 2026-11-21 v1.73.0 — partOf 5채널 확대
 - **oldnews(신문명)·aks(문중>지역 분류)** 계층 노출 — 당대 기사가 '신문 › 대한매일신보', 고문서 소장처가 '고문서 › 문중>충청남도' 시리즈 노드 아래 묶임. karda 그래프에서 **같은 신문·같은 문중 기록이 토폴로지로 군집**
 

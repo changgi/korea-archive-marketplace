@@ -1408,8 +1408,12 @@ def _c_ia(q, n):
     import urllib.parse
     q = _ko_en(q) or q
     d = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(q) +
-                  f"&fl[]=identifier&fl[]=title&fl[]=date&rows={n}&output=json")
+                  f"&fl[]=identifier&fl[]=title&fl[]=date&fl[]=collection&rows={n}&output=json")
+    def _col(x):
+        c = x.get("collection")
+        return (c[0] if isinstance(c, list) and c else c) or ""
     return [{"title": str(x.get("title", "")), "date": x.get("date", ""), "id": x.get("identifier"),
+             **({"series": str(_col(x))} if _col(x) else {}),
              "url": f"https://archive.org/details/{x.get('identifier')}"}
             for x in ((d.get("response") or {}).get("docs") or [])]
 
@@ -1936,6 +1940,7 @@ def _c_dnz(q, n):
         pc = (r.get("primary_collection") or [""])[0]
         out.append({"title": (_clean(str(r.get("title") or "(무제)")) + " — " + cp + ("·" + pc if pc else ""))[:115],
                     "date": str(r.get("display_date") or ""), "id": str(r.get("id") or ""),
+                    **({"series": cp + (" › " + pc if pc else "")} if cp else {}),
                     "url": str(r.get("landing_url") or "")})
     return out
 
@@ -2831,6 +2836,10 @@ def _part_of(ch, it):
         return f"신문 › {it['series']}"
     if ch == "aks" and it.get("series"):
         return f"고문서 › {it['series']}"
+    if ch == "dnz" and it.get("series"):
+        return f"NZ › {it['series']}"
+    if ch == "ia" and it.get("series"):
+        return f"IA Collection › {it['series']}"
     return None
 
 
