@@ -1421,7 +1421,7 @@ def _collect_merged(collectors):
                         merged[k] = {"title": _norm(raw.get("title", "")), "date": raw.get("date", ""),
                                      "id": raw.get("id", ""), "url": raw.get("url", ""), "sources": [name],
                                      **({"series": str(raw["series"])[:80]} if raw.get("series") else {}),
-                                     **({"media": str(raw["media"])[:180]} if raw.get("media") else {}),
+                                     **({"media": str(raw["media"])[:600]} if raw.get("media") else {}),  # URL은 자르면 깨진다
                                      **({"sameAs": str(raw["sameAs"])} if raw.get("sameAs") else {}),
                                      **({"lid": str(raw["lid"])} if raw.get("lid") else {})}
             except Exception:
