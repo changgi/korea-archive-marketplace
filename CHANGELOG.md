@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-21 v1.37.0
+- **위키미디어 공용 합류 — cross_search 22소스**: 키 불요 검색 API(한→영 자동 변환) — PD 사진·NARA/해군 재수집본의 원 소장처 역추적 창구. 'Seoul 1950' 791건 실측(해군역사센터 NH 시리즈 등). 공유 IP 429 가능성은 health가 상시 실측
+- **cross_search 푸터에 심층 판독 이어가기 안내**: 소스 태그→판독 경로 8종([i815]→mode=i815 … [nara]→judge_rights(naid)) — 연합 검색에서 본문 판독까지 끊김 없이
+- 해외 확장 재점검 기록: 호주 NAA(Cloudflare)·뉴질랜드 Archives NZ(Incapsula)·LOC(전 JSON 엔드포인트 Cloudflare) 보류, Trove는 무료 키 확보 시 합류 후보
+- HELP_GUIDE·help.html·심사 팩 22소스 동기화
+
 ## 2026-11-21 v1.36.0
 - **서울기록원 기록 단위 실체화 + 상세 판독**: 컬렉션명 매칭에 그치던 채널을 /catalog/result 서버 렌더 역공학으로 승격 — 시리즈(제목+/aggregation 딥링크)·사진 기록건(/item 딥링크)·컬렉션 카드 3유형 수확. `seoul_archives_search`에 상세 URL 투입 시 심층 판독(스키마 불변 오버로드): **식별번호(RG-SR-IT)·기술계층·법적지위·이용조건**(judge_rights 투입 — "제한없음+원본 협의 필요" 같은 기록 단위 권리 실문구)·기술 본문. 실측: 한강주변 도로신설 공사(RG5-SR90-IT2399)
 - 함정 기록: Python _clean은 태그 무공백 결합 — 경계 정규식 \s* 필수(Node와 차이)
