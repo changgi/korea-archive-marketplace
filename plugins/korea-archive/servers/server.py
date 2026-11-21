@@ -239,8 +239,10 @@ def nara_search(query: str, record_group: int | None = None,
                 hits2 = (((d2.get("body") or {}).get("hits") or {}).get("hits") or [])
                 rec = ((hits2[0].get("_source") or {}).get("record") or {}) if hits2 else {}
                 if rec.get("naId") and int(rec["naId"]) == i:
+                    po2 = _nara_chain(rec)  # v1.82: 인접 채굴에도 계보 — 중심과 같은 시리즈인지 즉시 판별
                     lines.append(f"{'★' if i == naid else ' '} [NAID {i}] {rec.get('title','')[:95]} | "
-                                 f"{rec.get('localIdentifier','')} | https://catalog.archives.gov/id/{i}")
+                                 f"{rec.get('localIdentifier','')}" + (f" | {po2}" if po2 else "")
+                                 + f" | https://catalog.archives.gov/id/{i}")
                 else:
                     lines.append(f"  [NAID {i}] (없음)")
             except Exception as e:
@@ -261,8 +263,11 @@ def nara_search(query: str, record_group: int | None = None,
     for h in (hits.get("hits") or [])[:max_results]:
         rec = (h.get("_source") or {}).get("record") or {}
         po = _nara_chain(rec)
-        rows.append(f"- [NAID {rec.get('naId')}] {rec.get('title','')[:100]} "
-                    f"| {rec.get('localIdentifier','')} | https://catalog.archives.gov/id/{rec.get('naId')}"
+        nd = _nara_date(rec)
+        ndo = len(rec.get("digitalObjects") or [])  # v1.82: 디지털 객체 수 — 원본 매체 유무를 목록에서 판별(다매체)
+        rows.append(f"- [NAID {rec.get('naId')}] {rec.get('title','')[:100]}" + (f" ({nd})" if nd else "")
+                    + f" | {rec.get('localIdentifier','')}" + (f" · 원본 {ndo}점" if ndo else "")
+                    + f" | https://catalog.archives.gov/id/{rec.get('naId')}"
                     + (f"\n  계보: {po}" if po else ""))
     total = hits.get("total", {}); total = total.get("value") if isinstance(total, dict) else total
     rline = ""
@@ -451,9 +456,19 @@ def judge_rights(rg_series: str = "", title: str = "", archive: str = "", naid: 
             import hashlib as _hs
             scope = str(rec.get("scopeAndContentNote") or "").strip()
             sfp = _hs.sha256(scope.encode("utf-8")).hexdigest()[:16] if scope else ""
+            # 맥락·다매체(v1.82): 생산자·생산일·소장단위(청구 좌표)·디지털 객체 직링크
+            cre = str(((rec.get("creators") or [{}])[0] or {}).get("heading", ""))[:90]
+            nd = _nara_date(rec)
+            ru = str(((((rec.get("physicalOccurrences") or [{}])[0] or {}).get("referenceUnits") or [{}])[0] or {}).get("name", ""))[:80]
+            dob = rec.get("digitalObjects") or []
+            d0 = dob[0] if dob else {}
             return (f"[NAID {naid}] {rec.get('title','')[:95]}\n"
                     f"{f'RG {rgnum} · ' if rgnum else ''}https://catalog.archives.gov/id/{naid}\n"
                     + (f"계보: {chain[:280]}\n" if chain else "")
+                    + (f"생산: {' · '.join(x for x in [cre, nd] if x)}\n" if (cre or nd) else "")
+                    + (f"소장단위: {ru} (열람·복제 청구 좌표)\n" if ru else "")
+                    + (f"디지털 객체 {len(dob)}점 — 첫 객체: {str(d0.get('objectUrl',''))[:160]}"
+                       + (f" ({str(d0.get('objectType'))[:30]})" if d0.get("objectType") else "") + "\n" if dob else "")
                     + (f"【범위·내용】 {scope[:400]}\n본문 지문(sha256-16): {sfp} — 판독 시점 기술(記述) 전문 기준. 재판독 지문 불일치=카탈로그 기술 개정 발생.\n" if scope else "")
                     + f"등급: {cls}\n근거: {basis}\n※ 카탈로그 실확인 기반 자동판정 — 공개 전 수동 확정 필수, D등급 공개 금지\n"
                     + f"※ 인접 채굴: nara_search(naid={naid}, radius=3) — 사진 ±3·색인 ±1 간격.")
@@ -1473,6 +1488,11 @@ def _nara_chain(rec):
     ser = next((a.get("title") for a in anc if re.search(r"series", str(a.get("levelOfDescription") or ""), re.I) and a.get("title")), "")
     return " › ".join(x for x in [f"RG {rg}" if rg else "", ser] if x)[:80]
 
+def _nara_date(rec):
+    # NARA 생산일자(v1.82): productionDates 다중 폴백 — logicalDate(ISO)·year·proximatePhrase
+    p = (rec.get("productionDates") or [{}])[0] or {}
+    return str(p.get("logicalDate") or p.get("year") or p.get("proximatePhrase") or "")[:10]
+
 def _c_nara(q, n):
     key = os.environ.get("NARA_API_KEY")
     if not key:
@@ -1485,7 +1505,7 @@ def _c_nara(q, n):
     for h in hits:
         rec = (h.get("_source") or {}).get("record") or {}
         po = _nara_chain(rec)
-        out.append({"title": rec.get("title", ""), "date": "", "id": f"NAID {rec.get('naId')}",
+        out.append({"title": rec.get("title", ""), "date": _nara_date(rec), "id": f"NAID {rec.get('naId')}",
                     **({"series": po} if po else {}),
                     "url": f"https://catalog.archives.gov/id/{rec.get('naId')}"})
     return out

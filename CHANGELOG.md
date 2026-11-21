@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-21 v1.82.0 — NARA 심층 2차(사용자 지시 "특히 nara 강화" 계속)
+- **목록 맥락**: nara_search·cross_search 수집기에 생산일자(`_nara_date` — productionDates logicalDate·year 폴백), 목록 행에 `원본 n점`(digitalObjects 수 — 매체 유무를 목록에서 판별)
+- **인접 채굴 맥락**: naid ±N 각 행에 계보 — 중심과 같은 시리즈인지 즉시 판별(시리즈 경계 탐지)
+- **판독 심화(judge_rights naid)**: 생산(creators heading·생산일)·**소장단위**(physicalOccurrences.referenceUnits — 열람·복제 청구 좌표)·**디지털 객체 직링크**(첫 objectUrl+유형 — 다매체 제작 직결)
+- 필드명은 NARA API v2 문서 기반 다중 폴백 — 배포 후 프로덕션 실측으로 확정
+
 ## 2026-11-21 v1.81.0 — 계층 구축 4차(재감사): 잔여 채널 5곳 추가 합류 → 28/30
 - nara 교정(v1.80)을 계기로 "재료 부재" 잔여 7채널 전수 재감사 — 5곳에서 재료 실재 확인·구축:
   - **earchive**: 행 하단 스팬 전면 수확 — 사료ID(code)·`국가 › 소장기관`(미국 › 국립문서기록관리청 실측)·**생산기간(날짜 신규 확보)**
