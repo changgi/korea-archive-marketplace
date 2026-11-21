@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.58.1
+- **nzarch 이중화 완성(프로덕션 실측 교정 2건)**: ① 0건 응답엔 hits 키가 없음(totalHits로 스트림 판별) ② icn1은 **간헐 Incapsula**(health 🟢 1.5s 직결 성공 vs 분 단위 차단 교차) → **nz-harvest.yml**(주간 화 07:07, GH 수확 136건→public/nz-index.json 커밋→배포) + 수집기 폴백('·주간인덱스' 투명 표기). 실측: '한국전쟁' 5건(Kayforce·전쟁일지 DAK1-7, Open/Restricted 권리 태그)
+- 함정 2건 추가: untracked 파일에 git diff --quiet '변경 없음' 오판(add 후 --cached로), 봇월 쿠키 워밍업은 시도 금지(공개 경로 발견으로 해결)
+
 ## 2026-11-21 v1.58.0
 - **Archives NZ(뉴질랜드 국립기록원) 합류 — cross_search 30소스**: 사용자 요청("합류 가능하도록 다른 방법을")을 GH 러너 역공학 10차로 완결. 수확 경로: 인라인 설정의 프록시 경로 노출(3차) → /local-rest 공개 JAX-RS 확인(4차) → **헤드리스 크롬 실입력으로 연합검색 XHR 포획**(8차: `GET /federated-search/customers/aims/search?q=&size=&isFuzzy=true&sourceId=aims-archive`) → **평문 GET 200 판정**(9차 — 8차의 401은 경로 착오, 보호 우회 불필요) → 단건 스키마 확정(10차: SSE 프레임 JSON — entity.name·id(R번호)·resultDate·**accessStatus 권리 표시**·series). 'Korea' 1,356건 실측
 - 교훈 축적: YAML 블록 스칼라 안 heredoc 종결자 함정(들여쓰기로 미종결 — base64 임베드로 회피), 80KB 단일행 grep 교착(6차 행), 봇 보호 우회(쿠키 워밍업)는 시도하지 않음 — 공개 경로 발견으로 해결
