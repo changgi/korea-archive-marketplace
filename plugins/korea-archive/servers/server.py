@@ -3630,6 +3630,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
+    format: csv=CSV 블록(표·통계) · karda=온톨로지 nodes/edges JSON(지식그래프·KARDA·Gephi/Neo4j 직투입).
     사용자가 "풀패키지"(보고서·카드뉴스·포스터 전부)를 원하면 report_template(kind="full_package")를 먼저 호출해 제작 순서를 따른다. 사용자가 사용법을 물으면(매직 키워드 "창기창기 도와줘")
     report_template(kind="help")를 호출해 안내한다."""
     want = (list(_COLLECT.keys()) if sources.strip().lower() == "all"
@@ -3656,6 +3657,31 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 jobs.append((f"{src}·{label}", (lambda src=src, vq=vq: _COLLECT[src](vq, n))))
     items, stats = _collect_merged(jobs)
     items.sort(key=lambda it: -len(it["sources"]))
+    if format == "karda":  # 온톨로지 직출력 — 로컬 스킬 전용이던 KARDA 노드·엣지 지식의 서버화(웹·모바일 동등성)
+        recs = items[:30]
+        srcs = sorted({s.split("·")[0] for it in recs for s in it["sources"]})
+
+        def rid(it, i):
+            return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
+        nodes = [{"id": "topic:" + query, "type": "topic", "label": query}]
+        nodes += [{"id": "archive:" + s, "type": "archive", "label": s} for s in srcs]
+        for i, it in enumerate(recs):
+            nd = {"id": rid(it, i), "type": "record", "label": it["title"][:90]}
+            if it.get("date"):
+                nd["date"] = it["date"]
+            if it.get("url"):
+                nd["url"] = it["url"]
+            nodes.append(nd)
+        edges = []
+        for i, it in enumerate(recs):
+            edges.append({"from": "topic:" + query, "to": rid(it, i), "rel": "FOUND"})
+            for s in sorted({x.split("·")[0] for x in it["sources"]}):
+                edges.append({"from": rid(it, i), "to": "archive:" + s, "rel": "HELD_BY"})
+        return (f"교차수집 '{query}' KARDA 온톨로지 — 채널별 [{' · '.join(stats)}] → "
+                f"노드 {len(nodes)}·엣지 {len(edges)} (레코드 {len(recs)}건, 상한 30):\n"
+                + "```json\n" + json.dumps({"nodes": nodes, "edges": edges}, ensure_ascii=False) + "\n```"
+                + "\n※ 그대로 KARDA·지식그래프 도구(Gephi·Neo4j·vis.js)에 투입. 한 레코드의 복수 HELD_BY=기관 교차확인. "
+                  "권리 초판정: judge_rights. 인물 중심 그래프는 nedb_search(mode=gonghun, \"종합:이름\")과 결합.")
     if format == "csv":  # 분석 투입용 구조화 출력 — "자료로써 분석할 수 있게"
         def esc(v):
             return '"' + str(v if v is not None else "").replace('"', '""') + '"'

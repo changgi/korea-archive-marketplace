@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.60.0
+- **KARDA 온톨로지 서버화 — `cross_search(format='karda')`**: 로컬 스킬(archival-discovery-pipeline) 전용이던 노드·엣지 생성 지식을 서버 출력으로(제1원칙 — 웹·모바일 동등성). topic·archive·record 3층 노드 + FOUND/HELD_BY 엣지 JSON — 복수 HELD_BY=기관 교차확인이 그래프에서 보임. 레코드 30건 상한(24KB 가드 내), Gephi·Neo4j·vis.js 직투입. 인물 그래프는 '종합:이름'과 결합 안내
+- v1.59.0: nzarch 폴백 R번호(id) 매칭(라이브 차단 중 재조회 0건 방지), PROJECT_OVERVIEW v1.58 전면 갱신, LOC 전 경로 차단 재확인(보류 유지)
+
 ## 2026-11-21 v1.58.1
 - **nzarch 이중화 완성(프로덕션 실측 교정 2건)**: ① 0건 응답엔 hits 키가 없음(totalHits로 스트림 판별) ② icn1은 **간헐 Incapsula**(health 🟢 1.5s 직결 성공 vs 분 단위 차단 교차) → **nz-harvest.yml**(주간 화 07:07, GH 수확 136건→public/nz-index.json 커밋→배포) + 수집기 폴백('·주간인덱스' 투명 표기). 실측: '한국전쟁' 5건(Kayforce·전쟁일지 DAK1-7, Open/Restricted 권리 태그)
 - 함정 2건 추가: untracked 파일에 git diff --quiet '변경 없음' 오판(add 후 --cached로), 봇월 쿠키 워밍업은 시도 금지(공개 경로 발견으로 해결)
