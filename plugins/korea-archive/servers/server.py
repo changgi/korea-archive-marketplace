@@ -1999,7 +1999,9 @@ def _c_jsg(q, n):
         if not t or did in seen or re.match(r"^JSG_K1-[1-5]$", did):
             continue
         seen.add(did)
-        out.append({"title": t[:95], "date": "", "id": did[4:] if did.startswith("JSG_") else "",
+        jid = did[4:] if did.startswith("JSG_") else ""
+        sb = {"K1": "經部(K1)", "K2": "史部(K2)", "K3": "子部(K3)", "K4": "集部(K4)"}.get(jid.split("-")[0])
+        out.append({"title": t[:95], "date": "", "id": jid, **({"series": sb} if sb else {}),
                     "url": "https://jsg.aks.ac.kr/dir/view?dataId=" + _up.quote(did)})
         if len(out) >= n:
             break
@@ -2021,7 +2023,11 @@ def _c_kyudb(q, n):
     lst = sec.get("목록")
     if not isinstance(lst, list):
         return []
-    return [{"title": str(t), "date": "", "id": "", "url": "https://kyudb.snu.ac.kr"} for t in lst[:n]]
+    def _kser(t):
+        km = re.search(r"(奎|古|想白|一簑)\s*\d", str(t))
+        return {"奎": "규장각도서(奎)", "古": "고도서(古)", "想白": "상백문고", "一簑": "일사문고"}.get(km.group(1)) if km else None
+    return [{"title": str(t), "date": "", "id": "", **({"series": _kser(t)} if _kser(t) else {}),
+             "url": "https://kyudb.snu.ac.kr"} for t in lst[:n]]
 
 
 _I815_DETAIL = {  # 구분(gubun)→상세 GET 경로 — 목록 contentsFrm(method=get) 역공학(2026-11-20 실측)
@@ -2884,6 +2890,10 @@ def _part_of(ch, it):
         return f"생산기관 › {it['series']}"
     if ch == "nlk" and it.get("series"):
         return f"자료유형 › {it['series']}"
+    if ch == "jsg" and it.get("series"):
+        return f"四部 › {it['series']}"
+    if ch == "kyudb" and it.get("series"):
+        return f"소장 › {it['series']}"
     return None
 
 
