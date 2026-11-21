@@ -2253,7 +2253,7 @@ def _un_mode(query: str, max_results: int) -> str:
             head = " · ".join(x for x in (f"발행: {(r.get('imprint') or {}).get('date')}" if (r.get("imprint") or {}).get("date") else "",
                                           f"주제: {subs}" if subs else "") if x)
             return (f"UN 디지털도서관 판독 — {sym or f'recid {recid}'}\n{head}\n"
-                    + (f"【요약】\n{abs_[:1500]}\n" if abs_ else "")
+                    + (f"【요약】\n{abs_[:1500]}\n본문 지문(sha256-16): {_hl.sha256(abs_.encode('utf-8')).hexdigest()[:16]} — 판독 시점 요약 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if abs_ else "")
                     + (f"영문 PDF: {en['url']}\n" if en else "")
                     + (("전체 언어판 %d종: " % len(files)) + "·".join(f.get("description") or "" for f in files) + "\n" if len(files) > 1 else "")
                     + f"레코드: https://digitallibrary.un.org/record/{recid}\n"
@@ -2423,12 +2423,15 @@ def _ktv_mode(query: str, max_results: int) -> str:
             body = re.sub(r"\n{3,}", "\n\n", body).strip()
             if not title and not body:
                 return f"판독 실패 — 영상 상세 구조 상이. 브라우저로 열람: {q}"
+            kfp = _hl.sha256(body.encode("utf-8")).hexdigest()[:16] if body else ""  # 판독 시점 해설 지문
             if len(body) > 4000:
                 body = body[:4000] + f" …(총 {len(body)}자 — 전문은 원문 링크)"
             meta = " · ".join(x for x in (f"제작연도: {pdate}" if pdate else "", f"상영시간: {ptime}" if ptime else "",
                                           f"출처: {origin}" if origin else "") if x)
             return (f"KTV e영상역사관 영상 판독 — {title or '(제목 미상)'}\n{meta}\n"
-                    + (f"【해설】\n{body}\n" if body else "") + f"원문(영상 재생): {q}\n"
+                    + (f"【해설】\n{body}\n" if body else "")
+                    + (f"본문 지문(sha256-16): {kfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if kfp else "")
+                    + f"원문(영상 재생): {q}\n"
                     + '※ KTV 콘텐츠는 KOGL(공공누리) — judge_rights에 "KOGL" 표기로 초판정. 게재 시 출처 표기.')
         items = _c_ktv(q, min(max_results, 10))
         if not items:
@@ -3700,6 +3703,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 "heldBy": sorted({s.split("·")[0] for s in it["sources"]}),  # 맥락 — 소장기관(복수=교차확인)
                 "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}"} for i, it in enumerate(recs)],
         }
+        man["recordsFixity"] = "sha256:" + _hl.sha256(json.dumps(man["records"], ensure_ascii=False).encode("utf-8")).hexdigest()  # 내장 무결성
         mj = json.dumps(man, ensure_ascii=False)
         fx = _hl.sha256(mj.encode("utf-8")).hexdigest()  # 고정성(fixity) — 전파 중 변조 검증
         return (f"발굴 수집기록 매니페스트 '{query}' — {len(recs)}건 (재현 가능·기관 등재용):\n"
