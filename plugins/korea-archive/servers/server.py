@@ -1663,14 +1663,18 @@ def _c_ndl(q, n):
                       headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
     with _ur.urlopen(req, timeout=25) as r:
         b = r.read().decode("utf-8", "replace")
+    if "<error>" in b and "429" in b:
+        raise RuntimeError("NDL 동시접속 제한(429) — 잠시 후 재시도")
     out = []
     for item in b.split("<item>")[1:]:
         g = lambda t: ((re.search(f"<{t}[^>]*>([^<]+)", item) or [None, ""])[1] or "").strip()
         title, link = g("title"), g("link")
         if not title or not link:
             continue
-        cat = g("category")
-        out.append({"title": (title + (f" [{cat}]" if cat else ""))[:110], "date": g("dc:date"), "id": "", "url": link})
+        cats = "·".join(re.findall(r"<category>([^<]+)", item))  # 자료형·매체(紙/デジタル)
+        author = g("author")
+        out.append({"title": (title + (f" [{cats}]" if cats else "") + (f" — {author}" if author else ""))[:120],
+                    "date": g("dc:date"), "id": "", "url": link})
         if len(out) >= n:
             break
     return out
@@ -1860,6 +1864,46 @@ def _c_gonghun(q, n):
         if len(out) >= n:
             break
     return out
+
+
+def _un_mode(query: str, max_results: int) -> str:
+    """UN 디지털도서관 심층 — 키워드 목록 / recid·URL 판독(요약·주제·언어별 PDF). Node 패리티."""
+    q = query.strip()
+    try:
+        rm = re.search(r"digitallibrary\.un\.org/record/(\d+)", q) or re.match(r"^(\d{4,9})$", q)
+        if rm:
+            recid = rm.group(1)
+            def fetch():
+                req = _ur.Request(f"https://digitallibrary.un.org/search?p=recid%3A{recid}&of=recjson&rg=1",
+                                  headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
+                with _ur.urlopen(req, timeout=25) as r:
+                    return r.read().decode("utf-8", "replace")
+            d = json.loads(_cached_text("unD:" + recid, 24 * 3600, fetch, "recid"))
+            r = d[0] if isinstance(d, list) and d else None
+            if not r:
+                return f"[recid {recid}] 레코드 미발견 — record URL 또는 recid를 확인하십시오."
+            files = [f for f in (r.get("files") or []) if f and f.get("url")]
+            sym = re.sub(r"-[A-Z]{2}\.pdf$", "", (files[0].get("full_name", "") if files else ""), flags=re.I).replace("_", "/")
+            en = next((f for f in files if re.search(r"english", f.get("description") or "", re.I)
+                       or re.search(r"-EN\.pdf$", f.get("full_name") or "", re.I)), None)
+            subs = " · ".join([x.get("term") for x in (r.get("subject") or []) if x.get("term")][:6])
+            abs_ = _clean(str((r.get("abstract") or {}).get("summary") or ""))
+            head = " · ".join(x for x in (f"발행: {(r.get('imprint') or {}).get('date')}" if (r.get("imprint") or {}).get("date") else "",
+                                          f"주제: {subs}" if subs else "") if x)
+            return (f"UN 디지털도서관 판독 — {sym or f'recid {recid}'}\n{head}\n"
+                    + (f"【요약】\n{abs_[:1500]}\n" if abs_ else "")
+                    + (f"영문 PDF: {en['url']}\n" if en else "")
+                    + (("전체 언어판 %d종: " % len(files)) + "·".join(f.get("description") or "" for f in files) + "\n" if len(files) > 1 else "")
+                    + f"레코드: https://digitallibrary.un.org/record/{recid}\n"
+                    + "※ UN 공식문서 — 출처 표기 하에 인용 가능(문서기호 병기). 결의·보고서 원문은 PDF 직링크로 분석 투입.")
+        items = _c_un(q, min(max_results, 10))
+        if not items:
+            return f"UN 디지털도서관 '{q}' — 0건. 영문 사건명·문서기호(S/RES/84 등)로 재시도하십시오."
+        return (f"UN 디지털도서관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}" + (f" ({it['date']})" if it.get("date") else "") + f"\n  {it['url']}" for it in items)
+                + "\n※ record URL(또는 recid 숫자)을 mode=un query로 재투입 → 요약·주제·언어별 PDF 직링크 판독.")
+    except Exception as e:
+        return f"UN 디지털도서관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://digitallibrary.un.org"
 
 
 def _jsg_mode(query: str, max_results: int) -> str:
@@ -2596,7 +2640,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     ktv=KTV e영상역사관(키워드 목록→ehistory view URL 투입 시 영상 해설·상영정보 판독, KOGL) ·
     earchive=국편 전자사료관(키워드 목록→'키워드|순번' 투입 시 상세: 열람·이용조건·등록번호) ·
     commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독) ·
-    jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독)
+    jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독) ·
+    un=UN 디지털도서관(키워드 목록→recid/URL 투입 시 요약·주제·언어별 PDF 직링크)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2615,6 +2660,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _commons_mode(query, max_results)
     if mode == "jsg":
         return _jsg_mode(query, max_results)
+    if mode == "un":
+        return _un_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
