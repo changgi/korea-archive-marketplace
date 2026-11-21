@@ -1833,29 +1833,36 @@ def _c_nlna(q, n):
 
 def _c_nzarch(q, n):
     """Archives NZ Collections(Te Rua Mahara) — 연합검색 공개 API(SSE 프레임 JSON, 무키 평문 GET 실측).
-    v1.58: 사용자 요청 → GH 러너(유일한 Incapsula 통과 환경) 역공학 10차로 완결. accessStatus=권리 표시."""
+    v1.58: GH 러너 역공학 10차로 완결. 0건 응답엔 hits 키 없음(totalHits로 판별). 간헐 Incapsula → 정적 인덱스 폴백."""
     en = _ko_en(q) or q
-    b = _http_text("https://collections.archives.govt.nz/federated-search/customers/aims/search?size=" + str(min(n, 20))
-                   + "&facetSize=0&start=0&isFuzzy=true&sourceId=aims-archive&q=" + _up.quote(en), 25)
-    line = next((l for l in b.split("\n") if l.startswith("data:") and '"hits"' in l), None)
-    if not line:
-        return []
-    j = json.loads(line[5:])
-    out = []
-    for h in (j.get("hits") or []):
-        e = h.get("entity") or {}
-        def cf(k):
-            try:
-                return str(e["custom"][k]["value"][0]["value"])
-            except Exception:
-                return ""
-        acc = cf("accessStatus")
-        rid = str(e.get("id") or "")
-        out.append({"title": _clean(str(e.get("name") or "(무제)"))[:92] + (f" [{acc}]" if acc else ""),
-                    "date": cf("resultDate"), "id": rid,
-                    "url": ("https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/"
-                            + rid + "?q=" + _up.quote(en)) if rid else ""})
-    return out
+
+    def _row(rid, title, acc, date):
+        return {"title": title[:92] + (f" [{acc}]" if acc else ""), "date": date, "id": rid,
+                "url": "https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/" + rid}
+    try:
+        b = _http_text("https://collections.archives.govt.nz/federated-search/customers/aims/search?size=" + str(min(n, 20))
+                       + "&facetSize=0&start=0&isFuzzy=true&sourceId=aims-archive&q=" + _up.quote(en), 25)
+        line = next((l for l in b.split("\n") if l.startswith("data:") and '"totalHits"' in l), None)
+        if not line:
+            raise RuntimeError("no-stream")
+        j = json.loads(line[5:])
+        out = []
+        for h in (j.get("hits") or []):
+            e = h.get("entity") or {}
+
+            def cf(k):
+                try:
+                    return str(e["custom"][k]["value"][0]["value"])
+                except Exception:
+                    return ""
+            out.append(_row(str(e.get("id") or ""), _clean(str(e.get("name") or "(무제)")), cf("accessStatus"), cf("resultDate")))
+        return out
+    except Exception:  # 간헐 Incapsula — GH 주간 수확 정적 인덱스 폴백(자체 도메인)
+        ix = _cached_text("nzIdx", 6 * 3600, lambda: _http_text("https://korea-archive-mcp.vercel.app/nz-index.json", 20), '"records"')
+        j = json.loads(ix)
+        ql = en.lower()
+        return [_row(str(r.get("id") or ""), str(r.get("title") or "")[:86] + " ·주간인덱스", str(r.get("access") or ""), str(r.get("date") or ""))
+                for r in (j.get("records") or []) if ql in str(r.get("title") or "").lower()][:n]
 
 
 def _c_dnz(q, n):
