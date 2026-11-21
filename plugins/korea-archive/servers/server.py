@@ -336,7 +336,7 @@ JB_STRAT = {
     'recipes': """발굴 완주 레시피 — 주제 유형별 발굴→판독→권리 순서 (전 단계 실측 검증, 2026-11-21)
 공통 원칙: ①cross_search로 폭 확보(variants=당대 표기) ②신호가 나온 소스의 전용 도구/판독 모드로 심층 ③권리는 표시(judge_rights·naid·라이선스) ④0건=부재가 아니다(표기 변형·인접 채굴·관리 행정으로 전환).
 
-① 인물(독립운동가): gonghun(이름→mngNo→공훈록·수형기록. 훈격·이명 확보) → 이명·한자명으로 i815 재검색(당대 신문 전문 판독) → jacar(일본 측 — 한자명) → commons(초상·PD) → 수형기록의 판결문은 국가기록원 교차.
+① 인물(독립운동가): gonghun(이름→mngNo→공훈록·수형기록. 훈격·이명 확보) → 이명·한자명으로 i815·oldnews 재검색(당대 신문 — oldnews는 '본문:이명' OCR 전문까지) → jacar(일본 측 — 한자명) → commons(초상·PD) → 수형기록의 판결문은 국가기록원 교차.
 ② 한국전쟁 전투·부대: koreanwar(협약 — archRfcd→koreanwar_item 인접 채굴) → nara(RG 교차+naid 인접, judge_rights(naid) 실확인) → tna(연대 필터)·awm(가평 등 영연방)·nlna(네덜란드) → un(안보리 결의 — recid 판독으로 PDF) → commons(PD 사진·원 소장처 역추적).
 ③ 조선 제도·고문헌: nedb law(법전 근거)→★sibling(형제 조 전수)→sjw(최초 용례) → kyujanggak(목록+해제)·jsg(청구기호→해제 전문) → aks(문중 고문서) → 인용 2층위 준수.
 ④ 일제강점기 정책·기관: ndl(총독부 간행물·통계연보·관보) ⇄ jacar(공문서 메타·인접 ±100) → nedb(한국사DB)·earchive('키워드|순번' 이용조건) → i815(민족 측 시각 대조).
@@ -1898,6 +1898,26 @@ def _oldnews_mode(query: str, max_results: int) -> str:
     """신문아카이브 심층 — 키워드 목록 / CNTS·URL 판독(색인어·관련기사·주제어). Node 패리티."""
     q = query.strip()
     try:
+        bm = re.match(r"^본문[:：]\s*(.+)$", q)
+        if bm:  # OCR 본문 전문 검색 — search_bodytext.do 역공학(2026-11-21)
+            kw = bm.group(1).strip()
+            req = _ur.Request("https://nl.go.kr/newspaper/search_bodytext.do",
+                              data=json.dumps({"search_keyword": kw, "page_size": min(max_results, 10), "page_no": 1}).encode(),
+                              headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json",
+                                       "Referer": "https://nl.go.kr/newspaper/bodytext_search.do"})
+            with _ur.urlopen(req, timeout=25) as r:
+                d2 = json.loads(r.read().decode("utf-8", "replace"))
+            f1 = lambda v: (v[0] if isinstance(v, list) and v else v) or ""
+            rows = []
+            for h in (d2.get("hits") or []):
+                ex = _clean(str(f1(h.get("highlight_abstract")) or f1(h.get("abstract")) or ""))
+                link = f"https://nl.go.kr/newspaper/detail.do?content_id={f1(h.get('uri'))}" if f1(h.get("uri")) else ""
+                rows.append(f"- {f1(h.get('label'))} — {f1(h.get('newspaperKorName'))} ({h.get('issued_date') or ''})\n  발췌: {ex[:180]}\n  {link}")
+            if not rows:
+                return f"신문아카이브 본문검색 '{kw}' — 0건. 당대 표기(국한문·옛 한글)로 재시도하십시오."
+            return (f"신문아카이브 OCR 본문검색 '{kw}' — 총 {d2.get('total_count') or len(rows)}건(상위 {len(rows)}):\n"
+                    + "\n".join(rows)
+                    + "\n※ 발췌는 OCR 원문(국한문 그대로). CNTS를 mode=oldnews로 재투입 → 색인어·관련기사 연쇄.")
         cm = re.search(r"content_id=(CNTS-\d+)", q) or re.match(r"^(CNTS-\d+)$", q)
         if cm:
             cid = cm.group(1)
@@ -2710,7 +2730,7 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독) ·
     jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독) ·
     un=UN 디지털도서관(키워드 목록→recid/URL 투입 시 요약·주제·언어별 PDF 직링크) ·
-    oldnews=신문아카이브(키워드 목록→CNTS/URL 투입 시 색인어 전체·관련기사 연쇄·주제어 판독)
+    oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 판독 · '본문:키워드'=OCR 전문 발췌)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
