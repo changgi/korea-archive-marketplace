@@ -1483,7 +1483,8 @@ def _c_archives(q, n):
     sk = key if ("%" in key) else _up.quote(key)
     xml = _http_text("https://apis.data.go.kr/1741050/openapi/searcharc?serviceKey=" + sk +
                      "&query=" + _up.quote(q) + f"&start=1&limit={n}", 20)
-    return [{"title": _xtag(i, "title"), "date": _xtag(i, "prod_year"), "id": _xtag(i, "prod_name"),
+    return [{"title": _xtag(i, "title"), "date": _xtag(i, "prod_year"), "id": (lambda lk: ((re.search(r"rc_rfile_no=(\\d+)", lk).group(1) if re.search(r"rc_rfile_no=(\\d+)", lk) else "")
+                               + ("-" + re.search(r"rc_ritem_no=0*(\\d+)", lk).group(1) if re.search(r"rc_ritem_no=0*(\\d+)", lk) else "")) or _xtag(i, "prod_name"))(_xtag(i, "link")),
              **({"series": _xtag(i, "prod_name")} if _xtag(i, "prod_name") else {}),
              "url": _xtag(i, "link")} for i in re.findall(r"<item>(.*?)</item>", xml, re.S)]
 
