@@ -1945,7 +1945,7 @@ def _much_mode(query: str, max_results: int) -> str:
             km = re.search(r"제\s*(\d)\s*유형\s*:\s*(.{3,60}?)\s*본 저작물", flat)
             di = flat.find("이용할 수 있습니다.")
             desc = flat[di + 11:di + 1700].strip() if di >= 0 else ""
-            desc = re.split(r"활용정보|이전글|다음글|사이트맵|COPYRIGHT", desc, flags=re.I)[0].strip()
+            desc = re.sub(r"&times;|×", "", re.split(r"자료열람|활용정보|이전글|다음글|사이트맵|COPYRIGHT", desc, flags=re.I)[0]).strip()
             if not no2 and not desc:
                 return f"[{id2}] 상세 미발견 또는 구조 상이 — idnbr을 확인하거나 mode=much에 검색어를 넣으십시오."
             rline = ""
