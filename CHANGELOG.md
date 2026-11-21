@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.36.0
+- **서울기록원 기록 단위 실체화 + 상세 판독**: 컬렉션명 매칭에 그치던 채널을 /catalog/result 서버 렌더 역공학으로 승격 — 시리즈(제목+/aggregation 딥링크)·사진 기록건(/item 딥링크)·컬렉션 카드 3유형 수확. `seoul_archives_search`에 상세 URL 투입 시 심층 판독(스키마 불변 오버로드): **식별번호(RG-SR-IT)·기술계층·법적지위·이용조건**(judge_rights 투입 — "제한없음+원본 협의 필요" 같은 기록 단위 권리 실문구)·기술 본문. 실측: 한강주변 도로신설 공사(RG5-SR90-IT2399)
+- 함정 기록: Python _clean은 태그 무공백 결합 — 경계 정규식 \s* 필수(Node와 차이)
+
 ## 2026-11-21 v1.35.0
 - **국편 전자사료관 세션 상세 역공학 해제 → `nedb_search(mode='earchive')`**: '상세 딥링크 없음(세션 기반)'으로 보류했던 상세 열람을 해제 — fnGoCatalogView가 catalogId가 아닌 **검색 폼+searchPosition 재제출** 설계임을 확인, 쿠키 유지 2단 POST로 상세 판독('키워드|순번' 입력). 열람조건·이용조건(권리 문구 — judge_rights 투입)·등록번호·사료건 ID 추출. 심층 판독 모드 4종(i815·gonghun·ktv·earchive)
 - 평문 매칭이 내비게이션 '열람·이용조건' 메뉴와 혼동되는 함정 발견 → row-box HTML 앵커로 교정(명세 기록)

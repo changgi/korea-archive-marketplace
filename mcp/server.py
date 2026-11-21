@@ -2032,15 +2032,37 @@ def _c_jacar(q, n):
 
 
 def _c_seoul(q, n):
-    """서울기록원 컬렉션 매칭 — 전용 도구(seoul_archives_search)와 동일 경로."""
-    b = _http_text("https://archives.seoul.go.kr/catalog?search_api_fulltext=" + _up.quote(q), 15)
-    out = []
-    for m in re.finditer(r'href="(/catalog/result\?[^"]*collects=[^"]*)"[^>]*>(.*?)</a>', b, re.S):
-        nm = _clean(m.group(2))
-        if nm and "컬렉션" in nm:
-            out.append({"title": nm, "date": "", "id": "", "url": "https://archives.seoul.go.kr" + m.group(1)})
+    """서울기록원 — v1.36 기록 단위 실체화: /catalog/result 서버 렌더 파싱 + fnDetail 딥링크(/item·/aggregation GET)."""
+    base = "https://archives.seoul.go.kr"
+    deep = base + "/catalog/result?regclass=ALL&query=" + _up.quote(q)
+    b = _http_text(deep, 20)
+    out, used = [], set()
+    # ① 시리즈형: fnDetail 직후 2600자 내 d02 제목 — 제목+딥링크 완결 / 사진 기록건은 상세 판독 안내
+    for seg in b.split("fnDetail('")[1:]:
+        pm = re.match(r"^(/[a-z-]+/\d+)", seg)
+        if not pm:
+            continue
+        path = pm.group(1)
+        tm = re.search(r'<p class="d02">\s*<span><b>([\s\S]*?)</b>', seg[:2600])
+        if tm:
+            tt = _clean(tm.group(1))
+            used.add(tt)
+            out.append({"title": tt[:110], "date": "", "id": path.split("/")[2], "url": base + path})
+        else:
+            out.append({"title": f"[기록건·사진] {path.split('/')[1]} {path.split('/')[2]} — 제목·이용조건은 상세 URL 판독",
+                        "date": "", "id": path.split("/")[2], "url": base + path})
         if len(out) >= n:
             break
+    # ② 컬렉션 카드형: d02 제목만(링크 JS 바인딩) — 제목+전체결과 URL 신호
+    if len(out) < n:
+        for m in re.finditer(r'<p class="d02">\s*<span><b>([\s\S]*?)</b>', b):
+            tt = _clean(m.group(1))
+            if not tt or tt in used:
+                continue
+            used.add(tt)
+            out.append({"title": f"[컬렉션] {tt}"[:110], "date": "", "id": "", "url": deep})
+            if len(out) >= n:
+                break
     return out
 
 
@@ -2618,23 +2640,43 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
 
 @mcp.tool()
 def seoul_archives_search(query: str, max_results: int = 15) -> str:
-    """서울기록원(archives.seoul.go.kr) 카탈로그를 서버에서 직접 조회 — 검색어와 매칭되는 컬렉션
-    목록과 전체 항목 URL을 반환한다. 서울시 행정기록·시정사진·구술 등 지방기록물."""
-    land = "https://archives.seoul.go.kr/catalog?search_api_fulltext=" + _up.quote(query)
-    deep = "https://archives.seoul.go.kr/catalog/result?regclass=RC_ITEM&search_api_fulltext=" + _up.quote(query)
+    """서울기록원(archives.seoul.go.kr) 기록 단위 검색 — 시리즈·기록건 제목+상세 딥링크.
+    query에 /item·/aggregation 상세 URL 투입 시 심층 판독: 식별번호(RG-SR-IT)·기술계층·법적지위·
+    이용조건(judge_rights 투입)·기술 본문. 서울시 행정기록·시정사진·구술 등 지방기록물."""
+    q = query.strip()
+    deep = "https://archives.seoul.go.kr/catalog/result?regclass=ALL&query=" + _up.quote(q)
+    if re.match(r"^https?://archives\.seoul\.go\.kr/(item|aggregation)/\d+", q):  # 상세 판독 — 도메인 한정
+        try:
+            b = _cached_text("seoulD:" + q, 24 * 3600, lambda: _http_text(q, 25), "기술계층")
+            flat = _clean(b)
+            pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
+            title = pick(r"<-\s*(.{2,90}?)\s+(?:기술계층|생산자)")
+            sid = pick(r"식별번호\s+(\S{4,30})")
+            layers = re.findall(r"기술계층\s+(\S{2,20}\([A-Za-z]+\))", flat)
+            layer = layers[-1] if layers else ""  # 첫 일치는 브레드크럼 — 마지막이 본 기록의 계층
+            legal = pick(r"법적지위\s+(\S{2,12})")
+            use = pick(r"이용조건\s*이용유형\s*(.{2,40}?)\s*(?:이용주기|검색도구|공개|관련)")
+            use_note = pick(r"이용주기\s*(.{5,160}?)\s*(?:검색도구|공개|관련)")
+            desc = pick(r"상세정보\s+기술\s+([\s\S]{10,1500}?)\s+(?:생산이력|입수이력|보존이력|관련 기록|열람|공개된)")
+            if not sid and not title and not desc:
+                return f"상세 파싱 실패 — URL을 확인하거나 브라우저로 열람: {q}"
+            meta = " · ".join(x for x in (f"식별번호 {sid}" if sid else "", layer,
+                                          f"법적지위 {legal}" if legal else "") if x)
+            return (f"서울기록원 상세 — {title or '(제목 미상)'}\n{meta}\n"
+                    + (f"이용조건: {use}{f' — {use_note}' if use_note else ''}\n" if use else "")
+                    + (f"【기술】\n{desc}\n" if desc else "") + f"원문: {q}\n"
+                    + "※ 출처: 서울기록원 — 게재 시 출처 표기. 이용조건·법적지위를 judge_rights에 투입해 초판정.")
+        except Exception as e:
+            return f"서울기록원 상세 오류({str(e)[:60]}) — 브라우저로 열람: {q}"
     try:
-        b = _http_text(land, 15)
-        cols = []
-        for href, inner in re.findall(r'href="(/catalog/result\?[^"]*collects=[^"]*)"[^>]*>(.*?)</a>', b, re.S):
-            nm = _clean(inner)
-            if nm and "컬렉션" in nm:
-                cols.append((nm, "https://archives.seoul.go.kr" + href))
-        if cols:
-            lines = [f"- {n}\n  {u}" for n, u in cols[:max_results]]
-            return f"서울기록원 '{query}' — 매칭 컬렉션 {len(cols)}개:\n" + "\n".join(lines) + f"\n전체 항목: {deep}"
-        return _agent_browse("서울기록원", query, deep, "매칭 컬렉션 미검출")
+        items = _c_seoul(q, min(max_results, 20))
+        if items:
+            return (f"서울기록원 '{q}' — {len(items)}건(시리즈·기록건):\n"
+                    + "\n".join(f"- {it['title']}\n  {it['url']}" for it in items)
+                    + f"\n전체 결과: {deep}\n※ 상세 URL을 query로 재투입 → 식별번호·이용조건·기술 본문 판독.")
+        return _agent_browse("서울기록원", q, deep, "기록 미검출")
     except Exception as e:
-        return _agent_browse("서울기록원", query, deep, f"자동조회 실패({e})")
+        return _agent_browse("서울기록원", q, deep, f"자동조회 실패({e})")
 
 
 @mcp.tool()
