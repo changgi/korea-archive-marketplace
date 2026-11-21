@@ -1329,7 +1329,7 @@ def report_template(kind: str = "report") -> str:
 
 
 # ══════════ 국내 아카이브 수집기 — 자동 브라우징(서버 사이드 fetch·파싱) v1.9.0 ══════════
-import urllib.parse as _up, urllib.request as _ur, html as _html
+import urllib.parse as _up, urllib.request as _ur, html as _html, datetime as _dt
 
 _UA_KO = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
 
@@ -3630,7 +3630,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
-    format: csv=CSV 블록(표·통계) · karda=온톨로지 nodes/edges JSON(지식그래프·KARDA·Gephi/Neo4j 직투입).
+    format: csv=CSV 블록(표·통계) · karda=온톨로지 nodes/edges JSON(지식그래프 직투입) · manifest=발굴 수집기록 매니페스트(ISAD(G)·RiC 지향 — provenance=증거성·heldBy=맥락, 기록관리시스템 등재·다매체 변환 원천).
     사용자가 "풀패키지"(보고서·카드뉴스·포스터 전부)를 원하면 report_template(kind="full_package")를 먼저 호출해 제작 순서를 따른다. 사용자가 사용법을 물으면(매직 키워드 "창기창기 도와줘")
     report_template(kind="help")를 호출해 안내한다."""
     want = (list(_COLLECT.keys()) if sources.strip().lower() == "all"
@@ -3657,6 +3657,30 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 jobs.append((f"{src}·{label}", (lambda src=src, vq=vq: _COLLECT[src](vq, n))))
     items, stats = _collect_merged(jobs)
     items.sort(key=lambda it: -len(it["sources"]))
+    if format == "manifest":  # 발굴 수집기록 매니페스트 — 발굴 행위 자체를 맥락·증거성 갖춘 현용기록으로(ISAD(G)·RiC 지향)
+        recs = items[:30]
+        now = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        h = 7
+        for c in query:
+            h = (h * 31 + ord(c)) & 0x7FFFFFFF
+        man = {
+            "@type": "DiscoveryManifest", "standard": "ISAD(G)/RiC-oriented",
+            "identifier": f"kad-{now[:10]}-{h:x}",
+            "provenance": {  # 증거성 — 수집의 재현 가능한 기술(누가·무엇을·언제·어떻게)
+                "query": query, "sources": ",".join(want), "variants": variants, "collectedAt": now,
+                "tool": "KOREA ARCHIVE 통합검색 cross_search (python plugin)",
+                "reproduce": f"cross_search(query={query!r}, sources={sources!r}, format='manifest')",
+                "channelStats": stats},
+            "records": [{
+                "identifier": it.get("id") or None, "title": it["title"], "date": it.get("date") or None,
+                "heldBy": sorted({s.split("·")[0] for s in it["sources"]}),  # 맥락 — 소장기관(복수=교차확인)
+                "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}"} for it in recs],
+        }
+        return (f"발굴 수집기록 매니페스트 '{query}' — {len(recs)}건 (재현 가능·기관 등재용):\n"
+                + "```json\n" + json.dumps(man, ensure_ascii=False) + "\n```"
+                + "\n※ 현용기록물로서의 발굴기록: provenance(질의·소스·시각·재현 호출)=증거성 · heldBy·식별자=맥락. 이 JSON을 그대로 기록관리시스템·KARDA에 등재."
+                + "\n※ 다매체 변환 사슬: 이 매니페스트 → report_template(kind=report/carousel/full_package)=보고서·카드뉴스 · format='karda'=지식그래프 · format='csv'=데이터셋."
+                + "\n※ 지속가능성: 영속 식별자(archRfcd·NAID·levelId·R번호) 우선 인용 — URL이 썩어도 재발굴 가능. 채널 생존은 source_profile(health)·주간 CI가 감시. 권리는 judge_rights로 기록 단위 표시.")
     if format == "karda":  # 온톨로지 직출력 — 로컬 스킬 전용이던 KARDA 노드·엣지 지식의 서버화(웹·모바일 동등성)
         recs = items[:30]
         srcs = sorted({s.split("·")[0] for it in recs for s in it["sources"]})

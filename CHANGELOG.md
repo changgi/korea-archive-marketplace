@@ -1,6 +1,7 @@
 # Changelog
 
-## 2026-11-21 v1.60.0
+## 2026-11-21 v1.61.0
+- **발굴 수집기록 매니페스트 — `cross_search(format='manifest')`** (사용자 제안: "맥락·증거성 갖는 현용기록물로 생산, 데이터화→다매체 전파, 지속가능성"): 발굴 행위 자체를 ISAD(G)·RiC 지향 기록으로 생산 — ①증거성=provenance 블록(질의·소스·수집시각·**재현 호출문**·채널 통계), ②맥락=heldBy(소장기관, 복수=교차확인)·영속 식별자, ③데이터화=표준 지향 JSON(기록관리시스템·KARDA 등재용), ④다매체 변환 사슬 안내(보고서·카드뉴스·karda 그래프·CSV), ⑤지속가능성=영속 식별자 우선 인용(URL 부패 대비)+health 주간 감시. 레코드 30건 상한(24KB 내)
 - **KARDA 온톨로지 서버화 — `cross_search(format='karda')`**: 로컬 스킬(archival-discovery-pipeline) 전용이던 노드·엣지 생성 지식을 서버 출력으로(제1원칙 — 웹·모바일 동등성). topic·archive·record 3층 노드 + FOUND/HELD_BY 엣지 JSON — 복수 HELD_BY=기관 교차확인이 그래프에서 보임. 레코드 30건 상한(24KB 가드 내), Gephi·Neo4j·vis.js 직투입. 인물 그래프는 '종합:이름'과 결합 안내
 - v1.59.0: nzarch 폴백 R번호(id) 매칭(라이브 차단 중 재조회 0건 방지), PROJECT_OVERVIEW v1.58 전면 갱신, LOC 전 경로 차단 재확인(보류 유지)
 
