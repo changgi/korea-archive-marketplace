@@ -1854,7 +1854,7 @@ def _c_nzarch(q, n):
         j = json.loads(ix)
         ql = en.lower()
         return [_row(str(r.get("id") or ""), str(r.get("title") or "")[:86] + " ·주간인덱스", str(r.get("access") or ""), str(r.get("date") or ""))
-                for r in (j.get("records") or []) if ql in str(r.get("title") or "").lower()][:n]
+                for r in (j.get("records") or []) if ql in str(r.get("title") or "").lower() or str(r.get("id") or "").lower() == ql][:n]
 
 
 def _c_dnz(q, n):
