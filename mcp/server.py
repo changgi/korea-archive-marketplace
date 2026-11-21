@@ -1967,10 +1967,15 @@ def _heritage_mode(query: str, max_results: int) -> str:
         hm = re.search(r"ccbaCpno=(\d{13})", q) or re.match(r"^(\d{13})$", q)
         if hm:
             cpno = hm.group(1)
-            kdcd, ctcd, asno = cpno[1:3], cpno[3:5], cpno[5:]
-            b = _cached_text("heriD:" + cpno, 24 * 3600,
-                             lambda: _http_text(f"https://www.khs.go.kr/cha/SearchKindOpenapiDt.do?ccbaKdcd={kdcd}&ccbaAsno={asno}&ccbaCtcd={ctcd}", 25),
-                             "ccbaMnm1")
+            kdcd, ctcd, asno8 = cpno[1:3], cpno[3:5], cpno[5:]
+            # asno 포맷이 종목별로 달라 후보 순차 시도(8자리·4자리·무패딩)
+            b = ""
+            for asno in dict.fromkeys([asno8, asno8[:4], str(int(asno8))]):
+                b = _cached_text(f"heriD:{kdcd}|{asno}|{ctcd}", 24 * 3600,
+                                 lambda a2=asno: _http_text(f"https://www.khs.go.kr/cha/SearchKindOpenapiDt.do?ccbaKdcd={kdcd}&ccbaAsno={a2}&ccbaCtcd={ctcd}", 25),
+                                 "<ccbaMnm1>")
+                if re.search(r"<ccbaMnm1>(?:<!\[CDATA\[)?[^<]", b):
+                    break
             g = lambda t: _clean(((re.search(f"<{t}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</{t}>", b) or [None, ""])[1] or ""))
             name = g("ccbaMnm1")
             if not name:
