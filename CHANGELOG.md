@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.35.0
+- **국편 전자사료관 세션 상세 역공학 해제 → `nedb_search(mode='earchive')`**: '상세 딥링크 없음(세션 기반)'으로 보류했던 상세 열람을 해제 — fnGoCatalogView가 catalogId가 아닌 **검색 폼+searchPosition 재제출** 설계임을 확인, 쿠키 유지 2단 POST로 상세 판독('키워드|순번' 입력). 열람조건·이용조건(권리 문구 — judge_rights 투입)·등록번호·사료건 ID 추출. 심층 판독 모드 4종(i815·gonghun·ktv·earchive)
+- 평문 매칭이 내비게이션 '열람·이용조건' 메뉴와 혼동되는 함정 발견 → row-box HTML 앵커로 교정(명세 기록)
+
 ## 2026-11-21 v1.34.0
 - **`nedb_search(mode='ktv')` 영상 판독 모드**: ehistory view URL 투입 시 대한뉴스·기록영상의 제목·제작연도·상영시간·출처·해설 전문 판독(24h 캐시·도메인 한정). 키워드면 목록. KOGL 출처 고지 자동 — 심층 판독 모드 3종 완성(i815·gonghun·ktv)
 - **foia fail-fast**: opengov 장기 차단으로 재시도 포함 21초를 태우던 수집기를 단발 6초로 — health·연합 탐침 시간 보호, 복구 시 자동 정상화

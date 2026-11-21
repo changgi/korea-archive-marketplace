@@ -1808,6 +1808,53 @@ def _c_gonghun(q, n):
     return out
 
 
+def _earchive_mode(query: str, max_results: int) -> str:
+    """국편 전자사료관 심층 — 키워드 목록 / '키워드|순번' 세션 상세(검색 폼+searchPosition 재제출). Node 패리티."""
+    import http.cookiejar as _cj
+    q = query.strip()
+    try:
+        pm = re.match(r"^(.+)\|(\d{1,3})$", q)
+        if pm:
+            kw, pos = pm.group(1).strip(), pm.group(2)
+            base = {"allSearchQuery": kw, "searchQuery": kw, "searchPageIndex": "1",
+                    "searchPageUnit": "10", "searchPageSize": "10"}
+            opener = _ur.build_opener(_ur.HTTPCookieProcessor(_cj.CookieJar()))
+            def post(url, extra):
+                req = _ur.Request(url, data=_up.urlencode({**base, **extra}).encode(),
+                                  headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/x-www-form-urlencoded",
+                                           "Referer": "https://archive.history.go.kr/search/searchResult.do"})
+                with opener.open(req, timeout=25) as r:
+                    return r.read().decode("utf-8", "replace")
+            post("https://archive.history.go.kr/search/searchResult.do", {})  # 세션 수립
+            b = post("https://archive.history.go.kr/record/catalog/catalogView.do", {"searchPosition": pos})
+            title = _clean((re.search(r'<div class="info-box">\s*<div>\s*<p>([\s\S]*?)</p>', b) or [None, ""])[1] or "")
+            # 메타는 row-box(label/value) 앵커 — 평문 매칭은 내비게이션 메뉴와 혼동(실측)
+            def row_val(name):
+                m = re.search(r'<div class="label">' + name + r'</div>\s*<div class="value">\s*<p>([\s\S]*?)</p>', b)
+                return _clean(m.group(1)) if m else ""
+            sid = (re.search(r"사료건(?:&nbsp;|\s)*([0-9A-Za-z_]{6,})", b) or [None, ""])[1] or ""
+            series = (re.search(r"사료계열\s+([0-9A-Za-z_]{5,24})", _clean(b)) or [None, ""])[1] or ""
+            reg = re.search(r'<th scope="col">등록번호</th>\s*<th scope="col">청구기호</th>\s*</tr>\s*<tr>\s*<td>\s*([0-9A-Za-z]*)\s*</td>\s*<td>\s*([\s\S]*?)\s*</td>', b)
+            if not title:
+                return f"'{kw}' {pos}번 상세 파싱 실패 — 순번 범위(0~9, 페이지1 기준)와 키워드를 확인하십시오."
+            meta = " · ".join(x for x in (f"사료건 {sid}" if sid else "", f"사료계열 {series}" if series else "",
+                                          f"등록번호 {reg.group(1)}" if reg and reg.group(1) else "",
+                                          f"청구기호 {_clean(reg.group(2))}" if reg and _clean(reg.group(2)) else "") if x)
+            acc, use = row_val("열람조건"), row_val("이용조건")
+            return (f"국편 전자사료관 상세 [{kw} · {pos}번] {title}\n{meta}\n"
+                    + (f"열람조건: {acc}\n" if acc else "") + (f"이용조건: {use}\n" if use else "")
+                    + "원문 열람: https://archive.history.go.kr 에서 사료ID·등록번호로 재검색\n"
+                    + "※ 출처: 국사편찬위원회 전자사료관. 이용조건 문구를 judge_rights(archive 필드)에 투입해 초판정. 해외 수집 사료는 원 소장처(NARA 등) 권리 확인 병행.")
+        items = _c_earchive(q, min(max_results, 10))
+        if not items:
+            return f"국편 전자사료관 '{q}' — 0건. 다른 표기·주제어로 재시도하십시오."
+        return (f"국편 전자사료관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- [{i}] {it['title']}" + (f" ({it['id']})" if it.get("id") else "") for i, it in enumerate(items))
+                + f"\n※ '{q}|순번'을 mode=earchive query로 재투입 → 상세 판독(열람·이용조건·등록번호). 순번은 위 대괄호(페이지1 기준 0~9).")
+    except Exception as e:
+        return f"국편 전자사료관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://archive.history.go.kr"
+
+
 def _ktv_mode(query: str, max_results: int) -> str:
     """KTV e영상역사관 심층 — 키워드 목록 / ehistory view URL 판독(해설·제작연도·상영시간, KOGL). Node 패리티."""
     q = query.strip()
@@ -2383,7 +2430,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     aks=한국고문서자료관(소장처 172곳→분류→문서 면·썸네일) · jacar=일본 아시아역사자료센터(한→일 변환 검색·레퍼런스코드 메타 직행·±span×100 인접) ·
     gonghun=공훈전자사료관 독립유공자(query=이름 검색→mngNo 숫자 투입 시 공적조서·공훈록 본문 판독) ·
     i815=독립기념관(query=키워드 목록→detail.do URL 투입 시 당대 신문기사·독립운동가 자료 본문 판독) ·
-    ktv=KTV e영상역사관(query=키워드 목록→ehistory view URL 투입 시 영상 해설·제작연도·상영시간 판독, KOGL)
+    ktv=KTV e영상역사관(키워드 목록→ehistory view URL 투입 시 영상 해설·상영정보 판독, KOGL) ·
+    earchive=국편 전자사료관(키워드 목록→'키워드|순번' 투입 시 상세: 열람·이용조건·등록번호)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2396,6 +2444,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _i815_mode(query, max_results)
     if mode == "ktv":
         return _ktv_mode(query, max_results)
+    if mode == "earchive":
+        return _earchive_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
