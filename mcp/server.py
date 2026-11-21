@@ -2781,6 +2781,43 @@ def _c_aks(q, n):
     return [{"title": f"[고문서 소장처] {c['name']} ({c['grp']})", "date": "", "id": c["id"],
              "url": _AKS_BASE + "/viewer/viewer.do"} for c in hits[:n]]
 
+# 소장기관 정식명·국가 — 맥락 강화(v1.71)
+ARCHIVE_META = {
+    "tna": {"n": "The National Archives (영국 국립기록관)", "c": "GB"}, "ia": {"n": "Internet Archive", "c": "INT"},
+    "gallica": {"n": "Gallica (프랑스 국립도서관 BnF)", "c": "FR"}, "europeana": {"n": "Europeana", "c": "EU"},
+    "nara": {"n": "U.S. National Archives (NARA)", "c": "US"}, "archives": {"n": "국가기록원", "c": "KR"},
+    "nlk": {"n": "국립중앙도서관", "c": "KR"}, "nedb": {"n": "국가기록원 개방데이터", "c": "KR"},
+    "koreanwar": {"n": "KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터", "c": "KR"},
+    "jacar": {"n": "아시아역사자료센터 JACAR", "c": "JP"}, "earchive": {"n": "국사편찬위원회 전자사료관", "c": "KR"},
+    "i815": {"n": "독립기념관 한국독립운동정보시스템", "c": "KR"}, "gonghun": {"n": "국가보훈부 공훈전자사료관", "c": "KR"},
+    "ktv": {"n": "KTV e영상역사관", "c": "KR"}, "oldnews": {"n": "국립중앙도서관 대한민국 신문 아카이브", "c": "KR"},
+    "much": {"n": "대한민국역사박물관", "c": "KR"}, "indy": {"n": "국가기록원 독립운동판결문", "c": "KR"},
+    "heritage": {"n": "국가유산청 국가유산포털", "c": "KR"}, "kyudb": {"n": "서울대 규장각한국학연구원", "c": "KR"},
+    "jsg": {"n": "한국학중앙연구원 장서각", "c": "KR"}, "awm": {"n": "Australian War Memorial", "c": "AU"},
+    "nlna": {"n": "Nationaal Archief (네덜란드)", "c": "NL"}, "dnz": {"n": "DigitalNZ (뉴질랜드 집계)", "c": "NZ"},
+    "nzarch": {"n": "Archives New Zealand Te Rua Mahara", "c": "NZ"}, "commons": {"n": "Wikimedia Commons", "c": "INT"},
+    "un": {"n": "UN Digital Library", "c": "INT"}, "ndl": {"n": "일본 국립국회도서관 NDL", "c": "JP"},
+    "seoul": {"n": "서울기록원", "c": "KR"}, "foia": {"n": "정보공개포털·서울소통광장", "c": "KR"},
+    "aks": {"n": "한국학중앙연구원 한국고문서자료관", "c": "KR"},
+}
+# 증거성 강화(v1.71): 레코드별 심층 판독 재현 호출문
+DEEP_READ = {
+    "gonghun": lambda it: it.get("id") and f"nedb_search(mode='gonghun', query='{it['id']}')",
+    "i815": lambda it: it.get("url") and f"nedb_search(mode='i815', query='{it['url']}')",
+    "un": lambda it: it.get("url") and f"nedb_search(mode='un', query='{it['url']}')",
+    "nzarch": lambda it: it.get("id") and f"nedb_search(mode='nzarch', query='{it['id']}')",
+    "jsg": lambda it: it.get("id") and f"nedb_search(mode='jsg', query='{it['id']}')",
+    "much": lambda it: it.get("url") and f"nedb_search(mode='much', query='{it['url']}')",
+    "indy": lambda it: it.get("url") and f"nedb_search(mode='indy', query='{it['url']}')",
+    "heritage": lambda it: it.get("id") and f"nedb_search(mode='heritage', query='{it['id']}')",
+    "ktv": lambda it: it.get("url") and f"nedb_search(mode='ktv', query='{it['url']}')",
+    "jacar": lambda it: it.get("id") and f"nedb_search(mode='jacar', query='{it['id']}')",
+    "oldnews": lambda it: it.get("id") and f"nedb_search(mode='oldnews', query='{it['id']}')",
+    "commons": lambda it: it.get("url") and f"nedb_search(mode='commons', query='{it['url']}')",
+    "koreanwar": lambda it: it.get("id") and f"koreanwar_item(archRfcd='{it['id']}')",
+    "nara": lambda it: it.get("id") and ("judge_rights(naid=" + re.sub(r"\D", "", str(it["id"])) + ")"),
+    "seoul": lambda it: it.get("url") and f"seoul_archives_search(query='{it['url']}')",
+}
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
             "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "gonghun": _c_gonghun, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm, "nlna": _c_nlna, "dnz": _c_dnz, "nzarch": _c_nzarch, "commons": _c_commons, "un": _c_un, "ndl": _c_ndl, "oldnews": _c_oldnews, "much": _c_much, "indy": _c_indy, "heritage": _c_heritage,
@@ -3765,11 +3802,15 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 "tool": "KOREA ARCHIVE 통합검색 cross_search (python plugin)",
                 "reproduce": f"cross_search(query={query!r}, sources={sources!r}, format='manifest')",
                 "channelStats": stats},
-            "records": [{
+            "records": [(lambda hb, dr: {
                 "@type": "rico:Record", "node": rid2(it, i),
                 "identifier": it.get("id") or None, "title": it["title"], "date": it.get("date") or None,
-                "heldBy": sorted({s.split("·")[0] for s in it["sources"]}),  # 맥락 — 소장기관(복수=교차확인)
-                "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}"} for i, it in enumerate(recs)],
+                "heldBy": [{"id": k, "name": ARCHIVE_META.get(k, {}).get("n", k), "country": ARCHIVE_META.get(k, {}).get("c", "")} for k in hb],  # 맥락 — 기관 정식명·국가
+                "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}",
+                **({"deepRead": dr} if dr else {})})(  # 증거성 — 판독 재현 호출문
+                sorted({s.split("·")[0] for s in it["sources"]}),
+                (DEEP_READ.get(sorted({s.split("·")[0] for s in it["sources"]})[0], lambda _: None)(it)))
+                for i, it in enumerate(recs)],
         }
         man["recordsFixity"] = "sha256:" + _hl.sha256(json.dumps(man["records"], ensure_ascii=False).encode("utf-8")).hexdigest()  # 내장 무결성
         mj = json.dumps(man, ensure_ascii=False)
@@ -3788,7 +3829,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         def rid(it, i):
             return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
         nodes = [{"id": "topic:" + query, "type": "topic", "label": query}]
-        nodes += [{"id": "archive:" + s, "type": "archive", "label": s} for s in srcs]
+        nodes += [dict({"id": "archive:" + s2, "type": "archive", "label": ARCHIVE_META.get(s2, {}).get("n", s2)}, **({"country": ARCHIVE_META[s2]["c"]} if ARCHIVE_META.get(s2, {}).get("c") else {})) for s2 in srcs]
         for i, it in enumerate(recs):
             nd = {"id": rid(it, i), "type": "record", "label": it["title"][:90]}
             if it.get("id"):
@@ -3811,10 +3852,12 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
     if format == "csv":  # 분석 투입용 구조화 출력 — "자료로써 분석할 수 있게"
         def esc(v):
             return '"' + str(v if v is not None else "").replace('"', '""') + '"'
-        rows = [",".join(esc(x) for x in ("+".join(it["sources"]), it["title"], it["date"], it["id"], it["url"]))
-                for it in items[:45]]
+        def ridc(it, i):
+            return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
+        rows = [",".join(esc(x) for x in (ridc(it, i), "+".join(it["sources"]), it["title"], it["date"], it["id"], it["url"]))
+                for i, it in enumerate(items[:45])]
         return (f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
-                + "sources,title,date,id,url\n" + "\n".join(rows)
+                + "node,sources,title,date,id,url\n" + "\n".join(rows)
                 + "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights.")
     lines = [f"- [{'+'.join(it['sources'])}] {it['title'][:95]}"
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")
