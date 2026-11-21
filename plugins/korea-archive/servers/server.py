@@ -1680,7 +1680,7 @@ def _kw_detail(ref):
     naid = (re.search(r"catalog\.archives\.gov/id/(\d+)", allv) or [None, ""])[1]
     pv = next((v for k, v in rows if "생산시기" in k), "")
     pm = re.search(r"\d{4}(?:-\d{2}){0,2}", pv)
-    return {"naid": naid, "date": pm.group(0) if pm else ""}
+    return {"naid": naid, "date": re.sub(r"(-00)+$", "", pm.group(0)) if pm else ""}  # '1950-12-00'(일 미상) → '1950-12'
 
 def _c_koreanwar(q, n):
     _, cards = _kw_search({"keyword": q, "viewType": "archive"})
