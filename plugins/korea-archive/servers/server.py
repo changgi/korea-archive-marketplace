@@ -1729,9 +1729,11 @@ def _c_heritage(q, n):
         if not name:
             continue
         cpno = g("ccbaCpno")
+        raw_id = (f"{g('ccbaKdcd')}-{g('ccbaAsno')}-{g('ccbaCtcd')}"
+                  if g("ccbaKdcd") and g("ccbaAsno") and g("ccbaCtcd") else cpno)  # 상세 API 원값 보존
         title = name + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + (f" [{g('ccmaName')}]" if g("ccmaName") else "") \
                 + (f" — {g('ccbaCtcdNm')} {g('ccsiName')}" if g("ccbaCtcdNm") else "")
-        out.append({"title": title[:110], "date": "", "id": cpno,
+        out.append({"title": title[:110], "date": "", "id": raw_id,
                     "url": (f"https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}" if cpno else "https://www.heritage.go.kr")})
         if len(out) >= n:
             break
@@ -1956,13 +1958,34 @@ def _heritage_mode(query: str, max_results: int) -> str:
     """국가유산 심층 — 키워드 목록 / ccbaCpno 상세(해설·시대·소유/관리). cpno=구분1+종목2+시도2+지정8. Node 패리티."""
     q = query.strip()
     try:
+        rid = re.match(r"^(\d{2})-([0-9A-Za-z]+)-(\d{2})$", q)  # 목록이 보존한 원값
+        if rid:
+            kdcd, asno, ctcd = rid.group(1), rid.group(2), rid.group(3)
+            b = _cached_text(f"heriD:{kdcd}|{asno}|{ctcd}", 24 * 3600,
+                             lambda: _http_text(f"https://www.khs.go.kr/cha/SearchKindOpenapiDt.do?ccbaKdcd={kdcd}&ccbaAsno={asno}&ccbaCtcd={ctcd}", 25),
+                             "<ccbaMnm1>")
+            g = lambda t: _clean(((re.search(f"<{t}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</{t}>", b) or [None, ""])[1] or ""))
+            name = g("ccbaMnm1")
+            if not name:
+                return f"[{q}] 상세 미매칭 — 포털에서 열람하십시오(목록의 딥링크)."
+            content = g("content")
+            if len(content) > 3500:
+                content = content[:3500] + f" …(총 {len(content)}자 — 전문은 포털)"
+            meta = " · ".join(x for x in (f"소유 {g('ccbaPoss')}" if g("ccbaPoss") else "",
+                                          f"관리 {g('ccbaAdmin')}" if g("ccbaAdmin") else "",
+                                          f"시대 {g('ccceName')}" if g("ccceName") else "",
+                                          f"소재 {g('ccbaLcad')[:60]}" if g("ccbaLcad") else "") if x)
+            return (f"국가유산 판독 — {name}" + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + f" [{g('ccmaName')}]"
+                    + f"\n{meta}\n" + (f"【해설】\n{content}\n" if content else "")
+                    + "※ 출처: 국가유산청 국가유산포털 — 게재 시 출처 표기. 사진 이용은 공공누리 유형 확인.")
         hm = re.search(r"ccbaCpno=(\d{13})", q) or re.match(r"^(\d{13})$", q)
         if hm:
             cpno = hm.group(1)
             kdcd, ctcd, asno8 = cpno[1:3], cpno[3:5], cpno[5:]
             # asno 포맷이 종목별로 달라 후보 순차 시도(8자리·4자리·무패딩)
             b = ""
-            for asno in dict.fromkeys([asno8, asno8[:4], str(int(asno8))]):
+            # 기관 원값 asno는 13자리('00'+지정4+'0000000') — 실측 역산 후보 최우선
+            for asno in dict.fromkeys(['00' + asno8[:4] + '0000000', asno8, asno8[:4]]):
                 b = _cached_text(f"heriD:{kdcd}|{asno}|{ctcd}", 24 * 3600,
                                  lambda a2=asno: _http_text(f"https://www.khs.go.kr/cha/SearchKindOpenapiDt.do?ccbaKdcd={kdcd}&ccbaAsno={a2}&ccbaCtcd={ctcd}", 25),
                                  "<ccbaMnm1>")
@@ -1991,7 +2014,7 @@ def _heritage_mode(query: str, max_results: int) -> str:
             return f"국가유산 '{q}' — 0건. 유산 명칭(전각·사적명 등)으로 재시도하십시오."
         return (f"국가유산 '{q}' — {len(items)}건:\n"
                 + "\n".join(f"- {it['title']}" + (f" [{it['id']}]" if it.get("id") else "") + f"\n  {it['url']}" for it in items)
-                + "\n※ ccbaCpno(13자리)를 mode=heritage query로 재투입 → 해설·시대·소유/관리 판독.")
+                + "\n※ 대괄호의 복합 id(예 11-0002230000000-11)를 mode=heritage query로 재투입 → 해설·시대·소유/관리 판독.")
     except Exception as e:
         return f"국가유산 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://www.heritage.go.kr"
 
