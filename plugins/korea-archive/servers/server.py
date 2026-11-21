@@ -1873,7 +1873,20 @@ def _nzarch_mode(query: str) -> str:
         b = _http_text("https://collections.archives.govt.nz/federated-search/customers/aims/search"
                        "?size=3&facetSize=0&start=0&isFuzzy=false&sourceId=aims-archive&q=" + rn, 25)
         line = next((l for l in b.split("\n") if l.startswith("data:") and '"totalHits"' in l), None)
-        if not line:
+        if not line:  # 간헐 Incapsula — 주간 수확 인덱스로 축약 판독 폴백
+            try:
+                ix = _cached_text("nzIdx", 6 * 3600, lambda: _http_text("https://korea-archive-mcp.vercel.app/nz-index.json", 20), '"records"')
+                r = next((x for x in (json.loads(ix).get("records") or []) if str(x.get("id")) == rn), None)
+                if r:
+                    meta = " · ".join(x for x in (
+                        f"연대 {r.get('date')}" if r.get("date") else "",
+                        f"시리즈 {r.get('series')}" if r.get("series") else "",
+                        f"접근 상태 {r.get('access')}" if r.get("access") else "") if x)
+                    return (f"Archives NZ 판독(축약 — ·주간인덱스, 라이브 간헐 차단 중) — {rn}\n제목: {r.get('title')}\n{meta}\n"
+                            f"레코드: https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/{rn}\n"
+                            "※ 전체 메타(생산 기관·열람 방법·메타 지문)는 라이브 재시도 시 제공. 출처: Archives New Zealand.")
+            except Exception:
+                pass
             return (f"[{rn}] 간헐 차단 — 잠시 후 재시도 또는 브라우저: "
                     f"https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/{rn}")
         j = json.loads(line[5:])
