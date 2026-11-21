@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-21 v1.40.0
+- **UN 디지털도서관 합류 — cross_search 23소스**: 보류된 UN Archives(AtoM 챌린지)와 달리 Invenio `of=xm`(MARCXML)이 무키로 열림을 실측 — 안보리 결의·공식문서(S/·A/ 문서기호+제목+날짜+record 딥링크). 한→영 자동 변환. 함정 기록: X-Requested-With 헤더에 빈 응답 — 일반 헤더 필수
+- **full_package 1단계에 심층 판독 연계 명시**: 발굴 후 핵심 기록은 판독 8채널로 본문·권리 실확인 — 풀패키지 산출물 품질 직결
+- health 23채널. HELP·help.html·심사 팩 23소스 동기화
+
 ## 2026-11-21 v1.39.0
 - **`nedb_search(mode='jsg')` 장서각 서지·해제 판독**: 청구기호(K2-…)·dataId·URL 투입 시 자료명·청구기호·MF번호·분류 3종(연쇄 앵커 — 단독 매칭은 내비 필터와 혼동)·**해제 전문**(정의·서지사항·체제 및 내용·특성 및 가치·참고문헌, 4,000자 컷) 판독. 실측: K2-3556 개건도감의궤(1776 경모궁 개건) 해제 1,500자
 - 심층 판독 8채널 완성 — 고문헌축(jsg 해제·kyujanggak·aks)·근대축(i815·gonghun·jacar)·현대축(ktv·earchive·seoul·commons)

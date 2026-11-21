@@ -1219,14 +1219,14 @@ body{font-family:'Noto Serif KR',serif;max-width:860px;margin:0 auto;padding:2re
 <div class=panel><img src="{{도판URL}}"><p class=cap>{{[연대] [발급자→수취인] [문서유형]}}</p><p class=story>{{이야기}}</p><span class=draft>{{검토 미완 시: 초안}}</span></div>
 <p class=src>자료: 한국학중앙연구원 한국고문서자료관 (archive.aks.ac.kr) · 이미지 재이용은 기관 이용조건 준수</p></body></html>"""
 
-HELP_GUIDE = '사용 안내 — 매직 키워드 “창기창기 도와줘” (처음 사용자용. 이 내용을 친절한 안내로 정리해 사용자에게 전달하라. 시각 안내 페이지: https://korea-archive-mcp.vercel.app/help.html — 링크를 함께 제공)\n\n■ 무엇을 하는 서비스인가\n국내외 22개 아카이브(🇺🇸 NARA · 🇬🇧 TNA · Internet Archive · 🇫🇷 갈리카 · 🇪🇺 유러피아나 · 🇯🇵 아시아역사자료센터 JACAR · 🇦🇺 호주 전쟁기념관 · 🇳🇱 네덜란드 국립문서보관소 · 🌐 위키미디어 공용 · 🇰🇷 국가기록원·국립중앙도서관·한국사DB·국편 전자사료관·독립기념관·공훈전자사료관·KTV e영상역사관·규장각·장서각·한국고문서자료관·서울기록원·정보공개포털·KOREAN WAR ARCHIVES 협약기관)에서 한국 관련 기록·사진·영상(1860~1960)을 발굴하고, 검증하고, 전파물까지 만들어 준다. 한국어 한 문장이면 충분 — 표기 변형(Corea·Chosen·Corée·한자·朝鮮)과 색인 언어 변환은 자동. 카카오 PlayMCP 마켓 등록본으로도 연결 가능(\'KOREA ARCHIVE 통합검색\' 검색 — 같은 서버).\n\n■ 매직 키워드 2개\n① “○○○ 풀패키지로 만들어줘” — 조사→검증→매거진 보고서→카드뉴스 8장→포스터→홍보·입문·메시지 카드→발표 PPTX(대본 포함)→기록 해설→Canva 편집본→KARDA 연구 데이터·시연 영상(데모 GIF)까지 전 산출물 자동(report_template kind=full_package 순서를 따름).\n② “창기창기 도와줘” — 이 사용 안내.\n\n■ 이렇게 물어보면 된다 (예시)\n· “할아버지가 참전한 글로스터 연대 기록 찾아줘” (실전 1호 — TNA 훈장 추천서 원문까지)\n· “장진호 전투 영상 기록 찾아줘” (실전 2호 — 3개국 3중 소장 실증)\n· “조선시대 한강 나루의 행정을 정리해줘” (법전 판독→형제 조 전수→연대 검증 제도사)\n· “병인양요 프랑스 기록 찾아줘” / “이 참조코드 주변을 더 캐줘”(인접 채굴) / “이 기록 게재 가능한지 판정해줘”\n· “안중근 공훈록 전문 보여줘”(독립유공자 — 공적조서·수형기록·현충시설까지) / “이 NARA 기록 권리 실확인해줘”(naid)\n\n■ 검증 원칙(차별점) — 실물 기록만(AI 생성 인물·장면 금지)·원문 대조·출처 명시·정정 공개. 통과 산출물에만 검증 낙관.\n\n■ 자주 묻는 것\n· 0건 → 부재가 아니다. 표기 변형·인접 채굴·“대상을 관리한 행정”으로 전환.\n· ZIP 일괄 납품은 로컬 환경 전용 — 웹·모바일은 개별 아티팩트+manifest.\n· 이미지: 웹은 기관 공개 URL 참조 — 원본은 항상 기관 링크에서 열람.\n· 조선 주제 → nedb_search 심층 판독 모드(law·sibling·matrix·origin·record·sjw·kyujanggak·aks[한국고문서자료관 — 문중·서원 고문서 172곳]). 독립유공자 인물 → mode=\'gonghun\'(공훈록 본문 판독). 일제강점기 일본 측 → mode=\'jacar\'.\n· 연대로 좁히기 → 주요 검색 도구의 year_from/year_to. 번호 옆 훑기(인접 채굴) → TNA·NARA(naid)·archive.org(radius)·6·25아카이브. 당대 표기 자동 팬아웃 → cross_search(variants). 채널 상태 → source_profile(\'health\').\n\n커넥터: korea-archive-mcp.vercel.app/api/mcp · 안내 페이지: korea-archive-mcp.vercel.app/help.html'
+HELP_GUIDE = '사용 안내 — 매직 키워드 “창기창기 도와줘” (처음 사용자용. 이 내용을 친절한 안내로 정리해 사용자에게 전달하라. 시각 안내 페이지: https://korea-archive-mcp.vercel.app/help.html — 링크를 함께 제공)\n\n■ 무엇을 하는 서비스인가\n국내외 23개 아카이브(🇺🇸 NARA · 🇬🇧 TNA · Internet Archive · 🇫🇷 갈리카 · 🇪🇺 유러피아나 · 🇯🇵 아시아역사자료센터 JACAR · 🇦🇺 호주 전쟁기념관 · 🇳🇱 네덜란드 국립문서보관소 · 🌐 위키미디어 공용 · 🇺🇳 UN 디지털도서관 · 🇰🇷 국가기록원·국립중앙도서관·한국사DB·국편 전자사료관·독립기념관·공훈전자사료관·KTV e영상역사관·규장각·장서각·한국고문서자료관·서울기록원·정보공개포털·KOREAN WAR ARCHIVES 협약기관)에서 한국 관련 기록·사진·영상(1860~1960)을 발굴하고, 검증하고, 전파물까지 만들어 준다. 한국어 한 문장이면 충분 — 표기 변형(Corea·Chosen·Corée·한자·朝鮮)과 색인 언어 변환은 자동. 카카오 PlayMCP 마켓 등록본으로도 연결 가능(\'KOREA ARCHIVE 통합검색\' 검색 — 같은 서버).\n\n■ 매직 키워드 2개\n① “○○○ 풀패키지로 만들어줘” — 조사→검증→매거진 보고서→카드뉴스 8장→포스터→홍보·입문·메시지 카드→발표 PPTX(대본 포함)→기록 해설→Canva 편집본→KARDA 연구 데이터·시연 영상(데모 GIF)까지 전 산출물 자동(report_template kind=full_package 순서를 따름).\n② “창기창기 도와줘” — 이 사용 안내.\n\n■ 이렇게 물어보면 된다 (예시)\n· “할아버지가 참전한 글로스터 연대 기록 찾아줘” (실전 1호 — TNA 훈장 추천서 원문까지)\n· “장진호 전투 영상 기록 찾아줘” (실전 2호 — 3개국 3중 소장 실증)\n· “조선시대 한강 나루의 행정을 정리해줘” (법전 판독→형제 조 전수→연대 검증 제도사)\n· “병인양요 프랑스 기록 찾아줘” / “이 참조코드 주변을 더 캐줘”(인접 채굴) / “이 기록 게재 가능한지 판정해줘”\n· “안중근 공훈록 전문 보여줘”(독립유공자 — 공적조서·수형기록·현충시설까지) / “이 NARA 기록 권리 실확인해줘”(naid)\n\n■ 검증 원칙(차별점) — 실물 기록만(AI 생성 인물·장면 금지)·원문 대조·출처 명시·정정 공개. 통과 산출물에만 검증 낙관.\n\n■ 자주 묻는 것\n· 0건 → 부재가 아니다. 표기 변형·인접 채굴·“대상을 관리한 행정”으로 전환.\n· ZIP 일괄 납품은 로컬 환경 전용 — 웹·모바일은 개별 아티팩트+manifest.\n· 이미지: 웹은 기관 공개 URL 참조 — 원본은 항상 기관 링크에서 열람.\n· 조선 주제 → nedb_search 심층 판독 모드(law·sibling·matrix·origin·record·sjw·kyujanggak·aks[한국고문서자료관 — 문중·서원 고문서 172곳]). 독립유공자 인물 → mode=\'gonghun\'(공훈록 본문 판독). 일제강점기 일본 측 → mode=\'jacar\'.\n· 연대로 좁히기 → 주요 검색 도구의 year_from/year_to. 번호 옆 훑기(인접 채굴) → TNA·NARA(naid)·archive.org(radius)·6·25아카이브. 당대 표기 자동 팬아웃 → cross_search(variants). 채널 상태 → source_profile(\'health\').\n\n커넥터: korea-archive-mcp.vercel.app/api/mcp · 안내 페이지: korea-archive-mcp.vercel.app/help.html'
 
 FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물까지 한 번에 (매직 키워드: "풀패키지" · "전부 다 만들어줘")
 입력은 주제 하나면 충분하다. 아래 순서를 전부 수행해 모든 산출물을 함께 납품한다.
 
 1. 발굴 조사: cross_search + 전문 도구(tna_search/nara_search/koreanwar_search/gallica_search…) — 표기 변형 병렬,
    시리즈 특정+tna_adjacent_mine 인접 채굴(±5~15), 국내 협약기관 교차검증, 카탈로그 API 원문으로 훈격·날짜·건수 검증
-   (정정 발생 시 이력 기록), judge_rights 권리 초판. 조선~대한제국 주제면 심층 판독 경로 추가: nedb_search 모드 활용 — law(법전 근거)→★sibling(조문을 열었으면 형제 조 전수 — 총론만 읽으면 핵심을 놓친다)→matrix(법전 수록 대조로 부재 발견)→origin(어휘 연원)→record(등록류 — 座目 필터)→sjw(최초 용례로 연대 검증)→kyujanggak(목록+해제). 보고서에 제도 재구성 절(등록·측정·운항·동원·보상 + 제도의 끝)·법전 대조표·자기 정정 이력을 추가하고, 인용은 2층위(법전=원문 인용 가능/등록·일기=국역만·역구성 학술 인용 불가) 명기.
+   (정정 발생 시 이력 기록), judge_rights 권리 초판. 핵심 기록은 심층 판독으로 본문·권리 실확인: nedb_search 모드(i815 당대 신문·gonghun 공훈록·ktv 영상·earchive 수집사료·commons PD파일·jsg 해제)와 seoul_archives_search(상세URL)·koreanwar_item·judge_rights(naid). 조선~대한제국 주제면 심층 판독 경로 추가: nedb_search 모드 활용 — law(법전 근거)→★sibling(조문을 열었으면 형제 조 전수 — 총론만 읽으면 핵심을 놓친다)→matrix(법전 수록 대조로 부재 발견)→origin(어휘 연원)→record(등록류 — 座目 필터)→sjw(최초 용례로 연대 검증)→kyujanggak(목록+해제). 보고서에 제도 재구성 절(등록·측정·운항·동원·보상 + 제도의 끝)·법전 대조표·자기 정정 이력을 추가하고, 인용은 2층위(법전=원문 인용 가능/등록·일기=국역만·역구성 학술 인용 불가) 명기.
 2. 실물 이미지 수집: 기관 공개 원본 전량(비식별판 우선) + digitised 기록의 카탈로그 무료 미리보기.
    수집 즉시 출처 대장(sources.txt) 기록. AI 생성 인물·역사 장면 절대 금지.
 3. HTML 보고서: report_template(kind='report') 18규칙 전부 — 히어로 실물·인라인 도판·콘택트시트·원문 미리보기·
@@ -1654,6 +1654,34 @@ def _jacar_mode(q, span, max_results):
                   "A=공문서관·B=외무성 외교사료관·C=방위연구소.")
     except Exception as e:
         return f"JACAR 조회 실패({e}) — https://www.jacar.archives.go.jp 직접 검색."
+
+
+def _c_un(q, n):
+    """UN 디지털도서관 — Invenio of=xm(MARCXML) 무키 실측(2026-11-21). 안보리 결의·공식문서. UN Archives(AtoM)와 별개."""
+    en = _to_index_lang(q, "en") or q
+    # _http_text의 X-Requested-With 헤더에 Invenio가 빈 응답(실측) — 일반 헤더로 직접 요청
+    req = _ur.Request(f"https://digitallibrary.un.org/search?p={_up.quote(en)}&of=xm&rg={min(n, 10)}",
+                      headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
+    with _ur.urlopen(req, timeout=25) as r:
+        b = r.read().decode("utf-8", "replace")
+    def sf(seg, tag, code):
+        m = re.search(r'<datafield tag="' + tag + r'"[^>]*>([\s\S]*?)</datafield>', seg)
+        if not m:
+            return ""
+        m2 = re.search(r'<subfield code="' + code + r'">([^<]+)', m.group(1))
+        return m2.group(1) if m2 else ""
+    out = []
+    for seg in re.split(r"<record>", b)[1:]:
+        rm = re.search(r'<controlfield tag="001">(\d+)', seg)
+        if not rm:
+            continue
+        sym = sf(seg, "191", "a")
+        title = _clean(sf(seg, "245", "a") + " " + sf(seg, "245", "b")).rstrip(" /:")
+        out.append({"title": (f"[{sym}] " if sym else "") + title[:110], "date": sf(seg, "269", "a") or sf(seg, "260", "c"),
+                    "id": sym or rm.group(1), "url": "https://digitallibrary.un.org/record/" + rm.group(1)})
+        if len(out) >= n:
+            break
+    return out
 
 
 def _c_commons(q, n):
@@ -2183,7 +2211,7 @@ def _c_aks(q, n):
 
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
-            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "gonghun": _c_gonghun, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm, "nlna": _c_nlna, "commons": _c_commons,
+            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "gonghun": _c_gonghun, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm, "nlna": _c_nlna, "commons": _c_commons, "un": _c_un,
             "ktv": _c_ktv, "seoul": _c_seoul,
             "foia": _c_foia, "aks": _c_aks}
 
@@ -3096,7 +3124,7 @@ def changgi_help() -> str:
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False,
                  format: str = "text") -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,i815,gonghun,ktv,kyudb,jsg,awm,nlna,commons,seoul,foia,aks). 해외와
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,i815,gonghun,ktv,kyudb,jsg,awm,nlna,commons,un,seoul,foia,aks). 해외와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
@@ -3148,18 +3176,18 @@ def source_profile(institution: str = "list") -> str:
     """기관 자료·이용·활용구조 프로파일 — 발굴 전략 수립용. 자료구조(계층·분류·식별자·메타),
     이용구조(API·인증·쿼리문법·robots·권리), 활용구조(3대 부정합·키워드셋·교차매핑·인접확장·교차검증 조합).
     institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia);
-    'health'=22채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
+    'health'=23채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
     t = (institution or "list").strip().lower()
     if t == "health":  # 발굴 우선 원칙의 전제: 깨짐을 스스로 발견한다
         GOLD = {"tna": "Korea", "ia": "Korea", "gallica": "Corée", "europeana": "Korea", "nara": "Korea",
                 "archives": "한국전쟁", "nlk": "한국전쟁", "nedb": "한강", "koreanwar": "장진호",
-                "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "gonghun": "안중근", "ktv": "대한뉴스", "kyudb": "절목", "jsg": "의궤", "awm": "Kapyong", "nlna": "Korea", "commons": "Seoul 1950",
+                "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "gonghun": "안중근", "ktv": "대한뉴스", "kyudb": "절목", "jsg": "의궤", "awm": "Kapyong", "nlna": "Korea", "commons": "Seoul 1950", "un": "Korea armistice",
                 "seoul": "한강", "foia": "회의", "aks": "문중"}
         keys = {k: bool(os.environ.get(k)) for k in
                 ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
                  "KOREANWAR_API_TOKEN", "NEDB_INDEX_URL")}
         import time as _t
-        def _probe(kv):  # 22채널 병렬 탐침 (Node Promise.all 패리티 — 순차 실행은 합산 수십 초)
+        def _probe(kv):  # 23채널 병렬 탐침 (Node Promise.all 패리티 — 순차 실행은 합산 수십 초)
             k, q = kv
             s = _t.monotonic()
             try:
@@ -3176,7 +3204,7 @@ def source_profile(institution: str = "list") -> str:
                             + ("" if cnt else " — 연결 정상·결과/파싱 0"))
             else:
                 rows.append(f"🔴 {k}: {err} · {ms}ms")
-        return ("22채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
+        return ("23채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
                 + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃) · ms=채널 응답시간. "
                   "nedb ✗=개방파일 인덱스 미설정.")
