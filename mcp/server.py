@@ -1902,6 +1902,46 @@ def _c_gonghun(q, n):
     return out
 
 
+def _oldnews_mode(query: str, max_results: int) -> str:
+    """신문아카이브 심층 — 키워드 목록 / CNTS·URL 판독(색인어·관련기사·주제어). Node 패리티."""
+    q = query.strip()
+    try:
+        cm = re.search(r"content_id=(CNTS-\d+)", q) or re.match(r"^(CNTS-\d+)$", q)
+        if cm:
+            cid = cm.group(1)
+            def fetch():
+                req = _ur.Request(f"https://nl.go.kr/newspaper/news_detail.do?content_id={cid}&ko_trans=no&abstractExist=false",
+                                  headers={"User-Agent": "Mozilla/5.0", "Referer": "https://nl.go.kr/newspaper/detail.do"})
+                with _ur.urlopen(req, timeout=25) as r:
+                    return r.read().decode("utf-8", "replace")
+            d = json.loads(_cached_text("oldnewsD:" + cid, 24 * 3600, fetch, "newspaperKorName"))
+            f1 = lambda v: (v[0] if isinstance(v, list) and v else v) or ""
+            if not f1(d.get("label")):
+                return f"[{cid}] 기사 미발견 — CNTS ID를 확인하십시오."
+            subj = " · ".join(str(x).split("|")[0] for x in ((d.get("subjectEvent") or []) + (d.get("subjectPlace") or []))[:8])
+            rel = "\n".join(f"  · {f1(r2.get('label'))} ({f1(r2.get('issued'))}) {f1(r2.get('uri'))}"
+                            for r2 in (d.get("relatedArticles") or [])[:5])
+            kws = ", ".join(d.get("keyword") or [])[:800]
+            return (f"신문아카이브 기사 판독 — {f1(d.get('label'))}\n"
+                    f"{f1(d.get('newspaperKorName'))}"
+                    + (f"({f1(d.get('newspaperForeignName'))})" if f1(d.get("newspaperForeignName")) else "")
+                    + f" · {f1(d.get('issued'))} · 발행 {f1(d.get('publisher'))}\n"
+                    + (f"색인어(기사 내용 재구성): {kws}\n" if kws else "")
+                    + (f"주제: {subj}\n" if subj else "")
+                    + (f"관련기사 연쇄(→ CNTS를 mode=oldnews로 재투입):\n{rel}\n" if rel else "")
+                    + (("원소장처: " + " / ".join(d.get("description") or [])[:200] + "\n") if d.get("description") else "")
+                    + f"원문 이미지(뷰어): https://nl.go.kr/newspaper/detail.do?content_id={cid}\n"
+                    + "※ 출처: 국립중앙도서관 대한민국신문아카이브 — 본문은 이미지 원문(뷰어 열람). 게재 시 신문명·발행일 출처 표기, 원소장처 병기.")
+        items = _c_oldnews(q, min(max_results, 10))
+        if not items:
+            return f"신문아카이브 '{q}' — 0건. 당대 표기(한자·옛 한글)로 재시도하십시오."
+        return (f"신문아카이브 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']} ({it['date']})\n  {it['url']}" for it in items)
+                + "\n※ CNTS ID(또는 상세 URL)를 mode=oldnews query로 재투입 → 색인어·관련기사 연쇄·주제어 판독.")
+    except Exception as e:
+        return f"신문아카이브 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://nl.go.kr/newspaper/"
+
+
 def _un_mode(query: str, max_results: int) -> str:
     """UN 디지털도서관 심층 — 키워드 목록 / recid·URL 판독(요약·주제·언어별 PDF). Node 패리티."""
     q = query.strip()
@@ -2677,7 +2717,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     earchive=국편 전자사료관(키워드 목록→'키워드|순번' 투입 시 상세: 열람·이용조건·등록번호) ·
     commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독) ·
     jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독) ·
-    un=UN 디지털도서관(키워드 목록→recid/URL 투입 시 요약·주제·언어별 PDF 직링크)
+    un=UN 디지털도서관(키워드 목록→recid/URL 투입 시 요약·주제·언어별 PDF 직링크) ·
+    oldnews=신문아카이브(키워드 목록→CNTS/URL 투입 시 색인어 전체·관련기사 연쇄·주제어 판독)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2698,6 +2739,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _jsg_mode(query, max_results)
     if mode == "un":
         return _un_mode(query, max_results)
+    if mode == "oldnews":
+        return _oldnews_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
