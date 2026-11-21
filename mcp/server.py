@@ -344,7 +344,7 @@ JB_STRAT = {
     'recipes': """발굴 완주 레시피 — 주제 유형별 발굴→판독→권리 순서 (전 단계 실측 검증, 2026-11-21)
 공통 원칙: ①cross_search로 폭 확보(variants=당대 표기) ②신호가 나온 소스의 전용 도구/판독 모드로 심층 ③권리는 표시(judge_rights·naid·라이선스) ④0건=부재가 아니다(표기 변형·인접 채굴·관리 행정으로 전환).
 
-① 인물(독립운동가): gonghun(이름→mngNo→공훈록·수형기록. 훈격·이명 확보) → 이명·한자명으로 i815·oldnews 재검색(당대 신문 — oldnews는 '본문:이명' OCR 전문까지) → jacar(일본 측 — 한자명) → commons(초상·PD) → 수형기록의 판결문 원문은 indy(국가기록원 판결문 테마관 — 판결기관·주문·원문) 직행.
+① 인물(독립운동가): gonghun(이름→mngNo→공훈록·수형기록. 훈격·이명 확보) + i815 '사전:이름'(인명사전 — 전기 전문·생몰·본관·이명) → 이명·한자명으로 i815·oldnews 재검색(당대 신문 — oldnews는 '본문:이명' OCR 전문까지) → jacar(일본 측 — 한자명) → commons(초상·PD) → 수형기록의 판결문 원문은 indy(국가기록원 판결문 테마관 — 판결기관·주문·원문) 직행.
 ② 한국전쟁 전투·부대: koreanwar(협약 — archRfcd→koreanwar_item 인접 채굴) → nara(RG 교차+naid 인접, judge_rights(naid) 실확인) → tna(연대 필터)·awm(가평 등 영연방)·nlna(네덜란드) → un(안보리 결의 — recid 판독으로 PDF) → commons(PD 사진·원 소장처 역추적).
 ③ 조선 제도·고문헌: nedb law(법전 근거)→★sibling(형제 조 전수)→sjw(최초 용례) → kyujanggak(목록+해제)·jsg(청구기호→해제 전문) → aks(문중 고문서) → 인용 2층위 준수.
 ④ 일제강점기 정책·기관: ndl(총독부 간행물·통계연보·관보) ⇄ jacar(공문서 메타·인접 ±100) → nedb(한국사DB)·earchive('키워드|순번' 이용조건) → i815(민족 측 시각 대조).
@@ -2389,6 +2389,47 @@ def _i815_mode(query: str, max_results: int) -> str:
     """독립기념관 심층 — 키워드 목록 / detail.do URL 본문 판독. Node nedb_search mode='i815' 패리티."""
     q = query.strip()
     try:
+        if re.match(r"^사전\s*[:：]", q):  # 한국독립운동인명사전 — v1.56 복구 합류(retry-blocked 주간 재점검 실측으로 감지)
+            t = re.sub(r"^사전\s*[:：]", "", q).strip()
+            noscript = lambda s: re.sub(r"<script[\s\S]*?</script>", "", s, flags=re.I)
+            if re.match(r"^\d+$", t):  # 상세 — 기본정보(생몰·본관·이명·훈격) + 전기 본문
+                du = ("https://search.i815.or.kr/dictionary/detail.do"
+                      f"?searchWord=&reSearchWord=&searchType=all&index=&id={t}")
+                b = _cached_text("i815W:" + t, 24 * 3600, lambda: _http_text(du, 28), "기본정보")
+                flat = _clean(noscript(b))
+                ix = flat.find("기본정보")
+                if ix < 0:
+                    return f"인명사전 상세 실패(id={t}) — \"사전:이름\" 검색으로 번호를 다시 확보하십시오. 브라우저: {du}"
+                seg = flat[ix:]
+                hm = re.match(r"^기본정보\s*([\s\S]{0,600}?포상훈격\(연도\)\s*\S+)\s", seg)
+                head = hm.group(1) if hm else seg[:350]
+                bio = seg[len(hm.group(0)) if hm else len(head):].strip()
+                cut = re.search(r"참고문헌|저작권 안내", bio)
+                if cut and cut.start() > 0:
+                    bio = bio[:cut.start()].strip()
+                if len(bio) > 3200:
+                    bio = bio[:3200] + f" …(전기 총 {len(bio)}자 — 전문은 원문)"
+                return (f"독립기념관 한국독립운동인명사전 — 항목 {t}\n【기본정보】 {head}\n【전기】\n{bio}\n원문: {du}\n"
+                        "※ 공공저작물 — 출처 표기(독립기념관 한국독립운동인명사전) 시 이용 가능. "
+                        "이명·한자명은 gonghun·jacar·oldnews(\"본문:이명\") 재검색에 투입.")
+            b = _http_text("https://search.i815.or.kr/dictionary/searchResult.do?searchType=all&searchWord="
+                           + _up.quote(t), 28)
+            rows = []
+            for blk in noscript(b).split("thumb_txt_case01")[1:1 + min(max_results, 15)]:
+                mid = re.search(r"goDetail\((\d+)\)", blk)
+                tt = re.search(r"dict_txt_title[^>]*>([\s\S]*?)</strong>", blk)
+                if not mid or not tt:
+                    continue
+                line = _clean(blk)
+                ser = re.search(r"운동계열:\s*([\s\S]{1,40}?)\s*관련단체:", line)
+                act = re.search(r"주요활동:\s*([\s\S]{1,130}?)\s*본문내용:", line)
+                rows.append(f"- [{mid.group(1)}] {_clean(tt.group(1))}"
+                            + (f" · {ser.group(1).strip()}" if ser else "")
+                            + (f"\n  {act.group(1).strip()}" if act else ""))
+            if not rows:
+                return f"인명사전 '{t}' — 0건. 한자명·이명으로 재시도(이명은 mode=gonghun이 제공)."
+            return (f"한국독립운동인명사전 '{t}' — {len(rows)}건:\n" + "\n".join(rows)
+                    + "\n※ \"사전:번호\" 재투입 → 기본정보(생몰·본관·이명·포상훈격)+전기 전문 판독. 공공저작물(출처 표기).")
         if re.match(r"^https?://search\.i815\.or\.kr/", q):  # 상세 판독 — i815 도메인 한정(임의 URL 페치 방지)
             b = _cached_text("i815D:" + q, 24 * 3600,
                              lambda: _http_text(_up.quote(q, safe="/?&=:%"), 28), "explain")
@@ -2414,7 +2455,7 @@ def _i815_mode(query: str, max_results: int) -> str:
                     "cross_search(variants=True)로 표기 변형을 팬아웃하십시오.")
         return (f"독립기념관 '{q}' — {len(items)}건:\n"
                 + "\n".join(f"- {it['title']}\n  {it['url']}" for it in items)
-                + "\n※ detail.do URL을 mode=i815 query로 재투입 → 자료 본문 판독.")
+                + "\n※ detail.do URL을 mode=i815 query로 재투입 → 자료 본문 판독. \"사전:이름\" → 한국독립운동인명사전(전기·생몰·훈격).")
     except Exception as e:
         return f"독립기념관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://search.i815.or.kr"
 
@@ -2946,7 +2987,7 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     sjw=승정원일기(왕대 분포·최초 용례) · kyujanggak=규장각(목록+해제 동시 — 절목류는 해제에서 발견).
     aks=한국고문서자료관(소장처 172곳→분류→문서 면·썸네일) · jacar=일본 아시아역사자료센터(한→일 변환 검색·레퍼런스코드 메타 직행·±span×100 인접) ·
     gonghun=공훈전자사료관 독립유공자(query=이름 검색→mngNo 숫자 투입 시 공적조서·공훈록 본문 판독) ·
-    i815=독립기념관(query=키워드 목록→detail.do URL 투입 시 당대 신문기사·독립운동가 자료 본문 판독) ·
+    i815=독립기념관(키워드 목록 · detail.do URL=자료 본문 · '사전:이름/번호'=한국독립운동인명사전 전기·생몰·훈격) ·
     ktv=KTV e영상역사관(키워드 목록→ehistory view URL 투입 시 영상 해설·상영정보 판독, KOGL) ·
     earchive=국편 전자사료관(키워드 목록→'키워드|순번' 투입 시 상세: 열람·이용조건·등록번호) ·
     commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독) ·
