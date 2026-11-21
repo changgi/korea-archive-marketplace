@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.78.0 — 계층 구축 2차: partOf 20채널
+- 5채널 추가 구축: **archives(생산기관 — 출처주의 핵심!)**·i815(자료 카테고리)·ktv(제호 — 대한뉴스/리버티뉴스/문화영화)·seoul(ISAD 기술단위 — series/item/aggregation)·nlk(자료유형)
+- 30채널 중 **20채널이 목록 레벨 계층** 보유 — 나머지 10(nara·commons·kyudb·jsg·awm·nlna·ndl·earchive·foia·nedb)은 목록 재료 부재로 상세 판독 단계 제공(정직한 설계)
+
 ## 2026-11-21 v1.77.0 — 계층정보 구축(사용자 지시: "없는 것들은 구축한다") — partOf 15채널
 - 목록에 명시 계층이 없던 6채널에 **의미적 계층을 도출·구축**: gonghun(운동계열 — 3.1운동·의열투쟁 군집)·indy(판결기관 — 법원별 군집)·heritage(지정 종목 — 국보/보물/사적)·un(문서기호 시리즈 — S/RES·A/… )·gallica(ark 유형 — btv 도판/bpt6k 인쇄본/bd6t 정기간행물)·much(아카이브 카테고리 — URL 세그먼트)
 - partOf 9→**15채널** — manifest·karda·csv 전부에 반영(기존 파이프라인 재사용)

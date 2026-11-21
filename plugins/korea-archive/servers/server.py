@@ -1476,6 +1476,7 @@ def _c_archives(q, n):
     xml = _http_text("https://apis.data.go.kr/1741050/openapi/searcharc?serviceKey=" + sk +
                      "&query=" + _up.quote(q) + f"&start=1&limit={n}", 20)
     return [{"title": _xtag(i, "title"), "date": _xtag(i, "prod_year"), "id": _xtag(i, "prod_name"),
+             **({"series": _xtag(i, "prod_name")} if _xtag(i, "prod_name") else {}),
              "url": _xtag(i, "link")} for i in re.findall(r"<item>(.*?)</item>", xml, re.S)]
 
 def _c_nlk(q, n):
@@ -1492,8 +1493,9 @@ def _c_nlk(q, n):
         lk = _xtag(it, "detail_link") or _xtag(it, "org_link")
         if lk.startswith("/"):
             lk = "https://www.nl.go.kr" + lk
+        tn = _xtag(it, "type_name")
         out.append({"title": _xtag(it, "title_info") or _xtag(it, "title"), "date": _xtag(it, "pub_year_info"),
-                    "id": _xtag(it, "type_name"), "url": lk})
+                    "id": tn, **({"series": tn} if tn else {}), "url": lk})
     return out
 
 # nedb: 국사편찬위 한국사DB의 data.go.kr 공식 개방파일(KOGL)을 인덱싱해 웹 배치한 것을 검색 — robots 무관(라이브 스크래핑 없음).
@@ -2049,7 +2051,7 @@ def _c_i815(q, n):
             for m in re.finditer(r'data-mngno="([^"]+)"[^>]*data-gubun="(\d+)"[^>]*>([\s\S]*?)</strong>', lb):
                 d = _I815_DETAIL.get(m.group(2))
                 url = (f"{base}/{d[0]}?{d[1]}={_up.quote(m.group(1))}&sortNo={m.group(2)}" if d else base + top["u"])
-                out.append({"title": f"[{top['name']}] {_clean(m.group(3))}"[:110], "date": "", "id": m.group(1), "url": url})
+                out.append({"title": f"[{top['name']}] {_clean(m.group(3))}"[:110], "date": "", "id": m.group(1), "series": top["name"], "url": url})
                 if len(out) >= max(2, n - 2):
                     break
         except Exception:
@@ -2698,7 +2700,8 @@ def _c_ktv(q, n):
         t = _clean(m.group(2))
         if not t or re.search(r"paging|overflow", t):
             continue
-        out.append({"title": t, "date": "", "id": "", "url": m.group(1).replace("&amp;", "&")})
+        ktm = re.match(r"^(대한뉴스|리버티뉴스|문화영화|대한뉴우스)", t)
+        out.append({"title": t, "date": "", "id": "", **({"series": ktm.group(1)} if ktm else {}), "url": m.group(1).replace("&amp;", "&")})
         if len(out) >= n:
             break
     return out
@@ -2756,7 +2759,7 @@ def _c_seoul(q, n):
         if tm:
             tt = _clean(tm.group(1))
             used.add(tt)
-            out.append({"title": tt[:110], "date": "", "id": path.split("/")[2], "url": base + path})
+            out.append({"title": tt[:110], "date": "", "id": path.split("/")[2], "series": path.split("/")[1], "url": base + path})
         else:
             out.append({"title": f"[기록건·사진] {path.split('/')[1]} {path.split('/')[2]} — 제목·이용조건은 상세 URL 판독",
                         "date": "", "id": path.split("/")[2], "url": base + path})
@@ -2870,6 +2873,16 @@ def _part_of(ch, it):
         return f"Gallica › {it['series']}"
     if ch == "much" and it.get("series"):
         return f"박물관 › {it['series']}"
+    if ch == "i815" and it.get("series"):
+        return f"자료 › {it['series']}"
+    if ch == "ktv" and it.get("series"):
+        return f"영상 › {it['series']}"
+    if ch == "seoul" and it.get("series"):
+        return f"기술단위 › {it['series']}"
+    if ch == "archives" and it.get("series"):
+        return f"생산기관 › {it['series']}"
+    if ch == "nlk" and it.get("series"):
+        return f"자료유형 › {it['series']}"
     return None
 
 
