@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-21 v1.87.0 — 동일 기록 연결 2호: 인터넷 아카이브 NARA 재게시본
+- 실측: IA에 `gov.archives.arc.<숫자>` 식별자 한국 관련 86건 — `gov.archives.arc.44175` = NARA **NAID 44175** "MISCELLANEOUS SCENES KOREAN SOLDIERS"(RG 242 노획 필름) 제목 일치 확인
+- ia 수집기: 식별자에서 원본 NAID를 읽어 `sameAs` 부여(**추가 조회 0**) → NARA 결과와 한 건으로 병합
+- 병합기: 한 원본에 여러 기관이 연결되면 `sameAs`를 **누적**(`koreanwar:… | ia:…`, 덮어쓰기 금지), `altTitle`은 제목이 다를 때만 보존
+
 ## 2026-11-21 v1.86.0 — 기관 간 동일 기록 연결(sameAs): 협약기관 재수집본 ↔ NARA 원본
 - 발견: 6·25전쟁 아카이브센터 `2022-US-02-AV-D-00207`의 입수처 링크가 NARA **NAID 22345**와 같은 기록인데, 제목 언어가 달라(한글/영어) 연합검색이 별개로 표시하던 문제
 - koreanwar 수집기: 상위 5건 상세 병렬 조회(24h 캐시·6s 상한) → **원본 NAID(sameAs)·생산시기(date 신규)** 확보

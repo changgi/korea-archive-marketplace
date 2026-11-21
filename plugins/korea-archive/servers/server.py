@@ -1436,8 +1436,10 @@ def _collect_merged(collectors):
         for s2 in it["sources"]:
             if s2 not in tgt["sources"]:
                 tgt["sources"].append(s2)
-        tgt["sameAs"] = f"{it['sources'][0].split('·')[0]}:{it['id']}"
-        tgt["altTitle"] = it["title"][:110]
+        link = f"{it['sources'][0].split('·')[0]}:{it['id']}"  # 복수 기관 연결은 누적(덮어쓰기 금지)
+        tgt["sameAs"] = f"{tgt['sameAs']} | {link}" if tgt.get("sameAs") and tgt["sameAs"] != link else link
+        if not tgt.get("altTitle") and _norm(it["title"]).lower() != _norm(tgt["title"]).lower():
+            tgt["altTitle"] = it["title"][:110]  # 다른 기관 제목(언어가 다르면) 보존
         if not tgt.get("date") and it.get("date"):
             tgt["date"] = it["date"]
         drop.add(id(it))
@@ -1464,8 +1466,12 @@ def _c_ia(q, n):
     def _col(x):
         c = x.get("collection")
         return (c[0] if isinstance(c, list) and c else c) or ""
+    def _an(x):  # v1.87: NARA 재게시본 식별자 gov.archives.arc.<NAID> → 원본 NAID(44175 실측 일치)
+        m = re.match(r"^gov\.archives\.arc\.(\d+)$", str(x.get("identifier") or ""))
+        return m.group(1) if m else ""
     return [{"title": str(x.get("title", "")), "date": x.get("date", ""), "id": x.get("identifier"),
              **({"series": str(_col(x))} if _col(x) else {}),
+             **({"sameAs": f"NAID {_an(x)}"} if _an(x) else {}),
              "url": f"https://archive.org/details/{x.get('identifier')}"}
             for x in ((d.get("response") or {}).get("docs") or [])]
 
