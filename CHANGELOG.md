@@ -1,6 +1,9 @@
 # Changelog
 
-## 2026-11-21 v1.57.0
+## 2026-11-21 v1.58.0
+- **Archives NZ(뉴질랜드 국립기록원) 합류 — cross_search 30소스**: 사용자 요청("합류 가능하도록 다른 방법을")을 GH 러너 역공학 10차로 완결. 수확 경로: 인라인 설정의 프록시 경로 노출(3차) → /local-rest 공개 JAX-RS 확인(4차) → **헤드리스 크롬 실입력으로 연합검색 XHR 포획**(8차: `GET /federated-search/customers/aims/search?q=&size=&isFuzzy=true&sourceId=aims-archive`) → **평문 GET 200 판정**(9차 — 8차의 401은 경로 착오, 보호 우회 불필요) → 단건 스키마 확정(10차: SSE 프레임 JSON — entity.name·id(R번호)·resultDate·**accessStatus 권리 표시**·series). 'Korea' 1,356건 실측
+- 교훈 축적: YAML 블록 스칼라 안 heredoc 종결자 함정(들여쓰기로 미종결 — base64 임베드로 회피), 80KB 단일행 grep 교착(6차 행), 봇 보호 우회(쿠키 워밍업)는 시도하지 않음 — 공개 경로 발견으로 해결
+- retry-blocked: NZ 관찰 블록 제거(합류 완료, 6곳), nz-probe 워크플로 삭제(탐사 종료). health 30채널, help 30곳
 - **DigitalNZ 합류 — cross_search 29소스**: 뉴질랜드 국가 집계 API(api.digitalnz.org/v3, 무키 JSON 익명 호출 실측) — **직접 차단이던 Papers Past(한국 관련 18,725건)를 우회 복구**, 터닝불도서관(TAPUHI 사진)·Te Papa·오클랜드박물관 등 NZ 30+기관 동시 커버. content_partner·primary_collection 태그로 기관 식별. health 29채널(골든 'Korean War')
 - **인물 종합 대조 — `nedb_search(mode='gonghun', '종합:이름')`**: 레시피 ①의 도구화 — 공훈록(mngNo·훈격)+인명사전(사전:id·운동계열)+판결문(주문·URL) 3채널 병렬 1회 호출, 한자명·생몰 대조로 동명이인 분리 가이드. 스키마 불변(쿼리 오버로드)
 - **Archives NZ 본체 역공학 착수(사용자 요청)**: DigitalNZ에 Archives NZ 소장기록 부재 실측(DIA=관보뿐) → GH 러너(유일하게 Incapsula 통과)를 원격 실험실로 쓰는 일회성 탐사 워크플로(nz-probe.yml) — SPA XHR/JSON 엔드포인트 추출, Adlib wwwopac 후보 탐침. 직결 불가 시 GH 주간 수확→정적 인덱스 폴백 설계

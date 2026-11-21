@@ -1823,6 +1823,33 @@ def _c_nlna(q, n):
     return out
 
 
+def _c_nzarch(q, n):
+    """Archives NZ Collections(Te Rua Mahara) — 연합검색 공개 API(SSE 프레임 JSON, 무키 평문 GET 실측).
+    v1.58: 사용자 요청 → GH 러너(유일한 Incapsula 통과 환경) 역공학 10차로 완결. accessStatus=권리 표시."""
+    en = _ko_en(q) or q
+    b = _http_text("https://collections.archives.govt.nz/federated-search/customers/aims/search?size=" + str(min(n, 20))
+                   + "&facetSize=0&start=0&isFuzzy=true&sourceId=aims-archive&q=" + _up.quote(en), 25)
+    line = next((l for l in b.split("\n") if l.startswith("data:") and '"hits"' in l), None)
+    if not line:
+        return []
+    j = json.loads(line[5:])
+    out = []
+    for h in (j.get("hits") or []):
+        e = h.get("entity") or {}
+        def cf(k):
+            try:
+                return str(e["custom"][k]["value"][0]["value"])
+            except Exception:
+                return ""
+        acc = cf("accessStatus")
+        rid = str(e.get("id") or "")
+        out.append({"title": _clean(str(e.get("name") or "(무제)"))[:92] + (f" [{acc}]" if acc else ""),
+                    "date": cf("resultDate"), "id": rid,
+                    "url": ("https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/"
+                            + rid + "?q=" + _up.quote(en)) if rid else ""})
+    return out
+
+
 def _c_dnz(q, n):
     """DigitalNZ 집계 API(무키 JSON) — v1.57 합류: Papers Past(직접 차단 — 본 API로 우회 복구)·터닝불도서관·Te Papa 등 NZ 30+기관."""
     en = _ko_en(q) or q
@@ -2664,7 +2691,7 @@ def _c_aks(q, n):
 
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
-            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "gonghun": _c_gonghun, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm, "nlna": _c_nlna, "dnz": _c_dnz, "commons": _c_commons, "un": _c_un, "ndl": _c_ndl, "oldnews": _c_oldnews, "much": _c_much, "indy": _c_indy, "heritage": _c_heritage,
+            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "gonghun": _c_gonghun, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm, "nlna": _c_nlna, "dnz": _c_dnz, "nzarch": _c_nzarch, "commons": _c_commons, "un": _c_un, "ndl": _c_ndl, "oldnews": _c_oldnews, "much": _c_much, "indy": _c_indy, "heritage": _c_heritage,
             "ktv": _c_ktv, "seoul": _c_seoul,
             "foia": _c_foia, "aks": _c_aks}
 
@@ -3592,7 +3619,7 @@ def changgi_help() -> str:
 def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False,
                  format: str = "text") -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,i815,gonghun,ktv,oldnews,much,indy,heritage,kyudb,jsg,awm,nlna,dnz,commons,un,ndl,seoul,foia,aks). 해외와
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,i815,gonghun,ktv,oldnews,much,indy,heritage,kyudb,jsg,awm,nlna,dnz,nzarch,commons,un,ndl,seoul,foia,aks). 해외와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
     record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
@@ -3644,18 +3671,18 @@ def source_profile(institution: str = "list") -> str:
     """기관 자료·이용·활용구조 프로파일 — 발굴 전략 수립용. 자료구조(계층·분류·식별자·메타),
     이용구조(API·인증·쿼리문법·robots·권리), 활용구조(3대 부정합·키워드셋·교차매핑·인접확장·교차검증 조합).
     institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia);
-    'health'=29채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
+    'health'=30채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
     t = (institution or "list").strip().lower()
     if t == "health":  # 발굴 우선 원칙의 전제: 깨짐을 스스로 발견한다
         GOLD = {"tna": "Korea", "ia": "Korea", "gallica": "Corée", "europeana": "Korea", "nara": "Korea",
                 "archives": "한국전쟁", "nlk": "한국전쟁", "nedb": "한강", "koreanwar": "장진호",
-                "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "gonghun": "안중근", "ktv": "대한뉴스", "oldnews": "의병", "much": "판문점", "indy": "유관순", "heritage": "숭례문", "kyudb": "절목", "jsg": "의궤", "awm": "Kapyong", "nlna": "Korea", "dnz": "Korean War", "commons": "Seoul 1950", "un": "Korea armistice", "ndl": "조선총독부",
+                "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "gonghun": "안중근", "ktv": "대한뉴스", "oldnews": "의병", "much": "판문점", "indy": "유관순", "heritage": "숭례문", "kyudb": "절목", "jsg": "의궤", "awm": "Kapyong", "nlna": "Korea", "dnz": "Korean War", "nzarch": "Korea", "commons": "Seoul 1950", "un": "Korea armistice", "ndl": "조선총독부",
                 "seoul": "한강", "foia": "회의", "aks": "문중"}
         keys = {k: bool(os.environ.get(k)) for k in
                 ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
                  "KOREANWAR_API_TOKEN", "NEDB_INDEX_URL")}
         import time as _t
-        def _probe(kv):  # 29채널 병렬 탐침 (Node Promise.all 패리티 — 순차 실행은 합산 수십 초)
+        def _probe(kv):  # 30채널 병렬 탐침 (Node Promise.all 패리티 — 순차 실행은 합산 수십 초)
             k, q = kv
             s = _t.monotonic()
             try:
@@ -3672,7 +3699,7 @@ def source_profile(institution: str = "list") -> str:
                             + ("" if cnt else " — 연결 정상·결과/파싱 0"))
             else:
                 rows.append(f"🔴 {k}: {err} · {ms}ms")
-        return ("29채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
+        return ("30채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
                 + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃) · ms=채널 응답시간. "
                   "nedb ✗=개방파일 인덱스 미설정.")
