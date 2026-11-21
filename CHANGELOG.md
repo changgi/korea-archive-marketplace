@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-11-21 v1.81.0 — 계층 구축 4차(재감사): 잔여 채널 5곳 추가 합류 → 28/30
+- nara 교정(v1.80)을 계기로 "재료 부재" 잔여 7채널 전수 재감사 — 5곳에서 재료 실재 확인·구축:
+  - **earchive**: 행 하단 스팬 전면 수확 — 사료ID(code)·`국가 › 소장기관`(미국 › 국립문서기록관리청 실측)·**생산기간(날짜 신규 확보)**
+  - **nlna**: 토이강 번호 첫 두 세그먼트 = 형성기관 클러스터(2.05 외무부·2.13 국방부 등 9종 사상 + 폴백 `토이강 n.nn`) — 컨테이너 실측
+  - **awm**: 상세 캐시에서 `Object type`(Photograph·Film·Firearm — C285584 실측) 승격
+  - **ndl**: 이미 추출하던 `<category>` 첫 항목을 series로 승격(자료형·매체)
+  - **commons**: list=search → **generator=search + prop=categories 1콜 전환** — 파일 소속 카테고리(큐레이션 계층) 확보
+- PART_OF 23→**28채널**. 진짜 잔여 2: foia(차단 중·목록 빈약)·nedb(인덱스 미설정) — 기술적 불능/미설정만 남음
+- earchive·nlna 파서는 실측 HTML/JSON로 오프라인 사전 검증(Node·Python 동일 출력 확인)
+
 ## 2026-11-21 v1.80.0 — NARA 집중 강화(사용자 지시): 계층 합류 23채널 + 판독 지문
 - **nara 목록 계층 합류**: 카탈로그 API `ancestors` 실존 확인(judge_rights 기존 코드가 RG 추출에 사용 중) → `naraChain`/`_nara_chain` 공용 헬퍼 — "RG n › 시리즈" 체인을 cross_search 수집기 series·nara_search 목록 행(계보:)·karda/csv/manifest partOf(`NARA › RG n › …`)에 일괄 주입. v1.79의 "잔여 8" 중 nara는 재료가 실재했음을 교정 — **23/30채널**
 - **judge_rights(naid) 판독 심화**: ① 계보 전 층 체인(RG›시리즈›파일단위, 각 층 NAID = 상·하위 항행 좌표) ② 【범위·내용】 scope note 발췌 + **본문 지문(sha256-16)** — 지문 채널 9→10 ③ 인접 채굴 안내 푸터. DEEP_READ.nara(judge_rights 재현 호출문)의 증거 사슬이 계보·지문까지 상속

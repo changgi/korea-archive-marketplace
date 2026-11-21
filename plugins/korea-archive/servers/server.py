@@ -1725,10 +1725,12 @@ def _c_ndl(q, n):
         title, link = g("title"), g("link")
         if not title or not link:
             continue
-        cats = "·".join(re.findall(r"<category>([^<]+)", item))  # 자료형·매체(紙/デジタル)
+        cat_arr = re.findall(r"<category>([^<]+)", item)  # 자료형·매체(紙/デジタル)
+        cats = "·".join(cat_arr)
         author = g("author")
         out.append({"title": (title + (f" [{cats}]" if cats else "") + (f" — {author}" if author else ""))[:120],
-                    "date": g("dc:date"), "id": "", "url": link})
+                    "date": g("dc:date"), "id": "",
+                    **({"series": cat_arr[0]} if cat_arr else {}), "url": link})
         if len(out) >= n:
             break
     return out
@@ -1850,13 +1852,17 @@ def _c_oldnews(q, n):
 def _c_commons(q, n):
     """위키미디어 공용 — 키 불요 검색 API(PD 사진·NARA/해군 재수집본 다수 — 원 소장처 역추적 창구). 공유 IP 429 시 채널 실패."""
     en = _to_index_lang(q, "en") or q
-    d = http_json("https://commons.wikimedia.org/w/api.php?action=query&list=search&srnamespace=6&format=json"
-                  f"&srlimit={min(n, 10)}&srsearch=" + _up.quote(en),
+    # v1.81: list=search → generator=search + prop=categories 1콜 전환 — 소속 카테고리(큐레이션 계층)를 목록 레벨에서 확보
+    d = http_json("https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&format=json"
+                  f"&gsrlimit={min(n, 10)}&gsrsearch=" + _up.quote(en) + "&prop=categories&clshow=!hidden&cllimit=3",
                   headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp; archival discovery)"})
+    pages = sorted(((d.get("query", {}) or {}).get("pages") or {}).values(), key=lambda p: p.get("index", 0))
     out = []
-    for it in (d.get("query", {}) or {}).get("search", []):
+    for it in pages:
         t = str(it.get("title", ""))
+        cat = str(((it.get("categories") or [{}])[0] or {}).get("title", "")).removeprefix("Category:")
         out.append({"title": t.removeprefix("File:")[:110], "date": "", "id": "",
+                    **({"series": cat[:80]} if cat else {}),
                     "url": "https://commons.wikimedia.org/wiki/" + _up.quote(t.replace(" ", "_"))})
     return out
 
@@ -1868,10 +1874,17 @@ def _c_nlna(q, n):
     en = q if (not t or t == 'Korea') else t
     d = json.loads(_http_text(f"https://zvt.nationaalarchief.nl/api/search/eads?page=1&rows={min(n, 10)}"
                               f"&q={_up.quote(en)}&sortBy=_score", 25))
+    # v1.81: 토이강(toegang) 번호 첫 두 세그먼트 = 형성기관 클러스터(2.05 외무부 등 — 2.05.202 'Zuid-Korea 대사관' 실측)
+    NLNA_CL = {"2.04": "내무부(Binnenlandse Zaken)", "2.05": "외무부(Buitenlandse Zaken)", "2.09": "법무부(Justitie)",
+               "2.10": "식민성(Koloniën)", "2.12": "해군(Marine)", "2.13": "국방부(Defensie)",
+               "2.19": "민간단체 문서", "2.21": "개인·가문 문서", "2.24": "사진·영상 컬렉션"}
     out = []
     for r in (d.get("results") or [])[:n]:
+        cl = ".".join(str(r.get("id", "")).split(".")[:2])
+        ser = f"{cl} {NLNA_CL[cl]}" if cl in NLNA_CL else (f"토이강 {cl}" if "." in cl else "")
         out.append({"title": _clean(str(r.get("title", "")))[:95] + (" [문서군]" if r.get("type") == "ARCHIVE" else ""),
                     "date": str(r.get("period", "")), "id": str(r.get("id", "")),
+                    **({"series": ser} if ser else {}),
                     "url": "https://www.nationaalarchief.nl/onderzoeken/archief/" + _up.quote(str(r.get("id", "")))})
     return out
 
@@ -2005,9 +2018,11 @@ def _c_awm(q, n):
             acc = re.search(r"(?:Accession Number|ID number)[^A-Z0-9]{0,40}([A-Z0-9/.\-]{3,20})", d)
             pd = bool(re.search(r"Copyright expired - public domain|publicdomain/mark", d))
             conf = re.search(r"Conflict[^<]*</[a-z0-9]+>\s*<[^>]*>\s*(?:<[^>]+>\s*)*([^<]{4,40})", d)
+            ot = re.search(r"Object type</th>\s*<td>\s*([^<]{2,40})", d)  # v1.81: 소장품 유형(Photograph·Film·Firearm 등 — C285584 실측)
             out.append({"title": (_clean(h1.group(1)) if h1 else cid) + (" · 권리:PD(저작권 만료)" if pd else ""),
                         "date": _clean(conf.group(1)) if conf else "",
                         "id": acc.group(1) if acc else cid,
+                        **({"series": _clean(ot.group(1))} if ot else {}),
                         "url": "https://www.awm.gov.au/collection/" + cid})
         except Exception:
             continue
@@ -2750,10 +2765,22 @@ def _c_earchive(q, n):
     with _ur.urlopen(req, timeout=25) as r:
         b = r.read().decode("utf-8", "replace")
     out = []
-    for m in re.finditer(r'fnGoCatalogView\(\'(\d+)\'[^"]*"\s+title="([^"]{3,120})"', b):
-        seg = b[m.start():m.start() + 700]
-        sid = re.search(r"([A-Z]{2,3}\d{3}_[0-9A-Za-z_]{6,})", seg)
-        out.append({"title": _clean(m.group(2)), "date": "", "id": (sid.group(1) if sid else m.group(1)),
+    # v1.81: 행 하단 스팬 전면 수확 — code(사료ID)·국내외·국가·소장기관·생산기간 (2026-11-21 실측: AUS033… → 미국 › 국립문서기록관리청)
+    for seg in b.split("fnGoCatalogView(")[1:]:
+        tm = re.search(r'title="([^"]{3,140})', seg)
+        if not tm:
+            continue
+        sid = (re.search(r'<span class="code">([^<]+)<', seg) or re.search(r"^'(\d+)'", seg))
+        spans = [_clean(x) for x in re.findall(r'<span class="date">\s*([^<]{1,80}?)\s*</span>', seg[:2500])]
+        meta = [s for s in spans if not s.startswith("생산")]  # [국내외, 국가, 소장기관]
+        inst = (meta[2] if len(meta) > 2 else "").split("(")[0].strip()
+        ser = " › ".join(x for x in [(meta[1] if len(meta) > 1 else ""), inst] if x)
+        prod_s = next((s for s in spans if s.startswith("생산기간")), "")
+        pm = re.search(r"[\d.~\s]{4,24}", prod_s) if prod_s else None
+        prod = pm.group(0).strip() if pm else ""
+        out.append({"title": _clean(tm.group(1))[:110], "date": prod,
+                    "id": _clean(sid.group(1)) if sid else "",
+                    **({"series": ser[:60]} if ser else {}),
                     "url": "https://archive.history.go.kr"})
         if len(out) >= n:
             break
@@ -2874,6 +2901,16 @@ DEEP_READ = {
 def _part_of(ch, it):
     if ch == "nara" and it.get("series"):
         return f"NARA › {it['series']}"
+    if ch == "ndl" and it.get("series"):
+        return f"NDL › {it['series']}"
+    if ch == "awm" and it.get("series"):
+        return f"AWM 유형 › {it['series']}"
+    if ch == "nlna" and it.get("series"):
+        return f"NA(NL) › {it['series']}"
+    if ch == "earchive" and it.get("series"):
+        return f"수집처 › {it['series']}"
+    if ch == "commons" and it.get("series"):
+        return f"Commons › {it['series']}"
     if ch == "nzarch" and it.get("series"):
         return f"Series: {it['series']}"
     if ch == "koreanwar":
