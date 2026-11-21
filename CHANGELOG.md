@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.39.0
+- **`nedb_search(mode='jsg')` 장서각 서지·해제 판독**: 청구기호(K2-…)·dataId·URL 투입 시 자료명·청구기호·MF번호·분류 3종(연쇄 앵커 — 단독 매칭은 내비 필터와 혼동)·**해제 전문**(정의·서지사항·체제 및 내용·특성 및 가치·참고문헌, 4,000자 컷) 판독. 실측: K2-3556 개건도감의궤(1776 경모궁 개건) 해제 1,500자
+- 심층 판독 8채널 완성 — 고문헌축(jsg 해제·kyujanggak·aks)·근대축(i815·gonghun·jacar)·현대축(ktv·earchive·seoul·commons)
+
 ## 2026-11-21 v1.38.0
 - **`nedb_search(mode='commons')` 파일 판독**: File URL(또는 File:제목) 투입 시 라이선스(PD/CC → A/B/D 초판정 자동)·작가·**출처(원 소장처 크레딧 — NH·NARA 번호)**·촬영일·설명·원본 해상도 판독. 24h 캐시·도메인 한정. 실측: NH 96379 서울 수복(1950-09-29, 해병대 Ed Barnum 병장 촬영, PD → A)
 - 심층 판독 모드 7종 완성(jacar·gonghun·i815·ktv·earchive·commons + seoul 전용도구) — 발굴→판독→권리 실확인 전 구간이 도구 응답 안에서 완결

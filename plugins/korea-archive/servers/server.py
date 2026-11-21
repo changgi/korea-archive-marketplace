@@ -1814,6 +1814,47 @@ def _c_gonghun(q, n):
     return out
 
 
+def _jsg_mode(query: str, max_results: int) -> str:
+    """장서각 심층 — 키워드 목록 / 청구기호·URL 서지+해제 전문 판독(서버 렌더 실측 2026-11-21). Node 패리티."""
+    q = query.strip()
+    try:
+        dm = (re.search(r"dataId=(JSG_[\w.\-]+)", q) or re.match(r"^(JSG_[\w.\-]+)$", q)
+              or re.match(r"^([A-Z]\d+(?:-\d+)*(?:[A-Za-z]*\d*)?)$", q))
+        if dm and not re.search(r"\s", q) and (dm.group(1).startswith("JSG_") or re.match(r"^[A-Z]\d", dm.group(1))):
+            did = dm.group(1) if dm.group(1).startswith("JSG_") else "JSG_" + dm.group(1)
+            b = _cached_text("jsgD:" + did, 24 * 3600,
+                             lambda: _http_text("https://jsg.aks.ac.kr/dir/view?dataId=" + _up.quote(did), 25), "청구기호")
+            flat = _clean(b).replace("&middot;", "·")
+            pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
+            name = pick(r"자료명\(한글\)\s*([^·]{2,60}?)\s*·")
+            callno = pick(r"청구기호\s*(\S{2,20})")
+            mf = pick(r"MF번호\s*(\S{2,20})")
+            cm = re.search(r"유형분류\s*(\S{2,20})\s*주제분류\s*(\S{2,30})\s*수집분류\s*(\S{2,30})", flat)
+            i0 = flat.find("정의 ")
+            haeje = ""
+            if i0 >= 0:
+                haeje = re.split(r"집필자|관련 멀티미디어|장서각 디지털아카이브 바로가기", flat[i0:i0 + 6000])[0].strip()
+                if len(haeje) > 4000:
+                    haeje = haeje[:4000] + f" …(총 {len(haeje)}자 — 전문은 원문 링크)"
+            if not callno and not haeje:
+                return f"'{did}' — 상세 미발견 또는 구조 상이. 청구기호(K2-…)를 확인하거나 mode=jsg에 검색어를 넣으십시오."
+            meta = " · ".join(x for x in (f"청구기호 {callno}" if callno else "", f"MF {mf}" if mf else "",
+                                          cm.group(1) if cm else "", cm.group(2) if cm else "") if x)
+            return (f"장서각 서지·해제 판독 — {name or did}\n{meta}\n"
+                    + (f"【해제】\n{haeje}\n" if haeje else "")
+                    + f"원문·이미지: https://jsg.aks.ac.kr/dir/view?dataId={_up.quote(did)}\n"
+                    + "※ 출처: 한국학중앙연구원 장서각 — 게재 시 출처 표기, 이미지 재이용은 기관 이용조건 준수. "
+                    "해제 인용은 국역·해설(학술 인용 시 집필 해제임을 명기).")
+        items = _c_jsg(q, min(max_results, 10))
+        if not items:
+            return f"장서각 '{q}' — 0건. 서명·주제어(의궤·등록 등)로 재시도하십시오."
+        return (f"장서각 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}" + (f" [{it['id']}]" if it.get("id") else "") + f"\n  {it['url']}" for it in items)
+                + "\n※ 청구기호(K2-… 등)나 상세 URL을 mode=jsg query로 재투입 → 서지·해제 전문 판독.")
+    except Exception as e:
+        return f"장서각 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://jsg.aks.ac.kr"
+
+
 def _commons_mode(query: str, max_results: int) -> str:
     """위키미디어 공용 심층 — 키워드 목록 / File URL 판독(라이선스·원 소장처·설명). Node 패리티."""
     q = query.strip()
@@ -2506,7 +2547,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     i815=독립기념관(query=키워드 목록→detail.do URL 투입 시 당대 신문기사·독립운동가 자료 본문 판독) ·
     ktv=KTV e영상역사관(키워드 목록→ehistory view URL 투입 시 영상 해설·상영정보 판독, KOGL) ·
     earchive=국편 전자사료관(키워드 목록→'키워드|순번' 투입 시 상세: 열람·이용조건·등록번호) ·
-    commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독)
+    commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독) ·
+    jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2523,6 +2565,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _earchive_mode(query, max_results)
     if mode == "commons":
         return _commons_mode(query, max_results)
+    if mode == "jsg":
+        return _jsg_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
