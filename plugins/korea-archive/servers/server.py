@@ -1400,8 +1400,10 @@ def _c_tna(q, n):
     for batch, _t in T._search(query, page_size=min(n, 50), max_pages=1, sleep=0):
         for r in batch:
             rec = T._extract(r, "x", q)
+            ref = str(rec.get("local_id", "") or "")
             out.append({"title": rec.get("title", ""), "date": rec.get("date", ""),
-                        "id": rec.get("local_id", ""), "url": rec.get("url", "")})
+                        "id": ref, **({"series": ref.split("/")[0]} if "/" in ref else {}),
+                        "url": rec.get("url", "")})
     return out[:n]
 
 def _c_ia(q, n):
@@ -1440,7 +1442,9 @@ def _c_europeana(q, n):
     d = http_json("https://api.europeana.eu/record/v2/search.json?" +
                   urllib.parse.urlencode({"wskey": key, "query": q, "rows": n, "profile": "standard"}))
     return [{"title": (it.get("title") or ["?"])[0], "date": (it.get("year") or [""])[0],
-             "id": it.get("id", ""), "url": it.get("guid", "")} for it in (d.get("items") or [])]
+             "id": it.get("id", ""),
+             **({"series": (it.get("dataProvider") or [""])[0]} if (it.get("dataProvider") or [""])[0] else {}),
+             "url": it.get("guid", "")} for it in (d.get("items") or [])]
 
 def _c_nara(q, n):
     key = os.environ.get("NARA_API_KEY")
@@ -2840,6 +2844,10 @@ def _part_of(ch, it):
         return f"NZ › {it['series']}"
     if ch == "ia" and it.get("series"):
         return f"IA Collection › {it['series']}"
+    if ch == "tna" and it.get("series"):
+        return f"TNA › {it['series']}"
+    if ch == "europeana" and it.get("series"):
+        return f"Europeana › {it['series']}"
     return None
 
 
@@ -3888,10 +3896,11 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
             return '"' + str(v if v is not None else "").replace('"', '""') + '"'
         def ridc(it, i):
             return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
-        rows = [",".join(esc(x) for x in (ridc(it, i), "+".join(it["sources"]), it["title"], it["date"], it["id"], it["url"]))
+        rows = [",".join(esc(x) for x in (ridc(it, i), "+".join(it["sources"]), it["title"], it["date"], it["id"], it["url"],
+                                           _part_of(it["sources"][0].split("·")[0], it) or ""))
                 for i, it in enumerate(items[:45])]
         return (f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
-                + "node,sources,title,date,id,url\n" + "\n".join(rows)
+                + "node,sources,title,date,id,url,partOf\n" + "\n".join(rows)
                 + "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights.")
     lines = [f"- [{'+'.join(it['sources'])}] {it['title'][:95]}"
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")

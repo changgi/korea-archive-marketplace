@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.75.0 — partOf 9채널 + csv 계층 컬럼
+- **tna**(참조번호 시리즈 — 'WO 281' 등 레코드그룹)·**europeana**(dataProvider 원 소장기관) 승격
+- **csv에 partOf 컬럼** — 표 분석에서도 계층 필터·피벗 가능(다매체×맥락 교차). 데이터화 3종 전부에 계층 탑재 완료
+
 ## 2026-11-21 v1.74.0 — partOf 7채널
 - **dnz**(기관 › 컬렉션 — 'Alexander Turnbull Library › TAPUHI')·**ia**(Internet Archive 컬렉션 — fl[]=collection 추가 수집: 'CSPAN3'·'prelinger' 등) 계층 승격 — 해외 양대 집계·미러 채널의 수집 맥락이 그래프 군집으로
 
