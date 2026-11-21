@@ -1940,6 +1940,42 @@ def _c_gonghun(q, n):
     return out
 
 
+def _indy_mode(query: str, max_results: int) -> str:
+    """독립운동판결문 심층 — 이름 목록 / 상세 URL 판독(죄명·주문·사건개요·원문 뷰어). Node 패리티."""
+    q = query.strip()
+    try:
+        if re.search(r"viewIndyDetail\.do", q) and re.match(r"^https?://theme\.archives\.go\.kr/", q):
+            evnt = (re.search(r"FK_ARCHIVE_EVNT_ID=(\d+)", q) or [None, ""])[1] or ""
+            b = _cached_text("indyD:" + (evnt or q[-40:]), 24 * 3600, lambda: _http_text(q, 25), "판결기관")
+            flat = _clean(b)
+            pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
+            name = pick(r"이름/별명\s*(.{2,40}?)\s*당시나이")
+            age = pick(r"당시나이\s*(.{1,20}?)\s*본적")
+            addr = pick(r"본적/주소\s*(.{2,60}?)\s*판결기관")
+            organ = pick(r"판결기관\s*(\S{2,20})")
+            crime = pick(r"죄명\s*(.{2,50}?)\s*생산년도")
+            sent = pick(r"주문\s*(.{2,100}?)\s*관리번호")
+            vdate = pick(r"판결날짜\s*(\d{8})")
+            kase = pick(r"사건개요\s*([\s\S]{5,900}?)\s*판결문 원문보기")
+            if not name and not kase:
+                return "판결문 상세 파싱 실패 — viewIndyDetail URL을 확인하거나 mode=indy에 이름을 넣으십시오."
+            meta = " · ".join(x for x in (f"본적/주소 {addr}" if addr else "", f"판결기관 {organ}" if organ else "",
+                                          f"판결 {vdate}" if vdate else "") if x)
+            return (f"독립운동판결문 판독 — {name}{f' (당시 {age})' if age else ''}\n{meta}\n"
+                    + (f"죄명: {crime}\n" if crime else "") + (f"주문: {sent}\n" if sent else "")
+                    + (f"【사건개요】\n{kase}\n" if kase else "")
+                    + (f"판결문 원문 뷰어: https://theme.archives.go.kr/viewer/common/archWebViewer.do?archiveEventId={evnt}\n" if evnt else "")
+                    + "※ 출처: 국가기록원 독립운동판결문 — 게재 시 출처 표기. 수형 사실의 존엄 고려(게재윤리). gonghun 수형기록과 교차검증 권장.")
+        items = _c_indy(q, min(max_results, 15))
+        if not items:
+            return f"독립운동판결문 '{q}' — 0건. 이름(이명·한자 포함)으로 재시도하십시오."
+        return (f"독립운동판결문 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']} ({it['date']})\n  {it['url']}" for it in items)
+                + "\n※ 상세 URL을 mode=indy query로 재투입 → 죄명·주문·사건개요·원문 뷰어 판독.")
+    except Exception as e:
+        return f"독립운동판결문 오류({str(e)[:60]}) — 잠시 후 재시도: https://theme.archives.go.kr/next/indy/viewMain.do"
+
+
 def _much_mode(query: str, max_results: int) -> str:
     """역사박물관 심층 — 키워드 목록 / idnbr·URL 판독(재질·크기·공공누리 유형·설명). Node 패리티."""
     q = query.strip()
@@ -2830,7 +2866,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독) ·
     un=UN 디지털도서관(키워드 목록→recid/URL 투입 시 요약·주제·언어별 PDF 직링크) ·
     oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 · '본문:키워드[|1905-1910]'=OCR 전문+연대) ·
-    much=역사박물관(키워드 목록→idnbr/URL 투입 시 재질·크기·공공누리 유형·설명 판독)
+    much=역사박물관(→idnbr/URL 투입 시 재질·공공누리·설명) ·
+    indy=독립운동판결문(이름 목록→상세 URL 투입 시 죄명·주문·사건개요·원문 뷰어)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2855,6 +2892,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _oldnews_mode(query, max_results)
     if mode == "much":
         return _much_mode(query, max_results)
+    if mode == "indy":
+        return _indy_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
