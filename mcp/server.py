@@ -3777,6 +3777,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         return (f"발굴 수집기록 매니페스트 '{query}' — {len(recs)}건 (재현 가능·기관 등재용):\n"
                 + "```json\n" + mj + "\n```"
                 + f"\nfixity(sha256): {fx} — 위 JSON 바이트의 지문. 전파·보관본 대조 시 불일치=변조/손상."
+                + "\n공개 지문 원장(골든 기록 주간 감시·개정 이력): https://korea-archive-mcp.vercel.app/fixity-ledger.json"
                 + "\n※ 현용기록물로서의 발굴기록: provenance(질의·소스·시각·재현 호출)=증거성 · heldBy·식별자=맥락 · fixity=고정성. 이 JSON을 그대로 기록관리시스템·KARDA에 등재."
                 + "\n※ 다매체 변환 사슬: 이 매니페스트 → report_template(kind=report/carousel/full_package)=보고서·카드뉴스 · format='karda'=지식그래프 · format='csv'=데이터셋."
                 + "\n※ 지속가능성: 영속 식별자(archRfcd·NAID·levelId·R번호) 우선 인용 — URL이 썩어도 재발굴 가능. 채널 생존은 source_profile(health)·주간 CI가 감시. 권리는 judge_rights로 기록 단위 표시.")
