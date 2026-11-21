@@ -1952,6 +1952,44 @@ def _c_gonghun(q, n):
     return out
 
 
+def _heritage_mode(query: str, max_results: int) -> str:
+    """국가유산 심층 — 키워드 목록 / ccbaCpno 상세(해설·시대·소유/관리). cpno=구분1+종목2+시도2+지정8. Node 패리티."""
+    q = query.strip()
+    try:
+        hm = re.search(r"ccbaCpno=(\d{13})", q) or re.match(r"^(\d{13})$", q)
+        if hm:
+            cpno = hm.group(1)
+            kdcd, ctcd, asno = cpno[1:3], cpno[3:5], cpno[5:]
+            b = _cached_text("heriD:" + cpno, 24 * 3600,
+                             lambda: _http_text(f"https://www.khs.go.kr/cha/SearchKindOpenapiDt.do?ccbaKdcd={kdcd}&ccbaAsno={asno}&ccbaCtcd={ctcd}", 25),
+                             "ccbaMnm1")
+            g = lambda t: _clean(((re.search(f"<{t}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</{t}>", b) or [None, ""])[1] or ""))
+            name = g("ccbaMnm1")
+            if not name:
+                return f"[{cpno}] 상세 미발견 — ccbaCpno를 확인하거나 mode=heritage에 키워드를 넣으십시오."
+            content = g("content")
+            if len(content) > 3500:
+                content = content[:3500] + f" …(총 {len(content)}자 — 전문은 포털)"
+            meta = " · ".join(x for x in (f"소유 {g('ccbaPoss')}" if g("ccbaPoss") else "",
+                                          f"관리 {g('ccbaAdmin')}" if g("ccbaAdmin") else "",
+                                          f"시대 {g('ccceName')}" if g("ccceName") else "",
+                                          f"소재 {g('ccbaLcad')[:60]}" if g("ccbaLcad") else "") if x)
+            return (f"국가유산 판독 — {name}"
+                    + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + f" [{g('ccmaName')}]"
+                    + f"\n{meta}\n"
+                    + (f"【해설】\n{content}\n" if content else "")
+                    + f"포털 상세: https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}\n"
+                    + "※ 출처: 국가유산청 국가유산포털 — 게재 시 출처 표기(해설문 인용 시 포털 명기). 사진 이용은 공공누리 유형 확인.")
+        items = _c_heritage(q, min(max_results, 15))
+        if not items:
+            return f"국가유산 '{q}' — 0건. 유산 명칭(전각·사적명 등)으로 재시도하십시오."
+        return (f"국가유산 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}" + (f" [{it['id']}]" if it.get("id") else "") + f"\n  {it['url']}" for it in items)
+                + "\n※ ccbaCpno(13자리)를 mode=heritage query로 재투입 → 해설·시대·소유/관리 판독.")
+    except Exception as e:
+        return f"국가유산 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://www.heritage.go.kr"
+
+
 def _indy_mode(query: str, max_results: int) -> str:
     """독립운동판결문 심층 — 이름 목록 / 상세 URL 판독(죄명·주문·사건개요·원문 뷰어). Node 패리티."""
     q = query.strip()
@@ -2879,7 +2917,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     un=UN 디지털도서관(키워드 목록→recid/URL 투입 시 요약·주제·언어별 PDF 직링크) ·
     oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 · '본문:키워드[|1905-1910]'=OCR 전문+연대) ·
     much=역사박물관(→idnbr/URL 투입 시 재질·공공누리·설명) ·
-    indy=독립운동판결문(이름 목록→상세 URL 투입 시 죄명·주문·사건개요·원문 뷰어)
+    indy=판결문(이름→상세 URL 투입 시 죄명·주문·사건개요·원문 뷰어) ·
+    heritage=국가유산(키워드 목록→ccbaCpno 13자리 투입 시 해설·시대·소유/관리 판독)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2906,6 +2945,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _much_mode(query, max_results)
     if mode == "indy":
         return _indy_mode(query, max_results)
+    if mode == "heritage":
+        return _heritage_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)

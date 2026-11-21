@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.53.0
+- **`nedb_search(mode='heritage')` 국가유산 판독**: ccbaCpno(13자리) 투입 시 cpno를 종목·시도·지정번호로 분해해 무키 상세 API(SearchKindOpenapiDt) 호출 — 명칭(한자)·종목·소유/관리·시대·소재·**해설 전문**(3,500자 컷) 판독. 심층 판독 13채널
+- 작업망 차단 지속 — 검증된 fix-forward 사이클(icn1 실측 판정)로 배포
+
 ## 2026-11-21 v1.52.0
 - **국가유산포털 합류 — cross_search 28소스**: 국가유산청 OpenAPI(무키 XML — SearchKindOpenapiList) — 명칭(한자)·종목(국보/보물/사적)·소재지·ccbaCpno 딥링크. 이 작업망에서는 차단이나 **배포 전 icn1 도달성을 기존 scrape_plan 도구로 원격 실측**(robots 허용 확인) 후 fix-forward 합류 — 프로덕션 health가 최종 판정
 - health 28채널(골든 질의 '숭례문'). 문서 28소스 동기화. cross_search 설명 1024자 재축약
