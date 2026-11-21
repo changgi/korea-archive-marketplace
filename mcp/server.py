@@ -1430,12 +1430,16 @@ def _collect_merged(collectors):
                                      "id": raw.get("id", ""), "url": raw.get("url", ""), "sources": [name],
                                      **({"series": str(raw["series"])[:80]} if raw.get("series") else {}),
                                      **({"media": str(raw["media"])[:180]} if raw.get("media") else {}),
-                                     **({"sameAs": str(raw["sameAs"])} if raw.get("sameAs") else {})}
+                                     **({"sameAs": str(raw["sameAs"])} if raw.get("sameAs") else {}),
+                                     **({"lid": str(raw["lid"])} if raw.get("lid") else {})}
             except Exception:
                 stats.append(f"{name}:—")
     # v1.86: 동일 기록 병합 — sameAs(원본 식별자)가 다른 레코드의 id와 같으면 한 건으로 합치고 출처를 모두 남긴다
     items = list(merged.values())
     by_id = {str(it["id"]): it for it in items if it.get("id")}
+    for it in items:  # NARA 고유번호(127-N-A4560형)로도 대조 — 실재할 때만 병합
+        if it.get("lid") and it["lid"] not in by_id:
+            by_id[it["lid"]] = it
     drop = set()
     for it in items:
         tgt = by_id.get(it.get("sameAs") or "")
@@ -1444,12 +1448,14 @@ def _collect_merged(collectors):
         for s2 in it["sources"]:
             if s2 not in tgt["sources"]:
                 tgt["sources"].append(s2)
-        link = f"{it['sources'][0].split('·')[0]}:{it['id']}"  # 복수 기관 연결은 누적(덮어쓰기 금지)
+        link = f"{it['sources'][0].split('·')[0]}:{it['id'] or it['url']}"  # 복수 기관 연결은 누적(덮어쓰기 금지)
         tgt["sameAs"] = f"{tgt['sameAs']} | {link}" if tgt.get("sameAs") and tgt["sameAs"] != link else link
         if not tgt.get("altTitle") and _norm(it["title"]).lower() != _norm(tgt["title"]).lower():
             tgt["altTitle"] = it["title"][:110]  # 다른 기관 제목(언어가 다르면) 보존
         if not tgt.get("date") and it.get("date"):
             tgt["date"] = it["date"]
+        if not tgt.get("media") and it.get("media"):
+            tgt["media"] = it["media"]  # 원본에 매체가 없으면 재게시본 원본 파일 승계
         drop.add(id(it))
     return [it for it in items if id(it) not in drop], stats
 
@@ -1539,6 +1545,7 @@ def _c_nara(q, n):
         po = _nara_chain(rec)
         d0u = str(((rec.get("digitalObjects") or [{}])[0] or {}).get("objectUrl", ""))
         out.append({"title": rec.get("title", ""), "date": _nara_date(rec), "id": f"NAID {rec.get('naId')}",
+                    **({"lid": f"NARA {str(rec['localIdentifier']).upper()}"} if rec.get("localIdentifier") else {}),
                     **({"series": po} if po else {}),
                     **({"media": d0u} if d0u else {}),
                     "url": f"https://catalog.archives.gov/id/{rec.get('naId')}"})
@@ -1950,9 +1957,14 @@ def _c_commons(q, n):
         t = str(it.get("title", ""))
         cat = str(((it.get("categories") or [{}])[0] or {}).get("title", "")).removeprefix("Category:")
         iiu = str(((it.get("imageinfo") or [{}])[0] or {}).get("url", "")).split("?")[0]  # v1.84: 원본 파일 직링크(utm 제거 — 절단 없는 영속 URL)
+        # v1.88: NARA 기증본 파일명 규칙 — '… - NARA - <NAID>.tif'(520782 실측 일치) · 'NARA <고유번호> …'(127-N-A4501형)
+        cn = re.search(r"[-_ ]NARA[-_ ]+(\d{5,10})\.\w+$", t, re.I)
+        cl = None if cn else re.match(r"^File:NARA[ _]+(\d{2,3}[A-Z]?-[A-Z0-9]+-[A-Z0-9-]+?)[ _]", t, re.I)
+        sa = f"NAID {cn.group(1)}" if cn else (f"NARA {cl.group(1).upper()}" if cl else "")
         out.append({"title": t.removeprefix("File:")[:110], "date": "", "id": "",
                     **({"series": cat[:80]} if cat else {}),
                     **({"media": iiu} if iiu else {}),
+                    **({"sameAs": sa} if sa else {}),
                     "url": "https://commons.wikimedia.org/wiki/" + _up.quote(t.replace(" ", "_"))})
     return out
 

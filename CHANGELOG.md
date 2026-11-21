@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-21 v1.88.0 — 동일 기록 연결 3호: 위키미디어 공용(Commons) NARA 기증본
+- 실측: Commons 파일명 규칙 2종 — `… - NARA - <NAID>.tif`(`520782` = NARA NAID 520782 흥남 철수 피란민 사진, RG 80 제목 일치) · `NARA <고유번호> …`(127-N-A4501형)
+- commons 수집기: 파일명에서 원본 식별자 → `sameAs`(추가 조회 0). 하이픈 위치가 NARA 표기와 다른 `111-SC349027`형은 확정 불가로 제외
+- nara 수집기: 고유번호(localIdentifier)를 `lid`로 보존 → 병합기가 NAID와 고유번호 **둘 다로 대조**(실재할 때만 병합)
+- 병합기: 원본에 매체가 없으면 재게시본의 원본 파일(media)을 승계
+- 오프라인 단위 검사: NARA+Commons+IA 3자 병합·고유번호 병합·매체 승계·근거 없는 연결 미병합 4경우 통과
+
 ## 2026-11-21 v1.87.0 — 동일 기록 연결 2호: 인터넷 아카이브 NARA 재게시본
 - 실측: IA에 `gov.archives.arc.<숫자>` 식별자 한국 관련 86건 — `gov.archives.arc.44175` = NARA **NAID 44175** "MISCELLANEOUS SCENES KOREAN SOLDIERS"(RG 242 노획 필름) 제목 일치 확인
 - ia 수집기: 식별자에서 원본 NAID를 읽어 `sameAs` 부여(**추가 조회 0**) → NARA 결과와 한 건으로 병합
