@@ -1732,7 +1732,7 @@ def _c_heritage(q, n):
                    + f"&pageUnit={min(n, 15)}", 25)
     out = []
     for it in b.split("<item>")[1:]:
-        g = lambda t: ((re.search(f"<{t}>([^<]*)<", it) or [None, ""])[1] or "").strip()
+        g = lambda t: ((re.search(f"<{t}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</{t}>", it) or [None, ""])[1] or "").strip()  # CDATA 대응
         name = g("ccbaMnm1")
         if not name:
             continue
