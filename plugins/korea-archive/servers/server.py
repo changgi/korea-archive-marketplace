@@ -1812,7 +1812,9 @@ def _c_commons(q, n):
 
 def _c_nlna(q, n):
     """네덜란드 국립문서보관소 — 공개 JSON API 실측(2026-11-20, Playwright 역추적). 주한 대사관·파견부대 문서군."""
-    en = _ko_en(q) or q
+    # commons는 한국어 네이티브 검색 가능 — TOPICS 미등재어(인명 등)가 'Korea' 단독으로 뭉개지면 원질의 유지(v1.62)
+    t = _ko_en(q)
+    en = q if (not t or t == 'Korea') else t
     d = json.loads(_http_text(f"https://zvt.nationaalarchief.nl/api/search/eads?page=1&rows={min(n, 10)}"
                               f"&q={_up.quote(en)}&sortBy=_score", 25))
     out = []
@@ -3663,8 +3665,14 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         h = 7
         for c in query:
             h = (h * 31 + ord(c)) & 0x7FFFFFFF
+        def rid2(it, i):  # karda 그래프와 동일 키 — 상호 참조
+            return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
         man = {
-            "@type": "DiscoveryManifest", "standard": "ISAD(G)/RiC-oriented",
+            "@context": {"dcterms": "http://purl.org/dc/terms/", "rico": "https://www.ica.org/standards/RiC/ontology#",
+                         "title": "dcterms:title", "date": "dcterms:date", "identifier": "dcterms:identifier",
+                         "provenance": "dcterms:provenance", "accessUrl": "dcterms:source",
+                         "heldBy": {"@id": "rico:hasOrHadHolder"}, "records": {"@id": "rico:hasRecordSetMember"}},
+            "@type": ["DiscoveryManifest", "rico:RecordSet"], "standard": "ISAD(G)/RiC-oriented",
             "identifier": f"kad-{now[:10]}-{h:x}",
             "provenance": {  # 증거성 — 수집의 재현 가능한 기술(누가·무엇을·언제·어떻게)
                 "query": query, "sources": ",".join(want), "variants": variants, "collectedAt": now,
@@ -3672,9 +3680,10 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 "reproduce": f"cross_search(query={query!r}, sources={sources!r}, format='manifest')",
                 "channelStats": stats},
             "records": [{
+                "@type": "rico:Record", "node": rid2(it, i),
                 "identifier": it.get("id") or None, "title": it["title"], "date": it.get("date") or None,
                 "heldBy": sorted({s.split("·")[0] for s in it["sources"]}),  # 맥락 — 소장기관(복수=교차확인)
-                "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}"} for it in recs],
+                "accessUrl": it.get("url") or None, "evidence": f"API 실조회 {now[:10]}"} for i, it in enumerate(recs)],
         }
         return (f"발굴 수집기록 매니페스트 '{query}' — {len(recs)}건 (재현 가능·기관 등재용):\n"
                 + "```json\n" + json.dumps(man, ensure_ascii=False) + "\n```"
@@ -3691,6 +3700,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         nodes += [{"id": "archive:" + s, "type": "archive", "label": s} for s in srcs]
         for i, it in enumerate(recs):
             nd = {"id": rid(it, i), "type": "record", "label": it["title"][:90]}
+            if it.get("id"):
+                nd["identifier"] = it["id"]  # manifest와 동일 식별자 — 상호 참조
             if it.get("date"):
                 nd["date"] = it["date"]
             if it.get("url"):
