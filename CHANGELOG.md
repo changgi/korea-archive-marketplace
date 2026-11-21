@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-21 v1.85.1 — GitHub README 전면 리뉴얼 + GitHub Pages 랜딩
+- korea-archive-mcp README: 13소스 시절 → 현행(30소스·9개국, 배지 6종, 연결표, 연합 검색망 권역표, 현용기록물화 사슬 다이어그램, 도구 20종 표, 감시 4종 표, 배포 상세는 접기)
+- `docs/index.html` 신설 — GitHub Pages 랜딩(통계 5종·연결 안내·검색망 칩·사슬 4단계·장치 4종·실물 예제). **활성화는 사용자 액션**: repo Settings → Pages → Deploy from a branch → `main` / `/docs`
+- marketplace README 헤더 현행화(15곳→30개 문서고·9개국, v1.85 배너)
+
 ## 2026-11-21 v1.85.0 — oldnews 지면 좌표 + 공표물 3종 갱신
 - **oldnews 지면 위치 승격**: 목록 응답의 `newsposition`("2면 2단")을 제목에 — 신문 기사 인용의 필수 좌표(신문명·날짜·면·단)가 목록 단계에서 완성
 - **공표물 갱신**: help.html·help-en.html 7½절(계층 28채널·media 직링크·데이터-지면 계보 일치 반영), 심사 팩 시연 19→**21선**(NARA 심층 판독 1콜·계층+media 내장 데이터셋), 원장 7→8종

@@ -1,9 +1,9 @@
 # 🇰🇷 Korea Archive — Claude Plugin Marketplace
 
-**국내외 15곳의 아카이브에 흩어진 한국 관련 기록(1860–1960)을 클로드에서 한 대화로 발굴합니다.**
-**Discover Korea-related records scattered across 15 archives — worldwide and in Korea — from a single Claude conversation.**
+**9개국 30개 문서고에 흩어진 한국 관련 기록(1860~현대)을 클로드에서 한 대화로 발굴합니다.**
+**Discover Korea-related records scattered across 30 archives in 9 countries — from a single Claude conversation.**
 
-[English](#english) · [한국어](#한국어) · [Gallery / 카드뉴스](#gallery--카드뉴스)
+[English](#english) · [한국어](#한국어) · [Gallery / 카드뉴스](#gallery--카드뉴스) · [원격 서버 저장소](https://github.com/changgi/korea-archive-mcp)
 
 ```
 /plugin marketplace add changgi/korea-archive-marketplace
@@ -12,6 +12,8 @@
 
 웹·모바일(클로드 웹앱)은 MCP 커넥터로 연결: 설정 → 커넥터 → 커스텀 커넥터 추가 →
 `https://korea-archive-mcp.vercel.app/api/mcp`
+
+> **v1.85 (2026-11)** — **30소스·9개국** 연합(Archives NZ 합류 — 공개 API 역공학 10차) · **심층 판독 14채널** · **partOf 계층 28/30채널**(RG·시리즈·四部·문고·토이강…) · **현용기록물화 사슬**: `cross_search` format=**manifest**(JSON-LD 수집기록)·**karda**(지식그래프)·**csv**(partOf·**media 원본 직링크** 열) + 본문 지문 10채널 + [공개 지문 원장](https://korea-archive-mcp.vercel.app/fixity-ledger.json)(골든 8종 주간 감시) · NARA 최심도(계보·생산일·소장단위·scope 지문·디지털 객체 직링크·Use Restriction 실조회) · 자가 감시 GitHub Actions 4종. 상세는 [CHANGELOG](CHANGELOG.md).
 
 > **v1.15** — **조선 사료 심층 판독**: `nedb_search` 9모드(법전·座目 필터·★형제 조 전수·법전 대조·어휘 연원·승정원일기·규장각) + 도메인 스킬 7종 · **매직 키워드 웹 네이티브화**(MCP prompts `full-package`·`changgi-help`) · `query_bank` 조사 전략 8토픽(11벽·식별자·인명·대조·6개국 서고·도시명 계보·895 지도·성씨 색인) · 전쟁기념관 **OpenAPI 채널**(Referer 바인딩 실측).
 > **v1.14** — 매직 키워드 **"풀패키지"**: 한 문장으로 **산출물 12종**(매거진 보고서·카드뉴스·포스터·홍보/입문/메시지 카드·발표 PPTX·기록 해설·Canva·KARDA·시연 영상·ZIP) 자동 제작 + 품질 게이트. 실전 3편: 글로스터(1호)·장진호(2호)·한강 강배(1485~1986).
