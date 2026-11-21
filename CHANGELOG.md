@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.63.0 (현용기록물화 3단계 — 전파 매체에 증거성 상속)
+- **보고서 규칙 19 신설**: 모든 발굴 보고서 끝에 매니페스트 JSON `<details>` 부록 필수 — provenance·heldBy·영속 식별자가 **보고서를 떠나 전파되어도 따라감**. 카드뉴스·포스터 2차 매체는 sources.txt에 매니페스트 identifier(kad-…)+재현 호출문 1줄 명기 — 어떤 매개로 변환돼도 원 발굴로 복귀 가능(의제의 "퍼져갈 수 있도록"을 증거성 유지 조건으로 충족)
+- v1.62 프로덕션 재실측: JSON-LD @context·node 키 정상, commons 교정 성과 — '유관순'에 초상+**일제감시대상인물카드** 합류 확인
+
 ## 2026-11-21 v1.62.0 (현용기록물화 2단계)
 - **매니페스트 JSON-LD 격상**: `@context`(Dublin Core dcterms + **RiC-O rico:** 용어 매핑 — RecordSet/Record·hasOrHadHolder·hasRecordSetMember) — 기관 기록관리시스템·링크드데이터와 상호운용 가능한 직렬화
 - **매니페스트↔karda 그래프 키 공유**: manifest 레코드에 `node`(=karda 노드 id), karda 레코드 노드에 `identifier`(원 식별자) — 같은 발굴의 두 데이터화 산출물이 동일 키로 상호 참조(매체 간 일관성)
