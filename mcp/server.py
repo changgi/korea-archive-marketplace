@@ -1896,7 +1896,7 @@ def _c_commons(q, n):
     for it in pages:
         t = str(it.get("title", ""))
         cat = str(((it.get("categories") or [{}])[0] or {}).get("title", "")).removeprefix("Category:")
-        iiu = str(((it.get("imageinfo") or [{}])[0] or {}).get("url", ""))  # v1.84: 원본 파일 직링크(다매체)
+        iiu = str(((it.get("imageinfo") or [{}])[0] or {}).get("url", "")).split("?")[0]  # v1.84: 원본 파일 직링크(utm 제거 — 절단 없는 영속 URL)
         out.append({"title": t.removeprefix("File:")[:110], "date": "", "id": "",
                     **({"series": cat[:80]} if cat else {}),
                     **({"media": iiu} if iiu else {}),
