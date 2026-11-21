@@ -1,6 +1,9 @@
 # Changelog
 
-## 2026-11-21 v1.56.1~2 (mcp 저장소)
+## 2026-11-21 v1.57.0
+- **DigitalNZ 합류 — cross_search 29소스**: 뉴질랜드 국가 집계 API(api.digitalnz.org/v3, 무키 JSON 익명 호출 실측) — **직접 차단이던 Papers Past(한국 관련 18,725건)를 우회 복구**, 터닝불도서관(TAPUHI 사진)·Te Papa·오클랜드박물관 등 NZ 30+기관 동시 커버. content_partner·primary_collection 태그로 기관 식별. health 29채널(골든 'Korean War')
+- **인물 종합 대조 — `nedb_search(mode='gonghun', '종합:이름')`**: 레시피 ①의 도구화 — 공훈록(mngNo·훈격)+인명사전(사전:id·운동계열)+판결문(주문·URL) 3채널 병렬 1회 호출, 한자명·생몰 대조로 동명이인 분리 가이드. 스키마 불변(쿼리 오버로드)
+- **Archives NZ 본체 역공학 착수(사용자 요청)**: DigitalNZ에 Archives NZ 소장기록 부재 실측(DIA=관보뿐) → GH 러너(유일하게 Incapsula 통과)를 원격 실험실로 쓰는 일회성 탐사 워크플로(nz-probe.yml) — SPA XHR/JSON 엔드포인트 추출, Adlib wwwopac 후보 탐침. 직결 불가 시 GH 주간 수확→정적 인덱스 폴백 설계
 - **dclean 확장 엔티티 디코드**: 인명사전 전기에 &amp;lsquo;·&amp;middot; 리터럴 노출 — Node만 기본 5종 처리(Python html.unescape 비대칭). 인용부호·가운뎃점·수치참조 추가, 프로덕션 재실측 정상
 - **retry-blocked 2차 실행 수렴**: LAC(403)·UN AtoM(마커) 오탐 제거 확인. Archives NZ는 GH IP에 실페이지 서빙 확인 — 단 Arena JS SPA+개발망 Incapsula로 합류 불능이므로 **관찰 전용**(비발화) 전환, 주간 false alarm 제거
 
