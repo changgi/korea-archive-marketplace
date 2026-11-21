@@ -340,8 +340,8 @@ JB_STRAT = {
 ② 한국전쟁 전투·부대: koreanwar(협약 — archRfcd→koreanwar_item 인접 채굴) → nara(RG 교차+naid 인접, judge_rights(naid) 실확인) → tna(연대 필터)·awm(가평 등 영연방)·nlna(네덜란드) → un(안보리 결의 — recid 판독으로 PDF) → commons(PD 사진·원 소장처 역추적).
 ③ 조선 제도·고문헌: nedb law(법전 근거)→★sibling(형제 조 전수)→sjw(최초 용례) → kyujanggak(목록+해제)·jsg(청구기호→해제 전문) → aks(문중 고문서) → 인용 2층위 준수.
 ④ 일제강점기 정책·기관: ndl(총독부 간행물·통계연보·관보) ⇄ jacar(공문서 메타·인접 ±100) → nedb(한국사DB)·earchive('키워드|순번' 이용조건) → i815(민족 측 시각 대조).
-⑤ 도시·공간사(서울 등): seoul_archives_search(기록 단위→상세 URL 판독: 식별번호·이용조건) → archives(국가기록원) → ktv(대한뉴스 view URL 판독) → commons·ia(항공·거리 사진) → cities 열쇠(Keijo·1914 경계).
-⑥ 사진·영상 소싱(게재용): commons(File 판독 — PD→A 자동, 원본 고해상) → ia(identifier radius) → nara(naid→judge_rights 실확인) → ktv(KOGL) → 게재윤리 4단계·출처 표기.
+⑤ 도시·공간사(서울 등): seoul_archives_search(기록 단위→상세 URL 판독) → heritage(국보·사적+해설 전문 — 공간의 유산 맥락) → archives → ktv(view URL 판독) → much(실물·포스터) → commons·ia(항공·거리 사진) → cities 열쇠(Keijo·1914 경계).
+⑥ 사진·영상·실물 소싱(게재용): commons(File 판독 — PD→A, 원본 고해상) → ia(radius) → nara(naid 실확인) → ktv(KOGL) → much(공공누리 자동판정 — 포스터·실물) → heritage(유산 해설·공공누리) → 게재윤리 4단계·출처 표기.
 ※ 각 단계의 투입 형식은 cross_search 푸터와 nedb_search 설명이 안내. 전 산출물 제작은 "풀패키지".""",
     'allies': """한국전 참전·지원국 발굴 지도 — 22개국 소스 매핑 (◉=보유 소스 직행 / ○=대체 경로)
 ◉ 미국: nara(RG 111·127·242·342·428)·ia·earchive(국내 수집 원문) ◉ 영국: tna(WO 281 부대 전쟁일지·ADM·AIR)
