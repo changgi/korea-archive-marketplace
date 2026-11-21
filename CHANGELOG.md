@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.41.0
+- **일본 NDL 서치 합류 — cross_search 24소스**: ndlsearch.ndl.go.jp OpenSearch 무키 실측(any= 파라미터) — 조선총독부 간행물·관보·통계연보·도판 축(JACAR 공문서와 상보). 한→일 JA_MAP 우선 변환 재사용. 실측: 朝鮮総督府 8,162건 · 京城 写真 1,983건(凱旋式之図 등)
+- health 24채널. HELP·help.html·심사 팩 24소스 동기화. cross_search 설명 1024자 재축약
+
 ## 2026-11-21 v1.40.0
 - **UN 디지털도서관 합류 — cross_search 23소스**: 보류된 UN Archives(AtoM 챌린지)와 달리 Invenio `of=xm`(MARCXML)이 무키로 열림을 실측 — 안보리 결의·공식문서(S/·A/ 문서기호+제목+날짜+record 딥링크). 한→영 자동 변환. 함정 기록: X-Requested-With 헤더에 빈 응답 — 일반 헤더 필수
 - **full_package 1단계에 심층 판독 연계 명시**: 발굴 후 핵심 기록은 판독 8채널로 본문·권리 실확인 — 풀패키지 산출물 품질 직결
