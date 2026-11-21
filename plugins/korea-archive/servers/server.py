@@ -1918,6 +1918,48 @@ def _c_gonghun(q, n):
     return out
 
 
+def _much_mode(query: str, max_results: int) -> str:
+    """역사박물관 심층 — 키워드 목록 / idnbr·URL 판독(재질·크기·공공누리 유형·설명). Node 패리티."""
+    q = query.strip()
+    try:
+        im = re.search(r"idnbr=([A-Z]{2}[\w\-]+)", q) or re.match(r"^(PS\d[\w\-]{8,})$", q)
+        if im:
+            id2 = im.group(1)
+            b = _cached_text("muchD:" + id2, 24 * 3600,
+                             lambda: _http_text("https://archive.much.go.kr/archive/nrms/view.do?idnbr=" + _up.quote(id2), 25),
+                             "소장품번호")
+            flat = _clean(b)
+            pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
+            mat = pick(r"재질\s*(\S{1,14})\s*작가")
+            artist = pick(r"작가\s*(.{1,40}?)\s*크기")
+            size = pick(r"크기\s*(\S{1,50}?)\s*소장품번호")
+            no2 = pick(r"소장품번호\s*(\S{2,20})")
+            km = re.search(r"제\s*(\d)\s*유형\s*:\s*(.{3,60}?)\s*본 저작물", flat)
+            di = flat.find("이용할 수 있습니다.")
+            desc = flat[di + 11:di + 1700].strip() if di >= 0 else ""
+            desc = re.split(r"활용정보|이전글|다음글|사이트맵|COPYRIGHT", desc, flags=re.I)[0].strip()
+            if not no2 and not desc:
+                return f"[{id2}] 상세 미발견 또는 구조 상이 — idnbr을 확인하거나 mode=much에 검색어를 넣으십시오."
+            rline = ""
+            if km:
+                rc, rb = auto_rights({"rg_series": f"KOGL {km.group(1)}", "title_orig": "", "archive": "역사박물관"})
+                rline = f"\n권리 초판정(공공누리 제{km.group(1)}유형 — {km.group(2).strip()}): {rc} — {rb}"
+            meta = " · ".join(x for x in (f"소장품번호 {no2}" if no2 else "", f"재질 {mat}" if mat else "",
+                                          f"작가 {artist}" if artist else "", f"크기 {size}" if size else "") if x)
+            return (f"역사박물관 소장품 판독 — [{id2}]\n{meta}{rline}\n"
+                    + (f"【설명】\n{desc}\n" if desc else "")
+                    + f"원문·이미지: https://archive.much.go.kr/archive/nrms/view.do?idnbr={_up.quote(id2)}\n"
+                    + "※ 출처: 대한민국역사박물관 근현대사아카이브 — 게재 시 출처 표기, 공공누리 유형 조건 준수.")
+        items = _c_much(q, min(max_results, 10))
+        if not items:
+            return f"역사박물관 '{q}' — 0건. 사건명·실물 유형(포스터·잡지 등)으로 재시도하십시오."
+        return (f"역사박물관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}" + (f" ({it['date']})" if it.get("date") else "") + f"\n  {it['url']}" for it in items)
+                + "\n※ idnbr(또는 상세 URL)을 mode=much query로 재투입 → 재질·크기·공공누리 유형·설명 판독.")
+    except Exception as e:
+        return f"역사박물관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://archive.much.go.kr"
+
+
 def _oldnews_mode(query: str, max_results: int) -> str:
     """신문아카이브 심층 — 키워드 목록 / CNTS·URL 판독(색인어·관련기사·주제어). Node 패리티."""
     q = query.strip()
@@ -2754,7 +2796,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독) ·
     jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독) ·
     un=UN 디지털도서관(키워드 목록→recid/URL 투입 시 요약·주제·언어별 PDF 직링크) ·
-    oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 판독 · '본문:키워드'=OCR 전문 발췌)
+    oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 · '본문:키워드'=OCR 전문) ·
+    much=역사박물관(키워드 목록→idnbr/URL 투입 시 재질·크기·공공누리 유형·설명 판독)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
     if mode == "aks":
@@ -2777,6 +2820,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _un_mode(query, max_results)
     if mode == "oldnews":
         return _oldnews_mode(query, max_results)
+    if mode == "much":
+        return _much_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
