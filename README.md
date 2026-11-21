@@ -1,9 +1,20 @@
+<div align="center">
+
 # 🇰🇷 Korea Archive — Claude Plugin Marketplace
+
+[![Sources](https://img.shields.io/badge/sources-30_archives_·_9_countries-1f6feb?style=flat-square)](#the-archives-30--tools-20)
+[![Tools](https://img.shields.io/badge/MCP_tools-20_(PlayMCP_준수)-2da44e?style=flat-square)](#the-archives-30--tools-20)
+[![Skills](https://img.shields.io/badge/local_skills-10종-8250df?style=flat-square)](#한국어)
+[![Fixity](https://img.shields.io/badge/공개_지문_원장-골든_8종-d4a72c?style=flat-square)](https://korea-archive-mcp.vercel.app/fixity-ledger.json)
+[![Server](https://img.shields.io/badge/remote_server-korea--archive--mcp-black?style=flat-square&logo=vercel)](https://github.com/changgi/korea-archive-mcp)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](#한국어)
 
 **9개국 30개 문서고에 흩어진 한국 관련 기록(1860~현대)을 클로드에서 한 대화로 발굴합니다.**
 **Discover Korea-related records scattered across 30 archives in 9 countries — from a single Claude conversation.**
 
-[English](#english) · [한국어](#한국어) · [Gallery / 카드뉴스](#gallery--카드뉴스) · [원격 서버 저장소](https://github.com/changgi/korea-archive-mcp)
+[English](#english) · [한국어](#한국어) · [Gallery / 카드뉴스](#gallery--카드뉴스) · [사용 안내](https://korea-archive-mcp.vercel.app/help.html) · [원격 서버 저장소](https://github.com/changgi/korea-archive-mcp)
+
+</div>
 
 ```
 /plugin marketplace add changgi/korea-archive-marketplace
@@ -15,11 +26,15 @@
 
 > **v1.85 (2026-11)** — **30소스·9개국** 연합(Archives NZ 합류 — 공개 API 역공학 10차) · **심층 판독 14채널** · **partOf 계층 28/30채널**(RG·시리즈·四部·문고·토이강…) · **현용기록물화 사슬**: `cross_search` format=**manifest**(JSON-LD 수집기록)·**karda**(지식그래프)·**csv**(partOf·**media 원본 직링크** 열) + 본문 지문 10채널 + [공개 지문 원장](https://korea-archive-mcp.vercel.app/fixity-ledger.json)(골든 8종 주간 감시) · NARA 최심도(계보·생산일·소장단위·scope 지문·디지털 객체 직링크·Use Restriction 실조회) · 자가 감시 GitHub Actions 4종. 상세는 [CHANGELOG](CHANGELOG.md).
 
-> **v1.15** — **조선 사료 심층 판독**: `nedb_search` 9모드(법전·座目 필터·★형제 조 전수·법전 대조·어휘 연원·승정원일기·규장각) + 도메인 스킬 7종 · **매직 키워드 웹 네이티브화**(MCP prompts `full-package`·`changgi-help`) · `query_bank` 조사 전략 8토픽(11벽·식별자·인명·대조·6개국 서고·도시명 계보·895 지도·성씨 색인) · 전쟁기념관 **OpenAPI 채널**(Referer 바인딩 실측).
-> **v1.14** — 매직 키워드 **"풀패키지"**: 한 문장으로 **산출물 12종**(매거진 보고서·카드뉴스·포스터·홍보/입문/메시지 카드·발표 PPTX·기록 해설·Canva·KARDA·시연 영상·ZIP) 자동 제작 + 품질 게이트. 실전 3편: 글로스터(1호)·장진호(2호)·한강 강배(1485~1986).
-> **웹 서비스** — 사용 안내 [help](https://korea-archive-mcp.vercel.app/help.html)([EN](https://korea-archive-mcp.vercel.app/help-en.html)) · 즉석 검색 [기록잇다](https://korea-archive-mcp.vercel.app/ingitda.html)(6문서고 연합) · 실물 예제 [한강 보고서](https://korea-archive-mcp.vercel.app/examples/hanriver.html)·[강연 풀덱 403장](https://korea-archive-mcp.vercel.app/examples/joseon-deck.html)
-> **v1.12** — **KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터**(koreanwar.or.kr, 전쟁기념관재단 — **협약기관**) TNA식 구조화 도구: `koreanwar_search`(통합검색+생산연도·수집구분 필터+전투정보 scope+OpenAPI 이중채널) · `koreanwar_item`(건별 메타 — NARA NAID 원본 직결 + radius 인접 채굴). **PlayMCP 개발가이드 준수: 도구 통합으로 총 20개**(ia_metadata→ia_search, local_gov→foia 흡수) + 전 도구 annotations.
-> **v1.11** — `cross_search`(여러 아카이브 동시 교차수집·병합) · `source_profile`(기관 자료·이용·활용구조 프로파일) · 국내 3대 부정합 검증 키워드셋 252종 · nlk 이중채널 · nedb 공식 개방파일(KOGL) 수집.
+<details>
+<summary><b>이전 마일스톤 (v1.11~v1.15)</b></summary>
+
+> **v1.15** — **조선 사료 심층 판독**: `nedb_search` 9모드(법전·座目 필터·★형제 조 전수·법전 대조·어휘 연원·승정원일기·규장각) + 도메인 스킬 7종 · **매직 키워드 웹 네이티브화**(MCP prompts `full-package`·`changgi-help`) · `query_bank` 조사 전략 8토픽 · 전쟁기념관 **OpenAPI 채널**(Referer 바인딩 실측).
+> **v1.14** — 매직 키워드 **"풀패키지"**: 한 문장으로 **산출물 12종** 자동 제작 + 품질 게이트. 실전 3편: 글로스터(1호)·장진호(2호)·한강 강배(1485~1986).
+> **웹 서비스** — 사용 안내 [help](https://korea-archive-mcp.vercel.app/help.html)([EN](https://korea-archive-mcp.vercel.app/help-en.html)) · 즉석 검색 [기록잇다](https://korea-archive-mcp.vercel.app/ingitda.html) · 실물 예제 [한강 보고서](https://korea-archive-mcp.vercel.app/examples/hanriver.html)·[강연 풀덱 403장](https://korea-archive-mcp.vercel.app/examples/joseon-deck.html)
+> **v1.12** — **KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터**(협약기관) TNA식 구조화 도구 + PlayMCP 준수(도구 통합 20개·전 도구 annotations).
+> **v1.11** — `cross_search`·`source_profile` · 검증 키워드셋 252종 · nedb 공식 개방파일(KOGL) 수집.
+</details>
 
 ---
 
@@ -33,7 +48,9 @@ Searching **"Seoul"** misses most colonial-period material, because in 1910–19
 
 This plugin packages a **peer-validated discovery methodology** — Song (2026): Recall 93.0%, Precision 93.3%, F1 = 0.931 — into 20 tools Claude uses automatically, now spanning both overseas and domestic archives.
 
-### The 15 archives / 20 tools
+### The archives (30) / tools (20)
+
+The tool tables below list the dedicated per-archive tools; `cross_search` federates **all 30 sources** at once (🇺🇸 NARA·IA · 🇬🇧 TNA · 🇫🇷 Gallica · 🇪🇺 Europeana · 🇳🇱 Nationaal Archief · 🇯🇵 JACAR·NDL · 🇦🇺 AWM · 🇳🇿 Archives NZ·DigitalNZ · 🌐 UN·Wikimedia Commons · 🇰🇷 14+ domestic institutions), and `nedb_search` deep-reads **14 channels** (공훈록·인명사전·판결문·장서각 해제·국가유산 해설·신문 OCR·UN·NARA…).
 
 **Overseas (6)**
 
@@ -67,8 +84,8 @@ This plugin packages a **peer-validated discovery methodology** — Song (2026):
 | `judge_rights` | First-pass rights triage A/B/C/D with legal basis. |
 | `scrape_plan` | robots check + browser-tool guidance for JS/blocked sites. |
 | `report_template` | Turn finished findings into a styled HTML discovery report (tables · reproducible queries · rights). |
-| `cross_search` | **여러 아카이브를 한 쿼리로 동시 교차수집·병합** (상호보완). 출처 태그 — 복수 출처 = 교차확인. |
-| `source_profile` | **기관 자료구조·이용구조·활용구조** 프로파일 (해외 5 + 국내 6). 발굴 전략 수립용. |
+| `cross_search` | **30소스 동시 교차수집·병합** (상호보완). 출처 태그 — 복수 출처 = 교차확인. `variants`=당대 표기 팬아웃 · `format`=**text/csv/karda/manifest**(partOf 계층·media 원본 직링크 열 포함 — 현용기록물화 사슬). |
+| `source_profile` | **기관 자료구조·이용구조·활용구조** 프로파일 + **health 30채널 헬스체크**(🟢🟡🔴·응답시간). |
 
 Plus the **skill** `korea-archive-discovery`: search strategy Claude applies automatically (spelling variants, broad→narrow phasing, TNA codes, adjacent mining, domestic cross-check, rights triage, HTML report).
 

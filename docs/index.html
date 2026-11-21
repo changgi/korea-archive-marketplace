@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Korea Archive — Claude 플러그인 · 9개국 30개 문서고 연합 발굴</title>
+<meta name="description" content="9개국 30개 문서고에 흩어진 한국 관련 기록을 클로드 한 대화로 발굴하는 플러그인·MCP 커넥터.">
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--ink:#e6edf3;--sub:#8b949e;
+  --gold:#d4a72c;--blue:#58a6ff;--green:#3fb950;
+  --serif:'Noto Serif KR',"Nanum Myeongjo",serif;--sans:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+header{padding:68px 0 46px;text-align:center;border-bottom:1px solid var(--line);
+  background:radial-gradient(ellipse 70% 60% at 50% 0%,#1a2333 0%,var(--bg) 70%)}
+.eyebrow{letter-spacing:.35em;color:var(--gold);font-size:.78rem;font-weight:700}
+h1{font-family:var(--serif);font-size:clamp(1.8rem,5vw,2.8rem);margin:14px 0 6px;font-weight:900}
+.tag{color:var(--sub);max-width:620px;margin:10px auto 0}
+.tag b{color:var(--ink)}
+.cta{margin-top:28px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-block;padding:11px 22px;border-radius:8px;font-weight:700;font-size:.92rem;border:1px solid var(--line)}
+.btn.primary{background:var(--gold);color:#1a1200;border-color:var(--gold)}
+.btn.primary:hover{filter:brightness(1.1);text-decoration:none}
+.btn.ghost:hover{border-color:var(--sub);text-decoration:none}
+section{padding:50px 0;border-bottom:1px solid var(--line)}
+h2{font-family:var(--serif);font-size:1.4rem;margin-bottom:8px}
+h2 .n{color:var(--gold);margin-right:10px}
+.lead{color:var(--sub);margin-bottom:24px;max-width:720px}
+.install{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px}
+.install pre{background:#0d1117;border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;
+  font-size:.85rem;color:var(--green);margin:12px 0}
+.kbd{color:var(--gold);font-weight:700}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.gal img{width:100%;border-radius:10px;border:1px solid var(--line);display:block;transition:transform .15s}
+.gal img:hover{transform:scale(1.02)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.card h3{font-size:1rem;margin-bottom:6px}
+.card p{color:var(--sub);font-size:.88rem}
+footer{padding:38px 0 58px;text-align:center;color:var(--sub);font-size:.82rem}
+footer .sep{margin:0 8px;color:var(--line)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">KOREA ARCHIVE · CLAUDE PLUGIN</div>
+    <h1>흩어진 기록을,<br>한 대화로 불러옵니다</h1>
+    <p class="tag"><b>9개국 30개 문서고</b>의 한국 관련 기록(1860~현대)을 발굴하는 클로드 플러그인.
+    당대 표기(Keijo·Fusan·Chosen·Corea)로 숨은 기록까지, 권리 표시와 함께.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/changgi/korea-archive-marketplace">플러그인 저장소</a>
+      <a class="btn ghost" href="https://korea-archive-mcp.vercel.app/help.html">사용 안내</a>
+      <a class="btn ghost" href="https://changgi.github.io/korea-archive-mcp/">원격 서버 소개</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">01</span>설치 — 두 가지 길</h2>
+    <div class="install">
+      <b>① 플러그인</b> (Claude 데스크톱 · Claude Code — 로컬 스킬 10종 포함)
+      <pre>/plugin marketplace add changgi/korea-archive-marketplace
+/plugin install korea-archive@korea-archive-marketplace</pre>
+      <b>② MCP 커넥터</b> (웹·모바일 — 설정 → 커넥터 → 커스텀 커넥터 추가)
+      <pre>https://korea-archive-mcp.vercel.app/api/mcp</pre>
+      매직 키워드 — <span class="kbd">"○○ 풀패키지로 만들어줘"</span> · <span class="kbd">"창기창기 도와줘"</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">02</span>무엇이 다른가</h2>
+    <div class="two">
+      <div class="card"><h3>🔎 구조적 부정합을 넘는 발굴</h3>
+        <p>"Seoul"로는 식민기 자료를 놓칩니다 — 당대엔 "Keijo"였으니까. 검증 방법론(송창기 2026, F1=0.931)의
+        표기 변형·인접 채굴·교차검증을 클로드가 자동 적용합니다.</p></div>
+      <div class="card"><h3>🧬 발굴이 기록이 됩니다</h3>
+        <p>결과는 JSON-LD 수집기록·지식그래프·CSV(계층 partOf·원본 직링크 media 열)로 —
+        보고서·카드뉴스로 변환돼도 출처 계보가 따라갑니다. 골든 기록 8종은
+        <a href="https://korea-archive-mcp.vercel.app/fixity-ledger.json">공개 지문 원장</a>이 주간 감시.</p></div>
+      <div class="card"><h3>🤝 협약기관 직결</h3>
+        <p>KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터(MOU) 55,000+ 소장 —
+        NARA Record Group 역추적·인접 채굴·권리 필드까지 구조화 도구로.</p></div>
+      <div class="card"><h3>⚖️ 발굴 우선, 권리는 표시</h3>
+        <p>KOGL 1~4유형 자동 인식 · NARA Use Restriction 실조회 · 게재윤리 4단계 —
+        권리 제약은 발굴을 막는 사유가 아니라 표시 대상입니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">03</span>실전 카드뉴스 — 전부 실물 기록으로 제작</h2>
+    <p class="lead">insta-carousel 스킬 실전 사례(8·15 광복 81주년 시리즈) — 퍼블릭 도메인 실물 기록만 사용.</p>
+    <div class="gal">
+      <img src="carousel/showcase_01_cover.png" alt="실사 커버 — 1945 개성, NARA 필름 프레임" loading="lazy">
+      <img src="carousel/showcase_02_pano.png" alt="파노라마 필름스트립" loading="lazy">
+      <img src="carousel/showcase_03_map.png" alt="지도 여정" loading="lazy">
+      <img src="carousel/showcase_04_stack.png" alt="부채꼴 스택 — 미공개 기록 목록" loading="lazy">
+      <img src="carousel/showcase_05_person.png" alt="인물 카드 — 유관순" loading="lazy">
+      <img src="carousel/showcase_06_document.png" alt="문서 판독 — 관보 제1호" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">04</span>소개 카드 18장</h2>
+    <p class="lead">능력 · 국내외 소스 · 자동 브라우징 · 실전 LIVE · 옛 표기 · 권리판정 · 설치.</p>
+    <div class="gal">
+      <img src="cards/card_01.png" alt="표지" loading="lazy">
+      <img src="cards/card_02.png" alt="문제" loading="lazy">
+      <img src="cards/card_03.png" alt="능력 4층" loading="lazy">
+      <img src="cards/card_04.png" alt="해외 소스" loading="lazy">
+      <img src="cards/card_05.png" alt="국내 소스" loading="lazy">
+      <img src="cards/card_06.png" alt="자동 브라우징" loading="lazy">
+      <img src="cards/card_07.png" alt="실전 LIVE 1" loading="lazy">
+      <img src="cards/card_08.png" alt="실전 LIVE 2" loading="lazy">
+      <img src="cards/card_09.png" alt="실전 LIVE 3" loading="lazy">
+      <img src="cards/card_12.png" alt="옛 표기" loading="lazy">
+      <img src="cards/card_13.png" alt="권리판정" loading="lazy">
+      <img src="cards/card_16.png" alt="당신 차례" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    MIT License<span class="sep">·</span>Methodology: Song, Chang-Gi (2026), National Archives of Korea
+    <span class="sep">·</span><a href="https://github.com/changgi/korea-archive-marketplace">korea-archive-marketplace</a>
+    <span class="sep">·</span><a href="https://github.com/changgi/korea-archive-mcp">korea-archive-mcp</a>
+  </div>
+</footer>
+
+</body>
+</html>

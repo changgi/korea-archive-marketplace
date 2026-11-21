@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21 v1.85.2 — marketplace 저장소 꾸미기(사용자 확인 요청 대응)
+- README: 배지 6종 센터 히어로(소스30·도구20·스킬10·원장8·서버 링크·MIT), 구 마일스톤(v1.11~15)은 접기, "The 15 archives"→30소스 현행화, cross_search·source_profile 행 현행화(format 4종·health 30채널)
+- `docs/index.html` 신설 — GitHub Pages 랜딩(설치 2경로·차별점 4카드·실전 캐러셀 6장·소개 카드 12장 갤러리 — 기존 PNG 재사용). 활성화: Settings → Pages → `main`/`/docs`
+
 ## 2026-11-21 v1.85.1 — GitHub README 전면 리뉴얼 + GitHub Pages 랜딩
 - korea-archive-mcp README: 13소스 시절 → 현행(30소스·9개국, 배지 6종, 연결표, 연합 검색망 권역표, 현용기록물화 사슬 다이어그램, 도구 20종 표, 감시 4종 표, 배포 상세는 접기)
 - `docs/index.html` 신설 — GitHub Pages 랜딩(통계 5종·연결 안내·검색망 칩·사슬 4단계·장치 4종·실물 예제). **활성화는 사용자 액션**: repo Settings → Pages → Deploy from a branch → `main` / `/docs`
