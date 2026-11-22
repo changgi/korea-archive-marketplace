@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.97.0 — 도구에 IIIF 연속 이미지 뷰 (2026-11-22)
+- cross_search format='iiif': 결과 중 기관 IIIF가 있는 기록(Internet Archive·Europeana·Gallica·NDL)의 원 매니페스트를 IIIF Presentation 3 Collection으로, 위키미디어 공용 이미지는 imageinfo 1회 조회로 정지 이미지 Manifest로 — IIIF 미제공 기록은 원 기관 링크 목록. 24KB 상한(매니페스트 30·이미지 12).
+- report_template(kind='iiif'): 공개 갤러리(iiif.html·collection.json·all.json) 사용법, 기관별 IIIF 주소 규칙(실측), 권리 3단계(1600px·공공누리 제4유형 원본 무변경·링크 전용), Presentation 3 최소 구조·검증기, v2/v3 매니페스트·컬렉션을 한 줄로 이어 넘기는 OpenSeadragon 뷰어 골격(아티팩트용).
+- 웹·모바일 동등성: 로컬 build_iiif.py와 같은 결과를 도구 응답만으로 재현.
+
 ## v1.96.9 — 전체 기록 IIIF 갤러리 (2026-11-22)
 - GitHub Pages iiif.html: 30곳 탐방·100선 실물 기록 이미지 800장(129 시리즈)을 격자·연속 스크롤·딥줌(OpenSeadragon)으로 — 확대 화면에서 기록을 가로질러 이어 넘김, 주소 #s070/3 딥링크.
 - IIIF Presentation 3.0: iiif/collection.json + 시리즈별 매니페스트(m/sNNN.json) — Mirador·Universal Viewer 바로 열기. 권리: 재이용 가능분 긴 변 1600px · 공공누리 제4유형 원본 무변경 · 웹 캡처·이용 허가 필요분은 원 기관 링크만.
