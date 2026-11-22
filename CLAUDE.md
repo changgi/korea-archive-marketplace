@@ -42,3 +42,10 @@ Claude Code 스킬(`.claude/skills/`)은 **로컬 전용**이다. 웹·모바일
 - 실물 기록만 — AI 생성 인물·역사 장면 금지. Canva 등 생성 AI 사용 시 실물 자산 강제 + 생성 후 한국어 환각 문구 전수 교정.
 - 링크·수치·훈격은 도구 호출·API 원문으로 실확인한 것만. 정정 시 정정 이력 명기.
 - 협약기관(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터) 기록은 출처 표기 필수. 게재윤리 4단계(포로·사망자 존엄) 적용.
+
+## 지속가능성 (고장을 스스로 발견하고, 이어받을 수 있게)
+
+- 유지·관리 안내: [MAINTAINING.md](MAINTAINING.md)(korea-archive-mcp) — 구조·자동 감시·장애 대응·배포·설정·산출물 재생성.
+- **파서를 고치거나 기능을 넣으면 `tests/golden.json`에 케이스를 추가한다**(옛 결함 출력을 잡는 `must_not` 포함). `golden` 워크플로가 배포 직후·매주 검사하고 실패 시 `auto-health` 이슈를 연다.
+- mcp/server.py는 손으로 고치지 않는다 — `python3 scripts/splice_mcp.py`(marketplace). CI가 본문 사본 일치를 검사한다.
+- 접근 차단은 우회하지 않고 표시한다(UA 위장·쿠키·프록시·러너 우회 금지).
