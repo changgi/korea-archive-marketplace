@@ -1487,6 +1487,10 @@ def _collect_merged(collectors):
     for it in items:  # NARA 고유번호(127-N-A4560형)로도 대조 — 실재할 때만 병합
         if it.get("lid") and it["lid"] not in by_id:
             by_id[it["lid"]] = it
+    for it in items:  # v1.91.2: NARA 디지털 객체 파일명(428-npc-171.mp4)으로도 대조
+        fm = re.search(r"/(\d{2,3}[a-z]?-[a-z]{1,6}-\d+[a-z]?)(?:_\d+)?\.\w+$", str(it.get("media") or ""), re.I)
+        if fm and any(s.startswith("nara") for s in it["sources"]) and f"NARA {fm.group(1).upper()}" not in by_id:
+            by_id[f"NARA {fm.group(1).upper()}"] = it
     drop = set()
     for it in items:
         tgt = by_id.get(it.get("sameAs") or "")
@@ -1530,9 +1534,12 @@ def _c_ia(q, n):
     def _an(x):  # v1.87: NARA 재게시본 식별자 gov.archives.arc.<NAID> → 원본 NAID(44175 실측 일치)
         m = re.match(r"^gov\.archives\.arc\.(\d+)$", str(x.get("identifier") or ""))
         return m.group(1) if m else ""
+    def _al(x):  # v1.91.2: NARA 고유번호형 식별자(428-npc-171) → 원본 대조
+        m = re.match(r"^(\d{2,3}[a-z]?-[a-z]{1,6}-\d+[a-z]?)$", str(x.get("identifier") or ""), re.I)
+        return m.group(1).upper() if m else ""
     return [{"title": str(x.get("title", "")), "date": x.get("date", ""), "id": x.get("identifier"),
              **({"series": str(_col(x))} if _col(x) else {}),
-             **({"sameAs": f"NAID {_an(x)}"} if _an(x) else {}),
+             **({"sameAs": f"NAID {_an(x)}"} if _an(x) else {"sameAs": f"NARA {_al(x)}"} if _al(x) else {}),
              "url": f"https://archive.org/details/{x.get('identifier')}"}
             for x in ((d.get("response") or {}).get("docs") or [])]
 
