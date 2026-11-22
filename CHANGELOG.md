@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.97.2 — 자체 IIIF 뷰어 KV(KA 뷰어, Korea Archive Viewer) (2026-11-22)
+- GitHub Pages kv.html: 어떤 기관의 IIIF든(Presentation 2·3 매니페스트·컬렉션·중첩 컬렉션) 여는 자체 뷰어 — IIIF Image API 딥줌(서비스 없으면 정지 이미지), 컬렉션 목록·거르기, 메타데이터·권리·출처·원 기관 링크 패널, ⧉ 두 창 나란히 비교(Mirador식), 자동 넘김(컬렉션이면 다음 기록으로 이어짐), 회전·전체 화면·공유 링크(?manifest=&canvas=&compare=&collection=), 드래그&드롭, 모바일.
+- IIIF 갤러리: 시리즈·확대 화면에 'KV로 열기', 전체를 KV·Mirador·Universal Viewer로 열기(컬렉션 — 실측 정상).
+- report_template(kind='iiif')·cross_search format='iiif' 안내에 KV 주소 추가(웹·모바일 동등성).
+
 ## v1.97.1 — 우리 IIIF 갤러리 자동 수집 (2026-11-22)
 - cross_search sources='gallery'(31번째 채널): 30곳 탐방·100선 실물 기록 800장(권리 확인·출처 대장 완비)을 연합 검색에 합류 — Pages index.json 6h 캐시, 한·영 검색어, 결과는 딥줌 딥링크(iiif.html#sNNN/k)·이미지 직링크(media).
 - format='iiif': 갤러리 결과는 시리즈 매니페스트(iiif/m/sNNN.json)를 컬렉션에 포함. source_profile 간이 프로파일·health 골든 질의('흥남') 추가.
