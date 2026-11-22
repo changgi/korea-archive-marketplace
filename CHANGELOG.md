@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.96.9 — 전체 기록 IIIF 갤러리 (2026-11-22)
+- GitHub Pages iiif.html: 30곳 탐방·100선 실물 기록 이미지 800장(129 시리즈)을 격자·연속 스크롤·딥줌(OpenSeadragon)으로 — 확대 화면에서 기록을 가로질러 이어 넘김, 주소 #s070/3 딥링크.
+- IIIF Presentation 3.0: iiif/collection.json + 시리즈별 매니페스트(m/sNNN.json) — Mirador·Universal Viewer 바로 열기. 권리: 재이용 가능분 긴 변 1600px · 공공누리 제4유형 원본 무변경 · 웹 캡처·이용 허가 필요분은 원 기관 링크만.
+- report_template(kind=help) 안내에 예제 갤러리·IIIF 갤러리 주소 추가(웹·모바일 동등성).
+
 ## v1.96.8 — 원본 찾기 보강 (2026-11-22)
 - nlk_search: category 미지정 시 '고문헌' 채널 자동 병행 — 현대 영인·번역본이 상위를 채워 원본 고서(예: 1797 오륜행실도)가 묻히던 문제.
 - NDL(cross_search ndl): 디지털화 자료에 dl.ndl.go.jp PID가 응답에 있으면 함께 표시·링크(권리·IIIF 원본 확인의 열쇠 — 재조회로 429를 부르던 단계 축소).
