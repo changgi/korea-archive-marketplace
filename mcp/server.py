@@ -2467,7 +2467,7 @@ def _c_kyudb(q, n):
             def _ks(c):
                 km = re.match(r"(奎|古|想白|一簑)", c)
                 return {"奎": "규장각도서(奎)", "古": "고도서(古)", "想白": "상백문고", "一簑": "일사문고"}.get(km.group(1)) if km else None
-            return [{"title": f"{x['title']} · {x.get('author', '')}"[:110], "date": x.get("date", ""), "id": x["call_number"],
+            return [{"title": f"[{x['call_number']}] {x['title']} · {x.get('author', '')}"[:120], "date": x.get("date", ""), "id": x["call_number"],
                      **({"series": _ks(x["call_number"])} if _ks(x["call_number"]) else {}), "url": "https://kyudb.snu.ac.kr"} for x in rows[:n]]
         lst = [x.get("call_number") for x in lst.get("items", [])]
     if not isinstance(lst, list):
