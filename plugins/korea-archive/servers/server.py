@@ -266,7 +266,7 @@ def nara_search(query: str, record_group: int | None = None,
         nd = _nara_date(rec)
         ndo = len(rec.get("digitalObjects") or [])  # v1.82: 디지털 객체 수 — 원본 매체 유무를 목록에서 판별(다매체)
         rows.append(f"- [NAID {rec.get('naId')}] {rec.get('title','')[:100]}" + (f" ({nd})" if nd else "")
-                    + f" | {rec.get('localIdentifier','')}" + (f" · 원본 {ndo}점" if ndo else "")
+                    + f" | {rec.get('localIdentifier','')}" + (f" · 원본 {ndo}점" if ndo else " · 디지털 사본 없음")
                     + f" | https://catalog.archives.gov/id/{rec.get('naId')}"
                     + (f"\n  계보: {po}" if po else ""))
     total = hits.get("total", {}); total = total.get("value") if isinstance(total, dict) else total
@@ -331,6 +331,8 @@ def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
     if identifier:
         data = http_json(f"https://archive.org/metadata/{identifier}")
         md = data.get("metadata") or {}
+        if not md:  # v1.96.1: 없는 식별자 — undefined 대신 명시
+            return f"archive.org '{identifier}' — 항목 없음(식별자 오기 또는 미등록). ia_search(query=…)로 검색하거나 NARA 원본은 nara_search·judge_rights(naid)로."
         files = [f for f in (data.get("files") or []) if f.get("source") == "original"][:10]
         return (f"제목: {md.get('title')}\n설명: {str(md.get('description'))[:300]}\n"
                 f"연대: {md.get('date')} | 라이선스: {md.get('licenseurl') or md.get('rights') or '표기 없음'}\n"
@@ -491,7 +493,8 @@ def judge_rights(rg_series: str = "", title: str = "", archive: str = "", naid: 
                     + (f"생산: {' · '.join(x for x in [cre, nd] if x)}\n" if (cre or nd) else "")
                     + (f"소장단위: {ru} (열람·복제 청구 좌표)\n" if ru else "")
                     + (f"디지털 객체 {len(dob)}점 — 첫 객체: {str(d0.get('objectUrl',''))[:160]}"
-                       + (f" ({str(d0.get('objectType'))[:30]})" if d0.get("objectType") else "") + "\n" if dob else "")
+                       + (f" ({str(d0.get('objectType'))[:30]})" if d0.get("objectType") else "") + "\n" if dob
+                       else "디지털 사본 없음 — 카탈로그에 디지털 객체 미등록(medialz URL도 HTML만 반환 실측) · 열람은 소장단위에 복제 청구\n")
                     + (f"【범위·내용】 {scope[:400]}\n본문 지문(sha256-16): {sfp} — 판독 시점 기술(記述) 전문 기준. 재판독 지문 불일치=카탈로그 기술 개정 발생.\n" if scope else "")
                     + f"등급: {cls}\n근거: {basis}\n※ 카탈로그 실확인 기반 자동판정 — 공개 전 수동 확정 필수, D등급 공개 금지\n"
                     + f"※ 인접 채굴: nara_search(naid={naid}, radius=3) — 사진 ±3·색인 ±1 간격.")
