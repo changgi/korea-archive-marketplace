@@ -561,7 +561,8 @@ def gallica_search(query: str, max_results: int = 15, year_from: int | None = No
             tot, its = _bnf_catalog(eff, max_results)
             if its:
                 return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "")
-                        + f" — Gallica 서버가 자동 조회를 차단해 **BnF 공식 카탈로그**(catalogue.bnf.fr, 같은 국립도서관 소장 목록)로 수집 — total {tot}:\n"
+                        + " — Gallica 서버가 자동 조회를 차단해 **BnF 공식 카탈로그**(catalogue.bnf.fr, 같은 국립도서관 소장 목록)로 수집"
+                        + (f" (전체 단어 일치 0건 → '{its[0]['relaxed']}'로 완화)" if its[0].get("relaxed") else "") + f" — total {tot}:\n"
                         + "\n".join(f"- {it['title'][:110]} ({it['date'] or '연대 미상'})" + (f" [{it['type']}]" if it['type'] else "")
                                      + (f" · {it['extent']}" if it['extent'] else "")
                                      + "\n  " + (f"Gallica 원문: {it['gallica']}" if it['gallica'] else f"카탈로그: {it['url']}") for it in its)
@@ -627,7 +628,8 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
         prov = (it.get("dataProvider") or [""])[0]
         rt = _rshort(it.get("rights"))
         lines.append(f"- {str(title)[:90]} ({year}) — {str(prov)[:40]}"
-                     + (f" | 권리:{rt}" if rt else "") + f" | {str(it.get('guid','')).split('?')[0]}")
+                     + (f" | 권리:{rt}" if rt else "") + f" | {str(it.get('guid','')).split('?')[0]}"
+                     + (f"\n  원본: {_eu_media(it)}" if _eu_media(it) else ""))
     return (f"Europeana '{query}'" + (f" [{media_type}]" if media_type else "")
             + f" — 총 {data.get('totalResults')}건:\n" + ("\n".join(lines) or "(0건)")
             + ("\n※ 공용 데모 키(api2demo) 사용 중 — 레이트리밋 시 EUROPEANA_API_KEY 설정 권장." if demo else "")
@@ -1595,6 +1597,13 @@ def _c_ia(q, n):
             for x in ((d.get("response") or {}).get("docs") or [])]
 
 
+def _eu_media(it):
+    """v1.96.3: Europeana 원본 이미지 직링크(edmIsShownBy) — Náprstek esbirky img.php·detail → /predmet/{id} 교정(실측 404)."""
+    u = str(((it.get("edmIsShownBy") or [""])[0]) or "")
+    m = re.search(r"esbirky\.cz/(?:img\.php\?id=|detail/)(\d+)", u)
+    return f"https://www.esbirky.cz/predmet/{m.group(1)}" if m else u
+
+
 def _bnf_catalog(q, n, doctype=""):
     if doctype == "":  # v1.93.1: 사진·도판(doctype i) 질의 병행 — 디지털화(Gallica 원문) 자료 상위
         res = []
@@ -1612,6 +1621,14 @@ def _bnf_catalog(q, n, doctype=""):
                 if it["id"] not in seen:
                     seen.add(it["id"]); allv.append(it)
         allv.sort(key=lambda it: 0 if it["gallica"] else 1)
+        if not allv:  # v1.96.3: 'all' CQL 전체 단어 일치 0건 → 숫자·짧은 단어 빼고 핵심어 2개로 완화
+            words = [w for w in str(q).split() if not w.isdigit() and len(w) > 2]
+            q2 = " ".join(words[:2])
+            if q2 and q2 != str(q).strip():
+                t2, i2 = _bnf_catalog(q2, n)
+                for it in i2:
+                    it["relaxed"] = q2
+                return t2, i2
         return max(t for t, _ in ok), allv[:n]
     """v1.93: Gallica 서버 IP 403 차단 시 BnF 공식 카탈로그 SRU(catalogue.bnf.fr/api/SRU) 폴백 — UNIMARC 200$a·210/214$d·215$a·856$u(Gallica ark)."""
     import urllib.parse, urllib.request
@@ -1675,6 +1692,7 @@ def _c_europeana(q, n):
     return [{"title": (it.get("title") or ["?"])[0], "date": (it.get("year") or [""])[0],
              "id": it.get("id", ""),
              **({"series": (it.get("dataProvider") or [""])[0]} if (it.get("dataProvider") or [""])[0] else {}),
+             **({"media": _eu_media(it)} if _eu_media(it) else {}),
              "url": str(it.get("guid", "")).split("?")[0]} for it in (d.get("items") or [])]
 
 def _nara_chain(rec):
@@ -2316,7 +2334,7 @@ def _c_awm(q, n):
     for m in re.finditer(r'href="/collection/(C\d+)"', b):
         if m.group(1) not in ids:
             ids.append(m.group(1))
-        if len(ids) >= min(n, 5):
+        if len(ids) >= min(n, 10):  # v1.96.3: 5→10
             break
     out = []
     for cid in ids:
@@ -2451,13 +2469,15 @@ def _c_gonghun(q, n):
 
 def _heritage_images(kdcd, asno, ctcd, main=""):
     """v1.95: 국가유산 원본 이미지 — 상세 API imageUrl + 이미지 목록 API(SearchImageOpenapi: imageUrl·ccimDesc) 직링크."""
-    urls = [(main, "대표 이미지")] if main else []
+    _hs = lambda u: re.sub(r"^http://www\.khs\.go\.kr", "https://www.khs.go.kr", u)
+    urls = [(_hs(main), "대표 이미지")] if main else []
     try:
         b = _cached_text(f"heriI:{kdcd}|{asno}|{ctcd}", 24 * 3600,
                          lambda: _http_text(f"https://www.khs.go.kr/cha/SearchImageOpenapi.do?ccbaKdcd={kdcd}&ccbaAsno={asno}&ccbaCtcd={ctcd}", 25), "<")
         ims = re.findall(r"<imageUrl>(?:<!\[CDATA\[)?\s*([^<\]]+?)\s*(?:\]\]>)?</imageUrl>", b)
         ds = re.findall(r"<ccimDesc>(?:<!\[CDATA\[)?\s*([^<\]]*?)\s*(?:\]\]>)?</ccimDesc>", b)
         for i, u in enumerate(ims):
+            u = _hs(u)
             if all(u != x for x, _ in urls):
                 urls.append((u, ds[i] if i < len(ds) else ""))
     except Exception:
