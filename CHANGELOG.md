@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-22 v1.93.1 — 배포 실측 교정 2건
+- 프로덕션 health에서 nedb·foia 채널 `dclean is not defined` 실측 — v1.93 모듈 범위 코드가 도구 범위 함수를 참조. 모듈 범위 정리 함수로 교정
+- Gallica 폴백: BnF 카탈로그를 사진·도판(doctype i) 질의와 병행 → 디지털화된 Gallica 원본(Guerre de Corée·32 phot. de Corée 1880-1896 등)이 상위
+
 ## 2026-11-22 v1.93.0 — 30곳 탐방 캐러셀 세트 + 막힌 수집처 교정 + 영상 장면 분석
 - 사용자 요청: 모든 수집처가 나오는 30개 시리즈, 원본 이미지로 가득, 설명 이미지, 막힌 곳은 기능을 고쳐 반드시 수집, 시리즈별 인스타 캐러셀+소개글 세트, 영상 장면 해설 이미지
 - **Gallica 교정**: gallica.bnf.fr 서버 403 시 BnF 공식 카탈로그 SRU(catalogue.bnf.fr) 폴백 — UNIMARC 표제·연대·수량·Gallica 원문 ark, 디지털화 자료 우선(gallica_search·cross_search 공통)

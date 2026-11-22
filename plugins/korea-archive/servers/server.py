@@ -1578,6 +1578,23 @@ def _c_ia(q, n):
 
 
 def _bnf_catalog(q, n, doctype=""):
+    if doctype == "":  # v1.93.1: 사진·도판(doctype i) 질의 병행 — 디지털화(Gallica 원문) 자료 상위
+        res = []
+        for dt in ("i", None):
+            try:
+                res.append(_bnf_catalog(q, n, dt))
+            except Exception as e:
+                res.append(e)
+        ok = [r for r in res if not isinstance(r, Exception)]
+        if not ok:
+            raise res[-1]
+        seen, allv = set(), []
+        for _, its in ok:
+            for it in its:
+                if it["id"] not in seen:
+                    seen.add(it["id"]); allv.append(it)
+        allv.sort(key=lambda it: 0 if it["gallica"] else 1)
+        return max(t for t, _ in ok), allv[:n]
     """v1.93: Gallica 서버 IP 403 차단 시 BnF 공식 카탈로그 SRU(catalogue.bnf.fr/api/SRU) 폴백 — UNIMARC 200$a·210/214$d·215$a·856$u(Gallica ark)."""
     import urllib.parse, urllib.request
     cql = f'bib.anywhere all "{str(q).replace(chr(34), "")}"' + (f' and bib.doctype any "{doctype}"' if doctype else "")
