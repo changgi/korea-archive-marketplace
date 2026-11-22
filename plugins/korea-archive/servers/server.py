@@ -413,8 +413,14 @@ def _nara_iiif_manifest(naid, key, max_canvas=40):
            "seeAlso": [{"id": U["ric"], "type": "Dataset", "label": L("RiC-O 기록 기술(JSON-LD) — 계층·증거", "ko"), "format": "application/ld+json", "profile": "https://www.ica.org/standards/RiC/ontology"}],
            **({"partOf": [{"id": _nara_urls(par["naId"])["collection"], "type": "Collection", "label": L(f"{par['level']} {'RG ' + str(par['rg']) + ' ' if par['rg'] else ''}{par['title']}".strip())}]} if par else {}),
            **({"rendering": rend} if rend else {}), "items": items}
-    if not items:
+    if not items:  # v2.0: 표시 이미지가 없으면 기록 카드 캔버스(연속 열람에서 빠지지 않게) — Node 패리티
         man["metadata"].append(MV("표시 가능한 이미지", "없음 — 원본 매체는 rendering(내려받기) 참조" if dob else "디지털 사본 없음 — 원본은 NARA 열람 청구"))
+        tok = _rec_token({"sources": ["nara"], "title": rec.get("title") or "", "date": dt, "id": f"NAID {naid}" + (f" · {rec['localIdentifier']}" if rec.get("localIdentifier") else ""), "url": U["catalog"]},
+                         "NARA→IIIF 브리지", "U.S. National Archives and Records Administration (NARA)", ct[:200])
+        cid = f"{U['manifest']}/canvas/1"; card = f"{_NARA_ORIGIN}/iiif/rec/{tok}/card.svg"
+        man["items"] = [{"id": cid, "type": "Canvas", "label": L("기록 카드(기술 메타데이터 — 디지털 이미지 없음)", "ko"), "width": 1200, "height": 900,
+                         "items": [{"id": cid + "/p", "type": "AnnotationPage", "items": [{"id": cid + "/p/a", "type": "Annotation", "motivation": "painting", "target": cid,
+                                                                                          "body": {"id": card, "type": "Image", "format": "image/svg+xml", "width": 1200, "height": 900}}]}]}]
     return man
 
 
