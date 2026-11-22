@@ -273,15 +273,127 @@ def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
             lines.append(f"   {ref} | ERROR {e}")
     return f"인접 확장 {series}/{piece}±{radius}:\n" + "\n".join(lines[:60])
 
+_NARA_ORIGIN = "https://korea-archive-mcp.vercel.app"
+
+
+def _nara_urls(naid):
+    m = f"{_NARA_ORIGIN}/iiif/nara/{naid}/manifest.json"
+    return {"manifest": m, "collection": f"{_NARA_ORIGIN}/iiif/nara/{naid}/collection.json", "ric": f"{_NARA_ORIGIN}/iiif/nara/{naid}/record.jsonld",
+            "kv": "https://changgi.github.io/korea-archive-mcp/kv.html?manifest=" + __import__("urllib.parse").parse.quote(m, safe=""),
+            "catalog": f"https://catalog.archives.gov/id/{naid}"}
+
+
+def _img_size(url):
+    """이미지 앞 128KB만 받아 JPEG SOF·PNG IHDR·GIF 헤더로 크기 판독(IIIF 캔버스 필수값). Node imageSize 패리티."""
+    import urllib.request as _r
+    try:
+        q = _r.Request(url, headers={"Range": "bytes=0-131071", "User-Agent": "KoreaArchiveMCP/1.0 (IIIF bridge)"})
+        b = _r.urlopen(q, timeout=8).read(131072)
+    except Exception:
+        return None
+    if b[:2] == b"\x89P":
+        return int.from_bytes(b[16:20], "big"), int.from_bytes(b[20:24], "big"), "image/png"
+    if b[:2] == b"GI":
+        return b[6] | b[7] << 8, b[8] | b[9] << 8, "image/gif"
+    if b[:2] == b"\xff\xd8":
+        i = 2
+        while i + 9 < len(b):
+            if b[i] != 0xFF:
+                i += 1; continue
+            m = b[i + 1]; ln = b[i + 2] << 8 | b[i + 3]
+            if 0xC0 <= m <= 0xCF and m not in (0xC4, 0xC8, 0xCC):
+                return b[i + 7] << 8 | b[i + 8], b[i + 5] << 8 | b[i + 6], "image/jpeg"
+            i += 2 + ln
+    return None
+
+
+def _nara_iiif_manifest(naid, key, max_canvas=40):
+    """v1.98 NARA→IIIF 브리지(Node lib/nara_iiif.js buildNaraManifest 패리티): 계보 partOf·생산일 navDate·권리 원문·판독 지문·
+    디지털 객체(표시 이미지=캔버스, TIFF·PDF·영상=rendering)."""
+    import hashlib as _h, datetime as _d
+    d = http_json(f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1", headers={"x-api-key": key})
+    hits = (((d.get("body") or {}).get("hits") or {}).get("hits") or [])
+    rec = ((hits[0].get("_source") or {}).get("record") or {}) if hits else {}
+    if not rec or int(rec.get("naId") or 0) != int(naid):
+        return None
+    U = _nara_urls(naid); L = lambda t, lang="en": {lang: [str(t or "")[:1000]]}; MV = lambda k, v: {"label": L(k, "ko"), "value": L(v, "none")}
+    ch = [{"naId": a.get("naId"), "level": str(a.get("levelOfDescription") or ""), "rg": a.get("recordGroupNumber") or "", "title": str(a.get("title") or "")[:160]} for a in rec.get("ancestors") or []]
+    ct = " › ".join(re.sub(r"\s+", " ", f"{re.sub('recordGroup', 'RG', a['level'], flags=re.I)}{' ' + str(a['rg']) if a['rg'] else ''} {a['title']} [NAID {a['naId']}]").strip() for a in ch)
+    u0 = rec.get("useRestriction") or {}; ur = u0 if isinstance(u0, str) else " · ".join(x for x in [u0.get("status"), u0.get("note"), "/".join(u0.get("specificUseRestrictions") or [])] if x)
+    a0 = rec.get("accessRestriction") or {}; ar = a0 if isinstance(a0, str) else " · ".join(x for x in [a0.get("status"), a0.get("note"), "/".join(a0.get("specificAccessRestrictions") or [])] if x)
+    pd = (rec.get("productionDates") or [{}])[0]; ld = str(pd.get("logicalDate") or "")
+    nav = ld[:10] + "T00:00:00Z" if re.match(r"^\d{4}-\d{2}-\d{2}", ld) else (f"{pd.get('year')}-01-01T00:00:00Z" if re.match(r"^\d{4}$", str(pd.get("year") or "")) else "")
+    dt = str(pd.get("logicalDate") or pd.get("year") or pd.get("proximatePhrase") or "")[:10]
+    scope = str(rec.get("scopeAndContentNote") or "").strip(); fp = _h.sha256(scope.encode()).hexdigest()[:16] if scope else ""
+    cre = " · ".join(c.get("heading") for c in rec.get("creators") or [] if c.get("heading"))
+    ru = (((rec.get("physicalOccurrences") or [{}])[0].get("referenceUnits") or [{}])[0]).get("name", "")
+    dob = rec.get("digitalObjects") or []
+    md = [x for x in [MV("NAID", str(naid)), rec.get("localIdentifier") and MV("로컬 식별자", rec["localIdentifier"]), MV("기술 수준", rec.get("levelOfDescription") or ""),
+                      ch and MV("계보(상위 계층)", ct), cre and MV("생산자", cre), dt and MV("생산일", dt), ru and MV("소장단위(열람·복제 청구)", ru),
+                      ur and MV("이용 제한(원문)", ur), ar and MV("접근 제한(원문)", ar), MV("디지털 객체", f"{len(dob)}점"),
+                      scope and MV("기술 지문(sha256-16)", fp + " — 범위·내용 기술 판독 시점 지문, 불일치=카탈로그 개정"),
+                      MV("판독 시각", _d.datetime.now(_d.timezone.utc).isoformat()), MV("변환", "KOREA ARCHIVE 통합검색 NARA→IIIF 브리지 v1.98 (원 데이터: NARA Catalog API v2)")] if x]
+    rights = ("http://rightsstatements.org/vocab/NoC-US/1.0/" if re.search(r"unrestricted", ur, re.I) and not re.search(r"restricted\s*[-–]|possibly|fully", ur, re.I)
+              else "http://rightsstatements.org/vocab/UND/1.0/")
+    kind = lambda o: (lambda t: "img" if re.search(r"\.(jpe?g|png|gif)\b|image/(jpe?g|png|gif)", t) else "tiff" if re.search(r"\.tiff?\b|tiff", t) else "pdf" if "pdf" in t
+                      else "video" if re.search(r"\.(mp4|mov|m4v)\b|video", t) else "audio" if re.search(r"\.(mp3|wav)\b|audio", t) else "other")((str(o.get("objectType") or "") + " " + str(o.get("objectUrl") or o.get("objectFilename") or "")).lower())
+    FMT = {"tiff": "image/tiff", "pdf": "application/pdf", "video": "video/mp4", "audio": "audio/mpeg", "other": "application/octet-stream"}
+    imgs = [o for o in dob if kind(o) == "img"][:max_canvas]
+    with _cf.ThreadPoolExecutor(max_workers=6) as ex:
+        sizes = list(ex.map(lambda o: _img_size(o.get("objectUrl")), imgs))
+    items, skipped = [], []
+    for o, sz in zip(imgs, sizes):
+        if not sz or not sz[0] or not sz[1]:
+            skipped.append(o); continue
+        cid = f"{U['manifest']}/canvas/{len(items) + 1}"
+        items.append({"id": cid, "type": "Canvas", "label": L(o.get("objectFilename") or f"Image {len(items) + 1}"), "width": sz[0], "height": sz[1],
+                      "metadata": [x for x in [MV("파일", o.get("objectFilename") or ""), o.get("objectFileSize") and MV("크기", f"{int(o['objectFileSize']) / 1048576:.1f} MB"), MV("객체 URL", o.get("objectUrl"))] if x],
+                      "items": [{"id": cid + "/p", "type": "AnnotationPage", "items": [{"id": cid + "/p/a", "type": "Annotation", "motivation": "painting", "target": cid,
+                                                                                        "body": {"id": o.get("objectUrl"), "type": "Image", "format": sz[2], "width": sz[0], "height": sz[1]}}]}]})
+    rend = [{"id": o.get("objectUrl"), "type": {"video": "Video", "audio": "Sound", "pdf": "Text"}.get(kind(o), "Image"),
+             "label": L(f"{o.get('objectFilename') or o.get('objectUrl')}" + (f" ({int(o['objectFileSize']) / 1048576:.1f} MB)" if o.get("objectFileSize") else "")),
+             "format": FMT.get(kind(o), "application/octet-stream")} for o in ([o for o in dob if kind(o) != "img"] + skipped)[:80]]
+    par = ch[-1] if ch else None
+    man = {"@context": "http://iiif.io/api/presentation/3/context.json", "id": U["manifest"], "type": "Manifest", "label": L(rec.get("title") or f"NAID {naid}"),
+           **({"summary": L(scope[:1500])} if scope else {}), "metadata": md, **({"navDate": nav} if nav else {}), "rights": rights,
+           "requiredStatement": {"label": L("출처", "ko"), "value": L(f"National Archives and Records Administration (NARA), NAID {naid}" + (f" ({rec['localIdentifier']})" if rec.get("localIdentifier") else ""))},
+           "provider": [{"id": "https://www.archives.gov/", "type": "Agent", "label": L("U.S. National Archives and Records Administration"),
+                         "homepage": [{"id": "https://catalog.archives.gov/", "type": "Text", "label": L("NARA Catalog"), "format": "text/html"}]}],
+           "homepage": [{"id": U["catalog"], "type": "Text", "label": L("NARA Catalog record"), "format": "text/html"}],
+           "seeAlso": [{"id": U["ric"], "type": "Dataset", "label": L("RiC-O 기록 기술(JSON-LD) — 계층·증거", "ko"), "format": "application/ld+json", "profile": "https://www.ica.org/standards/RiC/ontology"}],
+           **({"partOf": [{"id": _nara_urls(par["naId"])["collection"], "type": "Collection", "label": L(f"{par['level']} {'RG ' + str(par['rg']) + ' ' if par['rg'] else ''}{par['title']}".strip())}]} if par else {}),
+           **({"rendering": rend} if rend else {}), "items": items}
+    if not items:
+        man["metadata"].append(MV("표시 가능한 이미지", "없음 — 원본 매체는 rendering(내려받기) 참조" if dob else "디지털 사본 없음 — 원본은 NARA 열람 청구"))
+    return man
+
+
 @mcp.tool()
 def nara_search(query: str, record_group: int | None = None,
                 moving_images_only: bool = False, max_results: int = 20, page: int = 1,
-                naid: int | None = None, radius: int = 3) -> str:
+                naid: int | None = None, radius: int = 3, output: str = "text") -> str:
     """미국 NARA 카탈로그 검색 (환경변수 NARA_API_KEY 필요 — Catalog_API@nara.gov 발급).
+    output="iiif" + naid → 그 기록을 IIIF Presentation 3 매니페스트로(계보 partOf·생산일 navDate·권리·판독 지문·디지털 객체, 공개 URL로 KV·Mirador에서 열림).
     다국어 질의(한국어·日本語·中文·Русский 등)는 영문 색인어로 자동 변환(장진호/長津湖→Chosin Reservoir …).
     record_group으로 RG 교차 정밀검색(예: 242), moving_images_only로 영상 한정."""
     key = os.environ.get("NARA_API_KEY")
     if not key: return "NARA_API_KEY 미설정 — Catalog_API@nara.gov 로 무료 발급(이름+이메일)."
+    if naid and output == "iiif":  # v1.98 NARA→IIIF 브리지 — 맥락(계보)·증거성(판독 시각·기술 지문·권리 원문)·다매체(rendering)
+        try:
+            man = _nara_iiif_manifest(int(naid), key)
+            if not man:
+                return f"[NAID {naid}] 카탈로그에 없음 — NAID를 확인하십시오."
+            U = _nara_urls(naid); lite = dict(man, items=man["items"][:12])
+            js = json.dumps(lite, ensure_ascii=False, separators=(",", ":"))
+            if len(js) > 15000:
+                lite = dict(lite, items=lite["items"][:4]); lite.pop("summary", None); js = json.dumps(lite, ensure_ascii=False, separators=(",", ":"))
+            return (f"NARA→IIIF [NAID {naid}] {man['label']['en'][0][:90]}\n캔버스 {len(man['items'])}장 · 원본 매체(rendering) {len(man.get('rendering') or [])}건 · "
+                    f"계보 {'있음(partOf → 상위 컬렉션)' if man.get('partOf') else '없음'} · navDate {man.get('navDate') or '—'}\n"
+                    f"■ 공개 매니페스트(누구나·어느 IIIF 뷰어든): {U['manifest']}\n■ KV로 보기: {U['kv']}\n"
+                    f"■ 상위 계층 컬렉션: {man['partOf'][0]['id'] if man.get('partOf') else '—'} · 이 기록의 하위 컬렉션: {U['collection']}\n■ RiC-O JSON-LD(지식그래프·기록관리 등재): {U['ric']}\n"
+                    f"■ 매니페스트 JSON" + (f"(앞 {len(lite['items'])}장 — 전체는 위 URL)" if len(man["items"]) > len(lite["items"]) else "") + f":\n{js}")
+        except Exception as e:
+            return f"NARA→IIIF 실패({str(e)[:80]}) — 공개 URL로 재시도: {_nara_urls(naid)['manifest']}"
     if naid:  # NAID ± 인접 채굴 — v2는 단수 naId만 수용(naIds=400 실측) → 순차 조회. 간격: 사진 ±3·색인 ±1
         import time as _t
         ids = [i for i in range(naid - radius, naid + radius + 1) if i > 0]
@@ -4571,7 +4683,10 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
             g = re.search(r"ark:/12148/([a-z0-9]+)", u, re.I)
             nd = re.search(r"dl\.ndl\.go\.jp/pid/(\d+)", u)
             ka = re.search(r"korea-archive-mcp/iiif\.html#(s\d+)", u)
-            if ka:
+            na = re.search(r"catalog\.archives\.gov/id/(\d+)", u)
+            if na:
+                m = _nara_urls(na.group(1))["manifest"]  # v1.98 NARA→IIIF 브리지
+            elif ka:
                 m = f"https://changgi.github.io/korea-archive-mcp/iiif/m/{ka.group(1)}.json"
             elif a:
                 m = f"https://iiif.archive.org/iiif/3/{a.group(1)}/manifest.json"
