@@ -1976,17 +1976,34 @@ def _c_ndl(q, n):
                           headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
         with _ur.urlopen(req, timeout=25) as r:
             return r.read().decode("utf-8", "replace")
-    b = ndlq("title")
+    # v1.96: 수천 건 일치 시 표제 가나순 — 당대 자료(until=1945) 병행, 검색어(신·구자체) 포함 표제 우선
+    try:
+        req = _ur.Request(f"https://ndlsearch.ndl.go.jp/api/opensearch?title={_up.quote(ja)}&until=1945&cnt={min(n * 3, 30)}",
+                          headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
+        with _ur.urlopen(req, timeout=25) as r:
+            bc = r.read().decode("utf-8", "replace")
+    except Exception:
+        bc = ""
+    try:
+        ba = ndlq("title")
+    except Exception:
+        ba = ""  # 동시접속 제한 등 — 당대 자료 결과만으로 진행
+    b = (re.sub(r"</channel>[\s\S]*$", "", bc) if "<item>" in bc else "") + ba
     if "<item>" not in b and not ("<error>" in b and "429" in b):
         b = ndlq("any")
     if "<error>" in b and "429" in b:
         raise RuntimeError("NDL 동시접속 제한(429) — 잠시 후 재시도")
-    out = []
-    for item in b.split("<item>")[1:]:
+    kj = str.maketrans("總國鐵經會學臺縣圖廳發實寫眞", "総国鉄経会学台県図庁発実写真")
+    qn = ja.translate(kj).replace(" ", "")
+    its = b.split("<item>")[1:]
+    its = sorted(enumerate(its), key=lambda p: (0 if qn in ((re.search(r"<title[^>]*>([^<]+)", p[1]) or [None, ""])[1]).translate(kj).replace(" ", "") else 1, p[0]))
+    out, seen_l = [], set()
+    for _, item in its:
         g = lambda t: ((re.search(f"<{t}[^>]*>([^<]+)", item) or [None, ""])[1] or "").strip()
         title, link = g("title"), g("link")
-        if not title or not link:
+        if not title or not link or link in seen_l:
             continue
+        seen_l.add(link)
         cat_arr = re.findall(r"<category>([^<]+)", item)  # 자료형·매체(紙/デジタル)
         cats = "·".join(cat_arr)
         author = g("author")
