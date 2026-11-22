@@ -1410,6 +1410,53 @@ def _ddk(it):
     t = re.sub(r"[^a-z0-9가-힣一-鿿]", "", _norm(it.get("title", "")).lower())[:50]
     return (t + "|" + (it.get("id") or ""))[:80]
 
+def _resolve_origins(items, stats):
+    """v1.89: 원본 확인 — 재게시·재수집본의 sameAs NAID가 결과에 없으면 NARA 카탈로그를 직접 조회해
+    원본 실재를 확인하고 계보·날짜·매체를 채운다(최대 4건·6s·24h 캐시)."""
+    key = os.environ.get("NARA_API_KEY")
+    if not key:
+        return
+    todo = [it for it in items if not any(s.startswith("nara") for s in it["sources"])
+            and re.match(r"^NAID \d+$", it.get("sameAs") or "")][:4]
+    if not todo:
+        return
+
+    def one(it):
+        naid = it["sameAs"][5:]
+        raw = _cached_text("naid:" + naid, 24 * 3600, lambda: json.dumps(http_json(
+            f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1", headers={"x-api-key": key})), '"naId"')
+        hits = (((json.loads(raw).get("body") or {}).get("hits") or {}).get("hits") or [])
+        rec = ((hits[0].get("_source") or {}).get("record") or {}) if hits else {}
+        if str(rec.get("naId")) != naid:
+            return False  # 원본 미확인 — 연결 정보만 유지
+        link = f"{it['sources'][0].split('·')[0]}:{it['id'] or it['url']}"
+        if _norm(rec.get("title", "")).lower() != _norm(it["title"]).lower():
+            it["altTitle"] = it["title"][:110]
+        it["title"] = _norm(rec.get("title") or it["title"])
+        it["id"], it["url"], it["sameAs"] = f"NAID {naid}", f"https://catalog.archives.gov/id/{naid}", link
+        po = _nara_chain(rec)
+        if po:
+            it["series"] = po
+        if not it.get("date"):
+            it["date"] = _nara_date(rec)
+        d0 = str(((rec.get("digitalObjects") or [{}])[0] or {}).get("objectUrl", ""))
+        if not it.get("media") and d0:
+            it["media"] = d0
+        it["sources"].insert(0, "nara·원본확인")
+        return True
+    ok = 0
+    try:
+        with _cf.ThreadPoolExecutor(max_workers=4) as ex:
+            for f in _cf.as_completed([ex.submit(one, it) for it in todo], timeout=6):
+                try:
+                    ok += 1 if f.result() else 0
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    if ok:
+        stats.append(f"nara원본확인:{ok}")
+
 def _collect_merged(collectors):
     merged, stats = {}, []
     with _cf.ThreadPoolExecutor(max_workers=8) as ex:
@@ -4029,6 +4076,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
             for label, vq in vs:
                 jobs.append((f"{src}·{label}", (lambda src=src, vq=vq: _COLLECT[src](vq, n))))
     items, stats = _collect_merged(jobs)
+    _resolve_origins(items, stats)
     items.sort(key=lambda it: -len(it["sources"]))
     if format == "manifest":  # 발굴 수집기록 매니페스트 — 발굴 행위 자체를 맥락·증거성 갖춘 현용기록으로(ISAD(G)·RiC 지향)
         recs = items[:30]
