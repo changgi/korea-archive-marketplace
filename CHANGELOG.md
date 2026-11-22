@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.97.1 — 우리 IIIF 갤러리 자동 수집 (2026-11-22)
+- cross_search sources='gallery'(31번째 채널): 30곳 탐방·100선 실물 기록 800장(권리 확인·출처 대장 완비)을 연합 검색에 합류 — Pages index.json 6h 캐시, 한·영 검색어, 결과는 딥줌 딥링크(iiif.html#sNNN/k)·이미지 직링크(media).
+- format='iiif': 갤러리 결과는 시리즈 매니페스트(iiif/m/sNNN.json)를 컬렉션에 포함. source_profile 간이 프로파일·health 골든 질의('흥남') 추가.
+- 갤러리 자동 갱신: 100선 build_series.py가 빌드 끝에 build_iiif.py 자동 실행. CI check-docs가 출처 대장 대비 갤러리 최신성 검사(갱신 누락 시 실패).
+
 ## v1.97.0 — 도구에 IIIF 연속 이미지 뷰 (2026-11-22)
 - cross_search format='iiif': 결과 중 기관 IIIF가 있는 기록(Internet Archive·Europeana·Gallica·NDL)의 원 매니페스트를 IIIF Presentation 3 Collection으로, 위키미디어 공용 이미지는 imageinfo 1회 조회로 정지 이미지 Manifest로 — IIIF 미제공 기록은 원 기관 링크 목록. 24KB 상한(매니페스트 30·이미지 12).
 - report_template(kind='iiif'): 공개 갤러리(iiif.html·collection.json·all.json) 사용법, 기관별 IIIF 주소 규칙(실측), 권리 3단계(1600px·공공누리 제4유형 원본 무변경·링크 전용), Presentation 3 최소 구조·검증기, v2/v3 매니페스트·컬렉션을 한 줄로 이어 넘기는 OpenSeadragon 뷰어 골격(아티팩트용).
