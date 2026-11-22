@@ -571,7 +571,7 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
         prov = (it.get("dataProvider") or [""])[0]
         rt = _rshort(it.get("rights"))
         lines.append(f"- {str(title)[:90]} ({year}) — {str(prov)[:40]}"
-                     + (f" | 권리:{rt}" if rt else "") + f" | {it.get('guid','')}")
+                     + (f" | 권리:{rt}" if rt else "") + f" | {str(it.get('guid','')).split('?')[0]}")
     return (f"Europeana '{query}'" + (f" [{media_type}]" if media_type else "")
             + f" — 총 {data.get('totalResults')}건:\n" + ("\n".join(lines) or "(0건)")
             + ("\n※ 공용 데모 키(api2demo) 사용 중 — 레이트리밋 시 EUROPEANA_API_KEY 설정 권장." if demo else "")
@@ -1556,7 +1556,7 @@ def _c_europeana(q, n):
     return [{"title": (it.get("title") or ["?"])[0], "date": (it.get("year") or [""])[0],
              "id": it.get("id", ""),
              **({"series": (it.get("dataProvider") or [""])[0]} if (it.get("dataProvider") or [""])[0] else {}),
-             "url": it.get("guid", "")} for it in (d.get("items") or [])]
+             "url": str(it.get("guid", "")).split("?")[0]} for it in (d.get("items") or [])]
 
 def _nara_chain(rec):
     # NARA 계보(v1.80): ancestors → "RG n › 시리즈" 축약 체인 (수집기·전용 도구·판정 공용)
@@ -1844,11 +1844,19 @@ def _jacar_mode(q, span, max_results):
 
 def _c_ndl(q, n):
     """일본 국립국회도서관 서치 — OpenSearch 무키(2026-11-21). 총독부 간행물·관보·도판 축(JACAR 공문서와 상보). 한→일 JA_MAP 우선."""
-    ja = _ko_ja(q) or _to_index_lang(q, "en") or q
-    req = _ur.Request(f"https://ndlsearch.ndl.go.jp/api/opensearch?any={_up.quote(ja)}&cnt={min(n, 10)}",
-                      headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
-    with _ur.urlopen(req, timeout=25) as r:
-        b = r.read().decode("utf-8", "replace")
+    # v1.91.1: 일문·한자 입력이 영문 폴백('Korea')으로 바뀌던 결함 교정 — 한글 입력일 때만 영문 폴백, 부분 변환은 폐기
+    hg = lambda t: bool(re.search(r"[\uac00-\ud7a3]", t))
+    ja = _ko_ja(q)
+    if not ja or hg(ja):
+        ja = (_to_index_lang(q, "en") or q) if hg(q) else q
+    def ndlq(f):  # v1.91.1: any= 는 표제 가나순 잡음 상위화 — title= 우선, 0건이면 any= 폴백
+        req = _ur.Request(f"https://ndlsearch.ndl.go.jp/api/opensearch?{f}={_up.quote(ja)}&cnt={min(n, 10)}",
+                          headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
+        with _ur.urlopen(req, timeout=25) as r:
+            return r.read().decode("utf-8", "replace")
+    b = ndlq("title")
+    if "<item>" not in b and not ("<error>" in b and "429" in b):
+        b = ndlq("any")
     if "<error>" in b and "429" in b:
         raise RuntimeError("NDL 동시접속 제한(429) — 잠시 후 재시도")
     out = []
@@ -2127,9 +2135,19 @@ def _nzarch_mode(query: str) -> str:
 def _c_dnz(q, n):
     """DigitalNZ 집계 API(무키 JSON) — v1.57 합류: Papers Past(직접 차단 — 본 API로 우회 복구)·터닝불도서관·Te Papa 등 NZ 30+기관."""
     en = _ko_en(q) or q
-    d = json.loads(_http_text("https://api.digitalnz.org/v3/records.json?per_page=" + str(min(n, 20))
-                              + "&fields=id,title,display_date,landing_url,content_partner,primary_collection"
-                              + "&text=" + _up.quote(en), 25))
+    # v1.91.1: 서버 IP 익명 호출 403 실측 — DNZ_API_KEY(digitalnz.org/developers 무료) 설정 시 키 헤더로 호출
+    dk = os.environ.get("DNZ_API_KEY")
+    u = ("https://api.digitalnz.org/v3/records.json?per_page=" + str(min(n, 20))
+         + "&fields=id,title,display_date,landing_url,content_partner,primary_collection&text=" + _up.quote(en))
+    try:
+        req = _ur.Request(u, headers={"User-Agent": _UA_KO, "Accept": "application/json", **({"Authentication-Token": dk} if dk else {})})
+        with _ur.urlopen(req, timeout=25) as r:
+            d = json.loads(r.read().decode("utf-8", "replace"))
+    except Exception as e:
+        if "403" in str(e):
+            raise RuntimeError("HTTP 403 — 서버 IP 익명 호출 차단" + ("(키 거부 — DNZ_API_KEY 확인)" if dk else "(DNZ_API_KEY 미설정 — 등록 시 복구)")
+                               + f" · 대체: digitalnz.org/records?text={_up.quote(en)} 웹 검색")
+        raise
     out = []
     for r in ((d.get("search") or {}).get("results") or []):
         cp = (r.get("content_partner") or [""])[0]
