@@ -2876,7 +2876,8 @@ def _ktv_mode(query: str, max_results: int) -> str:
         if not items:
             return f"KTV e영상역사관 '{q}' — 0건. '대한뉴스'·사건명·인명으로 재시도하십시오."
         return (f"KTV e영상역사관 '{q}' — {len(items)}건:\n"
-                + "\n".join(f"- {it['title']}\n  {it['url']}" for it in items)
+                + "\n".join(f"- [{it.get('series') or 'e영상역사관'}] {it['title']}\n  {it['url']}" for it in items)
+                + "\n※ 기록 탭(대한뉴스·문화영화·미공개 대한뉴스·정부기록사진집·국가기록사진) 교차 병합 — 사이트 기본 최신순이 최근 영상만 올리는 문제 보정."
                 + "\n※ view URL을 mode=ktv query로 재투입 → 영상 해설·제작연도·상영시간 판독.")
     except Exception as e:
         return f"KTV 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://www.ehistory.go.kr"
@@ -3048,19 +3049,40 @@ def _gonghun_mode(query: str, max_results: int) -> str:
 
 
 def _c_ktv(q, n):
-    """KTV e영상역사관(대한뉴스·기록영상, KOGL) — ktv.go.kr 통합검색 iframe GET 실측(2026-11-19)."""
-    b = _http_text("https://www.ktv.go.kr/totalSearch/ehistory?design=new&collection=ehistory&baseKeyword="
-                   + _up.quote(q), 28)
-    out = []
-    for m in re.finditer(r'href="(https://www\.ehistory\.go\.kr/view/[^"]+)"[^>]*>\s*(?:<[^>]+>\s*)*([^<]{4,80})', b):
-        t = _clean(m.group(2))
-        if not t or re.search(r"paging|overflow", t):
-            continue
-        ktm = re.match(r"^(대한뉴스|리버티뉴스|문화영화|대한뉴우스)", t)
-        out.append({"title": t, "date": "", "id": "", **({"series": ktm.group(1)} if ktm else {}), "url": m.group(1).replace("&amp;", "&")})
-        if len(out) >= n:
-            break
-    return out
+    """KTV e영상역사관 — ktv.go.kr 통합검색 iframe GET 실측(2026-11-19).
+    v1.94: 기본 정렬이 '최신순'(sort 무효 실측)이라 최근 대통령 영상이 상위 독점 → 기록 탭별 병렬 조회·교차 병합, 대통령 기록영상(DT)은 뒤로."""
+    tabs = [("DH", "대한뉴스"), ("MH", "문화영화"), ("DK", "미공개 대한뉴스"), ("BK", "정부기록사진집"), ("PT", "국가기록사진"), ("", "전체")]
+    base = "https://www.ktv.go.kr/totalSearch/ehistory?design=new&collection=ehistory&baseKeyword=" + _up.quote(q)
+    names = {"DT": "대통령 기록영상", "DH": "대한뉴스", "MH": "문화영화", "DK": "미공개 대한뉴스"}
+
+    def one(tab):
+        code, label = tab
+        b = _http_text(base + (f"&ehistoryStleSe={code}" if code else ""), 28)
+        seen, out = set(), []
+        for m in re.finditer(r'href="(https://www\.ehistory\.go\.kr/view/[^"]+)"[^>]*>\s*(?:<[^>]+>\s*)*([^<]{4,80})', b):
+            t = _clean(m.group(2)); u = m.group(1).replace("&amp;", "&")
+            if not t or re.search(r"paging|overflow", t) or u in seen:
+                continue
+            seen.add(u)
+            g = (re.search(r"mediagbn=(\w+)", u) or [None, "PT" if "/photo?" in u else ""])[1]
+            out.append({"title": t, "date": "", "id": "", "series": (names.get(g, "e영상역사관") if label == "전체" else label),
+                        "url": u, "_dt": g == "DT"})
+        return out
+    lists, errs = [], []
+    with _cf.ThreadPoolExecutor(max_workers=6) as ex:
+        for f in [ex.submit(one, t) for t in tabs]:
+            try:
+                lists.append(f.result(timeout=30))
+            except Exception as e:
+                lists.append([]); errs.append(e)
+    if len(errs) == len(tabs):
+        raise errs[0]
+    seen, out, late = set(), [], []
+    for k in range(10):
+        for l in lists:
+            if k < len(l) and l[k]["url"] not in seen:
+                seen.add(l[k]["url"]); (late if l[k]["_dt"] else out).append(l[k])
+    return [{kk: vv for kk, vv in it.items() if kk != "_dt"} for it in (out + late)[:n]]
 
 
 def _c_earchive(q, n):
