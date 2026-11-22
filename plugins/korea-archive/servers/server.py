@@ -1963,7 +1963,7 @@ def _c_archives(q, n):
                      "&query=" + _up.quote(q) + f"&start=1&limit={n}", 20)
     return [{"title": _xtag(i, "title"), "date": _xtag(i, "prod_year"), "id": (lambda lk: ((re.search(r"rc_rfile_no=(\\d+)", lk).group(1) if re.search(r"rc_rfile_no=(\\d+)", lk) else "")
                                + ("-" + re.search(r"rc_ritem_no=0*(\\d+)", lk).group(1) if re.search(r"rc_ritem_no=0*(\\d+)", lk) else "")) or _xtag(i, "prod_name"))(_xtag(i, "link")),
-             **({"series": _xtag(i, "prod_name")} if _xtag(i, "prod_name") else {}),
+             **(lambda ser: {"series": ser} if ser else {})(_xtag(i, "prod_name") or (lambda lk: ("[유형] 기록건" if "rc_ritem_no=" in lk else "[유형] 기록물철" if "rc_rfile_no=" in lk else "[유형] 기록정보콘텐츠" if "rc_code=" in lk else ""))(_xtag(i, "link"))),  # v2.3 계열 구축(Node 패리티)
              "url": _xtag(i, "link")} for i in re.findall(r"<item>(.*?)</item>", xml, re.S)]
 
 def _c_nlk(q, n):
@@ -2696,7 +2696,7 @@ def _c_i815(q, n):
     for c in cats:
         if len(out) >= n:
             break
-        out.append({"title": f"독립기념관 {c['name']} {c['disp']}건", "date": "", "id": "", "url": base + c["u"]})
+        out.append({"title": f"독립기념관 {c['name']} {c['disp']}건", "date": "", "id": "", "series": c['name'], "url": base + c["u"]})  # v2.3: 집계 신호도 계열(카테고리) 부여
     return out
 
 
@@ -3723,7 +3723,9 @@ def _part_of(ch, it):
     if ch == "seoul" and it.get("series"):
         return f"기술단위 › {it['series']}"
     if ch == "archives" and it.get("series"):
-        return f"생산기관 › {it['series']}"
+        return f"국가기록원 › {it['series'][4:].strip()}" if it["series"].startswith("[유형]") else f"생산기관 › {it['series']}"
+    if ch == "nedb" and it.get("series"):  # v2.3: 편찬 자료군(DB)이 곧 상위 계열
+        return it["series"] if it["series"].startswith("한국사DB") else f"한국사DB › {it['series']}"
     if ch == "nlk" and it.get("series"):
         return f"자료유형 › {it['series']}"
     if ch == "jsg" and it.get("series"):
