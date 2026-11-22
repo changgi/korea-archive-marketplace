@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.99.0 — IIIF 브리지 2: 국가유산·역사박물관·AWM·위키미디어 (2026-11-22)
+- 공개 엔드포인트 /iiif/{heritage|much|awm|commons}/{id}/manifest.json(lib/ka_iiif.js · app/iiif/[src]/[...p]) — 기관 표시 권리 문구 원문·판독 시각·설명 지문·원 기관 homepage·navDate, 이미지 크기 판독(Range) 후 캔버스.
+  heritage=종목·지정번호·시대·소유·소재·해설+이미지 목록 API · much=명칭(꺾쇠 원문 보존)·국적/시대·분류·재질·작가·크기·공공누리 유형 · awm=수장번호·생산일·장소·PD 표시(rights PDM) · commons=라이선스 URL→rights·작가·원본 rendering.
+- 요청은 정직한 식별자(KoreaArchiveMCP UA)로만 — 브라우저 위장 금지 원칙(CLAUDE.md) 적용.
+- 도구: nedb_search heritage·much 상세에 IIIF·KV 주소, cross_search format='iiif'·'manifest'(iiif 필드)에 브리지 합류 — 패리티. 갤러리 캔버스 58장에 원 기관 브리지 seeAlso.
+
 ## v1.98.0 — 맥락·증거성·데이터화·다매체: NARA→IIIF 브리지 + 갤러리 계층 (2026-11-22)
 - NARA→IIIF 브리지(공개 엔드포인트): /iiif/nara/{NAID}/manifest.json — 계보(ancestors) metadata + partOf(상위 컬렉션), 판독 시각·범위·내용 기술 sha256-16·이용/접근 제한 원문·소장단위·rights(NoC-US/UND), navDate, 표시 이미지=캔버스(Range 128KB로 크기 판독)·TIFF/PDF/영상=rendering. /collection.json=시리즈·파일단위 하위 기록(계보 대조 확인분만) · /record.jsonld=RiC-O. IIIF 검증기 okay(매니페스트 2·컬렉션 1).
 - nara_search(naid, output='iiif') · cross_search format='iiif'/'manifest'에 NARA 브리지·기관 IIIF 주소(iiif 필드) — 패리티.
