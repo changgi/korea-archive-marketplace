@@ -2605,8 +2605,10 @@ def _commons_mode(query: str, max_results: int) -> str:
             lic = g("LicenseShortName")
             if not ii.get("url") and not lic:
                 return f"'{title}' — 파일 미발견 또는 메타 없음. File: 제목/URL을 확인하십시오."
+            jr = auto_rights({"rg_series": "", "title_orig": "", "archive": lic})  # KOGL(공공누리) 등 공용 판정 규칙 재사용
             rights = ("A(퍼블릭 도메인 표기)" if re.search(r"public domain", lic, re.I)
                       else f"B({lic} — 조건 준수 시 이용)" if re.match(r"^cc", lic, re.I)
+                      else f"{jr[0]}({jr[1].replace('[자동초판] ', '')})" if jr[0] != "D"
                       else f"D('{lic or '미표기'}' — 확인 필요)")
             meta = " · ".join(x for x in (
                 f"촬영/제작: {g('DateTimeOriginal')[:40]}" if g("DateTimeOriginal") else "",

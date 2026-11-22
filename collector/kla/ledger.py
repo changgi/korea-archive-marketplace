@@ -24,7 +24,7 @@ def auto_rights(rec: dict) -> tuple[str, str]:
         return "B", "[자동초판] 미 연방정부 직무저작물 추정(17 U.S.C. §105) — 카탈로그 Use Restriction 'Unrestricted' 확인 시 A로 상향"
     kogl_src = (rg + " " + (rec.get("title_orig") or "").upper() + " " + arch)
     import re as _re
-    km = _re.search(r"KOGL[\s-]?(?:제\s?)?([1-4])|공공누리\s*(?:제\s?)?([1-4])\s*유형", kogl_src, _re.I)
+    km = _re.search(r"(?:KOGL|Korea Open Government Licen[cs]e)[\s-]*(?:Type|제)?\s*([1-4])|공공누리\s*(?:제\s?)?([1-4])\s*유형", kogl_src, _re.I)  # 'KOGL Type 1'(Commons 표기)·정식 영문명 포함
     if km:
         n = km.group(1) or km.group(2)
         K = {"1": ("A", "공공누리 제1유형 — 출처표시만으로 자유이용(변경·상업 가능)"),

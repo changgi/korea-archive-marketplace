@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-22 v1.90.3 — 공공누리 영문 표기("KOGL Type 1") 판독 교정
+- 결함(v1.90.2 발견): 권리 판독기가 Commons 등 해외 표기 "KOGL Type 1"·"Korea Open Government License Type 2"를 공공누리로 인식하지 못해 D(확인 필요)로 판정
+- 교정: 공공누리 정규식에 `Type`·정식 영문명 허용 — lib/rights.js · kla/ledger.py(2부) 동일 반영
+- Commons 모드: PD·CC가 아닌 라이선스는 공용 판정 규칙(judgeRights/auto_rights)으로 재판독 — KOGL 1→A, 2~4→B
+- 실측: "KOGL 1"·"KOGL Type 1"·"공공누리 제1유형"→A / "KOGL Type 4"·"…License Type 2"→B / 미표기→D (Node·Python 동일)
+
 ## 2026-11-22 v1.90.2 — 카드뉴스 20장을 원본 사진으로 가득 채운 v2로 교체("글보다 이미지로 설득")
 - 사용자 요청: "원본 이미지가 가득 차게", "글보다는 이미지로 설득" → 캐러셀 10·단독 10 전면 재제작: 풀블리드·2×2·3×3 모자이크·지면 병치, 글은 제목 2줄+핵심 숫자 1개+출처 1줄
 - 원본 사진 26장 확보·권리 실조회: NARA 12(전부 Unrestricted A — 이 도구의 cross_search가 Commons 기증본↔NARA 원본을 `nara·원본확인`으로 묶어 찾음) · 호주 전쟁기념관 7(가평 계곡·227고지·뉴질랜드 제16야포연대, Copyright expired) · 국립중앙도서관 신문 지면 3(황성신문 1907.2.8 4면·대한매일신보 1909.11.9 3면·12.11 2면) · Commons 4(안중근·1906 경복궁·1930년대 경성 "KEIJO" 엽서 — PD / 화성성역의궤 — 공공누리 1유형)
