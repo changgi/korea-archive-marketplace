@@ -486,13 +486,21 @@ def judge_rights(rg_series: str = "", title: str = "", archive: str = "", naid: 
             nd = _nara_date(rec)
             ru = str(((((rec.get("physicalOccurrences") or [{}])[0] or {}).get("referenceUnits") or [{}])[0] or {}).get("name", ""))[:80]
             dob = rec.get("digitalObjects") or []
-            d0 = dob[0] if dob else {}
+            def _rank(o):  # v1.96.2: 최선 원본(TIFF>JPG/영상>PDF, 큰 파일)
+                t = f"{o.get('objectType','')} {o.get('objectUrl','')}"
+                w = 3 if re.search(r"tiff?\b", t, re.I) else 2 if re.search(r"jpe?g|mp4|mov|video", t, re.I) else 1 if re.search(r"pdf", t, re.I) else 0
+                try:
+                    sz = float(o.get("objectFileSize") or 0)
+                except (TypeError, ValueError):
+                    sz = 0
+                return w * 1e12 + sz
+            d0 = max(dob, key=_rank) if dob else {}
             return (f"[NAID {naid}] {rec.get('title','')[:95]}\n"
                     f"{f'RG {rgnum} · ' if rgnum else ''}https://catalog.archives.gov/id/{naid}\n"
                     + (f"계보: {chain[:280]}\n" if chain else "")
                     + (f"생산: {' · '.join(x for x in [cre, nd] if x)}\n" if (cre or nd) else "")
                     + (f"소장단위: {ru} (열람·복제 청구 좌표)\n" if ru else "")
-                    + (f"디지털 객체 {len(dob)}점 — 첫 객체: {str(d0.get('objectUrl',''))[:160]}"
+                    + (f"디지털 객체 {len(dob)}점 — 최선 원본: {str(d0.get('objectUrl',''))[:160]}"
                        + (f" ({str(d0.get('objectType'))[:30]})" if d0.get("objectType") else "") + "\n" if dob
                        else "디지털 사본 없음 — 카탈로그에 디지털 객체 미등록(medialz URL도 HTML만 반환 실측) · 열람은 소장단위에 복제 청구\n")
                     + (f"【범위·내용】 {scope[:400]}\n본문 지문(sha256-16): {sfp} — 판독 시점 기술(記述) 전문 기준. 재판독 지문 불일치=카탈로그 기술 개정 발생.\n" if scope else "")
@@ -1430,9 +1438,8 @@ def _browse(url):
 
 def _agent_browse(name, query, url, why="이 기관은 자동 페치가 제한적입니다"):
     return (f"{name} '{query}' — {why}.\n"
-            f"➤ 에이전트 지시: 이 메시지를 그대로 사용자에게 전달하지 마세요. 대신 당신의 웹 검색(WebSearch)으로 "
-            f"'{query}'를 이 기관에서 찾거나, 아래 공식 검색 URL을 열람해 상위 결과(제목·연대·링크)를 정리한 뒤 "
-            f"사용자에게 표로 제시하세요. 결과가 있으면 report_template으로 HTML 보고서화도 가능합니다.\n"
+            f"➤ 다음 단계(안내): 웹 검색이나 브라우저로 아래 공식 검색 URL을 열어 '{query}' 상위 결과(제목·연대·링크)를 "
+            f"표로 정리하면 됩니다. 결과가 있으면 report_template으로 HTML 보고서화도 가능합니다.\n"
             f"공식 검색: {url}")
 
 
@@ -4197,6 +4204,19 @@ def koreanwar_item(ref_code: str, radius: int = 0) -> str:
         if naid:
             out += (f"\n↔ NARA 원본 NAID {naid} (입수처 링크 직결) — "
                     f"https://catalog.archives.gov/id/{naid} 에서 고해상 원본·상세 기술 확인")
+            key = os.environ.get("NARA_API_KEY")
+            if key:  # v1.96.2: 시리즈·파일 단위 링크 오인 방지
+                try:
+                    raw = _cached_text("naid:" + naid, 24 * 3600, lambda: json.dumps(http_json(
+                        f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1", headers={"x-api-key": key})), '"naId"')
+                    hits = (((json.loads(raw).get("body") or {}).get("hits") or {}).get("hits") or [])
+                    lvl = str((((hits[0].get("_source") or {}).get("record") or {}).get("levelOfDescription")) or "") if hits else ""
+                    if lvl and "item" not in lvl.lower():
+                        out += f"\n⚠ 이 NAID는 '{lvl}' 단위(개별 기록 아님) — 협약기관 기록의 원본 낱장은 nara_search(제목·날짜)로 찾아 대조"
+                except Exception:
+                    pass
+        elif rows:
+            out += "\n↔ 입수처 NARA 링크 없음 — 제목·생산시기로 nara_search 대조 필요"
         if rg:
             out += f"\n↔ NARA RG {rg} — nara_search(record_group={rg})로 시리즈 확장 검색"
         return out + (f"\n{url}\n※ '열람 및 이용조건' 행을 judge_rights에 투입해 권리 초판 판정. "

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-22 v1.96.2 — 100선 제작 에이전트 보고 반영(도구 결함 6건)
+- 안내 문구 정리: "에이전트 지시: 이 메시지를 그대로 사용자에게 전달하지 마세요…"가 도구 응답 속 숨은 지시로 오인됨 → 중립 안내("다음 단계: 공식 검색 URL을 열어 표로 정리") — 전 채널 공통
+- judge_rights·nara_search: naid 문자열 입력 허용(숫자로 변환)
+- judge_rights(naid): 첫 객체(작은 GIF 등) 대신 최선 원본(TIFF>JPG/영상>PDF, 큰 파일)·용량 표시
+- koreanwar_item: 입수처 NAID가 시리즈·파일 단위면 경고(예: 530707 = 111-SC 시리즈 전체), NARA 링크가 없으면 대조 필요 안내
+- 한국사DB POST: 'terminated(UND_ERR_RES_CONTENT_LENGTH_MISMATCH)' 간헐 실측 → 3회·백오프·재시도 비압축 요청
+- 스킬 analyze_video.py: 비정방 화소(SAR 10:11·8:9) 보정 — NARA SD 영상 프레임 10% 늘어남 해소(합성 영상 실측 800×587)
+- 100선 Ⅶ부(031~040)·Ⅻ부(081~090) 완성
+
 ## 2026-11-22 v1.96.1 — 영상 특집 제작에서 나온 결함 2건
 - ia_search(identifier=없는 id)가 "Title: undefined"를 내던 문제 → "항목 없음" 명시
 - NARA 디지털 사본 유무 명시: nara_search 목록에 "디지털 사본 없음", judge_rights(naid)에 "디지털 사본 없음 — 디지털 객체 미등록(medialz도 HTML만 반환)" — 정전협정 조인 영상(NAID 76586) 등에서 실측

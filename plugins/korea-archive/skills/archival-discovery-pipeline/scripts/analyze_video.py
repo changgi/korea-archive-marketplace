@@ -62,6 +62,7 @@ def grab(path, t, out, scale=520, crop=None, eq=None, sharp=False):
     if crop:
         w, h, x, y = crop
         vf.append(f"crop=iw*{w}:ih*{h}:iw*{x}:ih*{y}")
+    vf.append("scale=trunc(iw*sar/2)*2:ih,setsar=1")  # v1.96.2: 비정방 화소(SAR 10:11·8:9 등) 보정 — 늘어남 방지
     vf.append(f"scale={scale}:-1")
     if eq:
         vf.append(f"eq=contrast={eq}")
@@ -301,7 +302,7 @@ def cmd_keyscenes(a):
     info = probe(a.video)
     d = info["duration"]
     try:  # 원본보다 크게 뽑지 않는다(업스케일 = 정보 없는 확대)
-        a.scale = min(a.scale, int(str(info["size"]).split(",")[0]))
+        a.scale = min(a.scale, int(str(info["size"]).split(",")[0]) + 80)  # SAR 보정 후 폭이 늘 수 있어 여유
     except ValueError:
         pass
     os.makedirs(os.path.join(a.out, "keyframes"), exist_ok=True)
