@@ -47,6 +47,7 @@ DB = "https://db.history.go.kr"
 SJW = "https://sjw.history.go.kr"
 SILLOK = "https://sillok.history.go.kr"
 KYU = "https://kyudb.snu.ac.kr"
+from html import unescape as _html_unescape
 
 POLITE_DELAY = 0.4          # 요청 간격
 RETRY_WAIT = 20             # 실패 시 대기
@@ -552,9 +553,16 @@ def kyujanggak_search(query: str, area: str = "both") -> dict:
             continue
 
         items = []
+        # v1.96.7: 결과 행 'N. 서명 청구기호 : 奎… 편저자 : … 간행년대 : … 사부분류 : … [본문 : …] 상세정보' 구조 판독(Node kyuRows 패리티)
+        flat = re.sub(r"\s+", " ", _html_unescape(re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)[\s\S]*?</\1>", " ", page, flags=re.I))))
+        for m in re.finditer(r"(?:^|\s)\d{1,3}\.\s+(.{2,140}?)\s+청구기호\s*:\s*(\S{2,40})\s+편저자\s*:\s*(.{1,90}?)\s+간행년대\s*:\s*(.{1,50}?)\s+사부분류\s*:\s*(.{1,80}?)\s+(?:본문\s*:\s*(.{0,400}?)\s+)?상세정보", flat):
+            items.append({"call_number": m.group(2), "title": re.split(r"\s\d{1,3}\.\s+", m.group(1))[-1].strip(),
+                          "author": m.group(3).strip(), "date": m.group(4).strip(), "cls": m.group(5).strip(),
+                          "body": re.sub(r"\.\.\.$", "", (m.group(6) or "")).strip()[:160]})
+        known = {i["call_number"].split("-")[0] for i in items}
         for m in re.finditer(r"(奎[\d軸]+)", page):
             code_no = m.group(1)
-            if code_no not in [i["call_number"] for i in items]:
+            if code_no not in known and code_no not in [i["call_number"] for i in items]:
                 items.append({"call_number": code_no})
         out["sections"][label] = {"count": len(items), "items": items[:30]}
         time.sleep(POLITE_DELAY)

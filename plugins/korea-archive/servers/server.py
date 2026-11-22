@@ -175,6 +175,31 @@ def _ko_en(q):
     return _to_index_lang(q, "en")
 
 
+_TNA_GENERIC = re.compile(r"^(battle|battles|records?|files?|documents?|papers?|the|of|in|and|on|for|a|an)$", re.I)
+
+
+def _tna_variants(q):
+    """v1.96.7: TNA는 단어 전부 일치·어형 그대로 — 'Korean War prisoners' 41 vs 'Korea POW' 216(실측). 표기 변형·일반어 제거 질의 병행. Node 패리티."""
+    s = str(q).strip()
+    if not re.search(r"\s", s) or '"' in s or re.match(r"^[A-Z]+ \d+(/\d+)?$", s):
+        return [s]
+    v = [s]
+
+    def add(x):
+        x = re.sub(r"\s+", " ", x).strip()
+        if x and x not in v:
+            v.append(x)
+    sw = re.sub(r"\bKoreans?\b", "Korea", s)
+    add(sw)
+    pw = lambda x: re.sub(r"\bwar POW\b", "POW", re.sub(r"\bprisoners?\b", "POW", re.sub(r"\bprisoners? of war\b", "POW", x, flags=re.I), flags=re.I), flags=re.I)
+    if pw(sw) != sw:
+        add(pw(sw).replace("Korea War POW", "Korea POW"))
+    core = " ".join(w for w in sw.split(" ") if not _TNA_GENERIC.match(w))
+    if core != sw:
+        add(core)
+    return v[:4]
+
+
 @mcp.tool()
 def tna_search(query: str, max_results: int = 20, year_from: int | None = None,
                year_to: int | None = None, page: int = 1) -> str:
@@ -186,18 +211,37 @@ def tna_search(query: str, max_results: int = 20, year_from: int | None = None,
     en = _ko_en(query)
     eff = en or query
     q = f'"{eff}"' if re.match(r"^[A-Z]+ \d+/\d+$", eff.strip()) else eff
-    recs = []
-    for batch, total in T._search(q, page_size=min(max_results, 100), max_pages=1, sleep=0,
-                                  start_page=page,
-                                  date_from=f"{year_from}-01-01" if year_from else None,
-                                  date_to=f"{year_to}-12-31" if year_to else None):
-        recs += [T._extract(r, "mcp", eff) for r in batch]
+    def _run(qq):
+        rr, tt = [], 0
+        for batch, total in T._search(qq, page_size=min(max_results, 100), max_pages=1, sleep=0,
+                                      start_page=page,
+                                      date_from=f"{year_from}-01-01" if year_from else None,
+                                      date_to=f"{year_to}-12-31" if year_to else None):
+            rr += [T._extract(r, "mcp", eff) for r in batch]; tt = total
+        return rr, tt
+    vs = _tna_variants(q) if page == 1 else [q]
+    recs, total = _run(vs[0])
+    vinfo = []
+    seen_ids = {str(r.get("id") or r.get("reference") or r.get("title")) for r in recs}
+    cap = max_results + -(-max_results // 2)
+    for vq in vs[1:]:
+        try:
+            r2, t2 = _run(vq)
+        except Exception:
+            continue
+        vinfo.append(f"'{vq}' {t2}건")
+        for r in r2:
+            k = str(r.get("id") or r.get("reference") or r.get("title"))
+            if k not in seen_ids and len(recs) < cap:
+                seen_ids.add(k); r = dict(r); r["title"] = f"{r.get('title', '')} ⟨변형 '{vq}'⟩"; recs.append(r)
     tag = f" → 영문 자동 변환 '{eff}'" if en else ""
     yt = f" [연대 {year_from or ''}~{year_to or ''}]" if (year_from or year_to) else ""
     pt = f" (p.{page})" if page > 1 else ""
     hint = ("\n※ 연대 필터는 연대 미상(Date unknown) 기록을 제외합니다 — 무필터로 재시도해 비교하십시오."
             if (year_from or year_to) and not recs else "")
-    return f"TNA 검색 '{query}'{tag}{yt}{pt} — 총 {total}건 중 {len(recs[:max_results])}건:\n" + _fmt(recs, max_results) + hint
+    vnote = (f"\n※ 표기 변형 병행(TNA는 단어 그대로 전부 일치): {' · '.join(vinfo)} — ⟨변형⟩ 표시 행이 원 질의에서 빠졌던 기록. 더 보려면 그 변형으로 재검색."
+             if vinfo else "")
+    return f"TNA 검색 '{query}'{tag}{yt}{pt} — 총 {total}건 중 {len(recs)}건:\n" + _fmt(recs, len(recs)) + hint + vnote
 
 @mcp.tool()
 def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
@@ -2409,6 +2453,15 @@ def _c_kyudb(q, n):
         return []
     sec = (r.get("sections") or {}) if isinstance(r, dict) else {}
     lst = sec.get("목록")
+    if isinstance(lst, dict):  # v1.96.7: sections 값은 {count, items} — 리스트로 가정해 항상 0건이던 결함
+        rows = [x for x in lst.get("items", []) if x.get("title")]
+        if rows:
+            def _ks(c):
+                km = re.match(r"(奎|古|想白|一簑)", c)
+                return {"奎": "규장각도서(奎)", "古": "고도서(古)", "想白": "상백문고", "一簑": "일사문고"}.get(km.group(1)) if km else None
+            return [{"title": f"{x['title']} · {x.get('author', '')}"[:110], "date": x.get("date", ""), "id": x["call_number"],
+                     **({"series": _ks(x["call_number"])} if _ks(x["call_number"]) else {}), "url": "https://kyudb.snu.ac.kr"} for x in rows[:n]]
+        lst = [x.get("call_number") for x in lst.get("items", [])]
     if not isinstance(lst, list):
         return []
     def _kser(t):
@@ -2999,7 +3052,8 @@ def _ktv_mode(query: str, max_results: int) -> str:
         if not items:
             return f"KTV e영상역사관 '{q}' — 0건. '대한뉴스'·사건명·인명으로 재시도하십시오."
         return (f"KTV e영상역사관 '{q}' — {len(items)}건:\n"
-                + "\n".join(f"- [{it.get('series') or 'e영상역사관'}] {it['title']}\n  {it['url']}" for it in items)
+                + "\n".join(f"- [{it.get('series') or 'e영상역사관'}] {it['title']}" + (f" ({it['date']})" if it.get("date") else "")
+                            + (f"\n  요지: {it['desc']}" if it.get("desc") else "") + f"\n  {it['url']}" for it in items)
                 + "\n※ 기록 탭(대한뉴스·문화영화·미공개 대한뉴스·정부기록사진집·국가기록사진) 교차 병합 — 사이트 기본 최신순이 최근 영상만 올리는 문제 보정."
                 + "\n※ view URL을 mode=ktv query로 재투입 → 영상 해설·제작연도·상영시간 판독.")
     except Exception as e:
@@ -3182,14 +3236,21 @@ def _c_ktv(q, n):
         code, label = tab
         b = _http_text(base + (f"&ehistoryStleSe={code}" if code else ""), 28)
         seen, out = set(), []
-        for m in re.finditer(r'href="(https://www\.ehistory\.go\.kr/view/[^"]+)"[^>]*>\s*(?:<[^>]+>\s*)*([^<]{4,80})', b):
+        # v1.96.7: 제목은 <dt><a>…</a></dt> 전체 — 검색어 강조 <span>에서 잘리던 결함 교정. 제작일·요지 동반(Node 패리티)
+        for blk in b.split('<div class="list">')[1:]:
+            m = (re.search(r'<dt>\s*<a href="(https://www\.ehistory\.go\.kr/view/[^"]+)"[^>]*>([\s\S]*?)</a>', blk)
+                 or re.search(r'href="(https://www\.ehistory\.go\.kr/view/[^"]+)"[^>]*>([^<]{4,120})', blk))
+            if not m:
+                continue
             t = _clean(m.group(2)); u = m.group(1).replace("&amp;", "&")
             if not t or re.search(r"paging|overflow", t) or u in seen:
                 continue
             seen.add(u)
             g = (re.search(r"mediagbn=(\w+)", u) or [None, "PT" if "/photo?" in u else ""])[1]
-            out.append({"title": t, "date": "", "id": "", "series": (names.get(g, "e영상역사관") if label == "전체" else label),
-                        "url": u, "_dt": g == "DT"})
+            dt = (re.search(r"제작일\s*:\s*([\d.]{4,10})", blk) or [None, ""])[1].replace(".00", "").rstrip(".")
+            sn = re.sub(r"^\.\.\.\s*|\s*\.\.\.$", "", _clean((re.search(r"<dd>\s*<p>([\s\S]*?)</p>", blk) or [None, ""])[1]))[:90]
+            out.append({"title": t[:110], "date": dt, "id": "", "series": (names.get(g, "e영상역사관") if label == "전체" else label),
+                        "url": u, **({"desc": sn} if sn else {}), "_dt": g == "DT"})
         return out
     lists, errs = [], []
     with _cf.ThreadPoolExecutor(max_workers=6) as ex:
@@ -3293,6 +3354,20 @@ def _c_seoul(q, n):
             out.append({"title": f"[컬렉션] {tt}"[:110], "date": "", "id": "", "url": deep})
             if len(out) >= n:
                 break
+    # v1.96.7: 기록건(사진) 행은 목록에 제목 없음(썸네일만) → 상세 <title>에서 보강(최대 6건 병렬·5s). Node 패리티
+    need = [it for it in out if it["title"].startswith("[기록건·사진]")][:6]
+
+    def _ttl(it):
+        try:
+            h = _http_text(it["url"], 5)
+            m = re.search(r"<title>[^<]*?상세보기\s*-\s*([^<|]{1,120}?)\s*\|", h)
+            if m:
+                it["title"] = (f"[기록건·{'사진' if '/item/' in it['url'] else '기록'}] " + _clean(m.group(1)))[:110]
+        except Exception:
+            pass
+    if need:
+        with _cf.ThreadPoolExecutor(max_workers=6) as ex:
+            list(ex.map(_ttl, need))
     return out
 
 
@@ -3528,7 +3603,13 @@ def _joseon_mode(query: str, mode: str, span: int, n: int) -> str:
                 if "error" in sec:
                     out += f"\n{label}: 오류({sec['error']})"
                 else:
-                    out += f"\n{label}: {sec['count']}건 — " + " ".join(x["call_number"] for x in sec.get("items", [])[:12])
+                    its = sec.get("items", [])
+                    if any(x.get("title") for x in its):
+                        out += f"\n{label}: {sec['count']}건\n" + "\n".join(
+                            f"- [{x['call_number']}] {x['title']} · {x.get('author', '')} · {x.get('date', '')} · {x.get('cls', '')}"
+                            + (f"\n  해제: {x['body']}…" if x.get("body") else "") for x in its[:10])
+                    else:
+                        out += f"\n{label}: {sec['count']}건 — " + " ".join(x["call_number"] for x in its[:12])
             if r.get("alert"):
                 out += "\n★ " + r["alert"]
             return out + '\n■ 원문 이미지 접근 지식(실측 2026-08-18) — GET·web_fetch 불가, ImageServlet 직접 URL은 브라우저에서 열림:\nhttps://kyudb.snu.ac.kr/ImageServlet.do?imgFileNm=[파일명]&path=/data01/stream/[item_cd]/IMG/[book_cd]/[book_cd]_0001/\nitem_cd 5종(자료 성격별): ART 도설·회화 / ETC 두루마리·축 / DRR 등록류 / FND 재정·사목 / POL 정책·절목.\n파일명 2형: 표준 [book_cd]_00_IH_0001_[nnn]a.jpg · POL계 [book_cd]_00IH_0001_[nnnn].jpg (밑줄 없음·4자리).\n★반드시 첫 장 URL을 실제로 받아 패턴 확정 후 순회 — 추정 순회는 전부 실패한다(200 OK·0바이트 함정 포함). 게재는 소장기관 허가 확인(02-880-5316).'
