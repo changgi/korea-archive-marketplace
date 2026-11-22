@@ -2614,11 +2614,36 @@ def _commons_mode(query: str, max_results: int) -> str:
                 f"촬영/제작: {g('DateTimeOriginal')[:40]}" if g("DateTimeOriginal") else "",
                 f"작가: {g('Artist')[:70]}" if g("Artist") else "",
                 f"원본 {ii.get('width')}×{ii.get('height')}" if ii.get("width") else "") if x)
+            nline = ""  # v1.91: 파일명의 NARA 번호 → 카탈로그 원본 자동 대조(실재·계보·Use Restriction)
+            nm = re.search(r"[-_ ]NARA[-_ ]+(\d{5,10})\.\w+$", title, re.I)
+            if nm:
+                naid, key = nm.group(1), os.environ.get("NARA_API_KEY")
+                nline = (f"【NARA 원본 대조】 파일명 NAID {naid} — "
+                         + (f"조회 실패, judge_rights(naid={naid})로 재확인\n" if key else f"서버 키 없음, judge_rights(naid={naid})로 확인\n"))
+                if key:
+                    try:
+                        raw = _cached_text("naid:" + naid, 24 * 3600, lambda: json.dumps(http_json(
+                            f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1", headers={"x-api-key": key})), '"naId"')
+                        hits = (((json.loads(raw).get("body") or {}).get("hits") or {}).get("hits") or [])
+                        rec = ((hits[0].get("_source") or {}).get("record") or {}) if hits else {}
+                        if str(rec.get("naId")) != naid:
+                            nline = f"【NARA 원본 대조】 NAID {naid} — 카탈로그에 없음(파일명 번호 오기 가능) → 업로더 라이선스만으로 게재 판단 금지\n"
+                        else:
+                            ur = rec.get("useRestriction") or {}
+                            urs = ur if isinstance(ur, str) else " · ".join(x for x in (ur.get("status"), ur.get("note"), "/".join(ur.get("specificUseRestrictions") or [])) if x)
+                            cls = ("A(제한 없음 실확인)" if re.search(r"unrestricted", urs, re.I) and not re.search(r"restricted\s*[-–]|possibly|fully restricted", urs, re.I)
+                                   else "C(제한 표기 — 기관 확인 필요)" if re.search(r"restricted", urs, re.I) else "판정 보류(Use Restriction 미기재)")
+                            nline = (f"【NARA 원본 대조】 NAID {naid} 원본 실재 확인 — {_norm(rec.get('title') or '')[:110]}\n"
+                                     f"  계보: {_nara_chain(rec) or '—'} · 생산: {_nara_date(rec) or '—'} · 소장 번호: {rec.get('localIdentifier') or '—'}\n"
+                                     f"  Use Restriction '{urs or '미기재'}' → {cls} · https://catalog.archives.gov/id/{naid}\n")
+                    except Exception:
+                        pass  # 실패 — 기본 안내 유지
             return (f"위키미디어 공용 파일 판독 — {title.removeprefix('File:')}\n{meta}\n"
                     f"라이선스: {lic or '(미표기)'} → 권리 초판정 {rights}\n"
                     + (f"출처(원 소장처): {g('Credit')[:160]}\n" if g("Credit") else "")
                     + (f"【설명】\n{g('ImageDescription')[:1200]}\n" if g("ImageDescription") else "")
-                    + (f"원본 이미지: {ii.get('url')}\n" if ii.get("url") else "")
+                    + nline
+                    + (f"원본 이미지: {str(ii.get('url')).split('?')[0]}\n" if ii.get("url") else "")
                     + "파일 페이지: https://commons.wikimedia.org/wiki/" + _up.quote(title.replace(" ", "_")) + "\n"
                     + "※ 라이선스는 업로더 기재 — 게재 전 원 소장처(NH·NARA 번호 등) 카탈로그와 교차검증(nara_search·judge_rights).")
         items = _c_commons(q, min(max_results, 10))

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-22 v1.91.0 — 공용 파일 판독에 NARA 원본 자동 대조(증거성 강화)
+- nedb_search(mode=commons) File 판독: 파일명에 NARA 번호(`… - NARA - 520782.tif`)가 있으면 NARA 카탈로그를 직접 조회해 【NARA 원본 대조】 표시 — 원본 실재·제목·계보(RG › 시리즈)·생산일·소장 번호·Use Restriction → A/C 판정·카탈로그 링크
+- 번호가 카탈로그에 없으면 "파일명 번호 오기 가능 — 업로더 라이선스만으로 게재 판단 금지" 경고 (6s·24h 캐시, cross_search 원본확인과 캐시 공유)
+- 원본 이미지 링크의 `?utm_…` 추적 꼬리 제거 (cross_search와 동일한 영속 URL)
+- 의의: 업로더가 적은 라이선스(2차 정보)를 원 소장처 기록(1차 정보)으로 자동 검증 — 지난 라운드 카드뉴스 이미지 26장 중 Commons 경유분을 손으로 대조하던 절차의 자동화
+
 ## 2026-11-22 v1.90.3 — 공공누리 영문 표기("KOGL Type 1") 판독 교정
 - 결함(v1.90.2 발견): 권리 판독기가 Commons 등 해외 표기 "KOGL Type 1"·"Korea Open Government License Type 2"를 공공누리로 인식하지 못해 D(확인 필요)로 판정
 - 교정: 공공누리 정규식에 `Type`·정식 영문명 허용 — lib/rights.js · kla/ledger.py(2부) 동일 반영
