@@ -2370,10 +2370,24 @@ def _c_awm(q, n):
     return out
 
 
+def _jsg_text(url, t=25):
+    """v1.96.6: 장서각 병렬 호출 간헐 403 — 백오프 3회(0.9s·1.8s) 후 실패 보고(같은 요청을 늦춰 재시도). Node jsgText 패리티."""
+    e0 = None
+    for k in range(3):
+        try:
+            return _http_text(url, t)
+        except Exception as e:
+            e0 = e
+            if not re.search(r"(403|429|5\d\d)", str(e)):
+                break
+            __import__("time").sleep(0.9 * (k + 1))
+    raise e0
+
+
 def _c_jsg(q, n):
     """AKS 장서각 — ★검색 파라미터는 q=query|<어> (플레인 q는 무시되고 전체 열람 반환 —
     Playwright 실브라우저 재역공학으로 확정, 2026-11-20)."""
-    b = _http_text("https://jsg.aks.ac.kr/search/group?q=" + _up.quote("query|" + q), 28)
+    b = _jsg_text("https://jsg.aks.ac.kr/search/group?q=" + _up.quote("query|" + q), 28)
     out, seen = [], set()
     for m in re.finditer(r'href="/dir/view\?dataId=([^"]+)"[^>]*>([\s\S]*?)</a>', b):
         t = _clean(m.group(2))
@@ -2778,17 +2792,26 @@ def _jsg_mode(query: str, max_results: int) -> str:
     """장서각 심층 — 키워드 목록 / 청구기호·URL 서지+해제 전문 판독(서버 렌더 실측 2026-11-21). Node 패리티."""
     q = query.strip()
     try:
-        dm = (re.search(r"dataId=(JSG_[\w.\-]+)", q) or re.match(r"^(JSG_[\w.\-]+)$", q)
-              or re.match(r"^([A-Z]\d+(?:-\d+)*(?:[A-Za-z]*\d*)?)$", q))
-        if dm and not re.search(r"\s", q) and (dm.group(1).startswith("JSG_") or re.match(r"^[A-Z]\d", dm.group(1))):
-            did = dm.group(1) if dm.group(1).startswith("JSG_") else "JSG_" + dm.group(1)
+        du = re.search(r"dataId=([^&\s#]+)", q)  # v1.96.6: 고문서(ANC_…)·기타 접두 dataId도 상세 판독
+        g1 = _up.unquote(du.group(1).replace("+", "%2B")) if du else None
+        if not g1:
+            dm = re.match(r"^((?:JSG|ANC)_[\w.+\-]+)$", q) or re.match(r"^([A-Z]\d+(?:-\d+)*(?:[A-Za-z]*\d*)?)$", q)
+            g1 = dm.group(1) if dm else None
+        if g1 and not re.search(r"\s", q) and (re.match(r"^[A-Z]{3}_", g1) or re.match(r"^[A-Z]\d", g1)):
+            did = g1 if re.match(r"^[A-Z]{3}_", g1) else "JSG_" + g1
             b = _cached_text("jsgD:" + did, 24 * 3600,
-                             lambda: _http_text("https://jsg.aks.ac.kr/dir/view?dataId=" + _up.quote(did), 25), "청구기호")
-            flat = _clean(b).replace("&middot;", "·")
+                             lambda: _jsg_text("https://jsg.aks.ac.kr/dir/view?dataId=" + _up.quote(did, safe=""), 25), "청구기호")
+            flat = re.sub(r"\s*한국역대인물(?!정보)", "", _clean(b).replace("&middot;", "·"))  # v1.96.6: 인명 뒤 링크 라벨 제거
             pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
-            name = pick(r"자료명\(한글\)\s*([^·]{2,60}?)\s*·")
+            name = pick(r"자료명\(한글\)\s*([^·]{2,60}?)\s*·") or pick(r"자료명\s+(.{2,60}?)\s+(?:xml|저자)")
+            gx = []
+            for k, rx in (("소장", r"소장정보\s+(.{4,90}?)\s+·"), ("집성", r"집성정보\s+(.{4,90}?)\s+(?:·|형태사항)"),
+                          ("형태", r"형태사항\s+(.{4,90}?)\s+\d{5}\s"), ("출판", r"출판정보\s*:\s*(.{4,90}?)\s*/")):
+                v = pick(rx)
+                if v and did.startswith("ANC_"):
+                    gx.append(f"{k}: " + re.sub(r"\s*·\s*", " · ", v).strip(" ·"))  # 고문서 메타
             callno = pick(r"청구기호\s*(\S{2,20})")
-            mf = pick(r"MF번호\s*(\S{2,20})")
+            mf = pick(r"MF번호\s*(?!유형분류)(\S{2,20})")
             cm = re.search(r"유형분류\s*(\S{2,20})\s*주제분류\s*(\S{2,30})\s*수집분류\s*(\S{2,30})", flat)
             i0 = flat.find("정의 ")
             haeje = ""
@@ -2802,10 +2825,11 @@ def _jsg_mode(query: str, max_results: int) -> str:
                 return f"'{did}' — 상세 미발견 또는 구조 상이. 청구기호(K2-…)를 확인하거나 mode=jsg에 검색어를 넣으십시오."
             meta = " · ".join(x for x in (f"청구기호 {callno}" if callno else "", f"MF {mf}" if mf else "",
                                           cm.group(1) if cm else "", cm.group(2) if cm else "") if x)
-            return (f"장서각 서지·해제 판독 — {name or did}\n{meta}\n"
+            return (f"장서각 서지·해제 판독 — {name or did}\n{meta}\n" + ("\n".join(gx) + "\n" if gx else "")
                     + (f"【해제】\n{haeje}\n" if haeje else "")
                     + (f"본문 지문(sha256-16): {jfp} — 판독 시점 해제 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if haeje else "")
-                    + f"원문·이미지: https://jsg.aks.ac.kr/dir/view?dataId={_up.quote(did)}\n"
+                    + f"원문·이미지: https://jsg.aks.ac.kr/dir/view?dataId={_up.quote(did, safe='')}\n"
+                    + ("※ 고문서 원문 이미지 이용 문의: 장서각 자료보존관리팀 031-730-8874 · 고문서자료관 원자료 병행 확인.\n" if did.startswith("ANC_") else "")
                     + "※ 출처: 한국학중앙연구원 장서각 — 게재 시 출처 표기, 이미지 재이용은 기관 이용조건 준수. "
                     "해제 인용은 국역·해설(학술 인용 시 집필 해제임을 명기).")
         items = _c_jsg(q, min(max_results, 10))
