@@ -1999,15 +1999,15 @@ def _c_ndl(q, n):
         with _ur.urlopen(req, timeout=25) as r:
             return r.read().decode("utf-8", "replace")
     # v1.96: 수천 건 일치 시 표제 가나순 — 당대 자료(until=1945) 병행, 검색어(신·구자체) 포함 표제 우선
-    try:
-        req = _ur.Request(f"https://ndlsearch.ndl.go.jp/api/opensearch?title={_up.quote(ja)}&until=1945&cnt={min(n * 3, 30)}",
+    try:  # v1.96.5: 타임박스 대응 — 당대 질의 단축(5s), 충분하면 일반 질의 생략
+        req = _ur.Request(f"https://ndlsearch.ndl.go.jp/api/opensearch?title={_up.quote(ja)}&until=1945&cnt={min(n * 2, 20)}",
                           headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
-        with _ur.urlopen(req, timeout=25) as r:
+        with _ur.urlopen(req, timeout=6) as r:
             bc = r.read().decode("utf-8", "replace")
     except Exception:
         bc = ""
     try:
-        ba = ndlq("title")
+        ba = "" if bc.count("<item>") >= n else ndlq("title")
     except Exception:
         ba = ""  # 동시접속 제한 등 — 당대 자료 결과만으로 진행
     b = (re.sub(r"</channel>[\s\S]*$", "", bc) if "<item>" in bc else "") + ba
@@ -2039,9 +2039,10 @@ def _c_ndl(q, n):
 
 def _c_un(q, n):
     """UN 디지털도서관 — Invenio of=xm(MARCXML) 무키 실측(2026-11-21). 안보리 결의·공식문서. UN Archives(AtoM)와 별개."""
-    en = _to_index_lang(q, "en") or q
+    qsym = q.strip().upper() if re.match(r"^[A-Z]{1,4}(/[A-Z0-9.()-]+)+$", q.strip(), re.I) else ""  # v1.96.5 문서기호
+    en = f'191:"{qsym}"' if qsym else (_to_index_lang(q, "en") or q)
     # _http_text의 X-Requested-With 헤더에 Invenio가 빈 응답(실측) — 일반 헤더로 직접 요청
-    req = _ur.Request(f"https://digitallibrary.un.org/search?p={_up.quote(en)}&of=xm&rg={min(n, 10)}",
+    req = _ur.Request(f"https://digitallibrary.un.org/search?p={_up.quote(en)}&of=xm&rg={50 if qsym else min(n, 10)}",
                       headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
     with _ur.urlopen(req, timeout=25) as r:
         b = r.read().decode("utf-8", "replace")
@@ -2062,8 +2063,11 @@ def _c_un(q, n):
                     "id": sym or rm.group(1),
                     **({"series": "/".join(sym.split("/")[:2])} if sym and "/" in sym else {}),
                     "url": "https://digitallibrary.un.org/record/" + rm.group(1)})
-        if len(out) >= n:
+        if len(out) >= (50 if qsym else n):
             break
+    if qsym:  # 기호 정확 일치 우선(191 필드는 접두 일치 — 실측)
+        out.sort(key=lambda it: 0 if it["title"].startswith(f"[{qsym}]") else 1)
+        return out[:n]
     return out
 
 
@@ -3214,15 +3218,20 @@ def _c_earchive(q, n):
 
 def _c_jacar(q, n):
     """일본 아시아역사자료센터(JACAR) — GET 검색 실측(2026-11-19, docs/jacar-access-spec.md). 파라미터는 kw."""
-    en = _ko_ja(q) or _ko_en(q) or q  # 일본어 사상 우선 → 영어 → 원문
-    b = _http_text("https://www.jacar.archives.go.jp/aj/search-en?kw=" + _up.quote(en), 30)
+    # v1.96.5: 일문·한자 입력이 영문으로 바뀌던 결함 — 한글 없는 입력·한→일 사상은 일본어 검색(/aj/search)
+    hg = re.search(r"[\uac00-\ud7a3]", q)
+    ja = _ko_ja(q) if hg else q
+    use_ja = bool(ja) and not re.search(r"[\uac00-\ud7a3]", ja)
+    kw = ja if use_ja else (_ko_en(q) or q)
+    b = _http_text(f"https://www.jacar.archives.go.jp/aj/{'search' if use_ja else 'search-en'}?kw=" + _up.quote(kw), 30)
     out = []
     for blk in b.split('<li class="archive-result-table__body-item"')[1:]:
         c = re.search(r'value="aj\d+/([A-Z]\d{11})"', blk)
         t = re.search(r'id="row-\d+-title"[\s\S]*?<span\s*>([^<]{3,150})', blk)
+        dm = re.search(r"((?:明治|大正|昭和)[０-９\d]+年(?:[^<]{0,14}?年)?)", blk)
         if c and t:
-            out.append({"title": _clean(t.group(1)), "date": "", "id": c.group(1),
-                        "url": "https://www.jacar.archives.go.jp/das/meta-en/" + c.group(1)})
+            out.append({"title": _clean(t.group(1)), "date": dm.group(1) if dm else "", "id": c.group(1),
+                        "url": "https://www.jacar.archives.go.jp/das/meta" + ("" if use_ja else "-en") + "/" + c.group(1)})
         if len(out) >= n:
             break
     return out
