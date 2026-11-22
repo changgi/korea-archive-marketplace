@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.1.0 — TNA 실제 계층 IIIF · 하위 기록 펼치기 (2026-11-22)
+- /iiif/tna/{C-id}/manifest.json(lib/tna_iiif.js): Discovery parentId를 따라 실제 계보(부서 › 분과 › 시리즈 › 피스) 복원 → metadata·partOf, 참조번호·기간·소장·법적 지위·공개 상태·이전 참조·기술 지문·판독 시각, 기록 카드 캔버스(디지털 사본은 rendering 안내).
+- /iiif/tna/{C-id}/collection.json: 하위 기록 — 하위 계층은 컬렉션, 말단은 기록 봉투(토큰에 제목·참조·기간·계보 봉인 → 추가 요청 없이 열림). 부모 캐시로 컬렉션 1회 = TNA 2~8요청.
+- 도구: tna_search 결과 끝에 계층·IIIF 주소, cross_search format='iiif'·'manifest'가 TNA를 브리지로(기록 봉투 대신 실제 계층) — 패리티.
+- KV: 하위 컬렉션 자동 펼치기 상한 30(기관 서버 예의) — 나머지는 폴더로 남겨 누를 때 연다.
+
 ## v2.0.0 — 기록 봉투 IIIF: IIIF가 없는 모든 기록을 IIIF로 구축 (2026-11-22)
 - /iiif/rec/{token}/manifest.json·card.svg·record.jsonld(lib/rec_iiif.js) — 토큰=발견한 기록의 봉인된 기술(출처·식별자·연대·계열·원 기관 URL·원본 매체·발견 질의·발견 시각), raw deflate+base64url, 서버 저장 없음·불변 캐시.
   계층 구축('기관 › 계열 › 기록' — 원 기관 계층이 없으면 구축 표시), 증거성(발견 경로·시각·봉투 지문 sha256-16), 원본 이미지가 있으면 그 이미지·없으면 기록 카드(실제 기술 메타데이터만), RiC-O+PROV(발견 행위=prov:Activity).
