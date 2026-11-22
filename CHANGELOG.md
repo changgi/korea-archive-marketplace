@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.97.3 — KV 전체 연속 보기 · 이름 통일 (2026-11-22)
+- KV (Korea Archive Viewer): 컬렉션을 열면 모든 기록의 장 목록을 미리 받아(동시 6) 한 줄로 이음 — ‹ ›·← →·자동 넘김이 기록(챕터) 경계를 넘어 다음·이전 기록으로 계속, 아래 썸네일 띠 = 전체(기록 경계 번호), '전체 n / 800' 표시, 마지막 장에서만 멈춤. 이전엔 한 기록 안에서만 넘어감.
+- 이름 통일: 'KA 뷰어' 표기 제거 → KV (Korea Archive Viewer). 안내(kind='iiif')·format='iiif' 안내 갱신(패리티).
+
 ## v1.97.2 — 자체 IIIF 뷰어 KV(KA 뷰어, Korea Archive Viewer) (2026-11-22)
 - GitHub Pages kv.html: 어떤 기관의 IIIF든(Presentation 2·3 매니페스트·컬렉션·중첩 컬렉션) 여는 자체 뷰어 — IIIF Image API 딥줌(서비스 없으면 정지 이미지), 컬렉션 목록·거르기, 메타데이터·권리·출처·원 기관 링크 패널, ⧉ 두 창 나란히 비교(Mirador식), 자동 넘김(컬렉션이면 다음 기록으로 이어짐), 회전·전체 화면·공유 링크(?manifest=&canvas=&compare=&collection=), 드래그&드롭, 모바일.
 - IIIF 갤러리: 시리즈·확대 화면에 'KV로 열기', 전체를 KV·Mirador·Universal Viewer로 열기(컬렉션 — 실측 정상).
