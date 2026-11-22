@@ -371,7 +371,7 @@ JB_STRAT = {
 ③ 조선 제도·고문헌: nedb law(법전 근거)→★sibling(형제 조 전수)→sjw(최초 용례) → kyujanggak(목록+해제)·jsg(청구기호→해제 전문) → aks(문중 고문서) → 인용 2층위 준수.
 ④ 일제강점기 정책·기관: ndl(총독부 간행물·통계연보·관보) ⇄ jacar(공문서 메타·인접 ±100) → nedb(한국사DB)·earchive('키워드|순번' 이용조건) → i815(민족 측 시각 대조).
 ⑤ 도시·공간사(서울 등): seoul_archives_search(기록 단위→상세 URL 판독) → heritage(국보·사적+해설 전문 — 공간의 유산 맥락) → archives → ktv(view URL 판독) → much(실물·포스터) → commons·ia(항공·거리 사진) → cities 열쇠(Keijo·1914 경계).
-⑥ 사진·영상·실물 소싱(게재용): commons(File 판독 — PD→A, 원본 고해상) → ia(radius) → nara(naid 실확인) → ktv(KOGL) → much(공공누리 자동판정 — 포스터·실물) → heritage(유산 해설·공공누리) → 게재윤리 4단계·출처 표기.
+⑥ 사진·영상·실물 소싱(게재용): commons(File 판독 — PD→A, 원본 고해상) → ia(radius) → nara(naid 실확인) → ktv(공공누리 표시 확인 — 영상은 무표시 多) → much(공공누리 자동판정 — 포스터·실물) → heritage(유산 해설·공공누리) → 게재윤리 4단계·출처 표기.
 ※ 각 단계의 투입 형식은 cross_search 푸터와 nedb_search 설명이 안내. 전 산출물 제작은 "풀패키지".""",
     'allies': """한국전 참전·지원국 발굴 지도 — 22개국 소스 매핑 (◉=보유 소스 직행 / ○=대체 경로)
 ◉ 미국: nara(RG 111·127·242·342·428)·ia·earchive(국내 수집 원문) ◉ 영국: tna(WO 281 부대 전쟁일지·ADM·AIR)
@@ -2846,7 +2846,7 @@ def _ktv_mode(query: str, max_results: int) -> str:
                     + (f"【해설】\n{body}\n" if body else "")
                     + (f"본문 지문(sha256-16): {kfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if kfp else "")
                     + f"원문(영상 재생): {q}\n"
-                    + '※ KTV 콘텐츠는 KOGL(공공누리) — judge_rights에 "KOGL" 표기로 초판정. 게재 시 출처 표기.')
+                    + '※ 권리: 페이지의 공공누리 표시를 확인 — 사진은 표시 유형대로(제4유형=변경·상업 금지), 영상 페이지에 표시가 없으면 KTV 나누리(nanuri.ktv.go.kr) 이용 신청 후 사용(2026-11 실측: 「대한뉴스의 발자취」 영상 무표시). 표시 유형을 judge_rights에 넣어 초판정.')
         items = _c_ktv(q, min(max_results, 10))
         if not items:
             return f"KTV e영상역사관 '{q}' — 0건. '대한뉴스'·사건명·인명으로 재시도하십시오."
@@ -3121,10 +3121,27 @@ def _c_seoul(q, n):
     return out
 
 
+
+def _open_go_status(q=""):
+    """v1.93: 정보공개포털 상태 실측 — 2026-11-12부터 원문정보 메뉴 '점검 중'. 막힌 사실·기간과 점검 중 가능한 경로를 알린다."""
+    try:
+        t = _clean(_http_text("https://www.open.go.kr/othicInfo/infoList/orginlInfoList.do?searchKeyword=" + _up.quote(q or ""), 12))
+    except Exception as e:
+        return False, f"정보공개포털 응답 실패({e})"
+    if re.search(r"메뉴 점검|점검 중인 메뉴", t):
+        per = (re.search(r"제한 기간\s*([^.]*?\d{4}\.\d{1,2}\.\d{1,2}\.[^재]{0,30})", t) or [None, ""])[1]
+        return True, ("정보공개포털 원문정보 메뉴 점검 중" + (f"(제한 기간 {per.strip()})" if per else "")
+                      + " — 포털 공지: 점검 기간에도 자료 보유 기관에 정보공개청구 가능, 진행은 '신청내역조회'에서 확인")
+    return False, ""
+
 def _c_foia(q, n):
     """정보공개 원문 라이브 채널: 서울정보소통광장 결재문서 — 전용 도구(foia_search)와 동일 경로."""
     # 기지 차단(연결 리셋) — 단발 6s fail-fast로 health·연합 탐침 시간 보호. 복구 시 자동 정상화
-    b = _http_text("https://opengov.seoul.go.kr/sanction/list?searchKeyword=" + _up.quote(q), 6)
+    try:
+        b = _http_text("https://opengov.seoul.go.kr/sanction/list?searchKeyword=" + _up.quote(q), 6)
+    except Exception as e:
+        _, msg = _open_go_status(q)
+        raise RuntimeError(f"서울정보소통광장 연결 실패({e})" + (f" · {msg}" if msg else "") + " → foia_search로 청구 경로 안내")
     seen, out = set(), []
     for m in re.finditer(r'<a[^>]+href="(/sanction/\d+)"[^>]*>(.*?)</a>', b, re.S):
         t = re.sub(r"^제목\s*:\s*", "", _clean(m.group(2)))
@@ -3611,7 +3628,7 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     aks=한국고문서자료관(소장처 172곳→분류→문서 면·썸네일) · jacar=일본 아시아역사자료센터(한→일 변환 검색·레퍼런스코드 메타 직행·±span×100 인접) ·
     gonghun=공훈전자사료관 독립유공자(query=이름 검색→mngNo 숫자 투입 시 공적조서·공훈록 본문 판독) ·
     i815=독립기념관(키워드 목록 · detail.do URL=자료 본문 · '사전:이름/번호'=한국독립운동인명사전 전기·생몰·훈격) ·
-    ktv=KTV e영상역사관(키워드 목록→ehistory view URL 투입 시 영상 해설·상영정보 판독, KOGL) ·
+    ktv=KTV e영상역사관(키워드 목록→ehistory view URL 투입 시 영상 해설·상영정보 판독, 공공누리 표시 확인) ·
     earchive=국편 전자사료관(키워드 목록→'키워드|순번' 투입 시 상세: 열람·이용조건·등록번호) ·
     commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독) ·
     jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독) ·
@@ -4106,6 +4123,13 @@ def foia_search(query: str, source: str = "open_go") -> str:
     src = source.strip().lower()
     if src == "open_go" or not src:
         url = "https://www.open.go.kr/othicInfo/infoList/orginlInfoList.do?searchKeyword=" + _up.quote(query)
+        maint, msg = _open_go_status(query)
+        if maint:
+            return (f"정보공개포털 '{query}' — 실측 결과: {msg}.\n"
+                    "➤ 지금 할 수 있는 것: ① 문서를 가진 기관을 특정해 정보공개청구(https://www.open.go.kr — 청구는 점검 중에도 가능) "
+                    "② 서울시 결재문서는 foia_search(source='seoul_opengov') 재시도(현재 연결 시간 초과가 잦음) "
+                    "③ 이미 공개된 기록물은 archives_search(국가기록원)·seoul_archives_search(서울기록원)로 같은 주제를 먼저 찾는다.\n"
+                    f"원문정보 검색(점검 해제 후): {url}")
         return (_agent_browse("정보공개포털(원문정보공개)", query, url)
                 + "\n※ 미공개 문서는 포털에서 정보공개청구로 요청.")
     if src == "seoul_opengov":
