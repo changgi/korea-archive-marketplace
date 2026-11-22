@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.98.0 — 맥락·증거성·데이터화·다매체: NARA→IIIF 브리지 + 갤러리 계층 (2026-11-22)
+- NARA→IIIF 브리지(공개 엔드포인트): /iiif/nara/{NAID}/manifest.json — 계보(ancestors) metadata + partOf(상위 컬렉션), 판독 시각·범위·내용 기술 sha256-16·이용/접근 제한 원문·소장단위·rights(NoC-US/UND), navDate, 표시 이미지=캔버스(Range 128KB로 크기 판독)·TIFF/PDF/영상=rendering. /collection.json=시리즈·파일단위 하위 기록(계보 대조 확인분만) · /record.jsonld=RiC-O. IIIF 검증기 okay(매니페스트 2·컬렉션 1).
+- nara_search(naid, output='iiif') · cross_search format='iiif'/'manifest'에 NARA 브리지·기관 IIIF 주소(iiif 필드) — 패리티.
+- 갤러리 IIIF: hierarchy.json(최상위 › 부 16 › 시리즈 129 › 이미지 800) · 매니페스트 partOf · 캔버스 seeAlso(출처 대장)·sha256 고정성·navDate·권리 근거·NARA 원 계보(브리지 RiC-O에서 81건). 데이터 내보내기 records.csv·records.jsonld(RiC-O·PROV·owl:sameAs).
+- KV: 중첩 컬렉션(계층) 펼쳐 연속 보기, 기본값=hierarchy.json, 목록에 부 머리말. NARA 시리즈 컬렉션도 연속 열람(실측 100기록 117장).
+
 ## v1.97.3 — KV 전체 연속 보기 · 이름 통일 (2026-11-22)
 - KV (Korea Archive Viewer): 컬렉션을 열면 모든 기록의 장 목록을 미리 받아(동시 6) 한 줄로 이음 — ‹ ›·← →·자동 넘김이 기록(챕터) 경계를 넘어 다음·이전 기록으로 계속, 아래 썸네일 띠 = 전체(기록 경계 번호), '전체 n / 800' 표시, 마지막 장에서만 멈춤. 이전엔 한 기록 안에서만 넘어감.
 - 이름 통일: 'KA 뷰어' 표기 제거 → KV (Korea Archive Viewer). 안내(kind='iiif')·format='iiif' 안내 갱신(패리티).
