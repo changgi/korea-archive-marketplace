@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-22 v1.96.4 — 100선 Ⅺ·XV부 보고 반영
+- source_profile: 상세 프로파일 없는 18곳(jacar·earchive·awm·nlna·dnz·nzarch·commons·un·ndl·i815·gonghun·ktv·oldnews·much·indy·heritage·kyudb·jsg·aks)에 간이 프로파일(검색 경로·상세 판독·권리) — "프로파일 없음" 해소
+- 신문아카이브: 띄어쓴 다어절 질의 0건이면 가장 긴 단어로 완화 재검색(실측 '독립신문 창간' 0건)
+- nedb_search(mode=commons): 퍼센트 인코딩된 File URL(File%3A…) 허용
+- nedb_search(mode=ktv): 사진 상세 URL은 '사진 판독' — 공공누리 유형·원본 이미지 경로 표시(영상 판독에도 유형 표기)
+- archives_search: API 정상 0건을 'API 오류'로 표기하던 문제 교정
+- judge_rights 인접 채굴 안내를 실제 호출 가능한 형식(nara_search(query='', naid, radius))으로
+- 100선 Ⅺ부(071~080)·XV부(111~120) 완성
+
 ## 2026-11-22 v1.96.3 — 100선 Ⅷ·Ⅸ·XIV부 보고 반영
 - 공공누리 4유형 표시 원칙 강화(제작 킷·30선 생성기): 원본 위에 글·그라데이션·테두리·블러 배경을 얹지 않음 — 이미지 영역과 글 영역 분리, 모음 라벨은 이미지 아래, 사실·CTA 배경은 단색. 30선 24·25·26·28·07·08·11과 100선 해당 시리즈 재렌더
 - Gallica 폴백: BnF 카탈로그 'all' 질의가 0건이면 핵심어 2개로 완화(실측 'Corée 1866 expédition'·'Souvenir de Séoul' 0건→복구), 그래도 0건이면 그 사실을 명시

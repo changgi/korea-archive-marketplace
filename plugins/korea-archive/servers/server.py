@@ -41,6 +41,8 @@ def _dom_groups(mod):
             return getattr(mod, _n)
     return []
 
+QUICK_PROFILES = {'jacar': ['일본 아시아역사자료센터 JACAR', 'cross_search(sources=jacar) — 한→일 변환·레퍼런스코드', "nedb_search(mode=jacar, 'A0401…') 상세 + ±8×100 인접 채굴, 원본 PDF는 国立公文書館 뷰어", 'JACAR 이용약관: 출처(센터·소장관·레퍼런스코드) 표기 조건 2차 이용 원칙 허용'], 'earchive': ['국사편찬위원회 전자사료관', 'cross_search(sources=earchive)', "nedb_search(mode=earchive, '키워드|순번') — 열람·이용조건·등록번호", '사료별 이용조건 표기(공개/제한적 이용) — 원 소장처 권리 확인'], 'awm': ['호주 전쟁기념관 AWM', 'cross_search(sources=awm) — 최대 10건 상세', 'awm.gov.au/collection/C… 페이지(공개 이미지 최대 640px)', "'Copyright expired - public domain' 표기분만 게재"], 'nlna': ['네덜란드 국립문서보관소', 'cross_search(sources=nlna) — 문서군(inventaris)', '사진은 Europeana dataset 1417 → nationaalarchief.nl 원본(TIFF 16비트 주의)', 'Anefo 등 CC0/Publiek Domein 다수 — 사진별 확인'], 'dnz': ['디지털NZ DigitalNZ', 'cross_search(sources=dnz) — NZ 30여 기관 집계', '각 제공기관 페이지(usage·rights 필드)', '재이용 표기(No known restrictions·CC) 확인 — Papers Past 1950년대는 usage Unknown 다수'], 'nzarch': ['뉴질랜드 기록원 Archives NZ', 'cross_search(sources=nzarch) — 라이브 실패 시 주간 정적 인덱스', "nedb_search(mode=nzarch, 'R22438362') — R번호 상세", '기록별 접근 상태(Open 등) — 본 사이트는 봇 차단(Incapsula)'], 'commons': ['위키미디어 공용', 'cross_search(sources=commons)', 'nedb_search(mode=commons, File URL) — 라이선스·원 소장처, NARA 번호면 원본 자동 대조', '업로더 표기는 2차 정보 — 원 소장처 카탈로그로 확정'], 'un': ['UN 디지털도서관', 'cross_search(sources=un) — 문서기호 시리즈', 'nedb_search(mode=un, recid) — 요약·주제·PDF 6개 언어', 'UN 공식문서는 퍼블릭 도메인(ST/AI/189/Add.9/Rev.2)'], 'ndl': ['일본 국립국회도서관 NDL', 'cross_search(sources=ndl) — 당대 자료(~1945) 우선', "dl.ndl.go.jp IIIF(<pid>/R<7자리>) — 'Access Restrictions: PDM' 확인", 'PDM(보호기간 만료) 표기분 자유 이용 · 동시 요청 시 429'], 'i815': ['독립기념관 한국독립운동정보시스템', 'cross_search(sources=i815)', "nedb_search(mode=i815, 상세 URL) 본문 · '사전:이름' 인명사전", '공공누리 표시 없는 원문이미지는 사전 협의 대상(041-560-0445)'], 'gonghun': ['공훈전자사료관(국가보훈부)', 'cross_search(sources=gonghun) — 이름', 'nedb_search(mode=gonghun, mngNo) — 공적조서·공훈록 전문', '공훈록 텍스트 인용 시 출처 표기 · 인물 사진은 수형 사진 제외'], 'ktv': ['KTV e영상역사관', 'cross_search(sources=ktv) — 기록 탭(대한뉴스·문화영화·사진집) 병합', 'nedb_search(mode=ktv, view URL) — 영상 해설 / 사진 판독(공공누리 유형·원본 경로)', '사진은 표시 유형대로(4유형=원형) · 영상 무표시분은 KTV 나누리 신청'], 'oldnews': ['대한민국신문아카이브(국립중앙도서관)', 'cross_search(sources=oldnews) — 단일 핵심어가 잘 걸림(띄어쓴 다어절은 완화 재검색)', "nedb_search(mode=oldnews, CNTS-…) 색인어 · '본문:…|연대' OCR", '1946년 이전 지면 보호기간 만료 — 국립중앙도서관 출처 표기'], 'much': ['대한민국역사박물관 근현대사아카이브', 'cross_search(sources=much)', 'nedb_search(mode=much, idnbr) — 재질·크기·공공누리 유형·원본 이미지 링크', '공공누리 유형(4유형=변경금지·비상업) 준수'], 'indy': ['국가기록원 독립운동판결문', 'cross_search(sources=indy) — 이름(동명이인 주의)', 'nedb_search(mode=indy, 상세 URL) — 죄명·주문·사건개요·원문 뷰어', '판결문은 저작권법 제7조 비보호 저작물 — 국가기록원 출처 표기'], 'heritage': ['국가유산청 국가유산포털', 'cross_search(sources=heritage) — 지정 종목', "nedb_search(mode=heritage, 'kdcd-asno-ctcd') — 해설·원본 이미지 목록", '사진은 공공누리 유형 확인 후 이용'], 'kyudb': ['서울대 규장각한국학연구원', 'cross_search(sources=kyudb)', 'nedb_search(mode=kyujanggak) — 목록+해제(절목류는 해제에서)', '원문 이미지 게재는 기관 허가(02-880-5316)'], 'jsg': ['한국학중앙연구원 장서각', 'cross_search(sources=jsg)', 'nedb_search(mode=jsg, K2-…) — 서지·해제 전문', '이미지 게재는 공문 신청·허가 대상'], 'aks': ['한국고문서자료관', 'cross_search(sources=aks) — 172개 소장처', 'nedb_search(mode=aks) — 소장처→분류→문서 면', '사이트 재이용 조건 미표기 — 게재 전 기관 확인']}  # v1.96.4: 상세 프로파일 없는 18곳 간이 프로파일
+
 mcp = FastMCP("korea-archive")
 
 def _fmt(recs: list[dict], limit: int) -> str:
@@ -505,7 +507,7 @@ def judge_rights(rg_series: str = "", title: str = "", archive: str = "", naid: 
                        else "디지털 사본 없음 — 카탈로그에 디지털 객체 미등록(medialz URL도 HTML만 반환 실측) · 열람은 소장단위에 복제 청구\n")
                     + (f"【범위·내용】 {scope[:400]}\n본문 지문(sha256-16): {sfp} — 판독 시점 기술(記述) 전문 기준. 재판독 지문 불일치=카탈로그 기술 개정 발생.\n" if scope else "")
                     + f"등급: {cls}\n근거: {basis}\n※ 카탈로그 실확인 기반 자동판정 — 공개 전 수동 확정 필수, D등급 공개 금지\n"
-                    + f"※ 인접 채굴: nara_search(naid={naid}, radius=3) — 사진 ±3·색인 ±1 간격.")
+                    + f"※ 인접 채굴: nara_search(query='', naid={naid}, radius=3) — 사진 ±3·색인 ±1 간격.")
         except Exception as e:
             return f"[NAID {naid}] 카탈로그 조회 실패({str(e)[:60]}) — rg_series 초판정으로 폴백하십시오."
     cls, note = auto_rights({"rg_series": rg_series, "title_orig": title, "archive": archive})
@@ -2138,6 +2140,15 @@ def _c_oldnews(q, n):
                                "Referer": "https://nl.go.kr/newspaper/keyword_search.do"})
     with _ur.urlopen(req, timeout=25) as r:
         d = json.loads(r.read().decode("utf-8", "replace"))
+    if not (d.get("hits") or []) and " " in str(q).strip():  # v1.96.4: 다어절 0건 → 가장 긴 단어로 완화 재검색
+        ws = sorted((w for w in str(q).split() if not w.isdigit()), key=len, reverse=True)
+        if ws:
+            req2 = _ur.Request("https://nl.go.kr/newspaper/search_newspaper.do",
+                               data=json.dumps({"search_keyword": ws[0], "page_size": min(n, 10), "page_no": 1}).encode(),
+                               headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json",
+                                        "Referer": "https://nl.go.kr/newspaper/keyword_search.do"})
+            with _ur.urlopen(req2, timeout=25) as r:
+                d = json.loads(r.read().decode("utf-8", "replace"))
     first = lambda v: (v[0] if isinstance(v, list) and v else v) or ""
     out = []
     for h in (d.get("hits") or [])[:n]:
@@ -2799,7 +2810,8 @@ def _commons_mode(query: str, max_results: int) -> str:
     """위키미디어 공용 심층 — 키워드 목록 / File URL 판독(라이선스·원 소장처·설명). Node 패리티."""
     q = query.strip()
     try:
-        fm = re.match(r"^https?://commons\.wikimedia\.org/wiki/(File:.+)$", q, re.I) or re.match(r"^(File:.+)$", q, re.I)
+        qd = _up.unquote(q) if re.search(r"%[0-9A-Fa-f]{2}", q) else q  # v1.96.4: 'File%3A…' 인코딩 URL 허용
+        fm = re.match(r"^https?://commons\.wikimedia\.org/wiki/(File:.+)$", qd, re.I) or re.match(r"^(File:.+)$", qd, re.I)
         if fm:
             title = _up.unquote(fm.group(1)).replace("_", " ")
             raw = _cached_text("commonsD:" + title, 24 * 3600,
@@ -2938,7 +2950,19 @@ def _ktv_mode(query: str, max_results: int) -> str:
                 body = body[:4000] + f" …(총 {len(body)}자 — 전문은 원문 링크)"
             meta = " · ".join(x for x in (f"제작연도: {pdate}" if pdate else "", f"상영시간: {ptime}" if ptime else "",
                                           f"출처: {origin}" if origin else "") if x)
-            return (f"KTV e영상역사관 영상 판독 — {title or '(제목 미상)'}\n{meta}\n"
+            kogl = (re.search(r"공공누리\s*(?:제\s*)?([1-4])\s*유형", b) or [None, ""])[1]  # v1.96.4
+            if "/view/photo?" in q:
+                pimg = []
+                for u in re.findall(r"((?:https?://[^\"'\s]+)?/(?:movie_pds|photo_pds)/[^\"'\s<>]+?\.(?:jpe?g|png|gif))", b, re.I):
+                    u = u if u.startswith("http") else "https://www.ehistory.go.kr" + u
+                    if u not in pimg:
+                        pimg.append(u)
+                m2 = " · ".join(x for x in (f"촬영/제작: {pdate}" if pdate else "", f"출처: {origin}" if origin else "",
+                                            (f"공공누리 제{kogl}유형" + ("(출처표시·상업금지·변경금지 — 자르지 말고 원형 게재)" if kogl == "4" else "")) if kogl else "") if x)
+                return (f"KTV e영상역사관 사진 판독 — {title or '(제목 미상)'}\n{m2}\n" + (f"【설명】\n{body}\n" if body else "")
+                        + (f"원본 이미지: {' · '.join(pimg[:3])}\n" if pimg else "") + f"원문(사진): {q}\n"
+                        + (f"※ judge_rights(archive='KOGL {kogl}')로 초판정." if kogl else "※ 페이지에 공공누리 표시 미검출 — 이용 전 KTV 확인."))
+            return (f"KTV e영상역사관 영상 판독 — {title or '(제목 미상)'}" + (f" [공공누리 제{kogl}유형]" if kogl else "") + f"\n{meta}\n"
                     + (f"【해설】\n{body}\n" if body else "")
                     + (f"본문 지문(sha256-16): {kfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if kfp else "")
                     + f"원문(영상 재생): {q}\n"
@@ -3847,6 +3871,8 @@ def archives_search(query: str, max_results: int = 10,
                         + ("\n".join(lines) or "(0건)")
                         + "\n공공누리(KOGL) 유형 확인 후 이용. 비공개 항목은 정보공개청구 대상.")
             m = re.search(r"<message>(.*?)</message>", xml, re.S)
+            if not m and re.search(r"<total>\s*0\s*</total>", xml):  # v1.96.4: 0건을 API 오류로 표기하던 문제
+                return f"국가기록원 '{query}' — 0건(API 정상 응답). 띄어쓰기·다른 표기로 재검색하거나 포털: {portal}"
             return _agent_browse("국가기록원", query, portal, f"API 오류: {m.group(1).strip() if m else '결과 없음'}")
         except Exception as e:
             return _agent_browse("국가기록원", query, portal, f"API 오류({e})")
@@ -4518,6 +4544,10 @@ def source_profile(institution: str = "list") -> str:
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
                 + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃) · ms=채널 응답시간. "
                   "nedb ✗=개방파일 인덱스 미설정.")
+    if t != "list" and t not in PROFILES and t in QUICK_PROFILES:  # v1.96.4 간이 프로파일
+        nm, sr, dt, rt = QUICK_PROFILES[t]
+        return (f"[{t}] {nm} — 간이 프로파일\n· 검색: {sr}\n· 상세 판독: {dt}\n· 권리: {rt}\n"
+                "※ 상세 프로파일(자료·이용·활용구조) 미작성 기관 — 위 경로로 발굴하고 judge_rights로 초판정.")
     if t == "list" or t not in PROFILES:
         lines = "\n".join(f"- {k} ({v['name_ko']}) [{v['category']}]" for k, v in PROFILES.items())
         extra = f"\n\n('{institution}' 프로파일 없음)" if (t != "list" and t not in PROFILES) else ""
