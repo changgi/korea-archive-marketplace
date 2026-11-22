@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.0.0 — 기록 봉투 IIIF: IIIF가 없는 모든 기록을 IIIF로 구축 (2026-11-22)
+- /iiif/rec/{token}/manifest.json·card.svg·record.jsonld(lib/rec_iiif.js) — 토큰=발견한 기록의 봉인된 기술(출처·식별자·연대·계열·원 기관 URL·원본 매체·발견 질의·발견 시각), raw deflate+base64url, 서버 저장 없음·불변 캐시.
+  계층 구축('기관 › 계열 › 기록' — 원 기관 계층이 없으면 구축 표시), 증거성(발견 경로·시각·봉투 지문 sha256-16), 원본 이미지가 있으면 그 이미지·없으면 기록 카드(실제 기술 메타데이터만), RiC-O+PROV(발견 행위=prov:Activity).
+- cross_search format='iiif': 'IIIF 없음'이 사라짐 — 나머지 기록 전부 기록 봉투로. 검색 결과 전체를 KV 한 링크로(kv.html#c=<압축 컬렉션>). format='manifest': 모든 기록에 iiif 필드. Python 패리티(토큰 상호 해독 실측).
+- KV: #c= 압축 컬렉션 열기(DecompressionStream), 주소 갱신 시 해시 보존.
+
 ## v1.99.0 — IIIF 브리지 2: 국가유산·역사박물관·AWM·위키미디어 (2026-11-22)
 - 공개 엔드포인트 /iiif/{heritage|much|awm|commons}/{id}/manifest.json(lib/ka_iiif.js · app/iiif/[src]/[...p]) — 기관 표시 권리 문구 원문·판독 시각·설명 지문·원 기관 homepage·navDate, 이미지 크기 판독(Range) 후 캔버스.
   heritage=종목·지정번호·시대·소유·소재·해설+이미지 목록 API · much=명칭(꺾쇠 원문 보존)·국적/시대·분류·재질·작가·크기·공공누리 유형 · awm=수장번호·생산일·장소·PD 표시(rights PDM) · commons=라이선스 URL→rights·작가·원본 rendering.
