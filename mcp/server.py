@@ -2421,6 +2421,24 @@ def _c_gonghun(q, n):
     return out
 
 
+
+def _heritage_images(kdcd, asno, ctcd, main=""):
+    """v1.95: 국가유산 원본 이미지 — 상세 API imageUrl + 이미지 목록 API(SearchImageOpenapi: imageUrl·ccimDesc) 직링크."""
+    urls = [(main, "대표 이미지")] if main else []
+    try:
+        b = _cached_text(f"heriI:{kdcd}|{asno}|{ctcd}", 24 * 3600,
+                         lambda: _http_text(f"https://www.khs.go.kr/cha/SearchImageOpenapi.do?ccbaKdcd={kdcd}&ccbaAsno={asno}&ccbaCtcd={ctcd}", 25), "<")
+        ims = re.findall(r"<imageUrl>(?:<!\[CDATA\[)?\s*([^<\]]+?)\s*(?:\]\]>)?</imageUrl>", b)
+        ds = re.findall(r"<ccimDesc>(?:<!\[CDATA\[)?\s*([^<\]]*?)\s*(?:\]\]>)?</ccimDesc>", b)
+        for i, u in enumerate(ims):
+            if all(u != x for x, _ in urls):
+                urls.append((u, ds[i] if i < len(ds) else ""))
+    except Exception:
+        pass
+    if not urls:
+        return ""
+    return f"【원본 이미지 {len(urls)}점】\n" + "\n".join(f"{i}. {u}" + (f" — {d[:50]}" if d else "") for i, (u, d) in enumerate(urls[:10], 1)) + "\n"
+
 def _heritage_mode(query: str, max_results: int) -> str:
     """국가유산 심층 — 키워드 목록 / ccbaCpno 상세(해설·시대·소유/관리). cpno=구분1+종목2+시도2+지정8. Node 패리티."""
     q = query.strip()
@@ -2446,6 +2464,7 @@ def _heritage_mode(query: str, max_results: int) -> str:
             return (f"국가유산 판독 — {name}" + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + f" [{g('ccmaName')}]"
                     + f"\n{meta}\n" + (f"【해설】\n{content}\n" if content else "")
                     + (f"본문 지문(sha256-16): {hfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if hfp else "")
+                    + _heritage_images(kdcd, asno, ctcd, g("imageUrl"))
                     + "※ 출처: 국가유산청 국가유산포털 — 게재 시 출처 표기. 사진 이용은 공공누리 유형 확인.")
         hm = re.search(r"ccbaCpno=(\d{13})", q) or re.match(r"^(\d{13})$", q)
         if hm:
@@ -2459,6 +2478,7 @@ def _heritage_mode(query: str, max_results: int) -> str:
                                  lambda a2=asno: _http_text(f"https://www.khs.go.kr/cha/SearchKindOpenapiDt.do?ccbaKdcd={kdcd}&ccbaAsno={a2}&ccbaCtcd={ctcd}", 25),
                                  "<ccbaMnm1>")
                 if re.search(r"<ccbaMnm1>(?:<!\[CDATA\[)?[^<]", b):
+                    used_asno = asno
                     break
             g = lambda t: _clean(((re.search(f"<{t}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</{t}>", b) or [None, ""])[1] or ""))
             name = g("ccbaMnm1")
@@ -2478,6 +2498,7 @@ def _heritage_mode(query: str, max_results: int) -> str:
                     + f"\n{meta}\n"
                     + (f"【해설】\n{content}\n" if content else "")
                     + (f"본문 지문(sha256-16): {hfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if hfp else "")
+                    + _heritage_images(kdcd, used_asno, ctcd, g("imageUrl"))
                     + f"포털 상세: https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}\n"
                     + "※ 출처: 국가유산청 국가유산포털 — 게재 시 출처 표기(해설문 인용 시 포털 명기). 사진 이용은 공공누리 유형 확인.")
         items = _c_heritage(q, min(max_results, 15))
@@ -2555,7 +2576,18 @@ def _much_mode(query: str, max_results: int) -> str:
                 rline = f"\n권리 초판정(공공누리 제{km.group(1)}유형 — {km.group(2).strip()}): {rc} — {rb}"
             meta = " · ".join(x for x in (f"소장품번호 {no2}" if no2 else "", f"재질 {mat}" if mat else "",
                                           f"작가 {artist}" if artist else "", f"크기 {size}" if size else "") if x)
-            return (f"역사박물관 소장품 판독 — [{id2}]\n{meta}{rline}\n"
+            imgs = []  # v1.95: 원본 이미지 직링크
+            for u in re.findall(r'<img[^>]+src="([^"]+)"', b, re.I):
+                if re.search(r"/(images?|img|common|layout|btn|icon|logo)/", u, re.I) or re.search(r"logo|icon|btn_|blank|kogl|open_?type", u, re.I):
+                    continue
+                if not re.search(r"\.(jpe?g|png|gif)|image|file|down|view", u, re.I):
+                    continue
+                u = u if u.startswith("http") else "https://archive.much.go.kr" + ("" if u.startswith("/") else "/") + u
+                if u not in imgs:
+                    imgs.append(u)
+            imgs = imgs[:6]
+            return ((f"【원본 이미지 {len(imgs)}점】\n" + "\n".join(f"{i}. {u}" for i, u in enumerate(imgs, 1)) + "\n" if imgs else "")
+                    + f"역사박물관 소장품 판독 — [{id2}]\n{meta}{rline}\n"
                     + (f"【설명】\n{desc}\n" if desc else "")
                     + f"원문·이미지: https://archive.much.go.kr/archive/nrms/view.do?idnbr={_up.quote(id2)}\n"
                     + "※ 출처: 대한민국역사박물관 근현대사아카이브 — 게재 시 출처 표기, 공공누리 유형 조건 준수.")
