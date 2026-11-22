@@ -2081,9 +2081,12 @@ def _c_ndl(q, n):
         cat_arr = re.findall(r"<category>([^<]+)", item)  # 자료형·매체(紙/デジタル)
         cats = "·".join(cat_arr)
         author = g("author")
-        out.append({"title": (title + (f" [{cats}]" if cats else "") + (f" — {author}" if author else ""))[:120],
-                    "date": g("dc:date"), "id": "",
-                    **({"series": cat_arr[0]} if cat_arr else {}), "url": link})
+        # v1.96.8: 디지털화 자료는 dl.ndl.go.jp PID 동반(권리·IIIF 열쇠) — Node 패리티
+        pm = re.search(r"dl\.ndl\.go\.jp/(?:api/iiif/|info:ndljp/pid/|pid/)(\d{5,})", item)
+        pid = pm.group(1) if pm else ""
+        out.append({"title": (title + (f" [{cats}]" if cats else "") + (f" — {author}" if author else "") + (f" · 디지털 PID {pid}" if pid else ""))[:140],
+                    "date": g("dc:date"), "id": pid,
+                    **({"series": cat_arr[0]} if cat_arr else {}), "url": f"https://dl.ndl.go.jp/pid/{pid}" if pid else link})
         if len(out) >= n:
             break
     return out
@@ -2857,20 +2860,23 @@ def _jsg_mode(query: str, max_results: int) -> str:
             flat = re.sub(r"\s*한국역대인물(?!정보)", "", _clean(b).replace("&middot;", "·"))  # v1.96.6: 인명 뒤 링크 라벨 제거
             pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
             name = pick(r"자료명\(한글\)\s*([^·]{2,60}?)\s*·") or pick(r"자료명\s+(.{2,60}?)\s+(?:xml|저자)")
-            gx = []
+            ed = [pick(r"간행년\(왕력\)\s*(.{3,60}?)\s*간행년"), pick(r"판사항\s*(\S{1,20})"), pick(r"간략내용\s*(.{6,200}?)\s*MF")]
+            gx = [x for x in (f"간행: {ed[0]}" if ed[0] else "", f"판본: {ed[1]}" if ed[1] else "",
+                              f"요지: {ed[2]}" if ed[2] and "해제내용" not in flat else "") if x]  # v1.96.8: 의궤 간행·판본·요지
             for k, rx in (("소장", r"소장정보\s+(.{4,90}?)\s+·"), ("집성", r"집성정보\s+(.{4,90}?)\s+(?:·|형태사항)"),
                           ("형태", r"형태사항\s+(.{4,90}?)\s+\d{5}\s"), ("출판", r"출판정보\s*:\s*(.{4,90}?)\s*/")):
                 v = pick(rx)
                 if v and did.startswith("ANC_"):
                     gx.append(f"{k}: " + re.sub(r"\s*·\s*", " · ", v).strip(" ·"))  # 고문서 메타
             callno = pick(r"청구기호\s*(\S{2,20})")
-            mf = pick(r"MF번호\s*(?!유형분류)(\S{2,20})")
+            mf = pick(r"MF번호\s*(?!유형분류)(\S{2,20})").rstrip(",")
             cm = re.search(r"유형분류\s*(\S{2,20})\s*주제분류\s*(\S{2,30})\s*수집분류\s*(\S{2,30})", flat)
-            i0 = flat.find("정의 ")
+            ih = flat.find("해제내용")  # v1.96.8: 의궤(ARC_) 페이지는 '해제내용 … 【정의】' 형식
+            i0 = ih + 4 if ih >= 0 else flat.find("정의 ")
             haeje = ""
             jfp = ""
             if i0 >= 0:
-                haeje = re.split(r"집필자|관련 멀티미디어|장서각 디지털아카이브 바로가기", flat[i0:i0 + 6000])[0].strip()
+                haeje = re.split(r"집필자|관련 멀티미디어|장서각 디지털아카이브 바로가기|13455 경기도", flat[i0:i0 + 6000])[0].strip()
                 jfp = _hl.sha256(haeje.encode("utf-8")).hexdigest()[:16]  # 판독 시점 해제 지문
                 if len(haeje) > 4000:
                     haeje = haeje[:4000] + f" …(총 {len(haeje)}자 — 전문은 원문 링크)"
@@ -4094,6 +4100,17 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
                 else:
                     out += f"\n(자료유형 '{category}' 채널 오류)"
             else:
+                # v1.96.8: category 미지정이면 '고문헌' 자동 병행 — 현대 영인·번역본이 상위를 채워 원본이 묻힘(실측). Node 패리티
+                if not yfilt:
+                    try:
+                        old_xml = _http_text(base_api + "&category=" + _up.quote("고문헌"), 20)
+                        if "<error" not in old_xml:
+                            o_tot, o_lines, _om = parse(old_xml)
+                            if o_lines:
+                                out += (f"\n\n[② 고문헌(원본) 자동 병행 — 총 {o_tot}건]\n" + "\n".join(o_lines[:6])
+                                        + "\n※ 현대 영인·번역본에 가려지는 원본 고서를 함께 보여 줍니다.")
+                    except Exception:
+                        pass
                 out += "\n※ 전체 카탈로그 대상. category 인자(신문·고문헌 등)로 자료유형 정밀 이중수집 가능."
             out += f" '{name}' 컬렉션 정밀검색: {open_url}" + (f"\n※ {note}" if note else "")
             return out
