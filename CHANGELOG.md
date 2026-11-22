@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.4.0 — 검색 결과 CSV 파일 내려받기 (2026-11-22)
+- cross_search(format='csv') 응답 끝에 📥 내려받기 링크: https://korea-archive-mcp.vercel.app/export/csv/<token>.csv — 토큰=CSV 본문 raw deflate+base64url(서버 저장 없음, 링크가 곧 파일). 엑셀 한글 깨짐 방지 BOM, 파일명 korea-archive_<질의>_<날짜>.csv. 웹·모바일에서도 파일로 저장 가능(제1원칙).
+- 응답 24KB·URL 12,000자를 넘으면 링크 생략 안내. Python 패리티(토큰 상호 해독 실측), 골든 csv-download.
+- v2.3.1: 한국사DB 계열 접두 중복(한국사DB › 한국사DB) 제거.
+
 ## v2.3.0 — 계열 미상 보강 (2026-11-22)
 - 국가기록원(archives): 생산기관이 없는 기록은 링크 유형으로 계열 부여 — '국가기록원 › 기록건 | 기록물철 | 기록정보콘텐츠' (실측: 60건 중 10건이 계열 미상이었음).
 - 한국사DB(nedb) 실시간 수집: 자료군(DB명)을 계열로 — '한국사DB › …' (실측: 4건 전부 계열 미상이었음).

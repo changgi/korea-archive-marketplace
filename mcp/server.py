@@ -4924,9 +4924,16 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         rows = [",".join(esc(x) for x in (ridc(it, i), "+".join(it["sources"]), it["title"], it["date"], it["id"], it["url"],
                                            _part_of(it["sources"][0].split("·")[0], it) or "", it.get("media", ""), it.get("sameAs", "")))
                 for i, it in enumerate(items[:45])]
-        return (f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
-                + "node,sources,title,date,id,url,partOf,media,sameAs\n" + "\n".join(rows)
-                + "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights.")
+        import zlib as _z, base64 as _b, datetime as _d
+        csv_body = "node,sources,title,date,id,url,partOf,media,sameAs\n" + "\n".join(rows)
+        head = f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
+        tail = "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights."
+        # v2.4: 파일로 받기 — 링크 안에 CSV를 압축 봉인(서버 저장 없음, Node /export/csv/{token}.csv 패리티). 24KB·URL 12,000자 넘으면 생략
+        c = _z.compressobj(9, _z.DEFLATED, -15)
+        env = {"q": str(query)[:80], "at": _d.datetime.now(_d.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "csv": csv_body}
+        dl = f"{_NARA_ORIGIN}/export/csv/" + _b.urlsafe_b64encode(c.compress(json.dumps(env, ensure_ascii=False, separators=(",", ":")).encode()) + c.flush()).decode().rstrip("=") + ".csv"
+        fits = len(dl) <= 12000 and len((head + csv_body + tail + dl).encode("utf-8")) + 300 <= 24000
+        return head + csv_body + tail + (f"\n📥 CSV 파일 내려받기(엑셀 한글 BOM 포함): {dl}" if fits else "\n📥 파일 링크 생략(크기 상한) — 위 본문을 .csv로 저장하거나 max_per_source를 줄여 다시 실행")
     lines = [f"- [{'+'.join(it['sources'])}] {it['title'][:95]}"
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")
              + (f"\n  ↔ 동일 기록: {it['altTitle'][:80]} ({it['sameAs']})" if it.get("altTitle")
