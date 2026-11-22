@@ -306,13 +306,36 @@ def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
             _t.sleep(0.2)
         return (f"archive.org 인접 채굴 {stem}[{base_n}±{min(radius, 8)}] (★=중심):\n" + "\n".join(lines)
                 + "\n※ 같은 컬렉션의 절반이 다른 표기로 기술돼 검색에 안 걸리는 사례 — 번호 옆 훑기로 복구(열한 겹의 벽 §8).")
+    def _ia_scenes(ident, data):
+        """v1.93: 영상 기록 장면 분석 — IA 파생 썸네일(.thumbs/<id>_<초>.jpg)을 시각 코드 장면 프레임으로(웹·모바일 경로)."""
+        md = data.get("metadata") or {}
+        if md.get("mediatype") != "movies":
+            return ""
+        th = sorted(f["name"] for f in (data.get("files") or []) if re.search(r"\.thumbs/.+_(\d{6})\.jpg$", f.get("name", "")))
+        vid = next((f for f in (data.get("files") or []) if re.search(r"\.(mp4|mpeg4)$", f.get("name", ""), re.I)
+                    and re.search(r"mpeg4|h\.264", f.get("format", ""), re.I)), None)
+        naid = (re.search(r"catalog\.archives\.gov/id/(\d+)", str(md.get("description") or "")) or [None, None])[1]
+        pick = [th[round(i * (len(th) - 1) / 11)] for i in range(12)] if len(th) > 12 else th
+        def mmss(nm):
+            sec = int(re.search(r"_(\d{6})\.jpg$", nm).group(1))
+            return f"{sec // 60:02d}:{sec % 60:02d}"
+        out = f"\n【영상 장면 프레임 — {len(th)}개 중 {len(pick)}개(시각 코드)】\n" + "\n".join(
+            f"- {mmss(nm)}  https://archive.org/download/{ident}/{nm}" for nm in pick)
+        if vid:
+            out += f"\n영상 파일: https://archive.org/download/{ident}/{_up.quote(vid['name'])} ({round(float(vid.get('length') or 0))}초)"
+        if naid:
+            out += f"\n↔ NARA 원본 NAID {naid} — judge_rights(naid={naid})로 권리 실확인"
+        return out + ("\n➤ 장면 해설: 각 프레임을 열어 '보이는 것만' 기술(인물 수·장비·문자·지형) → report_template(kind=video) 규칙으로 장면 해설 카드."
+                      " 로컬은 analyze_video.py keyscenes로 장면 전환 기반 대표 프레임(고해상).")
+
     if identifier:
         data = http_json(f"https://archive.org/metadata/{identifier}")
         md = data.get("metadata") or {}
         files = [f for f in (data.get("files") or []) if f.get("source") == "original"][:10]
         return (f"제목: {md.get('title')}\n설명: {str(md.get('description'))[:300]}\n"
                 f"연대: {md.get('date')} | 라이선스: {md.get('licenseurl') or md.get('rights') or '표기 없음'}\n"
-                "원본 파일:\n" + "\n".join(f"- {f['name']} ({int(f.get('size',0))/1e6:.1f}MB)" for f in files))
+                "원본 파일:\n" + "\n".join(f"- {f['name']} ({int(f.get('size',0))/1e6:.1f}MB)" for f in files)
+                + _ia_scenes(identifier, data))
     if not query:
         return "query 또는 identifier 중 하나는 필수."
     disp = query
@@ -506,12 +529,26 @@ def gallica_search(query: str, max_results: int = 15, year_from: int | None = No
         with urllib.request.urlopen(req, timeout=40) as r:
             return ET.fromstring(r.read().decode("utf-8", "replace"))
 
-    root = _sru(base + date_clause)
-    total = root.find(".//srw:numberOfRecords", ns)
+    try:
+        root = _sru(base + date_clause)
+        total = root.find(".//srw:numberOfRecords", ns)
+    except Exception:  # 403 HTML 등 — 아래 카탈로그 폴백
+        root, total, date_clause = None, None, ""
     post = False
     if date_clause and total is None:
         root = _sru(base); total = root.find(".//srw:numberOfRecords", ns); post = True
     if total is None:  # SRU XML 아님 — Cloudflare 차단/점검 (2026-11-18 실측: 서버 IP 403)
+        try:  # v1.93: BnF 공식 카탈로그 SRU 폴백
+            tot, its = _bnf_catalog(eff, max_results)
+            if its:
+                return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "")
+                        + f" — Gallica 서버가 자동 조회를 차단해 **BnF 공식 카탈로그**(catalogue.bnf.fr, 같은 국립도서관 소장 목록)로 수집 — total {tot}:\n"
+                        + "\n".join(f"- {it['title'][:110]} ({it['date'] or '연대 미상'})" + (f" [{it['type']}]" if it['type'] else "")
+                                     + (f" · {it['extent']}" if it['extent'] else "")
+                                     + "\n  " + (f"Gallica 원문: {it['gallica']}" if it['gallica'] else f"카탈로그: {it['url']}") for it in its)
+                        + "\n※ Gallica 원문 링크는 브라우저에서 열람(서버 자동 조회만 차단). BnF 디지털 자료 대부분 공유저작물(재이용 조건: gallica.bnf.fr/edit/und/conditions-dutilisation-des-contenus-de-gallica).")
+        except Exception:
+            pass
         return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "")
                 + " — 서버 자동 조회가 차단되었습니다(BnF측 봇 차단 — 간헐적).\n"
                 + f"➤ 에이전트 지시: 웹 검색/브라우저 도구로 '{eff}'를 gallica.bnf.fr에서 검색해 "
@@ -1228,6 +1265,7 @@ CTA bar: 발굴 보고서 공개 — KOREA ARCHIVE 통합검색 / Tiny credit: {
 
 CITATION_GUIDE = '인용 형식 가이드 — 한국사DB·국회도서관 (khdb-citation·nanet-citation 스킬의 서버판. 사용자의 논문·보고서 인용 요청에 이 형식을 적용하라)\n\n■ 한국사데이터베이스(db.history.go.kr) — 국사편찬위원회\n· 영구 인용 URL: http://db.history.go.kr/id/[기사ID]  (검색 URL은 POST라 재현 불가 — 반드시 /id/ 형식)\n· 각주(국내 표준): 저자, 〈[문서 제목]〉 작성일.(편찬기관 편, 연도, 《[총서명 권호]》) http://db.history.go.kr/id/[기사ID] (accessed YYYY.M.D.)\n· 참고문헌: [편찬기관]. 『[총서명]』. [권호]. 국사편찬위원회 한국사데이터베이스(http://db.history.go.kr), 검색일: YYYY.MM.DD.\n· 연대기(실록·승정원일기): 『[자료명]』 [왕명 연호년 월일(간지)], 국사편찬위원회 한국사데이터베이스, http://db.history.go.kr/id/[기사ID] (검색일: YYYY.MM.DD.)\n· 예: 조선총독부 고등법원 예심계, 〈한용운 신문조서〉 1919.8.27.(국사편찬위원회 편, 1990, 《한민족독립운동사자료집 12》) http://db.history.go.kr/id/hd_012r_0010_0310 (accessed 2026.3.13.)\n· ★인용 2층위 필수 고지 — 법전·편람(조선시대법령자료)은 한문 원문 제공 → 원문 인용 가능(표점은 DB 형태·교감본 미대조 명기). 등록·일기(비변사등록·승정원일기)는 국역만 노출 → 한문 역구성은 학술 인용 불가.\n· 출처 표기: KOGL — 국사편찬위원회 출처 표기.\n\n■ 국회도서관 전자도서관(dl.nanet.go.kr)\n· 영구 인용 URL: https://dl.nanet.go.kr/SearchDetailView.do?cn=[CN코드]  (CN코드가 식별자 — 예 KDMT1201319543)\n· 학위논문 각주: 저자명, 「논문 제목」, 학위논문(석사/박사), 대학교 대학원 학과명, YYYY.M, 쪽수.\n· 학위논문 참고문헌: 저자명. 「논문 제목」. 학위논문(석사/박사). 대학교 대학원 학과명, YYYY. 대한민국 국회도서관 전자도서관(https://dl.nanet.go.kr/SearchDetailView.do?cn=CN코드), 검색일: YYYY.MM.DD.\n· APA: 저자성, 이름. (연도). 제목 [학위 종류, 대학교명]. 국회도서관 전자도서관. https://dl.nanet.go.kr/SearchDetailView.do?cn=CN코드\n· Chicago: 저자명, “제목” (학위논문(박사), 대학교명, 연도), 쪽수. https://dl.nanet.go.kr/SearchDetailView.do?cn=CN코드 (검색일: YYYY년 MM월 DD일).\n· 단행본·학술기사·정부간행물도 같은 골격 — 「」=논문/기사, 『』=서명·총서명, CN코드 URL 동봉.\n\n공통 원칙: 검색일 명기 · 링크는 실확인한 것만 · 기사ID/CN코드 없는 인용은 재현 불가이므로 금지.'
 
+VIDEO_GUIDE = "영상 기록 장면 해설 규칙 (v1.93 — 영상 분석 기능의 서버판. 로컬=analyze_video.py keyscenes, 웹·모바일=IA 시각 코드 프레임)\n\n1. 영상 찾기: cross_search/nara_search로 영상 기록 → 권리 실확인(judge_rights(naid) — Unrestricted=A, 연방 저작물 Undetermined=B 명기, Restricted=장면 사용 금지·제목만 인용). 협약기관(koreanwar) 영상은 입수처 NARA NAID로 원본 권리 확인.\n2. 장면 추출 — 환경별 경로:\n   · 로컬(Claude Code): python analyze_video.py keyscenes <영상|URL> --out <dir> — ffmpeg scene 전환 탐지 → 장면별 가장 선명한 프레임(원본 해상도, 업스케일 금지) · 리더/암전 자동 제외 → scenes.json(start·end·dur·대표 시각) + _keyscenes.jpg 밀착 인화.\n   · 웹·모바일: ia_search(identifier=<IA 영상 id>) → 【영상 장면 프레임】 시각 코드 목록(IA 파생 썸네일 .thumbs/<id>_<초>.jpg)을 열어 장면을 본다. NARA 사본(예: 428-npc-170)은 IA에 같은 번호로 있는 경우가 많다(cross_search nara,ia가 [nara+ia]로 묶음). KTV(ehistory.go.kr) 영상은 nedb_search(mode=ktv, view URL)의 해설 목록(장면 순서)을 시각 코드 대용으로 쓴다.\n3. 장면 해설은 '보이는 것만': 인물 수·복장·장비(전차·함정·선체 번호)·지형·화면 속 문자. 불명은 '판독 불가'. 사건 해석(무엇을 위한 폭파인가 등)은 기록 표제·기술(NARA Scope and Content·KTV 해설)에서 인용할 때만, 인용 출처를 붙인다.\n4. 장면 해설 카드(1080×1080): 프레임 원본을 가득(object-fit cover, 업스케일 시 흐림 감수 대신 원 크기 근처 배치) + 좌상단 시각 코드 칩(mm:ss) + 하단 2줄 해설 + 장면 번호(n/N) + 출처 한 줄(기관·식별자·권리). 영상 1편 = 표지(대표 장면) + 장면 4~8장 + 밀착 인화(전 장면 타임라인) 1장.\n5. 타임라인 카드: 밀착 인화(시각 코드 포함)로 영상 전체 흐름을 한 장에 — '몇 분 몇 초에 무엇이 보이는가'가 증거성의 핵심.\n6. 존엄: 포로·시신·부상자 클로즈업 장면은 해설 카드에서 제외(게재윤리 4단계).\n7. 출처 표기: 기관 정식명 · 영상 식별자(NAID/IA id/KTV mediaid) · 장면 시각 · 권리 등급 — 프레임마다."
 ANNOTATION_GUIDE = "기록 해설형 어노테이션 규칙 — 상세판 (record-annotation 스킬의 서버판. 웹에서는 HTML/아티팩트로 동일 문법 구현)\n\n1. 영역 표시: 점선 영역 박스(dashed 1.5~2px) + 박스 모서리 바깥 번호 칩 — 점 찍기·내용 가림 금지. 좌표는 %(x,y,w,h)로 기록해 어느 해상도에서도 재현.\n2. 전처리: 레터박스(검은 띠) 자동 크롭 후 원본 비율 유지. 저해상 프레임은 확대 금지 — 원본 크기 근처로 배치.\n3. 메타데이터 표(7행 기준): 제목 · 식별번호(영구 식별자) · 원 제작(판독 근거 병기) · 사본 소재 · 생산시기 · 권리(원판/사본 구분) · 판독 근거.\n4. 범례: 번호 칩 + 굵은 요소명 + 한 줄 해설. 순서는 판독 서사(제작 주체→내용→좌표→판본) 순.\n5. ★추정 금지: 화면·원문에서 직접 읽히는 것만 적는다. 불명은 '판독 불가'로 명기 — '아마도·추정·으로 보임'류 어휘가 해설에 들어가면 재검토.\n6. 원판/사본 계보 필수: 원판 권리(PD 등)와 디지털화본 표시(워터마크·업체)를 구분 명기.\n7. 산출 3형: 보고서 부록 절('기록을 해설해 드립니다') · 카드뉴스(1080 — 범례 압축·2열 허용) · 슬라이드(도형 마커+노트에 판독 해설).\n8. 권리 고지: 기관 정식명·식별자·열람 URL — 협약기관(KOREAN WAR ARCHIVES) 출처 표기 필수, 게재윤리 4단계.\n9. 영상 프레임 판독 보강(슬레이트·화면 속 문자): 슬레이트/타이틀 카드에서 부대·촬영자·날짜·롤 번호·장소 필드를 파싱하고, 당대 지명(일본식 독음·외래 명명)은 현대 지명과 병기. 표지판·현수막·차량 표식 등 화면 속 문자는 OCR과 육안을 교차해 확정 — 불일치·판독 불가는 그대로 표기(추정 금지 원칙 동일)."
 
 EXHIBIT_GUIDE = """고문서 전시형 산출물 규칙 — aks-archive-harvester 스킬 ④매개(Mediate) 단계의 서버판 (웹·모바일 동등성).
@@ -1343,13 +1381,16 @@ def report_template(kind: str = "report") -> str:
     사용자가 "풀패키지"(또는 full-package)라고 하면 kind="full_package"를 먼저 호출 — 조사→보고서→캐러셀→포스터
     전 산출물 제작 순서를 받아 그대로 수행한다. kind="help"는 매직 키워드 "창기창기 도와줘"(또는 changgi-help) —
     처음 사용자 안내(사용법·예시·FAQ+안내 페이지 링크)를 반환한다.
-    kind="exhibit"은 고문서 전시형(AKS 문중·서원 고문서 — 전시 페이지·카드·학습지 규칙+HTML 골격)을 반환한다."""
+    kind="exhibit"은 고문서 전시형(AKS 문중·서원 고문서 — 전시 페이지·카드·학습지 규칙+HTML 골격)을 반환한다.
+    kind="video"는 영상 기록 장면 해설 규칙(장면 추출 로컬/웹 경로·보이는 것만 해설·장면 카드)을 반환한다."""
     if kind == "magazine":
         return MAGAZINE_PACK
     if kind == "help":
         return HELP_GUIDE
     if kind == "citation":
         return CITATION_GUIDE
+    if kind == "video":
+        return VIDEO_GUIDE
     if kind == "annotation":
         return ANNOTATION_GUIDE
     if kind == "exhibit":
@@ -1535,14 +1576,50 @@ def _c_ia(q, n):
              "url": f"https://archive.org/details/{x.get('identifier')}"}
             for x in ((d.get("response") or {}).get("docs") or [])]
 
+
+def _bnf_catalog(q, n, doctype=""):
+    """v1.93: Gallica 서버 IP 403 차단 시 BnF 공식 카탈로그 SRU(catalogue.bnf.fr/api/SRU) 폴백 — UNIMARC 200$a·210/214$d·215$a·856$u(Gallica ark)."""
+    import urllib.parse, urllib.request
+    cql = f'bib.anywhere all "{str(q).replace(chr(34), "")}"' + (f' and bib.doctype any "{doctype}"' if doctype else "")
+    url = ("https://catalogue.bnf.fr/api/SRU?version=1.2&operation=searchRetrieve&recordSchema=unimarcXchange"
+           f"&maximumRecords=20&query={urllib.parse.quote(cql)}")
+    with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": _UA_KO}), timeout=30) as r:
+        xml = r.read().decode("utf-8", "replace")
+    tm = re.search(r"numberOfRecords>(\d+)<", xml)
+    if not tm:
+        raise RuntimeError("BnF 카탈로그 응답 형식 아님")
+    items = []
+    for b in xml.split("<srw:record>")[1:]:
+        def sf(tag, code, _b=b):
+            for m in re.finditer(rf'tag="{tag}"[^>]*>(.*?)</mxc:datafield>', _b, re.S):
+                x = re.search(rf'code="{code}">([^<]*)<', m.group(1))
+                if x:
+                    return x.group(1).strip()
+            return ""
+        ark = (re.search(r'id="(ark:/12148/[^"]+)"', b) or [None, ""])[1]
+        gal = (re.search(r"(https?://gallica\.bnf\.fr/ark:/12148/[A-Za-z0-9]+)", b) or [None, ""])[1]
+        typ = sf("200", "b")
+        items.append({"title": (sf("200", "a") or "(무제)").strip("[]")[:160], "date": sf("210", "d") or sf("214", "d"),
+                      "id": ark, "extent": sf("215", "a"), "type": typ, "gallica": gal,
+                      **({"series": f"BnF › {typ}"} if typ else {}), "url": gal or (f"https://catalogue.bnf.fr/{ark}" if ark else "")})
+    items.sort(key=lambda it: 0 if it["gallica"] else 1)  # Gallica 원문(디지털화) 있는 기록 우선
+    return int(tm.group(1)), items[:n]
+
 def _c_gallica(q, n):
     import urllib.parse, urllib.request
     q = _gallica_ko_fr(q) or q
     qq = urllib.parse.quote('gallica all "' + q.replace('"', '') + '"')
     url = f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query={qq}&maximumRecords={n}"
     req = urllib.request.Request(url, headers={"User-Agent": _UA_KO})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        xml = r.read().decode("utf-8", "replace")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            xml = r.read().decode("utf-8", "replace")
+    except Exception:
+        xml = ""
+    if "<srw:numberOfRecords>" not in xml:  # v1.93 BnF 카탈로그 폴백
+        _, its = _bnf_catalog(q, n)
+        return [{"title": it["title"] + (" [Gallica 원문]" if it["gallica"] else ""), "date": it["date"], "id": it["id"],
+                 **({"series": it["series"]} if it.get("series") else {}), "url": it["url"]} for it in its]
     out = []
     for b in xml.split("<srw:record>")[1:n + 1]:
         def g(t, _b=b):
@@ -1663,8 +1740,21 @@ def _nedb_file_search(recs, q, n):
     return out
 
 def _c_nedb(q, n):
+    """v1.93: 개방파일 인덱스 미설정이면 한국사DB 통합검색 라이브 조회 — 검색어가 등장하는 DB를 기록 진입점으로 수집(0건 고정 해소)."""
     recs = _load_nedb_index()
-    return _nedb_file_search(recs, q, n) if recs else []
+    if recs:
+        return _nedb_file_search(recs, q, n)
+    b = _http_text("https://db.history.go.kr/search/searchTotalResult.do?searchKeyword=" + _up.quote(q), 15)
+    out, seen = [], set()
+    for code, inner in re.findall(r'href="/item/(\w+)/main\.do"[^>]*>(.*?)</a>', b, re.S):
+        nm = _clean(re.sub(r'<span[^>]*class="btn-new"[^>]*>.*?</span>', "", inner, flags=re.S))
+        if nm and code not in seen:
+            seen.add(code)
+            out.append({"title": f"{nm} — '{q}' 수록", "date": "", "id": code, "series": f"한국사DB › {nm}",
+                        "url": f"https://db.history.go.kr/item/{code}/main.do"})
+        if len(out) >= n:
+            break
+    return out
 
 
 # ══════════ KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 (koreanwar.or.kr:8443 — 전쟁기념관재단, 협약기관) ══════════
