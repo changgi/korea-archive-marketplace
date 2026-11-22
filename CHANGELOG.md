@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.2.0 — 분류 계층·결과 계층 (2026-11-22)
+- 규장각(kyudb): 사부분류(史部 › 政法類 › 度支 › 賦稅 …)를 계열(series)로 — 조선 기록이 '규장각도서(奎) › 史部 › 政法類 …' 분류 계층을 갖는다(CSV partOf·KARDA·manifest·기록 봉투 계층에 반영).
+- cross_search format='iiif': 결과를 '기관 › 계열' 하위 컬렉션(내장 inline)으로 묶어 계층 부여(계열 2개 이상일 때) — KV 링크 하나로 계열 머리말과 함께 연속 열람.
+- KV: 링크에 내장된 하위 컬렉션(inline)도 펼침. Python 패리티.
+
 ## v2.1.0 — TNA 실제 계층 IIIF · 하위 기록 펼치기 (2026-11-22)
 - /iiif/tna/{C-id}/manifest.json(lib/tna_iiif.js): Discovery parentId를 따라 실제 계보(부서 › 분과 › 시리즈 › 피스) 복원 → metadata·partOf, 참조번호·기간·소장·법적 지위·공개 상태·이전 참조·기술 지문·판독 시각, 기록 카드 캔버스(디지털 사본은 rendering 안내).
 - /iiif/tna/{C-id}/collection.json: 하위 기록 — 하위 계층은 컬렉션, 말단은 기록 봉투(토큰에 제목·참조·기간·계보 봉인 → 추가 요청 없이 열림). 부모 캐시로 컬렉션 1회 = TNA 2~8요청.
