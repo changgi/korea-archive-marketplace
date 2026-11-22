@@ -4228,7 +4228,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
     lines = [f"- [{'+'.join(it['sources'])}] {it['title'][:95]}"
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")
              + (f"\n  ↔ 동일 기록: {it['altTitle'][:80]} ({it['sameAs']})" if it.get("altTitle")
-                else (f"\n  ↔ 원본: {it['sameAs']}" if it.get("sameAs") else ""))
+                else (f"\n  ↔ {'함께 묶인 기록' if len(it['sources']) > 1 else '원본'}: {it['sameAs']}" if it.get("sameAs") else ""))
              for it in items[:45]]
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")

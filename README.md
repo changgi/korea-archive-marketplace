@@ -8,7 +8,7 @@
 [![스킬 11종](https://img.shields.io/badge/전문_스킬-11종-8250df?style=for-the-badge)](#-플러그인에-들어-있는-전문-스킬-11종)
 [![무료](https://img.shields.io/badge/이용-무료-d4a72c?style=for-the-badge)](#-설치하기)
 
-[**소개 페이지**](https://changgi.github.io/korea-archive-marketplace/) · [**예제 15선**](https://changgi.github.io/korea-archive-mcp/examples.html) · [**사용 안내**](https://korea-archive-mcp.vercel.app/help.html) · [English](#english) · [원격 서버 버전](https://github.com/changgi/korea-archive-mcp) · [변경 이력](CHANGELOG.md)
+[**소개 페이지**](https://changgi.github.io/korea-archive-marketplace/) · [**예제 15선**](https://changgi.github.io/korea-archive-mcp/examples.html) · [**30곳 탐방 시리즈**](https://changgi.github.io/korea-archive-mcp/series.html) · [**사용 안내**](https://korea-archive-mcp.vercel.app/help.html) · [English](#english) · [원격 서버 버전](https://github.com/changgi/korea-archive-mcp) · [변경 이력](CHANGELOG.md)
 
 </div>
 
