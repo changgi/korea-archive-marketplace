@@ -5,6 +5,7 @@
 - 심층 판독 nedb_search(mode='okchf'): 상세 URL 또는 'relic:ID'·'relic_gls:ID' → 소장국가·소장처·소장처 관리번호·시대·재질·크기·수량·소장경위·출판정보·조사기관·소장처 홈페이지·설명 전문·본문 지문(sha256-16)·이미지 목록·원문 뷰어. 키워드는 목록(전체 건수). 발간 보고서 게시판 안내.
 - 접근·권리 표시: robots.txt 전체 Disallow(발굴 우선 원칙 — 표시 대상), 정직 UA·요청 최소·상세 24h 캐시. 소장기관과 공개 협의된 정보 — 이미지·설명 게재는 이용조건 확인 후(허가 전 링크만).
 - 연결: INST·PART_OF·DEEP_READ·QUICK_PROFILES·health 골든 질의(불화)·원장 심층 보강(DEEP)·골든 okchf-collect·okchf-detail. Python 패리티(저장 HTML로 목록·상세 판독 실측).
+- v2.11.1: 상세 제목의 빈 한자명 칸 '· ·' 정리, 설명 끝 화면 버튼 글자 '더보기' 제거, 프로파일 이름표 중복 정리(프로덕션 실측). 골든 okchf-photo-detail.
 - ⚠ nedb_search mode enum에 okchf 추가 — PlayMCP 콘솔 '정보 불러오기' 재실행 필요.
 
 ## v2.10.0 — 원장 심층 판독 보강: 판결문·공적조서·신문·UN·6·25아카이브·서울기록원 (2026-11-23)
