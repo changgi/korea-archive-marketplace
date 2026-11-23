@@ -3643,7 +3643,7 @@ def _c_ledger(q, n):
         h = f"{o.get('title', '')} {o.get('partOf', '')} {o.get('id', '')} {' '.join(o.get('sources') or [])} {o.get('date', '')}".lower()
         if not (all(t in h for t in toks) or (en and all(t in h for t in en))):
             continue
-        it = {"title": f"[{'+'.join(o.get('sources') or [])}] {o.get('title', '')}"[:160] + f" · 발견 {o.get('seen', 1)}회(첫 {str(o.get('first_seen', ''))[:10]})",
+        it = {"title": f"[{'+'.join(o.get('sources') or [])} · 발견 {o.get('seen', 1)}회 · 첫 {str(o.get('first_seen', ''))[:10]}] {o.get('title', '')}"[:200],
               "date": o.get("date", ""), "id": o.get("id") or o.get("key"), "series": o.get("partOf", ""), "url": o.get("url", ""), "media": o.get("media", ""), "seen": o.get("seen", 1)}
         if o.get("sameAs"):
             it["sameAs"] = o["sameAs"]
