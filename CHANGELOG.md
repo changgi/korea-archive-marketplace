@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.28.0 — 발견 경로: 질의 ↔ 기록 증거 사슬 (2026-11-23)
+- 질의 지문 ak(도구+인자, 키 정렬 sha256-16)를 도구 래퍼가 요청 맥락에 실어 발견 기록 묶음(ka:in)과 질의·회신(ka:q) 양쪽에 기록.
+- 원장 병합: 기록마다 found_by(자기를 찾은 질의 지문들), docs/data/provenance.json(질의 → 발견 기록 목록·호출 수·회신 판 수), RiC-O prov:wasInformedBy. 원장 페이지 링크.
+- 효과: 어떤 질문이 어떤 기록을 찾았고 그때 회신이 무엇이었는지 끝까지 따라갈 수 있음(맥락·증거성). 원격 서버 전용(Python 로컬 플러그인은 원장 없음). 도구 스키마 변경 없음.
+
 ## v2.27.0 — 계층·IIIF 없는 기록에 구축 (2026-11-23)
 - 원장 기록 중 원 기관 계층이 없는 것(위키미디어 공용·서울기록원·Archives NZ·UN 등 30건)에 파생 계층 `[파생] 유형/주제 › 연대` 구축 — 근거: 서울기록원 유형 표기([기록건·사진])·AIMS 제목 첫 단·UN 문서 유형·파일 매체·연대(date → 제목 연도 → 메타 생산일). 원 기관 partOf와 분리된 partOf_derived 필드.
 - IIIF가 없는 기록(244건)에 기록 봉투 브리지 매니페스트를 만들어 iiif_built로 기록(iiif_kind 구분). CSV·JSONL·인기 CSV·RiC-O(rico:hasOrHadInstantiation, 파생 계열은 rico:generalDescription으로 표시) 반영.
