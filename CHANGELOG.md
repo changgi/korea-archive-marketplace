@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.6.0 — 누적 원장을 다시 검색 수집처로 (2026-11-23)
+- cross_search(sources='ledger'): 사용자들이 이미 발굴한 기록(docs/data/discovered.jsonl, 1h 캐시)을 검색 — 원 출처·계열·발견 횟수·처음 발견일 표시, 많이 발견된 순. 'all'에는 넣지 않음(원 기관 결과와 중복·교차확인 오인 방지). 원장에서 다시 찾은 기록은 재적재하지 않음.
+- source_profile 간이 프로파일 ledger. Python 패리티, 골든 ledger-source.
+
 ## v2.5.0 — 발견 누적 원장: 사용자가 발굴한 기록이 유실되지 않게 매일 무료 누적 (2026-11-23)
 - 서버(lib/ledger.js): cross_search가 끝나면 발견 기록(출처·제목·연대·식별자·URL·계열·매체·sameAs)만 Upstash Redis 날짜 함 ka:in:YYYY-MM-DD에 적재(3일 보관). 검색어·사용자 정보는 저장하지 않음. 미설정·한도 초과면 적재만 생략(검색 영향 없음). 응답에 누적 안내 한 줄.
 - 공개 읽기 /api/ledger/{YYYY-MM-DD}?start=&n= — 쓰기·삭제 경로 없음(GitHub Secrets 불필요).
