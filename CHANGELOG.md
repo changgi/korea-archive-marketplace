@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.29.0 — 다매체 확산: 구독·인용·타임라인 (2026-11-23)
+- 원장에서 매일 생성: feed.xml(Atom — 새로 발견된 기록 100건, 구독기·자동화로 확산), records.csl.json(Zotero·Mendeley·Pandoc 인용), records.ris(EndNote·RefWorks), timeline.json(연대 × 기관 × 매체 + 대표 기록·IIIF). 매체 유형은 제목·URL 근거(영상·사진·지도·문서).
+- 원장 페이지 내려받기 링크·Atom 자동 발견 링크. source_profile('ledger')에 전 형식 안내(웹·모바일에서도 확인), 옛 문구 '검색어·사용자 정보 없음' 정정. Node·Python 패리티, 골든 ledger-media-formats.
+
 ## v2.28.0 — 발견 경로: 질의 ↔ 기록 증거 사슬 (2026-11-23)
 - 질의 지문 ak(도구+인자, 키 정렬 sha256-16)를 도구 래퍼가 요청 맥락에 실어 발견 기록 묶음(ka:in)과 질의·회신(ka:q) 양쪽에 기록.
 - 원장 병합: 기록마다 found_by(자기를 찾은 질의 지문들), docs/data/provenance.json(질의 → 발견 기록 목록·호출 수·회신 판 수), RiC-O prov:wasInformedBy. 원장 페이지 링크.
