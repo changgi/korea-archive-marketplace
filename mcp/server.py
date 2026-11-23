@@ -49,7 +49,7 @@ def _dom_groups(mod):
             return getattr(mod, _n)
     return []
 
-QUICK_PROFILES = {'okchf': ['국외소재문화유산재단 대국민 아카이브', "cross_search(sources=okchf) · nedb_search(mode='okchf') — 국외문화유산 6천여 건·사진아카이브 1,800여 건(통합검색), 상세=소장국가·소장처·관리번호·소장경위·시대·재질·크기·출판정보·설명", "nedb_search(mode='okchf', query=<상세 URL>) — 계층 유형 › 소장국가 › 소장처 · 발간 보고서(국외 소장 한국문화재 조사보고서) https://www.overseaschf.or.kr/okchf/data/US_DF_PD.do", '소장기관과 공개 협의된 정보 — 이미지·설명 게재는 재단·소장처 이용조건 확인(허가 전 링크만). 접근: robots.txt 전체 Disallow(표시 — 발굴 우선 원칙), 정직 UA·요청 최소'], 'ledger': ['KOREA ARCHIVE 발견 누적 원장', 'cross_search(sources=ledger) — 사용자들이 도구로 이미 발굴한 기록(매일 누적, 검색어·사용자 정보 없음)', 'https://changgi.github.io/korea-archive-mcp/data/ — CSV·JSONL·RiC-O·IIIF 컬렉션(최근 300건 KV)', "원 기관 권리 표기를 따름 — 발견 횟수·처음 발견일 표시, 'all'에는 포함되지 않음(명시 호출)"], 'gallery': ['KOREA ARCHIVE IIIF 갤러리', 'cross_search(sources=gallery) — 30곳 탐방·100선 실물 기록 800장(권리 확인 완료)', "iiif.html#sNNN/k 딥줌 · iiif/m/sNNN.json 매니페스트 · cross_search format='iiif'로 컬렉션 합류", '이미지별 권리 표시(공공누리 제4유형은 원본 무변경) — 출처 대장 기반'], 'jacar': ['일본 아시아역사자료센터 JACAR', 'cross_search(sources=jacar) — 한→일 변환·레퍼런스코드', "nedb_search(mode=jacar, 'A0401…') 상세 + ±8×100 인접 채굴, 원본 PDF는 国立公文書館 뷰어", 'JACAR 이용약관: 출처(센터·소장관·레퍼런스코드) 표기 조건 2차 이용 원칙 허용'], 'earchive': ['국사편찬위원회 전자사료관', 'cross_search(sources=earchive)', "nedb_search(mode=earchive, '키워드|순번') — 열람·이용조건·등록번호", '사료별 이용조건 표기(공개/제한적 이용) — 원 소장처 권리 확인'], 'awm': ['호주 전쟁기념관 AWM', 'cross_search(sources=awm) — 최대 10건 상세', 'awm.gov.au/collection/C… 페이지(공개 이미지 최대 640px)', "'Copyright expired - public domain' 표기분만 게재"], 'nlna': ['네덜란드 국립문서보관소', 'cross_search(sources=nlna) — 문서군(inventaris)', '사진은 Europeana dataset 1417 → nationaalarchief.nl 원본(TIFF 16비트 주의)', 'Anefo 등 CC0/Publiek Domein 다수 — 사진별 확인'], 'dnz': ['디지털NZ DigitalNZ', 'cross_search(sources=dnz) — NZ 30여 기관 집계', '각 제공기관 페이지(usage·rights 필드)', '재이용 표기(No known restrictions·CC) 확인 — Papers Past 1950년대는 usage Unknown 다수'], 'nzarch': ['뉴질랜드 기록원 Archives NZ', 'cross_search(sources=nzarch) — 라이브 실패 시 주간 정적 인덱스', "nedb_search(mode=nzarch, 'R22438362') — R번호 상세", '기록별 접근 상태(Open 등) — 본 사이트는 봇 차단(Incapsula)'], 'commons': ['위키미디어 공용', 'cross_search(sources=commons)', 'nedb_search(mode=commons, File URL) — 라이선스·원 소장처, NARA 번호면 원본 자동 대조', '업로더 표기는 2차 정보 — 원 소장처 카탈로그로 확정'], 'un': ['UN 디지털도서관', 'cross_search(sources=un) — 문서기호 시리즈', 'nedb_search(mode=un, recid) — 요약·주제·PDF 6개 언어', 'UN 공식문서는 퍼블릭 도메인(ST/AI/189/Add.9/Rev.2)'], 'ndl': ['일본 국립국회도서관 NDL', 'cross_search(sources=ndl) — 당대 자료(~1945) 우선', "dl.ndl.go.jp IIIF(<pid>/R<7자리>) — 'Access Restrictions: PDM' 확인", 'PDM(보호기간 만료) 표기분 자유 이용 · 동시 요청 시 429'], 'i815': ['독립기념관 한국독립운동정보시스템', 'cross_search(sources=i815)', "nedb_search(mode=i815, 상세 URL) 본문 · '사전:이름' 인명사전", '공공누리 표시 없는 원문이미지는 사전 협의 대상(041-560-0445)'], 'gonghun': ['공훈전자사료관(국가보훈부)', 'cross_search(sources=gonghun) — 이름', 'nedb_search(mode=gonghun, mngNo) — 공적조서·공훈록 전문', '공훈록 텍스트 인용 시 출처 표기 · 인물 사진은 수형 사진 제외'], 'ktv': ['KTV e영상역사관', 'cross_search(sources=ktv) — 기록 탭(대한뉴스·문화영화·사진집) 병합', 'nedb_search(mode=ktv, view URL) — 영상 해설 / 사진 판독(공공누리 유형·원본 경로)', '사진은 표시 유형대로(4유형=원형) · 영상 무표시분은 KTV 나누리 신청'], 'oldnews': ['대한민국신문아카이브(국립중앙도서관)', 'cross_search(sources=oldnews) — 단일 핵심어가 잘 걸림(띄어쓴 다어절은 완화 재검색)', "nedb_search(mode=oldnews, CNTS-…) 색인어 · '본문:…|연대' OCR", '1946년 이전 지면 보호기간 만료 — 국립중앙도서관 출처 표기'], 'much': ['대한민국역사박물관 근현대사아카이브', 'cross_search(sources=much)', 'nedb_search(mode=much, idnbr) — 재질·크기·공공누리 유형·원본 이미지 링크', '공공누리 유형(4유형=변경금지·비상업) 준수'], 'indy': ['국가기록원 독립운동판결문', 'cross_search(sources=indy) — 이름(동명이인 주의)', 'nedb_search(mode=indy, 상세 URL) — 죄명·주문·사건개요·원문 뷰어', '판결문은 저작권법 제7조 비보호 저작물 — 국가기록원 출처 표기'], 'heritage': ['국가유산청 국가유산포털', 'cross_search(sources=heritage) — 지정 종목', "nedb_search(mode=heritage, 'kdcd-asno-ctcd') — 해설·원본 이미지 목록", '사진은 공공누리 유형 확인 후 이용'], 'kyudb': ['서울대 규장각한국학연구원', 'cross_search(sources=kyudb)', 'nedb_search(mode=kyujanggak) — 목록+해제(절목류는 해제에서)', '원문 이미지 게재는 기관 허가(02-880-5316)'], 'jsg': ['한국학중앙연구원 장서각', 'cross_search(sources=jsg)', 'nedb_search(mode=jsg, K2-…) — 서지·해제 전문', '이미지 게재는 공문 신청·허가 대상'], 'aks': ['한국고문서자료관', 'cross_search(sources=aks) — 172개 소장처', 'nedb_search(mode=aks) — 소장처→분류→문서 면', '사이트 재이용 조건 미표기 — 게재 전 기관 확인']}  # v1.96.4: 상세 프로파일 없는 18곳 간이 프로파일
+QUICK_PROFILES = {'nrich': ['국립문화유산연구원 국가유산 지식이음', "cross_search(sources=nrich) · nedb_search(mode='nrich') — 국외문화유산 DB 12,569건(명칭·시대·소장처·국가) + 발간자료 Open API(보고서·초록·목차·연구분야·공공누리 유형, 무키)", "nedb_search(mode='nrich', query='ov:번호'|'rep:번호'|상세 URL) — 계층 국외문화유산 › 국가 › 소장처 / 발간자료 › 연구분야. 국외소재문화유산 조사(1992~, 3만 7천여 점·보고서 36권) https://www.nrich.go.kr/kor/page.do?menuIdx=336", '대부분 공공누리 제4유형(출처표시·비상업·변경금지 — 원형 그대로). robots Allow. 정직 UA, 상세 24h 캐시. okchf와 교차확인'], 'okchf': ['국외소재문화유산재단 대국민 아카이브', "cross_search(sources=okchf) · nedb_search(mode='okchf') — 국외문화유산 6천여 건·사진아카이브 1,800여 건(통합검색), 상세=소장국가·소장처·관리번호·소장경위·시대·재질·크기·출판정보·설명", "nedb_search(mode='okchf', query=<상세 URL>) — 계층 유형 › 소장국가 › 소장처 · 발간 보고서(국외 소장 한국문화재 조사보고서) https://www.overseaschf.or.kr/okchf/data/US_DF_PD.do", '소장기관과 공개 협의된 정보 — 이미지·설명 게재는 재단·소장처 이용조건 확인(허가 전 링크만). 접근: robots.txt 전체 Disallow(표시 — 발굴 우선 원칙), 정직 UA·요청 최소'], 'ledger': ['KOREA ARCHIVE 발견 누적 원장', 'cross_search(sources=ledger) — 사용자들이 도구로 이미 발굴한 기록(매일 누적, 검색어·사용자 정보 없음)', 'https://changgi.github.io/korea-archive-mcp/data/ — CSV·JSONL·RiC-O·IIIF 컬렉션(최근 300건 KV)', "원 기관 권리 표기를 따름 — 발견 횟수·처음 발견일 표시, 'all'에는 포함되지 않음(명시 호출)"], 'gallery': ['KOREA ARCHIVE IIIF 갤러리', 'cross_search(sources=gallery) — 30곳 탐방·100선 실물 기록 800장(권리 확인 완료)', "iiif.html#sNNN/k 딥줌 · iiif/m/sNNN.json 매니페스트 · cross_search format='iiif'로 컬렉션 합류", '이미지별 권리 표시(공공누리 제4유형은 원본 무변경) — 출처 대장 기반'], 'jacar': ['일본 아시아역사자료센터 JACAR', 'cross_search(sources=jacar) — 한→일 변환·레퍼런스코드', "nedb_search(mode=jacar, 'A0401…') 상세 + ±8×100 인접 채굴, 원본 PDF는 国立公文書館 뷰어", 'JACAR 이용약관: 출처(센터·소장관·레퍼런스코드) 표기 조건 2차 이용 원칙 허용'], 'earchive': ['국사편찬위원회 전자사료관', 'cross_search(sources=earchive)', "nedb_search(mode=earchive, '키워드|순번') — 열람·이용조건·등록번호", '사료별 이용조건 표기(공개/제한적 이용) — 원 소장처 권리 확인'], 'awm': ['호주 전쟁기념관 AWM', 'cross_search(sources=awm) — 최대 10건 상세', 'awm.gov.au/collection/C… 페이지(공개 이미지 최대 640px)', "'Copyright expired - public domain' 표기분만 게재"], 'nlna': ['네덜란드 국립문서보관소', 'cross_search(sources=nlna) — 문서군(inventaris)', '사진은 Europeana dataset 1417 → nationaalarchief.nl 원본(TIFF 16비트 주의)', 'Anefo 등 CC0/Publiek Domein 다수 — 사진별 확인'], 'dnz': ['디지털NZ DigitalNZ', 'cross_search(sources=dnz) — NZ 30여 기관 집계', '각 제공기관 페이지(usage·rights 필드)', '재이용 표기(No known restrictions·CC) 확인 — Papers Past 1950년대는 usage Unknown 다수'], 'nzarch': ['뉴질랜드 기록원 Archives NZ', 'cross_search(sources=nzarch) — 라이브 실패 시 주간 정적 인덱스', "nedb_search(mode=nzarch, 'R22438362') — R번호 상세", '기록별 접근 상태(Open 등) — 본 사이트는 봇 차단(Incapsula)'], 'commons': ['위키미디어 공용', 'cross_search(sources=commons)', 'nedb_search(mode=commons, File URL) — 라이선스·원 소장처, NARA 번호면 원본 자동 대조', '업로더 표기는 2차 정보 — 원 소장처 카탈로그로 확정'], 'un': ['UN 디지털도서관', 'cross_search(sources=un) — 문서기호 시리즈', 'nedb_search(mode=un, recid) — 요약·주제·PDF 6개 언어', 'UN 공식문서는 퍼블릭 도메인(ST/AI/189/Add.9/Rev.2)'], 'ndl': ['일본 국립국회도서관 NDL', 'cross_search(sources=ndl) — 당대 자료(~1945) 우선', "dl.ndl.go.jp IIIF(<pid>/R<7자리>) — 'Access Restrictions: PDM' 확인", 'PDM(보호기간 만료) 표기분 자유 이용 · 동시 요청 시 429'], 'i815': ['독립기념관 한국독립운동정보시스템', 'cross_search(sources=i815)', "nedb_search(mode=i815, 상세 URL) 본문 · '사전:이름' 인명사전", '공공누리 표시 없는 원문이미지는 사전 협의 대상(041-560-0445)'], 'gonghun': ['공훈전자사료관(국가보훈부)', 'cross_search(sources=gonghun) — 이름', 'nedb_search(mode=gonghun, mngNo) — 공적조서·공훈록 전문', '공훈록 텍스트 인용 시 출처 표기 · 인물 사진은 수형 사진 제외'], 'ktv': ['KTV e영상역사관', 'cross_search(sources=ktv) — 기록 탭(대한뉴스·문화영화·사진집) 병합', 'nedb_search(mode=ktv, view URL) — 영상 해설 / 사진 판독(공공누리 유형·원본 경로)', '사진은 표시 유형대로(4유형=원형) · 영상 무표시분은 KTV 나누리 신청'], 'oldnews': ['대한민국신문아카이브(국립중앙도서관)', 'cross_search(sources=oldnews) — 단일 핵심어가 잘 걸림(띄어쓴 다어절은 완화 재검색)', "nedb_search(mode=oldnews, CNTS-…) 색인어 · '본문:…|연대' OCR", '1946년 이전 지면 보호기간 만료 — 국립중앙도서관 출처 표기'], 'much': ['대한민국역사박물관 근현대사아카이브', 'cross_search(sources=much)', 'nedb_search(mode=much, idnbr) — 재질·크기·공공누리 유형·원본 이미지 링크', '공공누리 유형(4유형=변경금지·비상업) 준수'], 'indy': ['국가기록원 독립운동판결문', 'cross_search(sources=indy) — 이름(동명이인 주의)', 'nedb_search(mode=indy, 상세 URL) — 죄명·주문·사건개요·원문 뷰어', '판결문은 저작권법 제7조 비보호 저작물 — 국가기록원 출처 표기'], 'heritage': ['국가유산청 국가유산포털', 'cross_search(sources=heritage) — 지정 종목', "nedb_search(mode=heritage, 'kdcd-asno-ctcd') — 해설·원본 이미지 목록", '사진은 공공누리 유형 확인 후 이용'], 'kyudb': ['서울대 규장각한국학연구원', 'cross_search(sources=kyudb)', 'nedb_search(mode=kyujanggak) — 목록+해제(절목류는 해제에서)', '원문 이미지 게재는 기관 허가(02-880-5316)'], 'jsg': ['한국학중앙연구원 장서각', 'cross_search(sources=jsg)', 'nedb_search(mode=jsg, K2-…) — 서지·해제 전문', '이미지 게재는 공문 신청·허가 대상'], 'aks': ['한국고문서자료관', 'cross_search(sources=aks) — 172개 소장처', 'nedb_search(mode=aks) — 소장처→분류→문서 면', '사이트 재이용 조건 미표기 — 게재 전 기관 확인']}  # v1.96.4: 상세 프로파일 없는 18곳 간이 프로파일
 
 mcp = FastMCP("korea-archive")
 
@@ -3758,6 +3758,104 @@ def _okchf_mode(q, max_results):
         return f"국외소재문화유산재단 조회 실패({str(e)[:60]}) — 브라우저 대체 경로: https://www.overseaschf.or.kr/archive/total-search.do?srSearchVal={_up.quote(q)}"
 
 
+_NR_B = "https://portal.nrich.go.kr"  # v2.13 국립문화유산연구원 국가유산 지식이음 — robots Allow. 발간자료 Open API(무키)·국외문화유산 DB. Node 패리티
+
+
+def _nr_rep_api(q, n):
+    x = _ok_get(f"{_NR_B}/kor/originalTotalApi.do?idx=203&firstindex=1&recordcountperpage={min(n, 20)}&st=all&sk={_up.quote(q)}&bunya_cd=&start_year=&end_year=")
+    out = []
+    for d in re.findall(r"<data>(.*?)</data>", x, re.S):
+        f = {k: v.strip() for k, v in re.findall(r"<md_data(\d+)><!\[CDATA\[(.*?)\]\]></md_data\d+>", d, re.S)}
+        out.append({"idx": f.get("2", ""), "title": _clean(f.get("3", "")), "form": f.get("4", ""), "abs": f.get("5", ""), "year": f.get("6", ""), "field": f.get("7", ""),
+                    "owner": f.get("8", ""), "kogl": f.get("10", ""), "toc": f.get("11", ""), "url": f.get("12") or f"{_NR_B}/kor/originalUsrView.do?menuIdx=1046&info_idx={f.get('2', '')}", "img": f.get("13", "")})
+    return out
+
+
+def _nr_ov_list(q):
+    b = _ok_get(f"{_NR_B}/kor/overseasSearchList.do?menuIdx=840&webyn=Y&st=1&pageindex=1&sk={_up.quote(q)}")
+    return [{"mseq": m.group(1), "title": _clean(m.group(2)), "era": _clean(m.group(3)), "holder": _clean(m.group(4)), "nation": _clean(m.group(5)),
+             "url": f"{_NR_B}/kor/overseasSearchView.do?menuIdx=840&mseq={m.group(1)}"}
+            for m in re.finditer(r'<tr>\s*<td[^>]*>\s*\d+\s*</td>\s*<td>\s*<a href="/kor/overseasSearchView\.do\?menuIdx=840&(?:amp;)?mseq=(\d+)">(.*?)</a>\s*</td>\s*<td[^>]*>(.*?)</td>\s*<td[^>]*>(.*?)</td>\s*<td[^>]*>(.*?)</td>', b, re.S)]
+
+
+def _nr_field(f):
+    return " › ".join(x for x in re.split(r"\s*-\s*", str(f or "")) if x)
+
+
+def _c_nrich(q, n):
+    """v2.13 국립문화유산연구원 — 국외문화유산 DB(명칭) + 발간자료(보고서). Node 패리티."""
+    try:
+        ov = _nr_ov_list(q)
+    except Exception:
+        ov = []
+    k = max(2, -(-n // 2))
+    try:
+        rp = _nr_rep_api(q, k)
+    except Exception:
+        rp = []
+    b = []
+    for r in rp[:k]:
+        it = {"title": f"[발간자료] {r['title']}"[:160], "date": r["year"], "id": f"rep:{r['idx']}", "series": " › ".join(x for x in ("발간자료", _nr_field(r["field"])) if x), "url": r["url"]}
+        if r["img"]:
+            it["media"] = r["img"]
+        b.append(it)
+    a = [{"title": f"[국외문화유산] {r['title']} — {' '.join(x for x in (r['nation'], r['holder']) if x)}"[:160], "date": r["era"], "id": f"ov:{r['mseq']}",
+          "series": " › ".join(x for x in ("국외문화유산", r["nation"], r["holder"]) if x), "url": r["url"]} for r in ov[:n]]
+    return (b + a)[:n + len(b)]
+
+
+def _nrich_mode(q, max_results):
+    """국립문화유산연구원 — ov:/rep:/상세 URL 판독, '보고서:키워드', 그 밖은 두 DB 목록(Node mode=nrich 패리티)."""
+    try:
+        om = re.search(r"overseasSearchView\.do\S*?mseq=(\d+)", q) or re.match(r"^ov\s*[:#]\s*(\d+)$", q.strip())
+        if om:
+            url = f"{_NR_B}/kor/overseasSearchView.do?menuIdx=840&mseq={om.group(1)}"
+            h = re.sub(r"<script.*?</script>", " ", _cached_text("nrO:" + om.group(1), 24 * 3600, lambda: _ok_get(url), "소장처명"), flags=re.S)
+            F = {}
+            for m in re.finditer(r"<(?:th|dt)[^>]*>(.*?)</(?:th|dt)>\s*<(?:td|dd)[^>]*>(.*?)</(?:td|dd)>", h, re.S):
+                k, v = _clean(m.group(1)), _clean(m.group(2))
+                if k and v and k not in F:
+                    F[k] = v
+            imgs = list(dict.fromkeys(_NR_B + _up.quote(x, safe="/:,()") for x in re.findall(r'<img[^>]+src="(/file_link/[^"]+)"', h)))
+            nm = " · ".join(x for x in (F.get("한글명칭"), F.get("한자명칭"), F.get("원어명칭")) if x) or f"ov:{om.group(1)}"
+            return (f"국립문화유산연구원 국외문화유산 판독 — {nm}\n" + "\n".join(f"{k}: {v[:200]}" for k, v in F.items() if k not in ("한글명칭", "한자명칭", "원어명칭")) + "\n"
+                    + (f"이미지 {len(imgs)}장: {' · '.join(imgs[:4])}\n" if imgs else "") + f"원문 뷰어: {url}\n"
+                    + f"※ 출처: 국립문화유산연구원 국가유산 지식이음 — {F.get('이용범위') or '이용조건 원 기관 확인'}. 공공누리 제4유형은 출처표시·비상업·변경금지(원형 그대로). 국외소재문화유산재단(okchf) 기록과 교차확인 권장.")
+        rm = re.search(r"originalUsrView\.do\S*?info_idx=(\d+)", q) or re.match(r"^rep\s*[:#]\s*(\d+)$", q.strip())
+        if rm:
+            url = f"{_NR_B}/kor/originalUsrView.do?menuIdx=1046&info_idx={rm.group(1)}"
+            h = re.sub(r"<script.*?</script>", " ", _cached_text("nrR:" + rm.group(1), 24 * 3600, lambda: _ok_get(url), "detail_tech"), flags=re.S)
+            tm = re.search(r'<div class="detail_tech[^"]*">\s*<h3 class="tit">(.*?)<a ', h, re.S); title = _clean(tm.group(1)) if tm else f"rep:{rm.group(1)}"
+            F = {}
+            for m in re.finditer(r"<dt[^>]*>(.*?)</dt>\s*<dd[^>]*>(.*?)</dd>", h, re.S):
+                k, v = _clean(m.group(1)), _clean(m.group(2))
+                if k and v and len(k) < 12 and k not in F:
+                    F[k] = v
+            am = re.search(r'<p id="mcctP"[^>]*>(.*?)</p>', h, re.S); ab = _clean(am.group(1)) if am else ""
+            tc = re.search(r'<pre id="listConPre">(.*?)</pre>', h, re.S); toc = [x for x in (_clean(l) for l in (tc.group(1) if tc else "").split("\n")) if x]
+            im = re.search(r'<div class="techBox">.*?<img src="([^"]+)"', h, re.S)
+            return (f"국립문화유산연구원 발간자료 판독 — {title}\n" + " · ".join(f"{k}: {v[:160]}" for k, v in list(F.items())[:8]) + "\n"
+                    + (f"【초록】\n{ab[:1500]}\n본문 지문(sha256-16): {_hl.sha256(ab.encode()).hexdigest()[:16]} — 판독 시점 초록 기준.\n" if ab else "")
+                    + (f"【목차】\n{chr(10).join(toc)[:1800]}\n" if toc else "") + (f"표지: {_NR_B}{im.group(1)}\n" if im else "") + f"원문 뷰어(PDF 열람·내려받기): {url}\n"
+                    + "※ 출처: 국립문화유산연구원 발간자료 — 공공누리 유형은 원문 페이지 표기 확인(대부분 제4유형: 출처표시·비상업·변경금지). 인용 시 보고서명·발행년도·쪽수.")
+        qm = re.match(r"^보고서\s*[:：]\s*(.+)$", q.strip())
+        kq = qm.group(1) if qm else q
+        try:
+            rp = _nr_rep_api(kq, max_results if qm else max(3, -(-max_results // 2)))
+        except Exception:
+            rp = []
+        try:
+            ov = [] if qm else _nr_ov_list(q)
+        except Exception:
+            ov = []
+        return (f"국립문화유산연구원 국가유산 지식이음 '{kq}' — 발간자료 {len(rp)}건" + ("" if qm else f" · 국외문화유산 {len(ov)}건") + "\n"
+                + "\n".join(f"- [발간자료] {r['title']} ({r['year']}) · {r['field']} · {'공공누리 ' + r['kogl'] if r['kogl'] else ''} {r['url']}" for r in rp) + ("\n" if rp else "")
+                + "\n".join(f"- [국외문화유산] {r['title']} — {r['nation']} · {r['holder']} ({r['era']}) {r['url']}" for r in ov[:max_results])
+                + f"\n※ 상세: nedb_search(mode='nrich', query=<상세 URL 또는 ov:번호·rep:번호>) · 보고서만: query='보고서:키워드' · 포털 통합검색(브라우저): {_NR_B}/search.do · 국외소재문화유산 조사 현황: https://www.nrich.go.kr/kor/page.do?menuIdx=336")
+    except Exception as e:
+        return f"국립문화유산연구원 조회 실패({str(e)[:60]}) — 브라우저 대체 경로: {_NR_B}/kor/index.do"
+
+
 def _c_ledger(q, n):
     """v2.6: 발견 누적 원장 — 사용자들이 이미 발굴한 기록(검색어 없음)을 다시 검색. docs/data/discovered.jsonl 1h 캐시. 'all'에는 넣지 않음. Node 패리티."""
     b = _cached_text("kaLedger", 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/discovered.jsonl", 20), '"key"')
@@ -3810,6 +3908,7 @@ ARCHIVE_META = {
     "gallery": {"n": "KOREA ARCHIVE IIIF 갤러리(30곳 탐방·100선 실물 기록)", "c": "KR"},
     "ledger": {"n": "KOREA ARCHIVE 발견 누적 원장(사용자 발굴 기록)", "c": "KR"},
     "okchf": {"n": "국외소재문화유산재단 대국민 아카이브", "c": "KR"},
+    "nrich": {"n": "국립문화유산연구원 국가유산 지식이음", "c": "KR"},
 }
 # 증거성 강화(v1.71): 레코드별 심층 판독 재현 호출문
 DEEP_READ = {
@@ -3827,6 +3926,7 @@ DEEP_READ = {
     "commons": lambda it: it.get("url") and f"nedb_search(mode='commons', query='{it['url']}')",
     "koreanwar": lambda it: it.get("id") and f"koreanwar_item(ref_code='{it['id']}')",
     "okchf": lambda it: it.get("url") and f"nedb_search(mode='okchf', query='{it['url']}')",
+    "nrich": lambda it: it.get("url") and f"nedb_search(mode='nrich', query='{it['url']}')",
     "nara": lambda it: it.get("id") and ("judge_rights(naid=" + re.sub(r"\D", "", str(it["id"])) + ")"),
     "seoul": lambda it: it.get("url") and f"seoul_archives_search(query='{it['url']}')",
 }
@@ -3860,6 +3960,8 @@ def _part_of(ch, it):
         return f"신문 › {it['series']}"
     if ch == "aks" and it.get("series"):
         return f"고문서 › {it['series']}"
+    if ch == "nrich" and it.get("series"):
+        return f"국립문화유산연구원 › {it['series']}"
     if ch == "okchf" and it.get("series"):
         return f"국외소재문화유산재단 › {it['series']}"
     if ch == "ledger":
@@ -3909,7 +4011,7 @@ _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_e
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
             "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "gonghun": _c_gonghun, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm, "nlna": _c_nlna, "dnz": _c_dnz, "nzarch": _c_nzarch, "commons": _c_commons, "un": _c_un, "ndl": _c_ndl, "oldnews": _c_oldnews, "much": _c_much, "indy": _c_indy, "heritage": _c_heritage,
             "ktv": _c_ktv, "seoul": _c_seoul,
-            "foia": _c_foia, "aks": _c_aks, "gallery": _c_gallery, "ledger": _c_ledger, "okchf": _c_okchf}
+            "foia": _c_foia, "aks": _c_aks, "gallery": _c_gallery, "ledger": _c_ledger, "okchf": _c_okchf, "nrich": _c_nrich}
 
 
 
@@ -4283,7 +4385,7 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 · '본문:키워드[|1905-1910]'=OCR 전문+연대) ·
     much=역사박물관(→idnbr/URL 투입 시 재질·공공누리·설명) ·
     indy=판결문(이름→상세 URL 투입 시 죄명·주문·사건개요·원문 뷰어) ·
-    nzarch=NZ기록원(R번호=상세 메타) · okchf=국외소재문화유산재단(상세 URL=소장·설명) ·
+    nzarch=NZ기록원(R번호=상세 메타) · okchf=국외소재문화유산재단(상세 URL=소장·설명) · nrich=국립문화유산연구원(국외문화유산 DB·발간자료 초록·목차) ·
     heritage=국가유산(키워드 목록 — 국보·보물·사적+딥링크. cpno 상세는 기관 식별 편차로 일부만)
     (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
@@ -4305,6 +4407,8 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
         return _jsg_mode(query, max_results)
     if mode == "okchf":
         return _okchf_mode(query, max_results)
+    if mode == "nrich":
+        return _nrich_mode(query, max_results)
     if mode == "un":
         return _un_mode(query, max_results)
     if mode == "oldnews":
@@ -5120,7 +5224,7 @@ def source_profile(institution: str = "list") -> str:
         GOLD = {"tna": "Korea", "ia": "Korea", "gallica": "Corée", "europeana": "Korea", "nara": "Korea",
                 "archives": "한국전쟁", "nlk": "한국전쟁", "nedb": "한강", "koreanwar": "장진호",
                 "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "gonghun": "안중근", "ktv": "대한뉴스", "oldnews": "의병", "much": "판문점", "indy": "유관순", "heritage": "숭례문", "kyudb": "절목", "jsg": "의궤", "awm": "Kapyong", "nlna": "Korea", "dnz": "Korean War", "nzarch": "Korea", "commons": "Seoul 1950", "un": "Korea armistice", "ndl": "조선총독부",
-                "seoul": "한강", "foia": "회의", "aks": "문중", "gallery": "흥남", "okchf": "불화"}
+                "seoul": "한강", "foia": "회의", "aks": "문중", "gallery": "흥남", "okchf": "불화", "nrich": "미륵사"}
         keys = {k: bool(os.environ.get(k)) for k in
                 ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
                  "KOREANWAR_API_TOKEN", "NEDB_INDEX_URL")}
