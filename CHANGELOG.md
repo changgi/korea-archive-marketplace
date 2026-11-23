@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.27.0 — 계층·IIIF 없는 기록에 구축 (2026-11-23)
+- 원장 기록 중 원 기관 계층이 없는 것(위키미디어 공용·서울기록원·Archives NZ·UN 등 30건)에 파생 계층 `[파생] 유형/주제 › 연대` 구축 — 근거: 서울기록원 유형 표기([기록건·사진])·AIMS 제목 첫 단·UN 문서 유형·파일 매체·연대(date → 제목 연도 → 메타 생산일). 원 기관 partOf와 분리된 partOf_derived 필드.
+- IIIF가 없는 기록(244건)에 기록 봉투 브리지 매니페스트를 만들어 iiif_built로 기록(iiif_kind 구분). CSV·JSONL·인기 CSV·RiC-O(rico:hasOrHadInstantiation, 파생 계열은 rico:generalDescription으로 표시) 반영.
+- cross_search(sources='ledger')는 원 기관 계층이 없으면 파생 계층을 계열로 표시. Node·Python 패리티, 골든 ledger-derived-hierarchy.
+
 ## v2.26.1 — 질의·회신 원문 그대로 축적 (2026-11-23)
 - 개인정보 패턴 제거(scrub) 폐지 — 질의 인자·회신 본문을 어떤 가공·삭제 없이 원문 그대로 축적(기록의 원형 보존·증거성). v2.26.0은 회신 본문에도 적용돼 13자리 이상 식별번호 등 기록 원문을 바꿀 수 있었음 → 수정.
 - cross_search 안내문: '원문 그대로 공개 누적 원장에 영구 축적 — 공개를 원치 않는 본인 정보는 질의에 넣지 마십시오'. 골든 ledger-query-notice 갱신.
