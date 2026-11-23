@@ -3374,17 +3374,19 @@ def _gonghun_mode(query: str, max_results: int) -> str:
             res = {}
             for key, fn in (("g", lambda: [f"- [mngNo {it['id']}] {it['title']}" for it in _c_gonghun(nm, 3)]),
                             ("d", _dict3),
-                            ("j", lambda: [f"- {it['title']} ({it['date']})\n  {it['url']}" for it in _c_indy(nm, 3)])):
+                            ("j", lambda: [f"- {it['title']} ({it['date']})\n  {it['url']}" for it in _c_indy(nm, 3)]),
+                            ("k", lambda: (lambda P: _nr_people_lines(P, _nr_people_keys(P, nm), 3))(_nr_people()))):
                 try:
                     res[key] = (fn(), "")
                 except Exception as e:
                     res[key] = ([], str(e)[:40])
             sec = lambda t, pair: f"【{t}】\n" + ("\n".join(pair[0]) if pair[0] else f"(0건{' — 오류: ' + pair[1] if pair[1] else ''})")
-            return (f"인물 종합 대조 '{nm}' — 공훈록·인명사전·판결문 3채널 병렬:\n"
+            return (f"인물 종합 대조 '{nm}' — 공훈록·인명사전·판결문·연구원 인물 색인 4채널 병렬:\n"
                     + sec("공훈전자사료관(국가보훈부) — 공적·훈격", res["g"]) + "\n"
                     + sec("한국독립운동인명사전(독립기념관) — 학술 전기", res["d"]) + "\n"
                     + sec("독립운동판결문(국가기록원) — 죄명·주문", res["j"]) + "\n"
-                    + "※ 심층: mngNo 숫자 재투입=공적조서·공훈록·수형기록 · mode=i815 \"사전:번호\"=전기 전문 · mode=indy 상세URL=주문·사건개요·원문 뷰어.\n"
+                    + sec("국립문화유산연구원 연구DB 인물 — 금석문 찬·서 · 초상화 · 괘불 화승 · 일기 저자(연대=원 데이터 표기, 생몰년과 대조)", res["k"]) + "\n"
+                    + "※ 심층: mngNo 숫자 재투입=공적조서·공훈록·수형기록 · mode=i815 \"사전:번호\"=전기 전문 · mode=indy 상세URL=주문·사건개요·원문 뷰어 · mode=nrich '인물:이름'=연구원 인물 전체·'ksm:번호' 등=기록 판독.\n"
                     + "※ 대조 포인트: 한자명·생몰 일치로 동명이인 분리 → 훈격(공훈)↔전기(사전)↔형량(판결문) 정합 → 이명 확보 후 oldnews \"본문:이명\"으로 당대 신문 확장.")
         if re.match(r"^\d+$", q):  # mngNo 상세
             b = _cached_text("gonghunD:" + q, 24 * 3600,
@@ -3827,6 +3829,28 @@ def _nr_db_item(o):
             "series": " › ".join(x for x in ("연구DB", o["dn"], (o.get("p") or "").split(" ")[0]) if x), "url": o.get("u", "")}
 
 
+def _nr_people():  # v2.21 연구원 인물 색인(공용 — '인물:' 모드·gonghun '종합:' 4번째 채널), Node 패리티
+    return json.loads(_cached_text("nrPeople", 6 * 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/nrich/people.json", 60), '"r"'))
+
+
+def _nr_people_keys(P, nm):
+    return [k for k, e in P.items() if e["n"] == nm or k == nm or (e.get("h") and nm in e["h"]) or (len(nm) >= 2 and e["n"].startswith(nm) and len(e["n"]) <= len(nm) + 1)][:8]
+
+
+def _nr_year(d):  # 연대 문자열의 첫 연도(정렬용, Node nrYear 패리티)
+    m = re.search(r"(?<!\d)(\d{3,4})(?!\d)", str(d or ""))
+    return int(m.group(1)) if m else 9999
+
+
+def _nr_people_lines(P, keys, per=3):
+    out = []
+    for k in keys:
+        e = P[k]; tot = sum(len(v) for v in e["r"].values())
+        ex = sorted([[r, *x] for r, v in e["r"].items() for x in v], key=lambda a: _nr_year(a[3]))[:per]
+        out.append(f"- {k} — {tot}건(" + " · ".join(f"{r} {len(v)}" for r, v in e["r"].items()) + ")" + "".join(f"\n  · [{x[0]}] {x[2]}" + (f" · {x[3]}" if x[3] else "") + f" → {x[1]}" for x in ex))
+    return out
+
+
 def _nr_field(f):
     return " › ".join(x for x in re.split(r"\s*-\s*", str(f or "")) if x)
 
@@ -3905,7 +3929,7 @@ def _nrich_mode(q, max_results):
                         left[0] -= 1; lines.append(f"  - [{r}] {x[1]}" + (f" · {x[2]}" if x[2] else "") + f" → {x[0]}")
                 blocks.append(f"■ {k} — {tot}건 (" + " · ".join(f"{r} {len(v)}" for r, v in e["r"].items()) + ")" + ("\n" + "\n".join(lines) if lines else ""))
             return (f"국립문화유산연구원 연구DB 인물 '{nm}' — {len(keys)}명(표기 기준)\n" + "\n".join(blocks)
-                    + "\n※ 기록 판독: nedb_search(mode='nrich', query='<id>') · 동명이인 가능 — 한자 병기로 구분 · 서(書)에는 집자(옛 글씨를 모아 새김)가 포함될 수 있음 — 생몰년과 건립 연대 대조 · 인물 색인 https://changgi.github.io/korea-archive-mcp/data/nrich/people.json(주 1회) · RiC-O(인물=rico:Person): data/nrich/export/<키>.jsonld")
+                    + "\n※ 기록 판독: nedb_search(mode='nrich', query='<id>') · 동명이인 가능 — 한자 병기로 구분 · 서(書)에는 집자(옛 글씨를 모아 새김)가 포함될 수 있음 · 연대는 원 데이터 표기(피장자 시대·건립 시점 혼재 가능) — 생몰년과 대조 · 인물 색인 https://changgi.github.io/korea-archive-mcp/data/nrich/people.json(주 1회) · RiC-O(인물=rico:Person): data/nrich/export/<키>.jsonld")
         dm = re.match(r"^(" + "|".join(_NR_DS) + r")\s*[:#]\s*(\S.*)$", q.strip())
         if dm:  # 연구DB 기록 — 정적 색인 전체 필드
             o = next((r for r in _nr_db() if r["id"] == f"{dm.group(1)}:{dm.group(2)}"), None)
