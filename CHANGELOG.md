@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.23.0 — health 🔴 채널 복구: 한국사DB 실검색 · Gallica data.bnf.fr (2026-11-23)
+- 결함 수정(한국사DB): 연합검색·nedb_search 통합 모드가 통합검색 페이지(GET)의 **사이트 메뉴**를 결과로 읽어, 무엇을 검색해도 메뉴의 'new' 항목 '헌정사 자료 DB·포로신문보고서' 2건만 나오던 장기 결함(검색어가 응답에 한 번도 없음 — 실측). → 시대별 하위 DB POST로 주요 8개 DB(비변사등록·각사등록·한국독립운동사자료·임시정부자료집·동아일보·자료대한민국사·휴전회담회의록·삼국사기) 병렬 검색, 건수·기록 제목·고정 URL(db.history.go.kr/id/levelId)·날짜(levelId에서), 6h 캐시. 실측 '한강' 2건(메뉴) → 7개 DB 실기록(동아일보 2,407 · 자료대한민국사 290 · 비변사등록 190 · 삼국사기 175 …). 계열 = 한국사DB › 시대 › DB.
+- 복구(Gallica): Gallica SRU 403 + BnF 카탈로그 연결 불가(서버·컨테이너 모두 시간 초과) → data.bnf.fr 공식 SPARQL(제목 전문검색 + Gallica 원문 링크) 우선, 0건일 때 카탈로그. 실측 'Corée' 1.3s·8건 전부 Gallica 원문(1868~1952).
+- foia(정보공개포털 점검·서울소통광장 시간 초과)는 기관 측 사정 — 표시 유지.
+- Node·Python 패리티(Python은 독립 POST 구현 _nedb_live·_bnf_sparql). 골든 nedb-live-subdb·gallica-databnf.
+
 ## v2.22.0 — 자동 파이프라인 자기 감시 (2026-11-23)
 - 연구원 수집 품질 관문(scripts/nrich_harvest.py): 데이터셋 건수가 지난주의 70% 미만이거나 URL 채움 90% 미만이면(원 기관 열 순서 변경 신호) 그 데이터셋은 지난 색인 유지 + meta.warnings + 종료 코드 3. 가짜 응답 실측: 고고학저널(호) 31→2건·URL 0% → 31건 유지·경고.
 - 워크플로 알림: nrich-harvest(경고·실패) · ledger(실패)가 auto-health 이슈를 열고 정상이면 자동 종료. ledger 푸시 전 rebase(자동 커밋 충돌 방지).

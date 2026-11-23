@@ -1841,8 +1841,37 @@ def _eu_media(it):
     return f"https://www.esbirky.cz/predmet/{m.group(1)}" if m else u
 
 
+def _bnf_sparql(q, n):
+    """v2.23 data.bnf.fr 공식 개방데이터 SPARQL(Node bnfSparql 패리티) — 카탈로그 연결 불가·Gallica 403일 때 우선 경로."""
+    words = [w for w in re.sub(r"[\"'\\{}<>]", " ", str(q)).split() if len(w) > 1 and not w.isdigit()][:4]
+    if not words:
+        return []
+    sp = ("PREFIX dcterms: <http://purl.org/dc/terms/> PREFIX rdarel: <http://rdvocab.info/RDARelationshipsWEMI/> SELECT ?m ?title ?date ?g WHERE { ?m dcterms:title ?title . ?title bif:contains \""
+          + " AND ".join(f"'{w}'" for w in words) + f"\" . OPTIONAL {{ ?m dcterms:date ?date }} OPTIONAL {{ ?m rdarel:electronicReproduction ?g }} }} LIMIT {min(60, n * 4)}")
+    j = json.loads(_http_text("https://data.bnf.fr/sparql?query=" + _up.quote(sp) + "&format=" + _up.quote("application/json"), 25))
+    seen, out = set(), []
+    for b in (j.get("results") or {}).get("bindings", []):
+        m = (b.get("m") or {}).get("value", "")
+        if not m or m in seen:
+            continue
+        seen.add(m)
+        ark = (re.search(r"ark:/12148/[A-Za-z0-9]+", m) or [""])[0]
+        gal = ((b.get("g") or {}).get("value") or "").replace("http:", "https:", 1)
+        gal = gal if "gallica.bnf.fr" in gal else ""
+        out.append({"title": str((b.get("title") or {}).get("value") or "(무제)")[:160], "date": (b.get("date") or {}).get("value", ""), "id": ark,
+                    "gallica": gal, "series": "BnF › data.bnf.fr", "url": gal or re.sub(r"#about$", "", m)})
+    out.sort(key=lambda x: 0 if x["gallica"] else 1)
+    return out
+
+
 def _bnf_catalog(q, n, doctype=""):
     if doctype == "":  # v1.93.1: 사진·도판(doctype i) 질의 병행 — 디지털화(Gallica 원문) 자료 상위
+        try:  # v2.23 data.bnf.fr 우선(카탈로그 연결 불가 실측)
+            sp = _bnf_sparql(q, n)
+            if sp:
+                return len(sp), sp[:n]
+        except Exception:
+            pass
         res = []
         for dt in ("i", None):
             try:
@@ -2034,21 +2063,56 @@ def _nedb_file_search(recs, q, n):
                 break
     return out
 
+# v2.23 한국사DB 주요 DB 병렬 검색(Node nedbLive 패리티) — 통합검색 GET은 검색어를 무시하고 메뉴만 돌려줘 메뉴 'new' 항목을 결과로 오인하던 결함
+_NEDB_DBS = [("joseon", "bb", "비변사등록", "조선"), ("joseon", "ks", "각사등록", "조선"), ("modern", "kd", "한국독립운동사자료", "근대"), ("modern", "ij", "대한민국임시정부자료집", "근대"),
+             ("modern", "npda", "동아일보", "근대"), ("contemp", "dh", "자료대한민국사", "현대"), ("contemp", "pn", "휴전회담회의록", "현대"), ("ancient", "sg", "삼국사기", "고대")]
+_NEDB_FORM = {"pageIndex": "1", "pageSize": "1", "orderColumn": "levelId", "orderDir": "ASC", "synonym": "off", "chinessChar": "on", "titleWord": "", "titleConjunction": "AND",
+              "contentsWord": "", "contentsConjunction": "AND", "creatorWord": "", "creatorConjunction": "AND", "startDate": "", "endDate": ""}
+
+
+def _nedb_date(i):
+    m = re.search(r"_(1[5-9]\d\d|20\d\d)_(\d\d)_(\d\d)", str(i))
+    return f"{m.group(1)}-{m.group(2)}-{m.group(3)}" if m else ""
+
+
+def _nedb_live(q, per=3):
+    def one(d):
+        site, iid, name, era = d
+        def post():
+            body = _up.urlencode(dict(_NEDB_FORM, searchItemId=iid, pageUnit=str(per), totalWord=q)).encode()
+            req = _ur.Request(f"https://db.history.go.kr/{site}/search/searchResultList.do", data=body, method="POST",
+                              headers={"User-Agent": _OK_UA, "Content-Type": "application/x-www-form-urlencoded", "Referer": "https://db.history.go.kr/"})
+            with _ur.urlopen(req, timeout=25) as r:
+                return r.read().decode("utf-8", "replace")
+        try:
+            b = _cached_text(f"nedbL:{iid}:{per}:{q}", 6 * 3600, post, "총")
+        except Exception as e:
+            return {"site": site, "iid": iid, "name": name, "era": era, "total": -1, "rows": [], "err": str(e)[:40]}
+        tm = re.search(r"총\s*([\d,]+)\s*건", _clean(re.sub(r"<script.*?</script>", " ", b, flags=re.S)))
+        rows, seen = [], set()
+        for m in re.finditer(r"fnGoItemLevel\('[^']*',\s*'(\w+)'[^)]*\);[^>]*>(.*?)</a>", b, re.S):
+            t = _clean(m.group(2))
+            if t and m.group(1) not in seen:
+                seen.add(m.group(1)); rows.append({"id": m.group(1), "title": t})
+            if len(rows) >= per:
+                break
+        return {"site": site, "iid": iid, "name": name, "era": era, "total": int(tm.group(1).replace(",", "")) if tm else 0, "rows": rows}
+    with _cf.ThreadPoolExecutor(max_workers=8) as ex:
+        return list(ex.map(one, _NEDB_DBS))
+
+
 def _c_nedb(q, n):
     """v1.93: 개방파일 인덱스 미설정이면 한국사DB 통합검색 라이브 조회 — 검색어가 등장하는 DB를 기록 진입점으로 수집(0건 고정 해소)."""
     recs = _load_nedb_index()
     if recs:
         return _nedb_file_search(recs, q, n)
-    b = _http_text("https://db.history.go.kr/search/searchTotalResult.do?searchKeyword=" + _up.quote(q), 15)
-    out, seen = [], set()
-    for code, inner in re.findall(r'href="/item/(\w+)/main\.do"[^>]*>(.*?)</a>', b, re.S):
-        nm = _clean(re.sub(r'<span[^>]*class="btn-new"[^>]*>.*?</span>', "", inner, flags=re.S))
-        if nm and code not in seen:
-            seen.add(code)
-            out.append({"title": f"{nm} — '{q}' 수록", "date": "", "id": code, "series": f"한국사DB › {nm}",
-                        "url": f"https://db.history.go.kr/item/{code}/main.do"})
-        if len(out) >= n:
-            break
+    dbs = sorted([d for d in _nedb_live(q, 2) if d["total"] > 0], key=lambda d: -d["total"])
+    out = []
+    for k in range(2):
+        for d in dbs:
+            if len(d["rows"]) > k and len(out) < n:
+                r = d["rows"][k]
+                out.append({"title": r["title"][:140], "date": _nedb_date(r["id"]), "id": r["id"], "series": f"{d['era']} › {d['name']}", "url": f"https://db.history.go.kr/id/{r['id']}"})
     return out
 
 
@@ -4581,19 +4645,15 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
             or "(0건 — 다른 표기(한자 원표기 등) 시도)"
         return (f"한국사DB(공식 개방파일 인덱스) '{query}' — {len(hits)}건:\n" + body
                 + f"\n※ data.go.kr 공식 파일(KOGL) 기반 — robots 무관. 전체 통합검색(브라우저): {browse}")
-    api = "https://db.history.go.kr/search/searchTotalResult.do?searchKeyword=" + _up.quote(query)
     try:
-        b = _http_text(api, 15)
-        dbs, seen = [], set()
-        for code, inner in re.findall(r'href="/item/(\w+)/main\.do"[^>]*>(.*?)</a>', b, re.S):
-            nm = _clean(inner)
-            if nm and nm not in seen:
-                seen.add(nm); dbs.append(nm)
-        if dbs:
-            return (f"한국사DB '{query}' — 검색어가 등장하는 DB {len(dbs)}종:\n"
-                    + "\n".join("- " + d for d in dbs[:max_results]) + _browse(browse)
-                    + "\n각 DB에서 문서 단위로 열람. 한자 원표기 병행 검색 권장.")
-        return _agent_browse("한국사DB", query, browse, "통합검색에서 매칭 DB 미검출")
+        dbs = _nedb_live(query, 3)
+        hit = sorted([d for d in dbs if d["total"] > 0], key=lambda d: -d["total"])
+        if hit:
+            return (f"한국사DB '{query}' — 주요 {len(_NEDB_DBS)}개 DB 직접 검색(시대별 하위 DB POST): 검색어가 나오는 DB {len(hit)}종\n"
+                    + "\n".join(f"■ [{d['era']}] {d['name']} — {d['total']:,}건\n" + "\n".join(f"  - {r['title'][:90]}" + (f" ({_nedb_date(r['id'])})" if _nedb_date(r['id']) else "") + f" → https://db.history.go.kr/id/{r['id']}" for r in d["rows"]) for d in hit)
+                    + (f"\n(조회 실패: {'·'.join(d['name'] for d in dbs if d['total'] < 0)})" if any(d["total"] < 0 for d in dbs) else "")
+                    + f"\n※ 인용은 db.history.go.kr/id/<levelId>(고정 URL). 비변사등록 座目 제외·형제 조: mode=record·sibling. 그 밖의 DB(실록·승정원일기 등 100여 종): 통합검색(브라우저) {browse}")
+        return _agent_browse("한국사DB", query, browse, "주요 DB에서 0건 — 한자 원표기·다른 표기로 재시도")
     except Exception as e:
         return _agent_browse("한국사DB", query, browse, f"자동조회 실패({e})")
 
