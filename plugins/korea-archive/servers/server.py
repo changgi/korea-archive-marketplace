@@ -3881,6 +3881,23 @@ def _nrich_mode(q, max_results):
                     + (f"【초록】\n{ab[:1500]}\n본문 지문(sha256-16): {_hl.sha256(ab.encode()).hexdigest()[:16]} — 판독 시점 초록 기준.\n" if ab else "")
                     + (f"【목차】\n{chr(10).join(toc)[:1800]}\n" if toc else "") + (f"표지: {_NR_B}{im.group(1)}\n" if im else "") + f"원문 뷰어(PDF 열람·내려받기): {url}\n"
                     + "※ 출처: 국립문화유산연구원 발간자료 — 공공누리 유형은 원문 페이지 표기 확인(대부분 제4유형: 출처표시·비상업·변경금지). 인용 시 보고서명·발행년도·쪽수.")
+        pm2 = re.match(r"^인물\s*[:：]\s*(.+)$", q.strip())
+        if pm2:  # v2.20 인물 색인(Node 패리티)
+            P = json.loads(_cached_text("nrPeople", 6 * 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/nrich/people.json", 60), '"r"'))
+            nm = pm2.group(1).strip()
+            keys = [k for k, e in P.items() if e["n"] == nm or k == nm or (e.get("h") and nm in e["h"]) or (len(nm) >= 2 and e["n"].startswith(nm) and len(e["n"]) <= len(nm) + 1)][:8]
+            if not keys:
+                return f"인물 '{nm}' — 연구DB 인물 색인(금석문 찬·서·제액, 초상화 화가, 괘불 화승, 일기 저자)에 없음. 본문 검색: cross_search(query='{nm}', sources='nrich')"
+            left = [40]; blocks = []
+            for k in keys:
+                e = P[k]; tot = sum(len(v) for v in e["r"].values())
+                lines = []
+                for r, v in e["r"].items():
+                    for x in v[:max(0, min(len(v), left[0]))]:
+                        left[0] -= 1; lines.append(f"  - [{r}] {x[1]}" + (f" · {x[2]}" if x[2] else "") + f" → {x[0]}")
+                blocks.append(f"■ {k} — {tot}건 (" + " · ".join(f"{r} {len(v)}" for r, v in e["r"].items()) + ")" + ("\n" + "\n".join(lines) if lines else ""))
+            return (f"국립문화유산연구원 연구DB 인물 '{nm}' — {len(keys)}명(표기 기준)\n" + "\n".join(blocks)
+                    + "\n※ 기록 판독: nedb_search(mode='nrich', query='<id>') · 동명이인 가능 — 한자 병기로 구분 · 서(書)에는 집자(옛 글씨를 모아 새김)가 포함될 수 있음 — 생몰년과 건립 연대 대조 · 인물 색인 https://changgi.github.io/korea-archive-mcp/data/nrich/people.json(주 1회) · RiC-O(인물=rico:Person): data/nrich/export/<키>.jsonld")
         dm = re.match(r"^(" + "|".join(_NR_DS) + r")\s*[:#]\s*(\S.*)$", q.strip())
         if dm:  # 연구DB 기록 — 정적 색인 전체 필드
             o = next((r for r in _nr_db() if r["id"] == f"{dm.group(1)}:{dm.group(2)}"), None)
@@ -3910,7 +3927,7 @@ def _nrich_mode(q, max_results):
                 + "\n".join(f"- [발간자료] {r['title']} ({r['year']}) · {r['field']} · {'공공누리 ' + r['kogl'] if r['kogl'] else ''} {r['url']}" for r in rp) + ("\n" if rp else "")
                 + "\n".join(f"- [국외문화유산] {r['title']} — {r['nation']} · {r['holder']} ({r['era']}) {r['url']}" for r in ov[:max_results])
                 + (lambda db: (f"\n연구DB {len(db)}건:\n" + "\n".join(f"- [{o['dn']}] {o['t']}" + (f" ({o['a']})" if o.get("a") else "") + (f" · {o['d']}" if o.get("d") else "") + (f" · {o['p']}" if o.get("p") else "") + f" → {o['id']}" for o in db)) if db else "")([] if qm else _safe(lambda: _nr_db_search(q, max_results), []))
-                + f"\n※ 상세: nedb_search(mode='nrich', query=<상세 URL 또는 ov:번호·rep:번호·연구DB id(ksm:3 등)>) · 보고서만: query='보고서:키워드' · 포털 통합검색(브라우저): {_NR_B}/search.do · 국외소재문화유산 조사 현황: https://www.nrich.go.kr/kor/page.do?menuIdx=336")
+                + f"\n※ 상세: nedb_search(mode='nrich', query=<상세 URL 또는 ov:번호·rep:번호·연구DB id(ksm:3 등)·'인물:이름'>) · 보고서만: query='보고서:키워드' · 포털 통합검색(브라우저): {_NR_B}/search.do · 국외소재문화유산 조사 현황: https://www.nrich.go.kr/kor/page.do?menuIdx=336")
     except Exception as e:
         return f"국립문화유산연구원 조회 실패({str(e)[:60]}) — 브라우저 대체 경로: {_NR_B}/kor/index.do"
 
