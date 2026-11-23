@@ -3991,6 +3991,21 @@ def _link_overseas(items):
     return out
 
 
+def _pipeline_freshness():
+    """v2.22 자동 파이프라인 신선도(Node 패리티) — 정적 색인·원장이 오래되면 🔴."""
+    import time as _t
+    PB = "https://changgi.github.io/korea-archive-mcp/data/"
+    out = []
+    for label, f, field, mx in (("연구원 연구DB 색인(nrich-harvest, 주 1회)", "nrich_db_meta.json", "harvested", 9), ("발견 누적 원장(ledger, 매일)", "stats.json", "updated", 2.5)):
+        try:
+            j = json.loads(_http_text(PB + f + "?t=" + str(int(_t.time() // 3600)), 20))
+            d = (_dt.datetime.now(_dt.timezone.utc) - _dt.datetime.strptime(j[field][:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=_dt.timezone.utc)).total_seconds() / 86400
+            out.append(f"{'🟢' if d <= mx else '🔴'} {label}: {j[field][:16]} ({d:.1f}일 전, 기준 {mx}일)" + (f" ⚠ 품질 경고 {len(j['warnings'])}" if j.get("warnings") else ""))
+        except Exception as e:
+            out.append(f"🔴 {label}: 확인 실패({str(e)[:30]})")
+    return "\n\n자동 파이프라인 신선도:\n" + "\n".join(out)
+
+
 def _c_ledger(q, n):
     """v2.6: 발견 누적 원장 — 사용자들이 이미 발굴한 기록(검색어 없음)을 다시 검색. docs/data/discovered.jsonl 1h 캐시. 'all'에는 넣지 않음. Node 패리티."""
     b = _cached_text("kaLedger", 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/discovered.jsonl", 20), '"key"')
@@ -5387,6 +5402,7 @@ def source_profile(institution: str = "list") -> str:
                 rows.append(f"🔴 {k}: {err} · {ms}ms")
         return ("30채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
                 + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
+                + _pipeline_freshness()
                 + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃) · ms=채널 응답시간. "
                   "nedb ✗=개방파일 인덱스 미설정.")
     if t != "list" and t not in PROFILES and t in QUICK_PROFILES:  # v1.96.4 간이 프로파일
