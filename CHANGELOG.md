@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.11.0 — 국외소재문화유산재단 합류 (2026-11-23)
+- 새 수집처 okchf(국외소재문화유산재단 대국민 아카이브): cross_search(sources=okchf|all) — 통합검색으로 국외문화유산(6천여 건)·사진아카이브(1,800여 건) 수집, 계층 = 국외소재문화유산재단 › 유형 › 소장국가 › 소장처, 썸네일(media).
+- 심층 판독 nedb_search(mode='okchf'): 상세 URL 또는 'relic:ID'·'relic_gls:ID' → 소장국가·소장처·소장처 관리번호·시대·재질·크기·수량·소장경위·출판정보·조사기관·소장처 홈페이지·설명 전문·본문 지문(sha256-16)·이미지 목록·원문 뷰어. 키워드는 목록(전체 건수). 발간 보고서 게시판 안내.
+- 접근·권리 표시: robots.txt 전체 Disallow(발굴 우선 원칙 — 표시 대상), 정직 UA·요청 최소·상세 24h 캐시. 소장기관과 공개 협의된 정보 — 이미지·설명 게재는 이용조건 확인 후(허가 전 링크만).
+- 연결: INST·PART_OF·DEEP_READ·QUICK_PROFILES·health 골든 질의(불화)·원장 심층 보강(DEEP)·골든 okchf-collect·okchf-detail. Python 패리티(저장 HTML로 목록·상세 판독 실측).
+- ⚠ nedb_search mode enum에 okchf 추가 — PlayMCP 콘솔 '정보 불러오기' 재실행 필요.
+
 ## v2.10.0 — 원장 심층 판독 보강: 판결문·공적조서·신문·UN·6·25아카이브·서울기록원 (2026-11-23)
 - 매니페스트 없는 출처(i815·indy·gonghun·jacar·oldnews·un·jsg·ktv·koreanwar·seoul)는 원장 병합 때 우리 서버의 심층 판독 도구(nedb_search 모드·koreanwar_item·seoul_archives_search)를 그대로 호출 → 주요 내용(사건개요·공적개요·기사 본문·주제어)·메타정보(죄명·주문·생몰·발행일·생산처·이용조건 등)·본문 지문(sha256-16)·원문 뷰어. 파서 중복 없음(서버 한 곳, 골든 검사). 호출문 deep_call 보존(재현성). X-KA-Probe: ledger로 적재 제외.
 - 실측(사본): 9개 출처 40건 전부 보강 성공.
