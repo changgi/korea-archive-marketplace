@@ -3698,7 +3698,7 @@ DEEP_READ = {
     "jacar": lambda it: it.get("id") and f"nedb_search(mode='jacar', query='{it['id']}')",
     "oldnews": lambda it: it.get("id") and f"nedb_search(mode='oldnews', query='{it['id']}')",
     "commons": lambda it: it.get("url") and f"nedb_search(mode='commons', query='{it['url']}')",
-    "koreanwar": lambda it: it.get("id") and f"koreanwar_item(archRfcd='{it['id']}')",
+    "koreanwar": lambda it: it.get("id") and f"koreanwar_item(ref_code='{it['id']}')",
     "nara": lambda it: it.get("id") and ("judge_rights(naid=" + re.sub(r"\D", "", str(it["id"])) + ")"),
     "seoul": lambda it: it.get("url") and f"seoul_archives_search(query='{it['url']}')",
 }
