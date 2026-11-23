@@ -3660,7 +3660,7 @@ def _ok_pubs(b):
 
 
 def _ok_pub_search(q):
-    b = _ok_get(f"{_OK_PD}?mode=list&srSearchKey=article_title_text&srSearchVal={_up.quote(q)}&articleLimit=10")
+    b = _cached_text("okPS:" + q, 6 * 3600, lambda: _ok_get(f"{_OK_PD}?mode=list&srSearchKey=article_title_text&srSearchVal={_up.quote(q)}&articleLimit=10"), "count-all")
     m = re.search(r'count-all">총 <span>([\d,]+)', b)
     return _ok_pubs(b), (m.group(1).replace(",", "") if m else "")
 
@@ -3671,7 +3671,7 @@ def _ok_lim(n):
 
 def _c_okchf(q, n):
     """v2.11 국외소재문화유산재단 대국민 아카이브 — 통합검색(국외문화유산·사진아카이브). 계층=유형 › 소장국가 › 소장처. Node 패리티."""
-    out, _ = _ok_list(_ok_get(f"{_OK_B}/archive/total-search.do?srSearchVal={_up.quote(q)}&pagerLimit={_ok_lim(n)}"))
+    out, _ = _ok_list(_cached_text(f"okL:{n}:{q}", 6 * 3600, lambda: _ok_get(f"{_OK_B}/archive/total-search.do?srSearchVal={_up.quote(q)}&pagerLimit={_ok_lim(n)}"), "data-result"))
     try:
         pubs, _ = _ok_pub_search(q)  # 조사보고서(목차) — 소장처 단위 맥락
     except Exception:
@@ -3754,7 +3754,7 @@ _NR_B = "https://portal.nrich.go.kr"  # v2.13 국립문화유산연구원 국가
 
 
 def _nr_rep_api(q, n):
-    x = _ok_get(f"{_NR_B}/kor/originalTotalApi.do?idx=203&firstindex=1&recordcountperpage={min(n, 20)}&st=all&sk={_up.quote(q)}&bunya_cd=&start_year=&end_year=")
+    x = _cached_text(f"nrA:{min(n, 20)}:{q}", 6 * 3600, lambda: _ok_get(f"{_NR_B}/kor/originalTotalApi.do?idx=203&firstindex=1&recordcountperpage={min(n, 20)}&st=all&sk={_up.quote(q)}&bunya_cd=&start_year=&end_year="), "<list")
     out = []
     for d in re.findall(r"<data>(.*?)</data>", x, re.S):
         f = {k: v.strip() for k, v in re.findall(r"<md_data(\d+)><!\[CDATA\[(.*?)\]\]></md_data\d+>", d, re.S)}
@@ -3764,7 +3764,7 @@ def _nr_rep_api(q, n):
 
 
 def _nr_ov_list(q):
-    b = _ok_get(f"{_NR_B}/kor/overseasSearchList.do?menuIdx=840&webyn=Y&st=1&pageindex=1&sk={_up.quote(q)}")
+    b = _cached_text("nrL:" + q, 6 * 3600, lambda: _ok_get(f"{_NR_B}/kor/overseasSearchList.do?menuIdx=840&webyn=Y&st=1&pageindex=1&sk={_up.quote(q)}"), "overseasSearch")
     return [{"mseq": m.group(1), "title": _clean(m.group(2)), "era": _clean(m.group(3)), "holder": _clean(m.group(4)), "nation": _clean(m.group(5)),
              "url": f"{_NR_B}/kor/overseasSearchView.do?menuIdx=840&mseq={m.group(1)}"}
             for m in re.finditer(r'<tr>\s*<td[^>]*>\s*\d+\s*</td>\s*<td>\s*<a href="/kor/overseasSearchView\.do\?menuIdx=840&(?:amp;)?mseq=(\d+)">(.*?)</a>\s*</td>\s*<td[^>]*>(.*?)</td>\s*<td[^>]*>(.*?)</td>\s*<td[^>]*>(.*?)</td>', b, re.S)]
@@ -3846,6 +3846,33 @@ def _nrich_mode(q, max_results):
                 + f"\n※ 상세: nedb_search(mode='nrich', query=<상세 URL 또는 ov:번호·rep:번호>) · 보고서만: query='보고서:키워드' · 포털 통합검색(브라우저): {_NR_B}/search.do · 국외소재문화유산 조사 현황: https://www.nrich.go.kr/kor/page.do?menuIdx=336")
     except Exception as e:
         return f"국립문화유산연구원 조회 실패({str(e)[:60]}) — 브라우저 대체 경로: {_NR_B}/kor/index.do"
+
+
+_OV_ALIAS = {"대영박물관": "영국박물관", "british museum": "영국박물관", "메트로폴리탄박물관": "메트로폴리탄미술관"}
+
+
+def _ov_key(it):
+    t = re.sub(r"^\[[^\]]+\]\s*", "", str(it.get("title", "")))
+    nm = re.sub(r"[(（][^)）]*[)）]|[『』〈〉「」<>\s·]", "", t.split(" — ")[0])
+    h = str(it.get("series", "")).split(" › ")[-1].strip()
+    return f"{nm}|{_OV_ALIAS.get(h.lower()) or _OV_ALIAS.get(h) or h}" if nm and h else ""
+
+
+def _link_overseas(items):
+    """v2.14 국외 소재 교차확인 — okchf·nrich의 '명칭+소장처' 동일 기록을 한 건으로(출처 둘 다, sameAs). Node linkOverseas 패리티."""
+    seen, out = {}, []
+    for it in items:
+        src = (it.get("sources") or [""])[0]
+        ok = re.match(r"^(okchf|nrich)", src) and str(it.get("series", "")).startswith("국외문화유산")
+        k = _ov_key(it) if ok else ""
+        prev = seen.get(k) if k else None
+        if prev and not any(x.split("·")[0] == src.split("·")[0] for x in prev["sources"]):
+            prev["sources"].extend(it["sources"]); prev["sameAs"] = prev.get("sameAs") or it.get("url", ""); prev["crossOv"] = True
+            continue
+        if k:
+            seen[k] = it
+        out.append(it)
+    return out
 
 
 def _c_ledger(q, n):
@@ -5006,6 +5033,10 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 jobs.append((f"{src}·{label}", (lambda src=src, vq=vq: _COLLECT[src](vq, n))))
     items, stats = _collect_merged(jobs)
     _resolve_origins(items, stats)
+    linked = _link_overseas(items)
+    if len(linked) != len(items):
+        stats.append(f"국외 교차확인 {sum(1 for x in linked if x.get('crossOv'))}건")
+        items[:] = linked
     items.sort(key=lambda it: -len(it["sources"]))
     if format == "iiif":  # v1.97: 연속 이미지 뷰 — 기관 IIIF 원 매니페스트 컬렉션 + 위키미디어 정지 이미지 매니페스트(Node 패리티)
         L3 = lambda t: {"ko": [str(t or "")[:200]]}
@@ -5202,7 +5233,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
             + "\n※ [출처] 복수 표기 = 교차확인된 record. 국내(nara·archives·nlk)는 서버 키, nedb는 "
-            "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. open.go.kr 본체(브라우저 전용)는 foia_search 전용 도구로.\n※ 발굴 우선 — 권리는 표시: 게재 전 judge_rights(참조코드·KOGL·naid)로 초판정. variants=True로 당대 표기(Corea·Chosen·Keijo…) 자동 팬아웃.\n※ 심층 판독 이어가기: [i815]→nedb_search(mode=i815, 상세URL) · [gonghun]→mode=gonghun(mngNo) · [ktv]→mode=ktv(view URL) · [earchive]→mode=earchive('키워드|순번') · [jacar]→mode=jacar(레퍼런스코드) · [seoul]→seoul_archives_search(상세URL) · [koreanwar]→koreanwar_item(archRfcd) · [nara]→judge_rights(naid).")
+            "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. open.go.kr 본체(브라우저 전용)는 foia_search 전용 도구로.\n※ 발굴 우선 — 권리는 표시: 게재 전 judge_rights(참조코드·KOGL·naid)로 초판정. variants=True로 당대 표기(Corea·Chosen·Keijo…) 자동 팬아웃.\n※ 심층 판독 이어가기: [i815]→nedb_search(mode=i815, 상세URL) · [gonghun]→mode=gonghun(mngNo) · [ktv]→mode=ktv(view URL) · [earchive]→mode=earchive('키워드|순번') · [jacar]→mode=jacar(레퍼런스코드) · [seoul]→seoul_archives_search(상세URL) · [koreanwar]→koreanwar_item(ref_code) · [okchf]→mode=okchf(상세URL·'보고서:') · [nrich]→mode=nrich(ov:·rep:·'보고서:') · [nara]→judge_rights(naid).")
 
 
 @mcp.tool()
