@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.0 — 발견 누적 원장: 사용자가 발굴한 기록이 유실되지 않게 매일 무료 누적 (2026-11-23)
+- 서버(lib/ledger.js): cross_search가 끝나면 발견 기록(출처·제목·연대·식별자·URL·계열·매체·sameAs)만 Upstash Redis 날짜 함 ka:in:YYYY-MM-DD에 적재(3일 보관). 검색어·사용자 정보는 저장하지 않음. 미설정·한도 초과면 적재만 생략(검색 영향 없음). 응답에 누적 안내 한 줄.
+- 공개 읽기 /api/ledger/{YYYY-MM-DD}?start=&n= — 쓰기·삭제 경로 없음(GitHub Secrets 불필요).
+- ledger 워크플로(매일 00:17 KST, scripts/ledger_merge.py): 중복 제거·병합 → docs/data/ discovered.jsonl·csv(엑셀 BOM)·jsonld(RiC-O·PROV 첫 발견)·collection.json(IIIF 최근 300건 → KV 연속 열람)·stats.json·index.html. 기록마다 처음/마지막 발견·발견 횟수. git 커밋 이력 = 발견의 증거.
+- source_profile('health') 설정 상태에 LEDGER_REDIS. 골든 ledger-kept. Python 플러그인(로컬)은 서버 저장소가 없어 적재하지 않음(원격 커넥터 사용 시 누적).
+
 ## v2.4.0 — 검색 결과 CSV 파일 내려받기 (2026-11-22)
 - cross_search(format='csv') 응답 끝에 📥 내려받기 링크: https://korea-archive-mcp.vercel.app/export/csv/<token>.csv — 토큰=CSV 본문 raw deflate+base64url(서버 저장 없음, 링크가 곧 파일). 엑셀 한글 깨짐 방지 BOM, 파일명 korea-archive_<질의>_<날짜>.csv. 웹·모바일에서도 파일로 저장 가능(제1원칙).
 - 응답 24KB·URL 12,000자를 넘으면 링크 생략 안내. Python 패리티(토큰 상호 해독 실측), 골든 csv-download.
