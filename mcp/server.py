@@ -1958,6 +1958,11 @@ def _c_nara(q, n):
                     "url": f"https://catalog.archives.gov/id/{rec.get('naId')}"})
     return out
 
+def _arch_link(u):
+    """국가기록원 상세 링크 정규화(v2.7.1, Node archLink 패리티) — API가 &amp;로 내려줘 클릭 시 빈 페이지(실측). 해제 + https."""
+    return re.sub(r"^http://www\.archives\.go\.kr", "https://www.archives.go.kr", str(u or "").replace("&amp;", "&"))
+
+
 def _xtag(bl, x):
     m = re.search(rf"<{x}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{x}>", bl, re.S)
     return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
@@ -1970,9 +1975,9 @@ def _c_archives(q, n):
     xml = _http_text("https://apis.data.go.kr/1741050/openapi/searcharc?serviceKey=" + sk +
                      "&query=" + _up.quote(q) + f"&start=1&limit={n}", 20)
     return [{"title": _xtag(i, "title"), "date": _xtag(i, "prod_year"), "id": (lambda lk: ((re.search(r"rc_rfile_no=(\\d+)", lk).group(1) if re.search(r"rc_rfile_no=(\\d+)", lk) else "")
-                               + ("-" + re.search(r"rc_ritem_no=0*(\\d+)", lk).group(1) if re.search(r"rc_ritem_no=0*(\\d+)", lk) else "")) or _xtag(i, "prod_name"))(_xtag(i, "link")),
-             **(lambda ser: {"series": ser} if ser else {})(_xtag(i, "prod_name") or (lambda lk: ("[유형] 기록건" if "rc_ritem_no=" in lk else "[유형] 기록물철" if "rc_rfile_no=" in lk else "[유형] 기록정보콘텐츠" if "rc_code=" in lk else ""))(_xtag(i, "link"))),  # v2.3 계열 구축(Node 패리티)
-             "url": _xtag(i, "link")} for i in re.findall(r"<item>(.*?)</item>", xml, re.S)]
+                               + ("-" + re.search(r"rc_ritem_no=0*(\\d+)", lk).group(1) if re.search(r"rc_ritem_no=0*(\\d+)", lk) else "")) or _xtag(i, "prod_name"))(_arch_link(_xtag(i, "link"))),
+             **(lambda ser: {"series": ser} if ser else {})(_xtag(i, "prod_name") or (lambda lk: ("[유형] 기록건" if "rc_ritem_no=" in lk else "[유형] 기록물철" if "rc_rfile_no=" in lk else "[유형] 기록정보콘텐츠" if "rc_code=" in lk else ""))(_arch_link(_xtag(i, "link")))),  # v2.3 계열 구축(Node 패리티)
+             "url": _arch_link(_xtag(i, "link"))} for i in re.findall(r"<item>(.*?)</item>", xml, re.S)]
 
 def _c_nlk(q, n):
     key = os.environ.get("NLK_API_KEY")
@@ -4234,7 +4239,7 @@ def archives_search(query: str, max_results: int = 10,
                         return int(m.group(0)) if m else None
                     items = [i for i in items if (_py(i) and yf <= _py(i) <= yt2)]
                 lines = [f"- {t(i,'title')[:90]} ({t(i,'prod_year')}) · {t(i,'prod_name')[:20]} "
-                         f"[{'공개' if t(i,'is_open')=='1' else '비공개'}] {t(i,'link')}"
+                         f"[{'공개' if t(i,'is_open')=='1' else '비공개'}] {_arch_link(t(i,'link'))}"
                          for i in items[:max_results]]
                 ytag = f" [생산 {year_from or ''}~{year_to or ''} · 상위 50건 내 후처리·연대 미상 제외]" if yfilt else ""
                 return (f"국가기록원 '{query}'{ytag} — 총 {tot}건" + (f" 중 연대 일치 {len(items)}건" if yfilt else "") + ":\n"
