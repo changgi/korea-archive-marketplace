@@ -3770,6 +3770,49 @@ def _nr_ov_list(q):
             for m in re.finditer(r'<tr>\s*<td[^>]*>\s*\d+\s*</td>\s*<td>\s*<a href="/kor/overseasSearchView\.do\?menuIdx=840&(?:amp;)?mseq=(\d+)">(.*?)</a>\s*</td>\s*<td[^>]*>(.*?)</td>\s*<td[^>]*>(.*?)</td>\s*<td[^>]*>(.*?)</td>', b, re.S)]
 
 
+_NR_DB = "https://changgi.github.io/korea-archive-mcp/data/nrich_db.jsonl"  # v2.15 연구DB 정적 색인(주 1회 수집) — Node nrDb 패리티
+_NR_DS = ["ksm", "portrait", "gwaebul", "diary", "mokgan", "jcbib", "jcphoto", "dict", "arch", "koguryo", "gaesong"]
+_NR_DB_MEM = {"n": -1, "rows": []}
+
+
+def _safe(fn, default):
+    try:
+        return fn()
+    except Exception:
+        return default
+
+
+def _nr_db():
+    t = _cached_text("nrDB", 6 * 3600, lambda: _http_text(_NR_DB, 60), '"ds"')
+    if _NR_DB_MEM["n"] != len(t):
+        rows = []
+        for ln in t.split("\n"):
+            if not ln.strip():
+                continue
+            try:
+                o = json.loads(ln)
+            except Exception:
+                continue
+            o["_h"] = " ".join(str(x) for x in [o.get("t"), o.get("a"), o.get("p"), o.get("d"), o.get("x"), *(o.get("m") or {}).values()] if x).lower()
+            rows.append(o)
+        _NR_DB_MEM.update(n=len(t), rows=rows)
+    return _NR_DB_MEM["rows"]
+
+
+def _nr_db_search(q, n, ds=None):
+    toks = [t for t in str(q).lower().split() if t]
+    if not toks:
+        return []
+    rows = [o for o in _nr_db() if (not ds or o["ds"] == ds) and all(t in o["_h"] for t in toks)]
+    rows.sort(key=lambda o: 0 if all(t in str(o.get("t", "")).lower() for t in toks) else 1)
+    return rows[:n]
+
+
+def _nr_db_item(o):
+    return {"title": (f"[{o['dn']}] {o['t']}" + (f" ({o['a']})" if o.get("a") else ""))[:160], "date": o.get("d", ""), "id": o["id"],
+            "series": " › ".join(x for x in ("연구DB", o["dn"], (o.get("p") or "").split(" ")[0]) if x), "url": o.get("u", "")}
+
+
 def _nr_field(f):
     return " › ".join(x for x in re.split(r"\s*-\s*", str(f or "")) if x)
 
@@ -3785,6 +3828,7 @@ def _c_nrich(q, n):
         rp = _nr_rep_api(q, k)
     except Exception:
         rp = []
+    db = _safe(lambda: _nr_db_search(q, n), [])
     b = []
     for r in rp[:k]:
         it = {"title": f"[발간자료] {r['title']}"[:160], "date": r["year"], "id": f"rep:{r['idx']}", "series": " › ".join(x for x in ("발간자료", _nr_field(r["field"])) if x), "url": r["url"]}
@@ -3793,7 +3837,8 @@ def _c_nrich(q, n):
         b.append(it)
     a = [{"title": f"[국외문화유산] {r['title']} — {' '.join(x for x in (r['nation'], r['holder']) if x)}"[:160], "date": r["era"], "id": f"ov:{r['mseq']}",
           "series": " › ".join(x for x in ("국외문화유산", r["nation"], r["holder"]) if x), "url": r["url"]} for r in ov[:n]]
-    return (b + a)[:n + len(b)]
+    c = [_nr_db_item(o) for o in db]
+    return (b + c[:k] + a + c[k:])[:n + len(b)]
 
 
 def _nrich_mode(q, max_results):
@@ -3830,6 +3875,16 @@ def _nrich_mode(q, max_results):
                     + (f"【초록】\n{ab[:1500]}\n본문 지문(sha256-16): {_hl.sha256(ab.encode()).hexdigest()[:16]} — 판독 시점 초록 기준.\n" if ab else "")
                     + (f"【목차】\n{chr(10).join(toc)[:1800]}\n" if toc else "") + (f"표지: {_NR_B}{im.group(1)}\n" if im else "") + f"원문 뷰어(PDF 열람·내려받기): {url}\n"
                     + "※ 출처: 국립문화유산연구원 발간자료 — 공공누리 유형은 원문 페이지 표기 확인(대부분 제4유형: 출처표시·비상업·변경금지). 인용 시 보고서명·발행년도·쪽수.")
+        dm = re.match(r"^(" + "|".join(_NR_DS) + r")\s*[:#]\s*(\S+)$", q.strip())
+        if dm:  # 연구DB 기록 — 정적 색인 전체 필드
+            o = next((r for r in _nr_db() if r["id"] == f"{dm.group(1)}:{dm.group(2)}"), None)
+            if not o:
+                return f"연구DB 기록 {dm.group(1)}:{dm.group(2)} 미발견 — 색인({_NR_DB})은 주 1회 갱신. cross_search(sources='nrich')로 다시 찾으십시오."
+            return (f"국립문화유산연구원 연구DB 판독 — [{o['dn']}] {o['t']}" + (f" · {o['a']}" if o.get("a") else "") + "\n"
+                    + " · ".join(x for x in [o.get("d") and f"연대: {o['d']}", o.get("p") and f"소재·소장: {o['p']}"] if x) + "\n"
+                    + "\n".join(f"{k}: {v}" for k, v in (o.get("m") or {}).items()) + (f"\n【해설(색인 150자)】\n{o['x']}…" if o.get("x") else "")
+                    + f"\n원문 뷰어(전문·이미지): {o.get('u') or '—'}\n"
+                    + f"※ 출처: 국립문화유산연구원 국가유산 지식이음 Open API({o['dn']}) — {('공공누리 ' + o['k']) if o.get('k') else '이용조건 원문 확인'}. 정적 색인 주 1회 갱신(원 기관 요청 없음).")
         qm = re.match(r"^보고서\s*[:：]\s*(.+)$", q.strip())
         kq = qm.group(1) if qm else q
         try:
@@ -3843,7 +3898,8 @@ def _nrich_mode(q, max_results):
         return (f"국립문화유산연구원 국가유산 지식이음 '{kq}' — 발간자료 {len(rp)}건" + ("" if qm else f" · 국외문화유산 {len(ov)}건") + "\n"
                 + "\n".join(f"- [발간자료] {r['title']} ({r['year']}) · {r['field']} · {'공공누리 ' + r['kogl'] if r['kogl'] else ''} {r['url']}" for r in rp) + ("\n" if rp else "")
                 + "\n".join(f"- [국외문화유산] {r['title']} — {r['nation']} · {r['holder']} ({r['era']}) {r['url']}" for r in ov[:max_results])
-                + f"\n※ 상세: nedb_search(mode='nrich', query=<상세 URL 또는 ov:번호·rep:번호>) · 보고서만: query='보고서:키워드' · 포털 통합검색(브라우저): {_NR_B}/search.do · 국외소재문화유산 조사 현황: https://www.nrich.go.kr/kor/page.do?menuIdx=336")
+                + (lambda db: (f"\n연구DB {len(db)}건:\n" + "\n".join(f"- [{o['dn']}] {o['t']}" + (f" ({o['a']})" if o.get("a") else "") + (f" · {o['d']}" if o.get("d") else "") + (f" · {o['p']}" if o.get("p") else "") + f" → {o['id']}" for o in db)) if db else "")([] if qm else _safe(lambda: _nr_db_search(q, max_results), []))
+                + f"\n※ 상세: nedb_search(mode='nrich', query=<상세 URL 또는 ov:번호·rep:번호·연구DB id(ksm:3 등)>) · 보고서만: query='보고서:키워드' · 포털 통합검색(브라우저): {_NR_B}/search.do · 국외소재문화유산 조사 현황: https://www.nrich.go.kr/kor/page.do?menuIdx=336")
     except Exception as e:
         return f"국립문화유산연구원 조회 실패({str(e)[:60]}) — 브라우저 대체 경로: {_NR_B}/kor/index.do"
 
@@ -3945,7 +4001,7 @@ DEEP_READ = {
     "commons": lambda it: it.get("url") and f"nedb_search(mode='commons', query='{it['url']}')",
     "koreanwar": lambda it: it.get("id") and f"koreanwar_item(ref_code='{it['id']}')",
     "okchf": lambda it: it.get("url") and f"nedb_search(mode='okchf', query='{it['url']}')",
-    "nrich": lambda it: it.get("url") and f"nedb_search(mode='nrich', query='{it['url']}')",
+    "nrich": lambda it: (f"nedb_search(mode='nrich', query='{it['id']}')" if re.match(r"^(ksm|portrait|gwaebul|diary|mokgan|jcbib|jcphoto|dict|arch|koguryo|gaesong):", str(it.get("id", ""))) else (it.get("url") and f"nedb_search(mode='nrich', query='{it['url']}')")),
     "nara": lambda it: it.get("id") and ("judge_rights(naid=" + re.sub(r"\D", "", str(it["id"])) + ")"),
     "seoul": lambda it: it.get("url") and f"seoul_archives_search(query='{it['url']}')",
 }
