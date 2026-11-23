@@ -4,6 +4,7 @@
 - 연구원 범용 Open API(키워드 검색 없음) 11종을 주 1회 공식 API로 전체 수집 → docs/data/nrich_db.jsonl(24,374건, 정규화: 명칭·이칭·연대·소재/소장·해설 150자·부가 메타·공공누리·원 기관 URL). 금석문 6,557 · 초상화(국가지정) 112 · 괘불 64 · 조선시대 개인일기 1,431 · 목간 512 · 일제강점기 고적조사 문헌목록 1,006 · 조선고적도보 15 · 한국고고학사전 13,995 · 고고학저널 유적 601 · 고구려 유적 65 · 개성 문화유적 16.
 - cross_search(sources=nrich): 색인을 함께 검색(명칭 일치 우선) — 계층 국립문화유산연구원 › 연구DB › 데이터셋 › 지역/소장처. nedb_search(mode='nrich', query='ksm:3' 등 연구DB id) → 전체 필드·원 기관 상세 URL. 목록 출력에 '연구DB n건'.
 - 실측: 색인 적재 0.27s·검색 0.08~0.11s(원 기관 요청 0). API 실측 사항 — firstindex=시작 행·recordcountperpage=끝 행(명세와 다름), 공식 End Point(http).
+- v2.15.1: 배포 직후 골든 실패 교정 — 연합검색 첫 호출에서 11.7MB 색인 적재가 수집기 제한(≈12s)을 넘겨 nrich 결과 전체(국외문화유산·보고서 포함)가 비던 결함. 색인 다운로드는 별도 40s 타임아웃·단일 적재 공유, 연합검색은 최대 3.5s만 기다리고 나머지 결과 먼저. 골든 nrich-db-search는 끝까지 기다리는 nedb_search 목록으로, 연합검색 확인은 nrich-db-in-cross(warn).
 - nrich-harvest 워크플로(매주 수 02:41 KST, 0건이면 기존 유지). 원장 심층 보강이 연구DB id를 사용. 골든 nrich-db-search·nrich-db-detail·nrich-db-portrait. Python 패리티.
 
 ## v2.14.0 — 국외 소재 교차확인·속도·안내 정리 (2026-11-23)
