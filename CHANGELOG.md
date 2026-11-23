@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.17.0 — 국립문화유산연구원 IIIF 브리지 · 데이터셋별 분할 색인 (2026-11-23)
+- /iiif/nrich/{ov-mseq|ksm-n|portrait-n|gwaebul-n}/manifest.json(lib/ka_iiif.js nrich): 국외문화유산·금석문·국가지정 초상화·괘불을 IIIF Presentation 3로 구축 — 원 기관 원본 이미지(file_link, 변경 없이 연결) 캔버스, 상세 항목(시대·연대·유형·재질·크기·소재지·서체·찬자/서자·제작자·지정·소장처 등), 해설(색인)·권리(공공누리 원문)·판독 시각·설명 지문·navDate.
+- iiifFor·_iiif_for·원장 iiif_for가 portal.nrich.go.kr 상세 URL을 브리지로 연결 → cross_search(format='iiif'|'manifest')·KV 연속 보기·원장 계층 IIIF에 자동 반영.
+- 정적 색인을 데이터셋별 파일(docs/data/nrich/<키>.jsonl)로도 분할 저장(브리지·데이터셋 안 검색이 전체 16MB를 읽지 않게, 성장 대비). nrich-harvest가 함께 갱신. 골든 nrich-iiif-bridge.
+
 ## v2.16.0 — 연구DB 21종 30,647건 · 데이터셋 안 검색 (2026-11-23)
 - 연구원 Open API 10종 추가 수집(정규화 필드 실측): 공예도설 31 · 한국의 전통문양 1,296 · 고문헌 조사목록 729 · 향교 건축 108 · 석조문화유산 518 · 한국고고학저널(호) 31 · 제철유적 65 · 영산강유역 지석묘 1,368 · 보존과학연구(분석) 29 · 문화유산 전통재료(문헌 용례, 원문 한문 포함) 2,098 → 색인 21종 30,647건.
 - nedb_search(mode='nrich', query='ksm:광개토') — 데이터셋 키 + 키워드 = 그 데이터셋 안에서만 검색(번호면 기록 판독). 키: ksm·portrait·gwaebul·diary·mokgan·jcbib·jcphoto·dict·arch·koguryo·gaesong·design·pattern·oldbook·hyanggyo·stone·journal·iron·dolmen·assay·material. Python 패리티. 골든 nrich-db-scoped·nrich-db-material.

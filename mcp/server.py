@@ -320,6 +320,9 @@ def _iiif_for(u, id_=None):
         return f"{_NARA_ORIGIN}/iiif/tna/{mt.group(1)}/manifest.json"
     if "heritage.go.kr" in u and re.match(r"^\d{2}-[0-9A-Za-z]+-\d{2}$", str(id_ or "")):
         return _bridge_url("heritage", id_)
+    _nm = re.search(r"portal\.nrich\.go\.kr/kor/(overseasSearchView|ksmUsrView|portraitNdUsrView|buddhaNdUsrView)\.do\S*?(?:mseq|ksm_idx|portrait_idx|buddha_idx)=(\d+)", u)
+    if _nm:  # v2.17 국립문화유산연구원 IIIF 브리지(Node iiifFor 패리티)
+        return f"{_NARA_ORIGIN}/iiif/nrich/{ {'overseasSearchView': 'ov', 'ksmUsrView': 'ksm', 'portraitNdUsrView': 'portrait', 'buddhaNdUsrView': 'gwaebul'}[_nm.group(1)] }-{_nm.group(2)}/manifest.json"
     for rx, sname in ((r"much\.go\.kr/.*idnbr=([A-Z]{2}[\w-]+)", "much"), (r"awm\.gov\.au/collection/(C\d+)", "awm")):
         mm = re.search(rx, u)
         if mm:
