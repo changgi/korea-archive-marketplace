@@ -3635,12 +3635,12 @@ def _c_ledger(q, n):
         h = f"{o.get('title', '')} {o.get('partOf', '')} {o.get('id', '')} {' '.join(o.get('sources') or [])} {o.get('date', '')}".lower()
         if not (all(t in h for t in toks) or (en and all(t in h for t in en))):
             continue
-        it = {"title": f"[{'+'.join(o.get('sources') or [])} · 발견 {o.get('seen', 1)}회 · 첫 {str(o.get('first_seen', ''))[:10]}] {o.get('title', '')}"[:200],
-              "date": o.get("date", ""), "id": o.get("id") or o.get("key"), "series": o.get("partOf", ""), "url": o.get("url", ""), "media": o.get("media", ""), "seen": o.get("seen", 1)}
+        it = {"title": f"[{'+'.join(o.get('sources') or [])} · 발견 {o.get('seen', 1)}회 · 7일 {o.get('seen_7d', 0)} · {o.get('days_total', 1)}일 · 첫 {str(o.get('first_seen', ''))[:10]}{f" · 활용 {o['rank']}위" if o.get('rank') else ''}] {o.get('title', '')}"[:220],
+              "date": o.get("date", ""), "id": o.get("id") or o.get("key"), "series": o.get("partOf", ""), "url": o.get("url", ""), "media": o.get("media", ""), "seen": o.get("seen", 1), "rank": o.get("rank") or 10 ** 9}
         if o.get("sameAs"):
             it["sameAs"] = o["sameAs"]
         out.append(it)
-    return sorted(out, key=lambda x: -x["seen"])[:n]
+    return sorted(out, key=lambda x: (x["rank"], -x["seen"]))[:n]  # v2.7: 활용 순위
 
 
 def _c_aks(q, n):

@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.7.0 — 원장 활용 집계: 여러 번 발견된 기록은 활용 컬럼으로 (2026-11-23)
+- 중복 처리 시 새 줄 대신 활용 컬럼 갱신: seen·seen_7d·seen_30d·days_total(발견된 날 수)·days(날짜별 90일 이력)·formats(활용 형식 text/csv/iiif/manifest/karda)·max_cross(교차확인 기관 수)·trend(신규/↑/→/↓)·score·rank.
+- 점수 = 최근 30일×2 + 전체 발견 + 발견 일수×3 + 교차확인 가중 — 반짝 검색보다 꾸준히 활용되는 기록이 위로.
+- 산출 추가: popular.csv(자주 활용 TOP 200)·usage.json(일별 검색 묶음·발견·신규, 형식별 누계 — 400일 보관). index.html에 TOP 30·일별 활용 표. discovered.csv에 활용 컬럼.
+- 서버: 적재 묶음에 출력 형식(f) 기록. 자동 검사(golden.py·health.yml)는 X-KA-Probe 헤더 → 적재 제외(활용 집계 오염 방지, AsyncLocalStorage 요청 맥락).
+- sources='ledger': 활용 순위순, 제목 앞에 [출처 · 발견 n회 · 7일 m · k일 · 첫 날짜 · 활용 r위]. Python 패리티.
+
 ## v2.6.0 — 누적 원장을 다시 검색 수집처로 (2026-11-23)
 - cross_search(sources='ledger'): 사용자들이 이미 발굴한 기록(docs/data/discovered.jsonl, 1h 캐시)을 검색 — 원 출처·계열·발견 횟수·처음 발견일 표시, 많이 발견된 순. 'all'에는 넣지 않음(원 기관 결과와 중복·교차확인 오인 방지). 원장에서 다시 찾은 기록은 재적재하지 않음.
 - v2.6.1: 발견 횟수·처음 발견일을 제목 앞 대괄호로 — 긴 제목에서 잘리지 않게(실측 결함).
