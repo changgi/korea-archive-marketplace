@@ -3651,6 +3651,20 @@ def _ok_list(b):
     return out, (m.group(1).replace(",", "") if m else "")
 
 
+_OK_PD = f"{_OK_B}/okchf/data/US_DF_PD.do"  # v2.12 발간자료(조사보고서) 게시판 — 제목+내용(목차) 검색. Node 패리티
+
+
+def _ok_pubs(b):
+    return [{"no": m.group(1), "title": _clean(m.group(3)).replace("\u200b", ""), "img": (_OK_B + m.group(2)) if m.group(2) else "", "url": f"{_OK_PD}?mode=view&articleNo={m.group(1)}"}
+            for m in re.finditer(r'<a href="\?mode=view&(?:amp;)?articleNo=(\d+)[^"]*">\s*<span class="board-item__img">\s*(?:<img src="([^"]+)")?.*?<span class="board-item__tit">(.*?)</span>', b, re.S)]
+
+
+def _ok_pub_search(q):
+    b = _ok_get(f"{_OK_PD}?mode=list&srSearchKey=article_title_text&srSearchVal={_up.quote(q)}&articleLimit=10")
+    m = re.search(r'count-all">총 <span>([\d,]+)', b)
+    return _ok_pubs(b), (m.group(1).replace(",", "") if m else "")
+
+
 def _ok_lim(n):
     return 10 if n <= 10 else 20 if n <= 20 else 50
 
@@ -3658,14 +3672,23 @@ def _ok_lim(n):
 def _c_okchf(q, n):
     """v2.11 국외소재문화유산재단 대국민 아카이브 — 통합검색(국외문화유산·사진아카이브). 계층=유형 › 소장국가 › 소장처. Node 패리티."""
     out, _ = _ok_list(_ok_get(f"{_OK_B}/archive/total-search.do?srSearchVal={_up.quote(q)}&pagerLimit={_ok_lim(n)}"))
+    try:
+        pubs, _ = _ok_pub_search(q)  # 조사보고서(목차) — 소장처 단위 맥락
+    except Exception:
+        pubs = []
     res = []
+    for r in pubs[:min(3, max(1, n // 3))]:
+        it = {"title": f"[조사보고서] {r['title']}"[:160], "date": "", "id": f"pub:{r['no']}", "series": "발간자료 › 조사보고서", "url": r["url"]}
+        if r["img"]:
+            it["media"] = r["img"]
+        res.append(it)
     for r in out[:n]:
         it = {"title": f"[{r['type']}] {r['title']} — {' '.join(x for x in (r['country'], r['holder']) if x)}"[:160], "date": "", "id": r["id"],
               "series": " › ".join(x for x in (r["type"], r["country"], r["holder"]) if x), "url": r["url"]}
         if r["img"]:
             it["media"] = r["img"]
         res.append(it)
-    return res
+    return res[:n + min(3, max(1, n // 3))]
 
 
 _OK_ORDER = ["소장국가", "소장처", "소장처 관리번호", "시대", "재질", "크기", "수량(점/책)", "촬영일", "촬영자", "촬영장소", "소장경위", "출판정보", "조사기관"]
@@ -3674,6 +3697,27 @@ _OK_ORDER = ["소장국가", "소장처", "소장처 관리번호", "시대", "�
 def _okchf_mode(q, max_results):
     """국외소재문화유산재단 — 상세 URL/'relic:ID' 판독, 그 밖은 키워드 목록(Node mode=okchf 패리티)."""
     try:
+        pm = re.search(r"US_DF_PD\.do\S*?articleNo=(\d+)", q) or re.match(r"^pub\s*[:#]\s*(\d+)$", q.strip())
+        if pm:  # 조사보고서 서지·목차
+            url = f"{_OK_PD}?mode=view&articleNo={pm.group(1)}"
+            h = re.sub(r"<script.*?</script>", " ", _cached_text("okP:" + pm.group(1), 24 * 3600, lambda: _ok_get(url), "board-detail__tit"), flags=re.S)
+            tm = re.search(r'board-detail__tit">(.*?)</h5>', h, re.S); title = _clean(tm.group(1)) if tm else f"pub:{pm.group(1)}"
+            ym = re.search(r"발간연도 : <em>([^<]*)", h); yr = _clean(ym.group(1)) if ym else ""
+            F = {}
+            for m in re.finditer(r"<dt>(.*?)</dt>\s*<dd>(.*?)</dd>", h, re.S):
+                k, v = _clean(m.group(1)), _clean(m.group(2))
+                if k and v and k not in F:
+                    F[k] = v
+            fm = re.search(r'<div class="fr-view">(.*?)</div>', h, re.S)
+            toc = [x for x in (_clean(p) for p in (fm.group(1) if fm else "").split("</p>")) if x]
+            return (f"국외소재문화유산재단 조사보고서 판독 — {title}\n" + " · ".join([x for x in [yr and f"발간연도: {yr}"] if x] + [f"{k}: {v}" for k, v in F.items()]) + "\n"
+                    + (f"【목차】\n{chr(10).join(toc)[:2500]}\n목차 지문(sha256-16): {_hl.sha256('|'.join(toc).encode()).hexdigest()[:16]}\n" if toc else "")
+                    + f"원문 뷰어: {url}\n※ 출처: 국외소재문화유산재단 발간자료 — 본문(전자책·PDF)은 재단 누리집 열람. 인용 시 보고서명·발간연도·쪽수 표기. robots 전체 Disallow(표시).")
+        qm = re.match(r"^보고서\s*[:：]\s*(.+)$", q.strip())
+        if qm:
+            items, total = _ok_pub_search(qm.group(1))
+            return (f"국외소재문화유산재단 조사보고서 '{qm.group(1)}'(제목+목차) — 전체 {total or len(items)}건\n" + ("\n".join(f"- {r['title']} {r['url']}" for r in items) or "(0)")
+                    + f"\n※ 서지·목차: nedb_search(mode='okchf', query=<보고서 URL>) · 전체 목록: {_OK_PD}")
         im = re.match(r"^(relic|relic_gls|redemption)\s*[:#]\s*(\d+)$", q.strip())
         if im or re.search(r"overseaschf\.or\.kr/archive/search/(photo|category)\.do\S*?[?&]id=\d+", q):
             ty = im.group(1) if im else ((re.search(r"srSearchTy=(\w+)", q) or [None, "relic"])[1])
@@ -3701,7 +3745,7 @@ def _okchf_mode(q, max_results):
         out, total = _ok_list(_ok_get(f"{_OK_B}/archive/total-search.do?srSearchVal={_up.quote(q)}&pagerLimit={_ok_lim(max_results)}"))
         return (f"국외소재문화유산재단 아카이브 '{q}' — 전체 {total or len(out)}건 중 {min(len(out), max_results)}건 (유형 › 소장국가 › 소장처)\n"
                 + ("\n".join(f"- [{r['type']}] {r['title']} — {r['country']} · {r['holder']} {r['url']}" for r in out[:max_results]) or "(0)")
-                + "\n※ 상세 판독: nedb_search(mode='okchf', query=<상세 URL>) · 전체 목록 브라우저: https://www.overseaschf.or.kr/archive/total-search.do · 발간 보고서: https://www.overseaschf.or.kr/okchf/data/US_DF_PD.do · robots 전체 Disallow(표시)")
+                + "\n※ 상세 판독: nedb_search(mode='okchf', query=<상세 URL>) · 조사보고서: query='보고서:키워드' · 전체 목록 브라우저: https://www.overseaschf.or.kr/archive/total-search.do · 발간 보고서: https://www.overseaschf.or.kr/okchf/data/US_DF_PD.do · robots 전체 Disallow(표시)")
     except Exception as e:
         return f"국외소재문화유산재단 조회 실패({str(e)[:60]}) — 브라우저 대체 경로: https://www.overseaschf.or.kr/archive/total-search.do?srSearchVal={_up.quote(q)}"
 
