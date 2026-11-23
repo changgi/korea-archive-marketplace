@@ -578,8 +578,7 @@ def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
     if year_from or year_to:  # date:[A TO B] + page 실측 검증 (2026-11-18)
         query = f"({query}) AND date:[{year_from or 1800}-01-01 TO {year_to or 2030}-12-31]"
     import urllib.parse
-    data = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(query) +
-                     f"&fl[]=identifier&fl[]=title&fl[]=date&fl[]=licenseurl&rows={max_results}&page={page}&output=json")
+    data = _ia_search(query, max_results, "fl[]=identifier&fl[]=title&fl[]=date&fl[]=licenseurl", page)  # v2.24 관련성 질의
     docs = (data.get("response") or {}).get("docs") or []
     nf = (data.get("response") or {}).get("numFound")
     yt = f" [연대 {year_from or ''}~{year_to or ''}]" if (year_from or year_to) else ""
@@ -1805,11 +1804,26 @@ def _c_tna(q, n):
                         "url": rec.get("url", "")})
     return out[:n]
 
+def _ia_queries(q):  # v2.24 IA 관련성(Node iaQueries 패리티)
+    return [q] if re.search(r"\w+:", q) else [f"title:({q}) AND mediatype:(texts OR movies OR image)", f"({q}) AND NOT mediatype:(web OR collection OR account)"]
+
+
+def _ia_search(q, rows, fl, page=1):
+    import urllib.parse
+    d = {}
+    for qq in _ia_queries(q):
+        d = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(qq) + f"&{fl}&rows={min(100, rows * 2)}&page={page}&output=json")
+        if ((d.get("response") or {}).get("numFound") or 0) > 0:
+            break
+    r = d.get("response") or {}
+    docs = [x for _, _, x in sorted(((0 if str(x.get("identifier", "")).startswith("gov.") else 2 if str(x.get("identifier", "")).startswith("youtube-") else 1, i, x) for i, x in enumerate(r.get("docs") or [])), key=lambda t: (t[0], t[1]))]
+    return {"response": {"numFound": r.get("numFound", 0), "docs": docs[:rows]}}
+
+
 def _c_ia(q, n):
     import urllib.parse
     q = _ko_en(q) or q
-    d = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(q) +
-                  f"&fl[]=identifier&fl[]=title&fl[]=date&fl[]=collection&rows={n}&output=json")
+    d = _ia_search(q, n, "fl[]=identifier&fl[]=title&fl[]=date&fl[]=collection")  # v2.24 관련성 질의
     def _col(x):
         c = x.get("collection")
         return (c[0] if isinstance(c, list) and c else c) or ""

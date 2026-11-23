@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.24.0 — 관련성 감사 · IA 크롤링 묶음 결함 수정 (2026-11-23)
+- 관련성 감사: 35개 수집처 골든 질의 결과에 검색어(번역어 포함)가 실제로 들어 있는지 전수 점검 — 한국사DB(v2.23 수정)에 이어 IA 결함 발견. 그 밖의 '검색어 미포함'은 번역·원표기(漢江·朝鮮·朝鮮総督府·Chosin·Hungnam)·본문/목차 일치라 정상 판정.
+- 결함 수정(IA): 전체 필드 검색이 Archive-It 웹 크롤링 원자료·라디오 스트림으로 상위를 채움(실측 'Korea' 5건 전부 'Archive-It Crawl Data'). → 제목 범위 + 문서·영상·이미지, 0건이면 web·collection·account 제외, gov.* 원본 우선·youtube- 사본 뒤. 연합검색·ia_search 공통(iaSearch / _ia_search), 고급 문법은 그대로. 실측 'Hungnam' → NARA 사본(428-npc-171·111-adc-8610 — NARA 원본과 자동 병합), '장진호' → DTIC 보고서·C-SPAN.
+- 골든 ia-relevance(must_not 'Archive-It Crawl Data'). MAINTAINING에 관련성 감사 절차.
+
 ## v2.23.0 — health 🔴 채널 복구: 한국사DB 실검색 · Gallica data.bnf.fr (2026-11-23)
 - 결함 수정(한국사DB): 연합검색·nedb_search 통합 모드가 통합검색 페이지(GET)의 **사이트 메뉴**를 결과로 읽어, 무엇을 검색해도 메뉴의 'new' 항목 '헌정사 자료 DB·포로신문보고서' 2건만 나오던 장기 결함(검색어가 응답에 한 번도 없음 — 실측). → 시대별 하위 DB POST로 주요 8개 DB(비변사등록·각사등록·한국독립운동사자료·임시정부자료집·동아일보·자료대한민국사·휴전회담회의록·삼국사기) 병렬 검색, 건수·기록 제목·고정 URL(db.history.go.kr/id/levelId)·날짜(levelId에서), 6h 캐시. 실측 '한강' 2건(메뉴) → 7개 DB 실기록(동아일보 2,407 · 자료대한민국사 290 · 비변사등록 190 · 삼국사기 175 …). 계열 = 한국사DB › 시대 › DB.
 - 복구(Gallica): Gallica SRU 403 + BnF 카탈로그 연결 불가(서버·컨테이너 모두 시간 초과) → data.bnf.fr 공식 SPARQL(제목 전문검색 + Gallica 원문 링크) 우선, 0건일 때 카탈로그. 실측 'Corée' 1.3s·8건 전부 Gallica 원문(1868~1952).
