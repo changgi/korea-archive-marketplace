@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.25.0 — 관련성 감사 자동화 (2026-11-23)
+- scripts/relevance_audit.py: 33개 수집처에 골든 질의 → 결과 제목·계열에 검색어 또는 인정 번역어(漢江·朝鮮·Chosin·Hungnam 등)가 최소 1건 있는지, 옛 오답 패턴(Archive-It 크롤링 묶음·한국사DB 메뉴 항목)이 없는지 검사. 0건은 health 담당(관련성 실패로 세지 않음). X-KA-Probe: relevance(원장 적재 제외).
+- relevance 워크플로(매주 목 03:23 KST + 수동): 실패 → auto-health 이슈, 통과 → 자동 종료. 첫 실행 실측: 33/33 통과.
+- MAINTAINING: 새 수집처는 CASES에, 새 오답 패턴은 JUNK에.
+
 ## v2.24.0 — 관련성 감사 · IA 크롤링 묶음 결함 수정 (2026-11-23)
 - 관련성 감사: 35개 수집처 골든 질의 결과에 검색어(번역어 포함)가 실제로 들어 있는지 전수 점검 — 한국사DB(v2.23 수정)에 이어 IA 결함 발견. 그 밖의 '검색어 미포함'은 번역·원표기(漢江·朝鮮·朝鮮総督府·Chosin·Hungnam)·본문/목차 일치라 정상 판정.
 - 결함 수정(IA): 전체 필드 검색이 Archive-It 웹 크롤링 원자료·라디오 스트림으로 상위를 채움(실측 'Korea' 5건 전부 'Archive-It Crawl Data'). → 제목 범위 + 문서·영상·이미지, 0건이면 web·collection·account 제외, gov.* 원본 우선·youtube- 사본 뒤. 연합검색·ia_search 공통(iaSearch / _ia_search), 고급 문법은 그대로. 실측 'Hungnam' → NARA 사본(428-npc-171·111-adc-8610 — NARA 원본과 자동 병합), '장진호' → DTIC 보고서·C-SPAN.
