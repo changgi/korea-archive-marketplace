@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.18.0 — 연구원 IIIF 브리지 14종으로 확장 (2026-11-23)
+- /iiif/nrich/{키}-{번호}: 이미지가 있는 연구DB 데이터셋 전부 — 금석문·초상화·괘불 + 조선시대 개인일기·목간·조선고적도보·고고학저널 유적·공예도설·전통문양·고문헌·향교·석조문화유산·개성 유적·보존과학 분석(+국외문화유산 ov). 원 페이지 주소는 색인(u)에서, 원본·대형 이미지가 있으면 썸네일 제외(최대 24 캔버스, 총수 표기), 공공누리 = 색인 표기 우선·없으면 Open API 개방목록 기본값.
+- 이미지 없는 기록은 같은 주소에서 기록 카드(기록 봉투) 매니페스트로 응답 — KV 연속 보기에서 빠지지 않음.
+- 연구DB id(ksm:3 등)가 iiifFor·_iiif_for·원장 iiif_for에서 바로 브리지로 연결(URL 패턴 불필요). 골든 nrich-iiif-stone.
+
 ## v2.17.0 — 국립문화유산연구원 IIIF 브리지 · 데이터셋별 분할 색인 (2026-11-23)
 - /iiif/nrich/{ov-mseq|ksm-n|portrait-n|gwaebul-n}/manifest.json(lib/ka_iiif.js nrich): 국외문화유산·금석문·국가지정 초상화·괘불을 IIIF Presentation 3로 구축 — 원 기관 원본 이미지(file_link, 변경 없이 연결) 캔버스, 상세 항목(시대·연대·유형·재질·크기·소재지·서체·찬자/서자·제작자·지정·소장처 등), 해설(색인)·권리(공공누리 원문)·판독 시각·설명 지문·navDate.
 - iiifFor·_iiif_for·원장 iiif_for가 portal.nrich.go.kr 상세 URL을 브리지로 연결 → cross_search(format='iiif'|'manifest')·KV 연속 보기·원장 계층 IIIF에 자동 반영.

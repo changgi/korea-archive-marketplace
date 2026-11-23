@@ -307,6 +307,9 @@ def _kv_url(m):
 def _iiif_for(u, id_=None):
     """v1.98: 기록 URL → IIIF 매니페스트(기관 IIIF·NARA 브리지·우리 갤러리). v1.99: 국가유산·역사박물관·AWM·위키미디어 브리지. Node iiifFor 패리티."""
     u = str(u or "")
+    _di = re.match(r"^(ksm|portrait|gwaebul|diary|mokgan|jcphoto|arch|design|pattern|oldbook|hyanggyo|stone|gaesong|assay):(\d+)$", str(id_ or ""))
+    if _di:  # v2.18 연구DB 이미지 데이터셋 → 국립문화유산연구원 IIIF 브리지(Node 패리티)
+        return f"{_NARA_ORIGIN}/iiif/nrich/{_di.group(1)}-{_di.group(2)}/manifest.json"
     mt = re.search(r"discovery\.nationalarchives\.gov\.uk/details/r/([A-Za-z0-9]{2,20})", u)
     if mt:  # v2.1: TNA 실제 계층 브리지
         return f"{_NARA_ORIGIN}/iiif/tna/{mt.group(1)}/manifest.json"
