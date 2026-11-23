@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.16.0 — 연구DB 21종 30,647건 · 데이터셋 안 검색 (2026-11-23)
+- 연구원 Open API 10종 추가 수집(정규화 필드 실측): 공예도설 31 · 한국의 전통문양 1,296 · 고문헌 조사목록 729 · 향교 건축 108 · 석조문화유산 518 · 한국고고학저널(호) 31 · 제철유적 65 · 영산강유역 지석묘 1,368 · 보존과학연구(분석) 29 · 문화유산 전통재료(문헌 용례, 원문 한문 포함) 2,098 → 색인 21종 30,647건.
+- nedb_search(mode='nrich', query='ksm:광개토') — 데이터셋 키 + 키워드 = 그 데이터셋 안에서만 검색(번호면 기록 판독). 키: ksm·portrait·gwaebul·diary·mokgan·jcbib·jcphoto·dict·arch·koguryo·gaesong·design·pattern·oldbook·hyanggyo·stone·journal·iron·dolmen·assay·material. Python 패리티. 골든 nrich-db-scoped·nrich-db-material.
+
 ## v2.15.0 — 국립문화유산연구원 연구DB 11종 정적 색인 (2026-11-23)
 - 연구원 범용 Open API(키워드 검색 없음) 11종을 주 1회 공식 API로 전체 수집 → docs/data/nrich_db.jsonl(24,374건, 정규화: 명칭·이칭·연대·소재/소장·해설 150자·부가 메타·공공누리·원 기관 URL). 금석문 6,557 · 초상화(국가지정) 112 · 괘불 64 · 조선시대 개인일기 1,431 · 목간 512 · 일제강점기 고적조사 문헌목록 1,006 · 조선고적도보 15 · 한국고고학사전 13,995 · 고고학저널 유적 601 · 고구려 유적 65 · 개성 문화유적 16.
 - cross_search(sources=nrich): 색인을 함께 검색(명칭 일치 우선) — 계층 국립문화유산연구원 › 연구DB › 데이터셋 › 지역/소장처. nedb_search(mode='nrich', query='ksm:3' 등 연구DB id) → 전체 필드·원 기관 상세 URL. 목록 출력에 '연구DB n건'.
