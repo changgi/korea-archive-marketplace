@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.92.0 — 원장 검색 응답에 같은 기록·날짜 교차 (2026-11-25)
+- 원장 검색(cross_search sources=ledger, Node·Python 패리티): 결과 머리에 '같은 기록 N곳 소장(기관)'·'날짜 교차 일치/불일치' — 웹·모바일 사용자도 도구 응답만으로 소장처를 넘은 맥락과 증거를 받는다. 원장 본체에 same_keys(매 실행 재계산). 골든 ledger-same-record.
+
 ## v2.91.0 — 연결 데이터 sameAs 확장 (2026-11-25)
 - korea-archive-mcp 원장: 기록 페이지 schema.org sameAs와 RiC-O owl:sameAs에 같은 기록(다른 소장처)의 원 기관 주소 — 예: NARA NAID 22344 ↔ 6·25전쟁 아카이브센터 2022-US-02-AV-D-00215.
 
