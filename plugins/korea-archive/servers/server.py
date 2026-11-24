@@ -3106,6 +3106,40 @@ def _un_mode(query: str, max_results: int) -> str:
         rm = re.search(r"digitallibrary\.un\.org/record/(\d+)", q) or re.match(r"^(\d{4,9})$", q)
         if rm:
             recid = rm.group(1)
+            # v2.66 공개 MARC XML(/export/xm) 1순위 — 기록 HTML은 봇 확인, recjson은 제목·날짜가 비던 결함(실측 4132698). Node 패리티
+            try:
+                def fetch_x():
+                    req = _ur.Request(f"https://digitallibrary.un.org/record/{recid}/export/xm",
+                                      headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp; archival discovery)"})
+                    with _ur.urlopen(req, timeout=25) as rr:
+                        return rr.read().decode("utf-8", "replace")
+                x = _cached_text("unX:" + recid, 24 * 3600, fetch_x, "<record")
+                def df(tag):
+                    return [dict((z.group(1), _clean(z.group(2))) for z in re.finditer(r'<subfield code="(.)">([\s\S]*?)</subfield>', m.group(1)))
+                            for m in re.finditer(rf'<datafield tag="{tag}"[^>]*>([\s\S]*?)</datafield>', x)]
+                t245 = (df("245") or [{}])[0]
+                title = re.sub(r"\s+([:/])", r" \1", re.sub(r"\s*[:/]\s*$", "", " ".join(v for v in (t245.get("a"), t245.get("b"), t245.get("c")) if v)))
+                if title:
+                    g1 = lambda tag, c: ((df(tag) or [{}])[0]).get(c, "")
+                    sym = g1("191", "a") or g1("791", "a")
+                    date = g1("269", "a") or g1("992", "a") or g1("260", "c")
+                    t930 = g1("930", "a"); typ = {"VOT": "표결 기록", "RES": "결의", "DOC": "문서", "MTG": "회의록", "SPE": "발언"}.get(t930, t930)
+                    agenda = "; ".join(" ".join(v for v in (z.get("a"), z.get("c")) if v) for z in df("991"))
+                    agenda = "; ".join([a_ for a_ in agenda.split("; ") if a_][:3])
+                    rel = ", ".join([z.get("a") for z in df("993") if z.get("a")][:6])
+                    subs = "; ".join([z.get("a") for z in df("650") if z.get("a")][:8])
+                    abs_ = " ".join(z.get("a") for z in df("520") if z.get("a"))
+                    files = [z.get("u") for z in df("856") if re.match(r"^https?:", z.get("u") or "")]
+                    en = next((u for u in files if re.search(r"-EN\.pdf$", u, re.I)), "")
+                    return (f"UN 디지털도서관 판독 — {title}\n"
+                            + " · ".join(v for v in (sym and f"문서기호: {sym}", typ and f"유형: {typ}", date and f"날짜: {date}") if v) + "\n"
+                            + (f"의제: {agenda}\n" if agenda else "") + (f"관련 문서: {rel}\n" if rel else "") + (f"주제: {subs}\n" if subs else "")
+                            + (f"【요약】\n{abs_[:1500]}\n" if abs_ else "")
+                            + (f"영문 PDF: {en}\n" if en else "") + (f"파일 {len(files)}종\n" if len(files) > 1 else "")
+                            + f"레코드: https://digitallibrary.un.org/record/{recid}\n"
+                            + "※ UN 공식문서 — 출처 표기 하에 인용 가능(문서기호 병기). 원 데이터: 기관 MARC XML(export/xm).")
+            except Exception:
+                pass  # MARC 실패 — recjson으로
             def fetch():
                 req = _ur.Request(f"https://digitallibrary.un.org/search?p=recid%3A{recid}&of=recjson&rg=1",
                                   headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})

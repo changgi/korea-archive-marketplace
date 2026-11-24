@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.66.0 — UN 디지털도서관 판독: 기관 MARC XML (2026-11-25)
+- nedb_search mode=un: 기관 MARC XML(/record/{id}/export/xm)을 1순위로 — 기록 HTML은 봇 확인(202·빈 본문), recjson은 제목·날짜가 비어 판독이 공란이던 결함(실측 4132698). 제목·문서기호(791/191)·유형(930, VOT=표결 기록)·날짜·의제(991)·관련 문서(993)·주제·요약·파일. 실패 시 recjson. Node·Python 패리티, 골든 un-marc-detail.
+- 원장: DEEP_V un=2 재판독, 유형·의제로 'UN 디지털도서관 › 유형 › 의제' 계층(근거 표시).
+
 ## v2.65.0 — Commons 범주: 계층·분류 (2026-11-25)
 - nedb_search mode=commons: 파일의 Commons 범주(숨김 범주 제외)를 '범주(Commons):' 줄로 판독(캐시 키 판 올림). Node·Python 패리티, 골든 commons-categories.
 - IIIF 브리지(/iiif/commons/): 범주를 메타로. 원장: IIIF_V commons=2로 재판독, 원 기관 계층이 없는 Commons 기록(22건)은 첫 범주로 'Commons › 범주' 계층(근거 표시), 범주는 분류 패싯으로 축적.
