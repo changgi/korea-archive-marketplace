@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.91.0 — 연결 데이터 sameAs 확장 (2026-11-25)
+- korea-archive-mcp 원장: 기록 페이지 schema.org sameAs와 RiC-O owl:sameAs에 같은 기록(다른 소장처)의 원 기관 주소 — 예: NARA NAID 22344 ↔ 6·25전쟁 아카이브센터 2022-US-02-AV-D-00215.
+
 ## v2.90.0 — 같은 기록 IIIF 컬렉션 (2026-11-25)
 - korea-archive-mcp 원장: 같은 기록 묶음마다 IIIF Presentation 3 컬렉션(same/<지문>.json) — NARA·IA·6·25전쟁 아카이브센터 등 소장처별 매니페스트를 한 뷰어에서 나란히 비교. relations.html에서 KV로 바로 열기. 실측 10묶음·매니페스트 20개.
 
