@@ -2126,7 +2126,7 @@ def _nedb_live(q, per=3):
                 seen.add(m.group(1)); rows.append({"id": m.group(1), "title": t})
             if len(rows) >= per:
                 break
-        return {"site": site, "iid": iid, "name": name, "era": era, "total": int(tm.group(1).replace(",", "")) if tm else 0, "rows": rows}
+        return {"site": site, "iid": iid, "name": name, "era": era, "total": int(tm.group(1).replace(",", "")) if tm else -1, "rows": rows}  # v2.47 표기 없음 = 확인 불가
     with _cf.ThreadPoolExecutor(max_workers=8) as ex:
         return list(ex.map(one, _NEDB_DBS))
 
@@ -4772,7 +4772,9 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
                     + "\n".join(f"■ [{d['era']}] {d['name']} — {d['total']:,}건\n" + "\n".join(f"  - {r['title'][:90]}" + (f" ({_nedb_date(r['id'])})" if _nedb_date(r['id']) else "") + f" → https://db.history.go.kr/id/{r['id']}" for r in d["rows"]) for d in hit)
                     + (f"\n(조회 실패: {'·'.join(d['name'] for d in dbs if d['total'] < 0)})" if any(d["total"] < 0 for d in dbs) else "")
                     + f"\n※ 인용은 db.history.go.kr/id/<levelId>(고정 URL). 비변사등록 座目 제외·형제 조: mode=record·sibling. 그 밖의 DB(실록·승정원일기 등 100여 종): 통합검색(브라우저) {browse}")
-        return _agent_browse("한국사DB", query, browse, "주요 DB에서 0건 — 한자 원표기·다른 표기로 재시도")
+        failed = [d for d in dbs if d.get("total", -1) < 0]; zero = [d for d in dbs if d.get("total") == 0]  # v2.47 Node 패리티
+        return _agent_browse("한국사DB", query, browse, (f"주요 DB 확정 0건 {len(zero)}종 · 조회 실패 {len(failed)}종({'·'.join(d['name'] for d in failed)}) — 부재로 단정하지 마십시오(응답 끊김·지연). 잠시 후 재시도"
+                                                        if failed else "주요 DB 모두 확정 0건 — 한자 원표기·다른 표기로 재시도"))
     except Exception as e:
         return _agent_browse("한국사DB", query, browse, f"자동조회 실패({e})")
 

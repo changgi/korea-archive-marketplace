@@ -146,8 +146,8 @@ def joseon_law_search(query: str, max_results: int = 50) -> dict:
     if not s:
         return {"error": "요청 실패", "query": query}
 
-    m = re.search(r"총\s*([\d,]+)건", _strip(s))
-    total = int(m.group(1).replace(",", "")) if m else 0
+    m = re.search(r"총\s*([\d,]+)\s*건", _strip(s))
+    total = int(m.group(1).replace(",", "")) if m else -1  # v2.47 표기 없음 = 확인 불가(-1) — 부재 단정 금지(Node 패리티)
 
     results = []
     for lid, tt, tx in re.findall(
@@ -171,8 +171,10 @@ def joseon_law_search(query: str, max_results: int = 50) -> dict:
         "note": ("법전·편람은 한문 원문이 제공되므로 인용 가능합니다. "
                  "단 표점은 DB 제공 형태이며 교감본과 대조되지 않았습니다."),
     }
+    if total < 0:
+        out["finding"] = "결과 건수를 확인하지 못했습니다(응답 구조 변경 또는 끊김) — 부재로 단정하지 마십시오."
     if total == 0:
-        out["finding"] = (f"'{query}'는 법전에 수록되어 있지 않습니다. "
+        out["finding"] = (f"'{query}'는 법전에 수록되어 있지 않습니다(한국사DB '총 0건' 응답 — 확정 0). "
                           "법전 밖 관행일 가능성을 검토하고, 등록류·일기류를 조회하십시오.")
     return out
 
@@ -202,8 +204,8 @@ def joseon_record_search(query: str, include_jwamok: bool = False,
     if not s:
         return {"error": "요청 실패", "query": query}
 
-    mt = re.search(r"총\s*([\d,]+)건", _strip(s))
-    reported_total = int(mt.group(1).replace(",", "")) if mt else 0
+    mt = re.search(r"총\s*([\d,]+)\s*건", _strip(s))
+    reported_total = int(mt.group(1).replace(",", "")) if mt else -1  # v2.47
 
     seen, rows = set(), []
     # 결과 항목은 fnGoItemLevel('bb', '<levelId>', '0') 형태로 링크된다
@@ -396,7 +398,7 @@ def law_presence_matrix(terms: list) -> dict:
     matrix, absent = [], []
     for t in terms[:30]:
         r = joseon_law_search(t, max_results=10)
-        total = r.get("total", 0)
+        total = r.get("total", -1)  # v2.47 조회 실패는 -1(확인 불가) — 부재 아님
         earliest, in_code = "", False
         if r.get("results"):
             sources = [x["source"] for x in r["results"] if x.get("source")]
@@ -411,6 +413,8 @@ def law_presence_matrix(terms: list) -> dict:
         if total == 0:
             row["note"] = "법전 미수록"
             absent.append(t)
+        elif total < 0:
+            row["note"] = "확인 불가(조회 실패)"
         elif not in_code:
             row["note"] = f"법전이 아닌 {earliest}에만 수록 — 조문 아닐 수 있음"
             absent.append(t)
@@ -515,7 +519,7 @@ def sjw_search(query: str, max_results: int = 50) -> dict:
 
     t = _strip(s)
     m = re.search(r"검색결과\s*([\d,]+)\s*건", t) or re.search(r"총\s*([\d,]+)\s*건", t)
-    total = int(m.group(1).replace(",", "")) if m else 0
+    total = int(m.group(1).replace(",", "")) if m else -1  # v2.47
 
     dist = {}
     for reign in _REIGNS:
