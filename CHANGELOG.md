@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.74.0 — 기록 페이지 교차 연결·원장 오프라인 CI 시험 (2026-11-25)
+- 원장: 계층구조도·주제 색인·Atom 피드(rel=related)·OAI-PMH(dc:identifier)·RiC-O JSON-LD(rdfs:seeAlso)가 기록별 영구 페이지로 연결 — 어느 매체로 들어와도 같은 기록의 맥락·증거에 닿게. 결함 출력·검색 안내 항목도 페이지를 만들고 상단에 고지(링크 끊김 7건 해소).
+- CI: scripts/ci-ledger-offline.py — 네트워크를 막고 저장소 원장 사본으로 병합 전 과정을 실행(예외·항목 감소·산출물 누락·등록부 사슬 검사)해 verify 워크플로에 추가. 줄 끝 주석이 코드를 삼킨 결함(이번 작업 중 3번째)처럼 문법 검사로 안 잡히는 실행 결함을 잡는다.
+
 ## v2.73.0 — 기록별 영구 페이지·사이트맵 (2026-11-25)
 - 원장: 기록마다 영구 공개 페이지(r/<slug>.html — 소장 기관·원 링크·계층과 근거·날짜와 파생 근거·연대·요약·권리·IIIF(KV 뷰어)·발견 이력·옛 key·복원/거둠 비고·기관 메타·원문 지문 이력·발견 경로 질의)와 schema.org ArchiveComponent JSON-LD, r/index.json(key→페이지), sitemap.xml(검색엔진). 실측 457쪽(2.3MB), JSON-LD 오류 0, 상대 링크 1,478개 전부 존재. 결함 출력은 페이지 제외.
 - source_profile(ledger) 안내에 추가(Node·Python 패리티), 골든 ledger-media-formats 보강.
