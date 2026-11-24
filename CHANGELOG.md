@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.86.0 — 맥락 연결 읽기 페이지 (2026-11-25)
+- korea-archive-mcp 원장: relations.html — 같은 기록 묶음(여러 소장처)·같은 날 묶음을 기관·날짜·날짜 교차 확인·근거와 함께 보여 주는 읽기·공유용 페이지(원장 첫 화면·DCAT·사이트맵 연결). 실측 같은 기록 10묶음.
+
 ## v2.85.0 — 기록별 인용문·기계 판독 JSON (2026-11-25)
 - korea-archive-mcp 원장: 기록 페이지마다 인용 두 형식(한국어 각주형·Chicago형 — 기관 표기 그대로, 파생 날짜 [파생], 확인일·원장 영구 페이지)과 schema.org citation, 기록별 JSON r/<slug>.json(원장 항목·관계·인용). 원장 안내(source_profile ledger)에 반영(패리티). 실측 473쪽·JSON 473개.
 
