@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.60.0 — 데이터 목록(DCAT)·schema.org Dataset (2026-11-25)
+- 원장: catalog.jsonld(DCAT Catalog·Dataset — 산출물 20종 Distribution: 내려받기 URL·형식·바이트·SHA-256, 수집처 목록, 일일 갱신, 권리 원칙)와 index.html의 schema.org Dataset JSON-LD(Google 데이터셋 검색 등 자동 수집). 재실행 시 중복 삽입 없음.
+- source_profile(ledger) 안내에 catalog.jsonld 추가(Node·Python 패리티), 골든 ledger-media-formats 보강.
+
 ## v2.59.0 — 분류 축적: 형태·재질·기술 수준 패싯 (2026-11-25)
 - 원장 주제 색인: 기관 메타의 자료 형태(문서유형·기록물형태·매체유형·사료구분·사료유형·format) → '형태', 재질(기관 분류 계층 그대로, 쉼표로만 분할) → '재질', 기술 단계(item·fileUnit·Piece) → '기술 수준' 패싯. SKOS 개념 체계·RiC-O 연결 자동. 실측 형태 21·재질 18·기술 수준 4.
 
