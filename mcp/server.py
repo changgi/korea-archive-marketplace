@@ -2730,7 +2730,7 @@ def _c_kyudb(q, n):
     실측 ~10s(12s 타임박스 근접) → 6h TTL 캐시(마커 奎 — 결과 있을 때만 캐시)."""
     if _jt is None:
         return []
-    raw = _cached_text("kyudb4:" + q, 6 * 3600,
+    raw = _cached_text("kyudb5:" + q, 6 * 3600,
                        lambda: json.dumps(_jt.kyujanggak_search(q, area="both"), ensure_ascii=False), "奎")
     try:
         r = json.loads(raw)
