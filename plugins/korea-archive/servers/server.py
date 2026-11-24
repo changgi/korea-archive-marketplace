@@ -1654,6 +1654,7 @@ def report_template(kind: str = "report") -> str:
 
 
 # ══════════ 국내 아카이브 수집기 — 자동 브라우징(서버 사이드 fetch·파싱) v1.9.0 ══════════
+import http.client as _hc
 import urllib.parse as _up, urllib.request as _ur, html as _html, datetime as _dt, hashlib as _hl
 
 _UA_KO = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)"  # v2.36 정직 UA(브라우저 위장 제거 — CLAUDE.md 접근 원칙, Node 패리티). 거부 기관은 우회 없이 표시
@@ -2099,7 +2100,12 @@ def _nedb_live(q, per=3):
             req = _ur.Request(f"https://db.history.go.kr/{site}/search/searchResultList.do", data=body, method="POST",
                               headers={"User-Agent": _OK_UA, "Content-Type": "application/x-www-form-urlencoded", "Referer": "https://db.history.go.kr/"})
             with _ur.urlopen(req, timeout=25) as r:
-                return r.read().decode("utf-8", "replace")
+                try:
+                    return r.read().decode("utf-8", "replace")
+                except _hc.IncompleteRead as e:  # v2.39.1 본문 조기 끊김(기관 측) — 받은 만큼 판독(Node 패리티)
+                    if not e.partial:
+                        raise
+                    return e.partial.decode("utf-8", "replace")
         try:
             b = _cached_text(f"nedbL:{iid}:{per}:{q}", 6 * 3600, post, "총")
         except Exception as e:

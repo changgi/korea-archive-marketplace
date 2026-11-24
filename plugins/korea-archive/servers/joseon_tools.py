@@ -23,6 +23,7 @@ import urllib.request
 import urllib.parse
 import ssl
 import gzip
+import http.client
 import re
 import html
 import time
@@ -53,7 +54,12 @@ RETRY_WAIT = 20             # 실패 시 대기
 
 
 def _decode(resp) -> str:
-    b = resp.read()
+    try:
+        b = resp.read()
+    except http.client.IncompleteRead as e:  # v2.39.1 본문이 선언 길이보다 일찍 끊김(기관 측) — 받은 만큼 판독(Node 패리티)
+        if not e.partial:
+            raise
+        b = e.partial
     if resp.headers.get("Content-Encoding") == "gzip":
         b = gzip.decompress(b)
     return b.decode("utf-8", "replace")

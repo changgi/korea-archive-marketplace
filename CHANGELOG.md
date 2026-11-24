@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.39.1 — 한국사DB 끊긴 응답 판독 (2026-11-24)
+- 한국사DB가 본문을 선언 길이보다 일찍 끊어 보내는 응답(UND_ERR_RES_CONTENT_LENGTH_MISMATCH — 기관 측, golden nedb-live-subdb·mode record/law 전부 0건 실측) → 받은 만큼 보존해 판독(결과는 페이지 앞부분). Node jdbPost 스트림 직접 읽기, Python IncompleteRead.partial(joseon_tools·_nedb_live) 패리티.
+
 ## v2.39.0 — 권리 표시 전수·데이터 품질 추이 (2026-11-24)
 - 원장 기록마다 권리 표시와 근거(rights_view·rights_basis): 기관 IIIF 매니페스트 → 기록 메타(원 기관 판독 — 이용조건·공공누리·라이선스) → NARA RG 규칙(매니페스트 UND일 때, 프로파일 rights_rule) → 수집처 정책 원문(source_profile 그대로 읽음, 요청 예절 등 운영 메모 제거). 채움률 32% → 100%(매니페스트 112 · 기록 메타 39 · 수집처 정책 238). 판정이 아닌 표시 — 게재 전 judge_rights.
 - 인용 CSL에 license·근거, 원장 카드에 권리(근거) 표시, CSV 열.
