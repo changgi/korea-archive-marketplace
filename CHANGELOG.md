@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.35.0 — 첫 화면 링크 → 실제 기록 · 원문 고정성 감시 (2026-11-24)
+- 전자사료관: 검색 행의 systemId로 GET 고정 상세 링크(catalogView.do?systemId=, 세션 불필요 — 실측). nedb_search(mode='earchive')가 그 URL·12자리 systemId를 직접 판독: 기관 계층(사료군 › 사료계열 › 하위사료계열)·생산자·생산기간·문서번호·소장자(처)·사료구분·주제어·해제·열람/이용조건. Python 수집기의 브라우저 UA를 정직 UA로.
+- 규장각: 검색 행의 book_cd로 book/view.do?book_cd= 고정 상세(마이크로필름 사본 행이 원본을 덮어쓰던 것 방지 — 원본 GK… 우선). Python은 joseon_tools에서 book_cd 수확.
+- 고문서자료관: 소장처 단위 직접 링크가 없는 구조(뷰어 JS 트리) — 문서 목록에 UCI 고정 링크(link.do?dataUCI=) 추가. 원장이 소장처 항목을 '소장처(컬렉션)'으로 두고 하위 문서를 실제 기록으로 발굴(예: 서울 마포 성주이씨 대종회 → 1714~1865 영정 13건).
+- 원장: 첫 화면 링크 기록을 식별자 재검색으로 고정 상세로 교체(옛 URL은 url_history 보존), 전자사료관 심층 판독 추가.
+- 원문 고정성 감시: 기록의 원 기관 응답 지문을 하루 30건 순환 재확인 → fixity 이력(첫 지문 / 판독기 변경 동반 / 원문 변경 의심), fixity_changes.json. 실측 8개 수집처 2회 판독 오탐 0.
+- CI: lib 전 파일 구문 검사. 골든 earchive-direct-detail · earchive-systemid-link · kyudb-bookcd-link · aks-uci-permalink.
+
 ## v2.34.0 — 원장 항목 유형: 기록·검색 안내·결함 출력 (2026-11-24)
 - 원장 376건 판정: 기록 362 · 검색 안내 7(독립기념관 'N건' 결과 묶음·서울기록원 검색 페이지) · 결함 출력 7(v2.23 이전 한국사DB 메뉴 오인 2 · v2.24 이전 IA Archive-It 크롤링 묶음 5). 지우지 않고 entry_type·defect_note로 표시(증거 보존), 인용(CSL·RIS)·Atom·타임라인·인기 순위에서 제외.
 - 원 기관 첫 화면만 가리키는 기록 18건(전자사료관·규장각·고문서자료관)에 link_note('식별자로 원 기관 검색').

@@ -2722,7 +2722,7 @@ def _c_kyudb(q, n):
     실측 ~10s(12s 타임박스 근접) → 6h TTL 캐시(마커 奎 — 결과 있을 때만 캐시)."""
     if _jt is None:
         return []
-    raw = _cached_text("kyudb:" + q, 6 * 3600,
+    raw = _cached_text("kyudb4:" + q, 6 * 3600,
                        lambda: json.dumps(_jt.kyujanggak_search(q, area="both"), ensure_ascii=False), "奎")
     try:
         r = json.loads(raw)
@@ -2738,7 +2738,8 @@ def _c_kyudb(q, n):
                 return {"奎": "규장각도서(奎)", "古": "고도서(古)", "想白": "상백문고", "一簑": "일사문고"}.get(km.group(1)) if km else None
             _cl = lambda x: " › ".join(str(x.get("cls") or "").split()[:4])  # v2.2: 사부분류를 계열로(Node 패리티)
             return [{"title": f"[{x['call_number']}] {x['title']} · {x.get('author', '')}"[:120], "date": x.get("date", ""), "id": x["call_number"],
-                     **({"series": " › ".join(v for v in (_ks(x["call_number"]), _cl(x)) if v)} if (_ks(x["call_number"]) or _cl(x)) else {}), "url": "https://kyudb.snu.ac.kr"} for x in rows[:n]]
+                     **({"series": " › ".join(v for v in (_ks(x["call_number"]), _cl(x)) if v)} if (_ks(x["call_number"]) or _cl(x)) else {}),
+                     "url": f"https://kyudb.snu.ac.kr/book/view.do?book_cd={x['book_cd']}" if x.get("book_cd") else "https://kyudb.snu.ac.kr"} for x in rows[:n]]
         lst = [x.get("call_number") for x in lst.get("items", [])]
     if not isinstance(lst, list):
         return []
@@ -3249,6 +3250,31 @@ def _earchive_mode(query: str, max_results: int) -> str:
     import http.cookiejar as _cj
     q = query.strip()
     try:
+        # v2.35 고정 상세 — catalogView.do?systemId= URL 또는 12자리 systemId(GET, 세션 불필요). Node 패리티
+        smm = re.search(r"catalogView\.do\?systemId=(\d{6,})", q) or re.match(r"^(\d{12})$", q)
+        if smm:
+            u = f"https://archive.history.go.kr/record/catalog/catalogView.do?systemId={smm.group(1)}"
+            def _get():
+                with _ur.urlopen(_ur.Request(u, headers={"User-Agent": _OK_UA}), timeout=25) as r:
+                    return r.read().decode("utf-8", "replace")
+            b = _cached_text("eaD:" + smm.group(1), 24 * 3600, _get, "info-box")
+            dc = lambda x: re.sub(r"\s+", " ", _clean(x or "")).strip()
+            title = dc((re.search(r'<div class="info-box">\s*<div>\s*<p>([\s\S]*?)</p>', b) or [None, ""])[1])
+            row = lambda name: dc((re.search(r'<div class="label">' + re.escape(name) + r'</div>\s*<div class="value">\s*<p>([\s\S]*?)</p>', b) or [None, ""])[1])
+            hb = (re.search(r'<ul class="history-box">([\s\S]*?)<div class="info-box">', b) or [None, ""])[1]
+            hist = [f"{dc(m[1])} {dc(m[0])}"[:120] for m in re.findall(r'title="([^"]{2,160})"[\s\S]*?<span class="type">([^<]{2,40})</span>', hb)]
+            sid = (re.search(r"사료건(?:&nbsp;|\s)*([0-9A-Za-z_]{6,})", b) or [None, ""])[1]
+            if not title:
+                return f"전자사료관 systemId {smm.group(1)} 상세 파싱 실패 — 브라우저로 열람: {u}"
+            F = [(k, row(k)) for k in ("생산자", "생산기간", "문서번호", "소장자(처)", "사료구분", "사료유형", "언어", "취급지명", "주제어")]
+            F = [(k, v) for k, v in F if v]
+            ab, acc, use = row("해제"), row("열람조건"), row("이용조건")
+            return (f"국편 전자사료관 상세 — {title}\n" + " · ".join(x for x in (sid and f"사료건 {sid}", f"systemId {smm.group(1)}") if x) + "\n"
+                    + (f"계층: 국사편찬위원회 전자사료관 › {' › '.join(hist)}\n" if hist else "")
+                    + "".join(f"{k}: {v[:160]}\n" for k, v in F)
+                    + (f"열람조건: {acc}\n" if acc else "") + (f"이용조건: {use}\n" if use else "")
+                    + (f"【해제】\n{ab[:1200]}\n" if ab else "") + f"원문: {u}\n"
+                    + "※ 출처: 국사편찬위원회 전자사료관. 이용조건 문구를 judge_rights에 투입해 초판정. 해외 수집 사료는 원 소장처(NARA 등) 권리 확인 병행.")
         pm = re.match(r"^(.+)\|(\d{1,3})$", q)
         if pm:
             kw, pos = pm.group(1).strip(), pm.group(2)
@@ -3559,7 +3585,7 @@ def _c_earchive(q, n):
     body = _up.urlencode({"allSearchQuery": q, "searchQuery": q, "searchPageIndex": "1",
                           "searchPageUnit": str(min(n, 20)), "searchPageSize": "10"}).encode()
     req = _ur.Request("https://archive.history.go.kr/search/searchResult.do", data=body,
-                      headers={"User-Agent": "Mozilla/5.0",
+                      headers={"User-Agent": _OK_UA,  # v2.35 정직 UA(브라우저 위장 제거 — 접근 원칙)
                                "Content-Type": "application/x-www-form-urlencoded"})
     with _ur.urlopen(req, timeout=25) as r:
         b = r.read().decode("utf-8", "replace")
@@ -3577,10 +3603,11 @@ def _c_earchive(q, n):
         prod_s = next((s for s in spans if s.startswith("생산기간")), "")
         pm = re.search(r"[\d.~\s]{4,24}", prod_s) if prod_s else None
         prod = pm.group(0).strip() if pm else ""
+        sysm = re.match(r"^'(\d{6,})'", seg)  # v2.35 fnGoCatalogView 첫 인자 = systemId → GET 고정 상세(Node 패리티)
         out.append({"title": _clean(tm.group(1))[:110], "date": prod,
                     "id": _clean(sid.group(1)) if sid else "",
                     **({"series": ser[:60]} if ser else {}),
-                    "url": "https://archive.history.go.kr"})
+                    "url": f"https://archive.history.go.kr/record/catalog/catalogView.do?systemId={sysm.group(1)}" if sysm else "https://archive.history.go.kr"})
         if len(out) >= n:
             break
     return out
@@ -4570,7 +4597,7 @@ def _aks_mode(query: str) -> str:
             b = _cached_text("aks:" + q, 6 * 3600, lambda: _aks_text(_aks_url), "data-dataId")
             kids = [{"id": k[0], "leaf": "nochild" in k[1], "name": k[2]} for k in
                     re.findall(r"data-dataId='([^']+)'[\s\S]{0,300}?<span(?:\s+class='([^']*)')?\s+title='([^']*)'", b)]
-            lines = [(f"- [문서] {k['name']}\n  상세: mode=aks query='{q}/{k['id']}'" if k["leaf"]
+            lines = [(f"- [문서] {k['name']}\n  원문 고정 링크(UCI): {_AKS_BASE}/link.do?dataUCI={k['id']}\n  상세: mode=aks query='{q}/{k['id']}'" if k["leaf"]
                       else f"- [분류 {k['id']}] {k['name']} → mode=aks query='{k['id']}'") for k in kids[:25]]
             return (f"한국고문서자료관 {col['name']} [{q}] 하위 {len(kids)}건:\n" + ("\n".join(lines) or "(0건)")
                     + (f"\n… 외 {len(kids) - 25}건" if len(kids) > 25 else "")

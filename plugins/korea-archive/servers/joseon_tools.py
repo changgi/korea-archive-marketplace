@@ -561,6 +561,13 @@ def kyujanggak_search(query: str, area: str = "both") -> dict:
             items.append({"call_number": m.group(2), "title": re.split(r"\s\d{1,3}\.\s+", m.group(1))[-1].strip(),
                           "author": m.group(3).strip(), "date": m.group(4).strip(), "cls": m.group(5).strip(),
                           "body": re.sub(r"\.\.\.$", "", (m.group(6) or "")).strip()[:160]})
+        # v2.35 행별 book_cd ↔ 청구기호(앞 행=원본 GK… 우선, 뒤 마이크로필름 TM… 무시) — /book/view.do?book_cd= GET 고정 상세(Node 패리티)
+        codes = {}
+        for seg in page.split('class="schli"')[1:]:
+            cm = re.search(r"청구기호\s*:\s*([^<\n]{2,30})", seg); bm = re.search(r"fn_totalSearchResultView\([^)]*?'([A-Z]{1,4}\d[\w-]*_\d\d)'", seg)
+            if cm and bm: codes.setdefault(re.sub(r"\s+", " ", cm.group(1)).strip(), bm.group(1))
+        for i in items:
+            if codes.get(i["call_number"]): i["book_cd"] = codes[i["call_number"]]
         known = {i["call_number"].split("-")[0] for i in items}
         for m in re.finditer(r"(奎[\d軸]+)", page):
             code_no = m.group(1)
