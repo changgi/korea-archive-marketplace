@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.58.0 — 자동 점검 질의·회신 축적 (2026-11-25)
+- 서버(korea-archive-mcp): 자동 점검(X-KA-Probe — 골든·헬스·원장 보강·관련도 감사) 질의·회신을 버리지 않고 별도 날짜 함 ka:qp에 축적(probe 종류 표기). 공개 읽기 /api/ledger/{날짜}?kind=qp.
+- 원장: queries/probe/YYYY-MM.jsonl.gz·index.json으로 영구 축적 — 활용 집계·발견 경로와 분리, 같은 질의·같은 회신은 횟수만(중복 제거), 회신이 바뀌면 새 판(기관 장애·개편의 날짜별 증거). 질의 형식이 아닌 항목은 받지 않음(배포 순서 방어).
+- source_profile(ledger) 안내에 queries/probe/ 추가(Node·Python 패리티).
+
 ## v2.57.0 — 인물 전거로 표기 변이 연결 (2026-11-25)
 - 원장 주제 색인: 같은 한국역대인물 UCI를 가진 인물 개념(김익·金熤, 영조·조선 영조, 숙빈·淑嬪, 효명세자·孝明世子)을 지우지 않고 skos:exactMatch로 서로 연결. subjects.json authority_groups에 UCI별 표기 묶음 축적. 실측 4묶음.
 
