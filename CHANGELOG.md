@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.96.2 — 변환어 실측 교정 2 (2026-11-25)
+- TOPICS(Node·Python): 거창 사건 → 'Kochang incident'(NARA·IA 실측 — 'Geochang massacre' 0건, 'Kochang incident'는 무초 대사 국무부 보고 1951~52), 피란수도·임시수도 → 'Pusan 1951'('wartime capital Pusan'은 2차대전 작전보고만).
+
 ## v2.96.1 — 변환어 기관 색인 실측 교정 (2026-11-25)
 - TOPICS(Node·Python): 제주 4·3 → 'Cheju-do 1948'(NARA 실측 — 'Cheju uprising 1948'은 무관한 작전보고, 'Cheju-do 1948'은 1948-05 제주도 불탄 가옥 항공사진·귀향 주민·경비대 등 4·3 시기 실물), 관동대지진 → 'earthquake Tokyo 1923 Koreans'(NARA 국무부 1923 재난 문서철·IA 학살 자료). 학술 명칭이 아니라 기관이 실제 쓴 표기로.
 
