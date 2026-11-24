@@ -4838,10 +4838,23 @@ def seoul_archives_search(query: str, max_results: int = 15) -> str:
     if re.match(r"^https?://archives\.seoul\.go\.kr/(item|aggregation)/\d+", q):  # 상세 판독 — 도메인 한정
         try:
             b = _cached_text("seoulD:" + q, 24 * 3600, lambda: _http_text(q, 25), "기술계층")
-            flat = _clean(b)
+            flat = re.sub(r"\s+", " ", _clean(b).replace("&lt;", "<").replace("&gt;", ">").replace("&nbsp;", " ").replace("&amp;", "&"))
             pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
             title = pick(r"<-\s*(.{2,90}?)\s+(?:기술계층|생산자)")
-            sid = pick(r"식별번호\s+(\S{4,30})")
+            sid = pick(r"식별번호\s+(\S{4,60})")  # v2.32 RG-SR-FI-IT 35자 이상 — 30자 제한으로 잘리던 결함
+            # v2.32 기관 계층(브레드크럼) — 상위 단계만(원 기관 계층 그대로). Node 패리티
+            crumb = pick(r"기술계층\s+(.+?)\s+생산자\s") or pick(r"기술계층\s+(.+?)\s+기술계층\s")
+            hier = [f"{m[0]} {m[2].strip()}"[:80] for m in re.findall(r"([가-힣]{2,8})\(([A-Za-z][A-Za-z -]{1,20})\)\s+(.+?)(?=\s+[가-힣]{2,8}\([A-Za-z][A-Za-z -]{1,20}\)|$)", crumb) if not m[2].strip().startswith("<-")]
+            producers = [x.strip() for x in re.split(r"(?<=\))\s*,?\s+(?=\S)", pick(r"생산자\s+(.+?)\s+기술계층\s")) if x.strip()][:4]
+            date_p = pick(r"일자\s+\[생산\]\s*(.{0,40}?)\s+(?:연관정보|보존이력|수집|언어)")
+            rtype, ptype, atype = pick(r"기록유형\s+(\S{2,20})"), pick(r"보존유형\s+(\S{2,10})"), pick(r"접근유형\s*(\S{2,10})")
+            custody, transfer = pick(r"보존이력\s+(.{2,120}?)\s+(?:수집/이관 기관|언어|보존유형)"), pick(r"수집/이관 기관\s+(.{2,80}?)\s+(?:언어|보존유형)")
+            related = pick(r"연관정보\s+(.{2,160}?)\s+(?:보존이력|수집/이관|언어)")
+            kinds = " · ".join(x for x in (rtype and f"기록유형 {rtype}", ptype and f"보존유형 {ptype}", atype and f"접근유형 {atype}") if x)
+            extra = ((f"계층: 서울기록원 › {' › '.join(hier)}\n" if hier else "") + (f"생산자: {'; '.join(producers)}\n" if producers else "")
+                     + (f"일자: 생산 {date_p}\n" if re.search(r"\d", date_p) else "") + (kinds + "\n" if kinds else "")
+                     + (f"보존이력: {' · '.join(x for x in (custody, transfer and f'수집/이관 {transfer}') if x)}\n" if custody or transfer else "")
+                     + (f"연관정보: {related}\n" if related else ""))
             layers = re.findall(r"기술계층\s+(\S{2,20}\([A-Za-z]+\))", flat)
             layer = layers[-1] if layers else ""  # 첫 일치는 브레드크럼 — 마지막이 본 기록의 계층
             legal = pick(r"법적지위\s+(\S{2,12})")
@@ -4852,7 +4865,7 @@ def seoul_archives_search(query: str, max_results: int = 15) -> str:
                 return f"상세 파싱 실패 — URL을 확인하거나 브라우저로 열람: {q}"
             meta = " · ".join(x for x in (f"식별번호 {sid}" if sid else "", layer,
                                           f"법적지위 {legal}" if legal else "") if x)
-            return (f"서울기록원 상세 — {title or '(제목 미상)'}\n{meta}\n"
+            return (f"서울기록원 상세 — {title or '(제목 미상)'}\n{meta}\n" + extra
                     + (f"이용조건: {use}{f' — {use_note}' if use_note else ''}\n" if use else "")
                     + (f"【기술】\n{desc}\n" if desc else "") + f"원문: {q}\n"
                     + "※ 출처: 서울기록원 — 게재 시 출처 표기. 이용조건·법적지위를 judge_rights에 투입해 초판정.")
