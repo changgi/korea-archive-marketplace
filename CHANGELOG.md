@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.98.1 — 당대 국호+연도 변형 범위 (2026-11-25)
+- cross_search variants(Node·Python): 'Corea <연도>' 질의에서 NARA 제외 — 운영 실측에서 성씨 Corea(Josephine Corea, 1894년생)·날짜만 맞는 문서철로 흐려짐. TNA는 정확(강화도조약 'Corea (Korea): treaty with Japan' 1876, 청일전쟁기 조선 서신 1894), IA는 당대 신문·연감과 무관 결과 혼재.
+
 ## v2.98.0 — 당대 국호+연도 변형 (2026-11-25)
 - cross_search(variants=true, Node·Python): 변환어에 1850~1909 연도가 있으면 'Corea <연도>' 질의를 tna·ia·nara·europeana에 추가 — 개항기~대한제국기 사건은 기관 색인이 사건명이 아니라 당대 국호+연도(실측: TNA 'Tonghak rebellion'·'Kabo reform 1894' 0건, 'Corea 1894'는 FO 405/334 조선·청일전쟁 서신 1894). 기존 변형은 사건명을 남긴 채 Korea만 Corea로 바꿔 단어 전부 일치(TNA)에서 여전히 0건이었다. 골든 variants-era-year.
 
