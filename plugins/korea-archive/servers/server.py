@@ -3139,6 +3139,27 @@ def _un_mode(query: str, max_results: int) -> str:
         return f"UN 디지털도서관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://digitallibrary.un.org"
 
 
+_JSG_ENT = ["인명", "지명", "관청명", "관직명", "나라명", "건물명", "문헌명", "서명"]
+
+
+def _jsg_entities(html_text):
+    """v2.56 장서각 해제의 기관 개체 태깅(data-xsl-tag) — 인명·지명·관청명 등과 인명 전거(한국역대인물 UCI). Node 패리티."""
+    by, uci, seen_u = {}, [], set()
+    for m in re.finditer(r'<span data-xsl-tag="([^"]+)"([^>]*)>([\s\S]*?)(?:<div|</span>)', str(html_text or "")):
+        if m.group(1) not in _JSG_ENT:
+            continue
+        t = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", m.group(3))).strip()
+        if not t or len(t) > 40:
+            continue
+        a = by.setdefault(m.group(1), [])
+        if t not in a and len(a) < 12:
+            a.append(t)
+        u = re.search(r'data-people-uci="([^"]+)"', m.group(2))
+        if u and t not in seen_u:
+            seen_u.add(t); uci.append((t, u.group(1)))
+    return [(k, by[k]) for k in _JSG_ENT if k in by], uci[:20]
+
+
 def _jsg_mode(query: str, max_results: int) -> str:
     """장서각 심층 — 키워드 목록 / 청구기호·URL 서지+해제 전문 판독(서버 렌더 실측 2026-11-21). Node 패리티."""
     q = query.strip()
@@ -3179,9 +3200,12 @@ def _jsg_mode(query: str, max_results: int) -> str:
                 return f"'{did}' — 상세 미발견 또는 구조 상이. 청구기호(K2-…)를 확인하거나 mode=jsg에 검색어를 넣으십시오."
             meta = " · ".join(x for x in (f"청구기호 {callno}" if callno else "", f"MF {mf}" if mf else "",
                                           cm.group(1) if cm else "", cm.group(2) if cm else "") if x)
+            ent, uci = _jsg_entities(b)
             return (f"장서각 서지·해제 판독 — {name or did}\n{meta}\n" + ("\n".join(gx) + "\n" if gx else "")
+                    + "".join(f"{k}(장서각 태깅): {'; '.join(v)}\n" for k, v in ent)
                     + (f"【해제】\n{haeje}\n" if haeje else "")
                     + (f"본문 지문(sha256-16): {jfp} — 판독 시점 해제 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if haeje else "")
+                    + (f"인물 전거(한국역대인물 UCI): {'; '.join(f'{n}={u}' for n, u in uci)}\n" if uci else "")
                     + f"원문·이미지: https://jsg.aks.ac.kr/dir/view?dataId={_up.quote(did, safe='')}\n"
                     + ("※ 고문서 원문 이미지 이용 문의: 장서각 자료보존관리팀 031-730-8874 · 고문서자료관 원자료 병행 확인.\n" if did.startswith("ANC_") else "")
                     + "※ 출처: 한국학중앙연구원 장서각 — 게재 시 출처 표기, 이미지 재이용은 기관 이용조건 준수. "
