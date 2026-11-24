@@ -1665,6 +1665,19 @@ def report_template(kind: str = "report") -> str:
 import urllib.parse as _up, urllib.request as _ur, html as _html, datetime as _dt, hashlib as _hl
 
 _UA_KO = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)"  # v2.36 정직 UA(브라우저 위장 제거 — CLAUDE.md 접근 원칙, Node 패리티). 거부 기관은 우회 없이 표시
+# v2.36 정직 UA 거부 기관 — 우회하지 않고 표시(Node UA_REFUSED 패리티)
+_UA_REFUSED = {
+    "kyudb": {"name": "서울대 규장각한국학연구원", "since": "2026-11-24", "how": "정직 UA 요청에 HTTP 403", "browse": "https://kyudb.snu.ac.kr/search/search.do", "contact": "02-880-5316"},
+    "ktv": {"name": "KTV e영상역사관", "since": "2026-11-24", "how": "정직 UA 요청에 결과 0건(같은 질의가 브라우저 UA 시절 정상)", "browse": "https://www.ktv.go.kr/totalSearch/ehistory", "contact": "KTV 국민방송"},
+}
+
+
+def _ua_refused_note(k, q=""):
+    r = _UA_REFUSED.get(k)
+    if not r:
+        return ""
+    return (f"접근 제한(정직 UA 거부) — {r['name']}: {r['how']} (실측 {r['since']}). 위장·우회하지 않습니다. 브라우저로 직접 열람: {r['browse']}"
+            + (f" (검색어 '{q}')" if q else "") + f" · 자동 수집 허용 문의: {r['contact']}")
 
 
 def _http_text(url, timeout=15):
@@ -1753,7 +1766,7 @@ def _collect_merged(collectors):
         for name, fut in submitted:
             try:
                 items = fut.result(timeout=12) or []  # 소스별 타임박스 — 최저속 소스가 전체 지연 지배 방지
-                stats.append(f"{name}:{len(items)}")
+                stats.append(f"{name}:{len(items)}" + ("⛔정직UA거부" if not items and name in _UA_REFUSED else ""))
                 for raw in items:
                     if not _norm(raw.get("title", "")):
                         continue
@@ -1769,7 +1782,7 @@ def _collect_merged(collectors):
                                      **({"sameAs": str(raw["sameAs"])} if raw.get("sameAs") else {}),
                                      **({"lid": str(raw["lid"])} if raw.get("lid") else {})}
             except Exception:
-                stats.append(f"{name}:—")
+                stats.append(f"{name}:—" + ("⛔정직UA거부" if name in _UA_REFUSED else ""))
     # v1.86: 동일 기록 병합 — sameAs(원본 식별자)가 다른 레코드의 id와 같으면 한 건으로 합치고 출처를 모두 남긴다
     items = list(merged.values())
     by_id = {str(it["id"]): it for it in items if it.get("id")}
@@ -3367,7 +3380,7 @@ def _ktv_mode(query: str, max_results: int) -> str:
                     + '※ 권리: 페이지의 공공누리 표시를 확인 — 사진은 표시 유형대로(제4유형=변경·상업 금지), 영상 페이지에 표시가 없으면 KTV 나누리(nanuri.ktv.go.kr) 이용 신청 후 사용(2026-11 실측: 「대한뉴스의 발자취」 영상 무표시). 표시 유형을 judge_rights에 넣어 초판정.')
         items = _c_ktv(q, min(max_results, 10))
         if not items:
-            return f"KTV e영상역사관 '{q}' — 0건. '대한뉴스'·사건명·인명으로 재시도하십시오."
+            return f"KTV e영상역사관 '{q}' — 0건. '대한뉴스'·사건명·인명으로 재시도하십시오.\n{_ua_refused_note('ktv', q)}"
         return (f"KTV e영상역사관 '{q}' — {len(items)}건:\n"
                 + "\n".join(f"- [{it.get('series') or 'e영상역사관'}] {it['title']}" + (f" ({it['date']})" if it.get("date") else "")
                             + (f"\n  요지: {it['desc']}" if it.get("desc") else "") + f"\n  {it['url']}" for it in items)
@@ -4108,7 +4121,8 @@ def _pipeline_freshness():
             out.append(f"{'🟢' if d <= mx else '🔴'} {label}: {j[field][:16]} ({d:.1f}일 전, 기준 {mx}일)" + (f" ⚠ 품질 경고 {len(j['warnings'])}" if j.get("warnings") else ""))
         except Exception as e:
             out.append(f"🔴 {label}: 확인 실패({str(e)[:30]})")
-    return "\n\n자동 파이프라인 신선도:\n" + "\n".join(out)
+    return ("\n\n자동 파이프라인 신선도:\n" + "\n".join(out)
+            + "\n\n접근 제한(정직 UA 거부 — 우회하지 않음, v2.36):\n" + "\n".join(f"⛔ {k} {r['name']}: {r['how']} (실측 {r['since']}) · 브라우저 {r['browse']}" for k, r in _UA_REFUSED.items()))
 
 
 def _c_ledger(q, n):
@@ -4351,7 +4365,7 @@ def _joseon_mode(query: str, mode: str, span: int, n: int) -> str:
             out = f"규장각 '{q}'"
             for label, sec in r.get("sections", {}).items():
                 if "error" in sec:
-                    out += f"\n{label}: 오류({sec['error']})"
+                    out += f"\n{label}: 오류({sec['error']})" + (f"\n{_ua_refused_note('kyudb', q)}" if "403" in str(sec["error"]) else "")
                 else:
                     its = sec.get("items", [])
                     if any(x.get("title") for x in its):
@@ -5465,7 +5479,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         import zlib as _z, base64 as _b, datetime as _d
         csv_body = "node,sources,title,date,id,url,partOf,media,sameAs\n" + "\n".join(rows)
         head = f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
-        tail = "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights."
+        ua_note = "".join(f"\n※ {_ua_refused_note(k, query)}" for k in _UA_REFUSED if any(x.startswith(k + ":") and "⛔" in x for x in stats))  # v2.36
+        tail = "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights." + ua_note
         # v2.4: 파일로 받기 — 링크 안에 CSV를 압축 봉인(서버 저장 없음, Node /export/csv/{token}.csv 패리티). 24KB·URL 12,000자 넘으면 생략
         c = _z.compressobj(9, _z.DEFLATED, -15)
         env = {"q": str(query)[:80], "at": _d.datetime.now(_d.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "csv": csv_body}
@@ -5479,6 +5494,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
              for it in items[:45]]
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
+            + "".join(f"\n※ {_ua_refused_note(k, query)}" for k in _UA_REFUSED if any(x.startswith(k + ":") and "⛔" in x for x in stats))
             + "\n※ [출처] 복수 표기 = 교차확인된 record. 국내(nara·archives·nlk)는 서버 키, nedb는 "
             "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. open.go.kr 본체(브라우저 전용)는 foia_search 전용 도구로.\n※ 발굴 우선 — 권리는 표시: 게재 전 judge_rights(참조코드·KOGL·naid)로 초판정. variants=True로 당대 표기(Corea·Chosen·Keijo…) 자동 팬아웃.\n※ 심층 판독 이어가기: [i815]→nedb_search(mode=i815, 상세URL) · [gonghun]→mode=gonghun(mngNo) · [ktv]→mode=ktv(view URL) · [earchive]→mode=earchive('키워드|순번') · [jacar]→mode=jacar(레퍼런스코드) · [seoul]→seoul_archives_search(상세URL) · [koreanwar]→koreanwar_item(ref_code) · [okchf]→mode=okchf(상세URL·'보고서:') · [nrich]→mode=nrich(ov:·rep:·'보고서:') · [nara]→judge_rights(naid).")
 

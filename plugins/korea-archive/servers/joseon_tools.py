@@ -547,7 +547,7 @@ def kyujanggak_search(query: str, area: str = "both") -> dict:
                                          data=data, headers=khdr)
             page = _decode(urllib.request.urlopen(req, timeout=90, context=_CTX))
         except Exception as e:
-            out["sections"][label] = {"error": type(e).__name__}
+            out["sections"][label] = {"error": f"{type(e).__name__} {getattr(e, 'code', '')}".strip()}  # v2.36 HTTP 코드 보존(403 = 정직 UA 거부 표시)
             time.sleep(POLITE_DELAY)
             continue
 

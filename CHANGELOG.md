@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.36.0 — 정직 UA 일원화 · 프록시 우회 제거 (2026-11-24)
+- CLAUDE.md 접근 원칙("UA 위장·프록시 우회 금지") 위반 정리: Node 공용 UA·고문서자료관 UA·Python `_UA_KO`·개별 요청 8곳·kla/ia·harvester·joseon_tools·selfcheck·스킬 참조 스크립트의 브라우저 UA → `KoreaArchiveMCP/2.36 (+저장소; archival discovery; non-commercial research)`. `FETCH_PROXY_PREFIX`(allorigins·jina) 경유 폴백 제거.
+- 전후 비교(프로덕션 golden 70여 케이스·관련성 감사 33곳): 정직 UA에서 달라진 곳은 **규장각(HTTP 403)**·**KTV e영상역사관(0건)** 두 곳뿐. 우회하지 않고 `UA_REFUSED` 표로 표시 — 해당 도구 응답·cross_search 채널(`⛔정직UA거부`)·health '접근 제한' 절에 브라우저 경로·자동 수집 허용 문의처. golden은 원래 패턴 또는 명시 표시를 통과로(조용한 0건은 실패).
+- 이미 발굴된 규장각·KTV 기록은 원장·IIIF·인용에 그대로 남는다(고정 상세 링크는 브라우저에서 열림).
+
 ## v2.35.0 — 첫 화면 링크 → 실제 기록 · 원문 고정성 감시 (2026-11-24)
 - 전자사료관: 검색 행의 systemId로 GET 고정 상세 링크(catalogView.do?systemId=, 세션 불필요 — 실측). nedb_search(mode='earchive')가 그 URL·12자리 systemId를 직접 판독: 기관 계층(사료군 › 사료계열 › 하위사료계열)·생산자·생산기간·문서번호·소장자(처)·사료구분·주제어·해제·열람/이용조건. Python 수집기의 브라우저 UA를 정직 UA로.
 - 규장각: 검색 행의 book_cd로 book/view.do?book_cd= 고정 상세(마이크로필름 사본 행이 원본을 덮어쓰던 것 방지 — 원본 GK… 우선). Python은 joseon_tools에서 book_cd 수확.
