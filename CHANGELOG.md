@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.58.1 — 원장 읽기 결함 교정·단위 시험 (2026-11-25)
+- v2.58에서 lib/ledger.js readDay의 줄 끝 주석이 같은 줄의 `const len = …`을 삼켜 /api/ledger 읽기가 'len is not defined'로 실패(배포 직후 실측 발견) → 주석을 별도 줄로 교정.
+- 재발 방지: scripts/ci-ledger-unit.mjs(모의 Redis로 readDay in·q·qp·stash·stashCall 실행)를 verify 워크플로에 추가 — 문법 검사로는 잡히지 않는 결함.
+
 ## v2.58.0 — 자동 점검 질의·회신 축적 (2026-11-25)
 - 서버(korea-archive-mcp): 자동 점검(X-KA-Probe — 골든·헬스·원장 보강·관련도 감사) 질의·회신을 버리지 않고 별도 날짜 함 ka:qp에 축적(probe 종류 표기). 공개 읽기 /api/ledger/{날짜}?kind=qp.
 - 원장: queries/probe/YYYY-MM.jsonl.gz·index.json으로 영구 축적 — 활용 집계·발견 경로와 분리, 같은 질의·같은 회신은 횟수만(중복 제거), 회신이 바뀌면 새 판(기관 장애·개편의 날짜별 증거). 질의 형식이 아닌 항목은 받지 않음(배포 순서 방어).
