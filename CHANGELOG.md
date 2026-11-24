@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.53.0 — 다매체: OAI-PMH Dublin Core · BibTeX (2026-11-25)
+- 원장: records.oai_dc.xml(OAI-PMH ListRecords, Dublin Core — 아카이브·도서관 하베스터가 그대로 수집) · records.bib(BibTeX @misc — LaTeX·학위논문). 파생 날짜·계층은 [파생] 표기, 권리는 원 기관 표기, IIIF(기관 또는 브리지)는 dc:relation. 실측: 389건, XML 파싱 정상, BibTeX 키 389/389 고유.
+- source_profile(ledger) 안내에 두 형식 추가(Node·Python 패리티), 골든 ledger-media-formats 보강.
+
 ## v2.52.1 — IA·TNA 지문 근거 우선순위 (2026-11-25)
 - 원장: IA IIIF 매니페스트가 빈 응답이라 지문이 생기지 않던 기록(IA 13·TNA 2)을 기관 메타데이터 API로 우선 지문. 이미 매니페스트 근거로 지문을 뜬 기록은 같은 근거 유지(근거 전환을 원문 변경으로 오인하지 않게). 실측: 같은 API 응답 2회 → 지문 동일.
 
