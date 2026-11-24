@@ -5513,6 +5513,10 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         return "sources: 'all' 또는 " + ",".join(_COLLECT.keys())
     n = max(1, min(max_per_source, 30))
     jobs = [(s, (lambda s=s: _COLLECT[s](query, n))) for s in want]
+    if not variants and "tna" in want:  # v2.99 기본 검색에도 — 1850~1909 연도 변환어면 TNA에 당대 국호+연도 1건(Node 패리티)
+        ym0 = re.search(r"\b(18[5-9]\d|190\d)\b", _ko_en(query) or "")
+        if ym0:
+            jobs.append((f"tna·Corea {ym0[1]}", (lambda y=ym0[1]: _COLLECT["tna"](f"Corea {y}", n))))
     if variants:  # 당대 표기 자동 팬아웃 — query_bank '열한 겹의 벽' 지식의 도구화
         eff = _ko_en(query) or query
         SUBS = [("Korean", "Corean"), ("Korea", "Corea"), ("Korea", "Chosen"), ("Seoul", "Keijo"), ("Pusan", "Fusan"),
