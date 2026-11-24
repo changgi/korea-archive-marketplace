@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.77.0 — 주간 발견 소식 (2026-11-25)
+- 원장: digest/YYYY-Www.html·.json — 그 주에 처음 발굴된 기록을 수집처별로 묶은 읽기·공유용 소식(기록별 영구 페이지로 연결, 날짜·연대·계층 함께), digest/index.html 목록. 주마다 새 파일로 쌓고 지우지 않음(처음 발견 시각 고정이라 지난 주 소식은 더 바뀌지 않음). 실측 2026-W48 445건·32곳, 링크 445개 전부 존재.
+
 ## v2.76.0 — IIIF 권리와 출처 표기 분리 (2026-11-25)
 - 원장: IIIF 매니페스트 보강이 attribution·requiredStatement(출처 표기 — '제목 - 링크')를 license보다 먼저 읽어 권리 칸에 출처 문구가 표시되던 결함(Europeana·국가유산청·역사박물관). 권리는 rights·license(권리 URI·문구)에서만, 출처 표기는 attribution 필드에 보존(권리 어휘가 있는 출처 문구만 권리로). 실측 Europeana IL5000015457: 권리 표시가 출처 문구 → 'rightsstatements.org InC(저작권 있음)'. IIIF 기록 일괄 재판독(IIIF_V).
 
