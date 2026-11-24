@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.90.0 — 같은 기록 IIIF 컬렉션 (2026-11-25)
+- korea-archive-mcp 원장: 같은 기록 묶음마다 IIIF Presentation 3 컬렉션(same/<지문>.json) — NARA·IA·6·25전쟁 아카이브센터 등 소장처별 매니페스트를 한 뷰어에서 나란히 비교. relations.html에서 KV로 바로 열기. 실측 10묶음·매니페스트 20개.
+
 ## v2.89.0 — 하베스터용 같은 기록 연결 (2026-11-25)
 - korea-archive-mcp 원장: records.oai_dc.xml에 같은 기록(다른 소장처) 연결을 dc:relation으로(기관명·원 기관 주소·근거). 실측 20건, XML 정상.
 
