@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.82.0 — 기록↔기록 맥락 연결 (2026-11-25)
+- korea-archive-mcp 원장: relations.json — 기관 표기만으로 기록끼리 잇고 관계마다 근거: 같은 기록(다른 소장처 — sameAs·NAID·로컬 식별자 일치), 같은 날(다른 기관 — 기관 날짜 일치), 같은 계열(기관 계층 같은 기록의 날짜 이웃 8건, 파생 계층 제외). 기록 페이지 '관련 기록'·schema.org isRelatedTo·RiC-O rico:isRelatedTo·DCAT·품질 지표. 원장 밖 sameAs는 기관 표기 그대로 표시. 실측(오프라인 시험): 같은 계열 816·같은 날 8·같은 기록 2 간선. 원장 안내(source_profile ledger)에 relations.json(패리티).
+
 ## v2.81.0 — 원장 정기 실행 이중화·신선도 감시 (2026-11-25)
 - korea-archive-mcp: GitHub 정기 실행 누락(실측 — 원장 정기 실행 기록 1건뿐, 2026-11-24 15:17 UTC 미실행)이 3일 이어지면 서버 날짜 함(3일 보관)의 발견이 유실되는 위험 — ledger 이중 일정(00:17·12:47 KST, 처리 위치로 중복 없음), ledger-watch 워크플로(6시간마다 마지막 원장 커밋 확인: 26시간 초과 → ledger 직접 실행, 48시간 초과 → auto-health 이슈).
 
