@@ -4409,6 +4409,9 @@ def _joseon_mode(query: str, mode: str, span: int, n: int) -> str:
                 mline = " · ".join(f"{kk}: {v}" for kk, v in r.get("meta") or [])
                 return (f"[{q}] {r.get('title', '')}\n" + (mline + "\n" if mline else "") + f"{r['body']}\n({r['chars']}자) {r['url']}"
                         f"\n※ {r.get('citation_note', '')} 조문이면 mode=sibling으로 형제 조 확인.")
+            if r.get("body_status") == "image_only":  # v2.61.1 Node 패리티
+                return (f"[{q}] {r.get('title', '')}\n" + " · ".join(f"{kk}: {v}" for kk, v in r.get("meta") or [])
+                        + f"\n본문 텍스트 없음 — 원문 이미지(지면)로만 제공됩니다(미공개 아님). 원문 열람: {r.get('url', '')}")
             return f"[{q}] {r.get('title', '')} — {r.get('body_status')}: {r.get('note', '')} {r.get('url', '')}"
         if mode == "sibling":
             r = _jt.joseon_sibling_scan(q, span=span)

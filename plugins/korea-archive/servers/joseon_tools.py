@@ -114,7 +114,8 @@ def _lines(s: str) -> list:
 
 # v2.61 시대별 상세 경로 — 근대·현대·고대 DB를 조선 경로로 요청해 404가 나던 결함(실측 dh_·sg_). Node 패리티
 _J_ERA = {"kd": "modern", "ij": "modern", "npda": "modern", "dh": "contemp", "pn": "contemp", "sg": "ancient"}
-_J_LABELS = ["제목", "연월일", "출전", "발신자", "수신자", "발신일", "문서분류", "작성자", "날짜", "작성일"]
+_J_LABELS = ["제목", "연월일", "출전", "발신자", "수신자", "발신일", "문서분류", "작성자", "날짜", "작성일", "신문명", "기사제목", "발행년월일", "발행구분", "면수", "단수", "표제어"]
+_J_UI = re.compile(r"^(원문이미지|판본 전체|비교보기|.+본\(\d{4}년\))$")  # v2.61.1 본문 사이 화면 단추·판본 목록
 
 
 def _era(level_id: str) -> str:
@@ -308,7 +309,34 @@ def joseon_item_read(level_id: str, max_chars: int = 20000) -> dict:
                 return {"level_id": level_id, "title": ttl, "body": body, "chars": len(body), "body_status": "ok", "url": _cite(level_id), "meta": mv, "era": era,
                         "citation_note": (f"원문 수록({ {'contemp': '현대', 'modern': '근대', 'ancient': '고대'}[era]} 자료) — 출전을 병기해 인용." if era != "joseon"
                                           else "원문 수록(등록류 장계 등) — 출전·발신일 병기 인용.")}
+            if "원문이미지" in lines:  # v2.61.1 신문 지면 등 — 텍스트 없이 원문 이미지만(미공개 아님)
+                return {"level_id": level_id, "title": ttl, "body": None, "body_status": "image_only", "url": _cite(level_id), "meta": mv,
+                        "note": "본문 텍스트 없음 — 원문 이미지(지면)로만 제공됩니다(미공개 아님)."}
             title = ttl
+        else:  # v2.61.1 기술 항목 표도 '◯'도 없는 기록(삼국사기 등) — 제목 반복 줄 뒤 '(날짜)'·본문·주제분류
+            j0 = next((i for i in range(hoi + 2, len(lines)) if t2 and lines[i] == t2), -1)
+            if j0 > 0:
+                i = j0 + 1; mv = []; dt_ = ""
+                if i < len(lines) and lines[i] == "(":
+                    k2 = lines.index(")", i) if ")" in lines[i:] else -1
+                    if i < k2 < i + 8: dt_ = " ".join(lines[i + 1:k2]); i = k2 + 1
+                if dt_: mv.append(["연월일", dt_])
+                if "주제분류" in lines[i:]:
+                    ci = lines.index("주제분류", i); cls = [l for l in lines[ci + 1:stop] if "＞" in l][:6]
+                    if cls: mv.append(["주제분류", "; ".join(cls)])
+                sr = re.search(r'<section class="section-read"[^>]*>([\s\S]*?)</section>', s)  # 본문은 section-read — 각주 팝업(註 NNN)은 걷어 낸다
+                if sr:
+                    sr_t = re.sub(r'<div class="popup-nd[\s\S]*?<div class="cont">[\s\S]*?</div></div>', " ", sr.group(1))
+                    sr_t = re.sub(r"<sup>[^<]*</sup>", "", sr_t)
+                    body = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", sr_t))).strip()
+                else:
+                    cut = next((x for x in range(i, len(lines)) if lines[x].startswith("註)") or lines[x] == "주제분류" or "개인정보취급방침" in lines[x]), stop)
+                    body = re.sub(r"\s+", " ", " ".join(l for l in lines[i:cut] if not _J_UI.match(l) and not re.match(r"^註\s*\d+\)?$", l))).strip()
+                body = body[:max_chars]
+                if len(body) > 20:
+                    era = _era(level_id)
+                    return {"level_id": level_id, "title": t2, "body": body, "chars": len(body), "body_status": "ok", "url": _cite(level_id), "meta": mv, "era": era,
+                            "citation_note": f"원문 수록({ {'contemp': '현대', 'modern': '근대', 'ancient': '고대'}.get(era, '조선')} 자료) — 출전을 병기해 인용."}
     if k is None:
         status = "not_published" if title else "parse_failed"
         return {
