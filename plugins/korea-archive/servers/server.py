@@ -1662,6 +1662,15 @@ _UA_KO = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; a
 _UA_REFUSED = {}  # v2.37 비움 — 규장각 403은 UA가 아니라 사이트 개편(POST CSRF)이었고 GET으로 복구, KTV는 e영상역사관 자체 목록 검색으로 복구(2026-11-24 실측). 새 거부가 확인되면 여기에 추가(위장하지 않음)
 
 
+def _fail_note(stats):
+    """v2.48 조회 실패(—) 채널은 '그 기관에 없음'이 아님 — 확정 0건과 구분해 명시(Node 패리티)."""
+    failed = list(dict.fromkeys(x.split(":")[0].split("·")[0] for x in stats if re.match(r"^[a-z0-9_]+(?:·[^:]+)?:—", x)))
+    if not failed:
+        return ""
+    return (f"\n※ 조회 실패 채널 {len(failed)}곳({', '.join(failed)}) — 이번 응답에 없을 뿐 그 기관에 기록이 없다는 뜻이 아닙니다(시간 초과·차단·응답 끊김). "
+            f"해당 수집처만 다시: sources='{','.join(failed)}'")
+
+
 def _ua_refused_note(k, q=""):
     r = _UA_REFUSED.get(k)
     if not r:
@@ -5536,6 +5545,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         csv_body = "node,sources,title,date,id,url,partOf,media,sameAs\n" + "\n".join(rows)
         head = f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
         ua_note = "".join(f"\n※ {_ua_refused_note(k, query)}" for k in _UA_REFUSED if any(x.startswith(k + ":") and "⛔" in x for x in stats))  # v2.36
+        ua_note = _fail_note(stats) + ua_note
         tail = "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights." + ua_note
         # v2.4: 파일로 받기 — 링크 안에 CSV를 압축 봉인(서버 저장 없음, Node /export/csv/{token}.csv 패리티). 24KB·URL 12,000자 넘으면 생략
         c = _z.compressobj(9, _z.DEFLATED, -15)
@@ -5550,6 +5560,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
              for it in items[:45]]
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
+            + _fail_note(stats)
             + "".join(f"\n※ {_ua_refused_note(k, query)}" for k in _UA_REFUSED if any(x.startswith(k + ":") and "⛔" in x for x in stats))
             + "\n※ [출처] 복수 표기 = 교차확인된 record. 국내(nara·archives·nlk)는 서버 키, nedb는 "
             "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. open.go.kr 본체(브라우저 전용)는 foia_search 전용 도구로.\n※ 발굴 우선 — 권리는 표시: 게재 전 judge_rights(참조코드·KOGL·naid)로 초판정. variants=True로 당대 표기(Corea·Chosen·Keijo…) 자동 팬아웃.\n※ 심층 판독 이어가기: [i815]→nedb_search(mode=i815, 상세URL) · [gonghun]→mode=gonghun(mngNo) · [ktv]→mode=ktv(view URL) · [earchive]→mode=earchive('키워드|순번') · [jacar]→mode=jacar(레퍼런스코드) · [seoul]→seoul_archives_search(상세URL) · [koreanwar]→koreanwar_item(ref_code) · [okchf]→mode=okchf(상세URL·'보고서:') · [nrich]→mode=nrich(ov:·rep:·'보고서:') · [nara]→judge_rights(naid).")
