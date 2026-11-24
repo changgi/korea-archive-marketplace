@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.45.0 — IIIF 구조 검증(CI) (2026-11-24)
+- scripts/iiif_check.py: IIIF Presentation 3 핵심 규칙(@context·id·type·label 언어 맵·Collection 항목·Canvas→AnnotationPage→Annotation·이미지 캔버스 크기·metadata/summary/requiredStatement·rights 단일 URI)을 의존성 없이 검사. 실측: docs 정적 IIIF 477개 + 프로덕션 브리지 매니페스트 표본 20개(전체 참조 11,495) 오류 0. 고장 사본 6종(rights 텍스트·label 문자열·캔버스 크기 누락·target 불일치·v2 context·metadata 문자열) 전부 검출 확인.
+- verify(모든 push·PR: 정적) · ledger(매일 커밋 뒤: 정적+브리지 표본 20) 워크플로에 편입.
+
 ## v2.44.0 — 연결 데이터 표준 파서 검증(CI) (2026-11-24)
 - scripts/rdf_check.py: 공개 JSON-LD(RiC-O·SKOS)를 rdflib로 파싱하고 SPARQL로 끊긴 주제·장소 링크·개념 prefLabel/inScheme 누락 검사. ledger 워크플로가 매일 커밋 뒤 실행(원장 저장은 막지 않음), 실패 시 auto-health 이슈.
 
