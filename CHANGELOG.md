@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.89.0 — 하베스터용 같은 기록 연결 (2026-11-25)
+- korea-archive-mcp 원장: records.oai_dc.xml에 같은 기록(다른 소장처) 연결을 dc:relation으로(기관명·원 기관 주소·근거). 실측 20건, XML 정상.
+
 ## v2.88.0 — 같은 계열 비교 교정 (2026-11-25)
 - korea-archive-mcp 원장: 6·25전쟁 아카이브센터 카드 계층이 글자 수로 잘려('…Chief' / '…Chief Signal Of') 같은 RG 111 기록이 다른 계열로 갈라지던 결함 — 비교 열쇠를 기관 표기의 Record Group 번호까지로(ser_key). 실측 같은 계열 연결 839→854, 장진호 철수 기록영상 5건이 한 계열로.
 
