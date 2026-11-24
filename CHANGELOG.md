@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.98.0 — 당대 국호+연도 변형 (2026-11-25)
+- cross_search(variants=true, Node·Python): 변환어에 1850~1909 연도가 있으면 'Corea <연도>' 질의를 tna·ia·nara·europeana에 추가 — 개항기~대한제국기 사건은 기관 색인이 사건명이 아니라 당대 국호+연도(실측: TNA 'Tonghak rebellion'·'Kabo reform 1894' 0건, 'Corea 1894'는 FO 405/334 조선·청일전쟁 서신 1894). 기존 변형은 사건명을 남긴 채 Korea만 Corea로 바꿔 단어 전부 일치(TNA)에서 여전히 0건이었다. 골든 variants-era-year.
+
 ## v2.97.1 — 변환어 실측 교정 3 (2026-11-25)
 - TOPICS(Node·Python): topics_probe '약함' 39개의 후보 표기를 NARA·IA로 재고 상위 결과 확인 후 9개 교정 — 서울 수복 → recapture of Seoul(NARA 'RECAPTURE OF SEOUL, KOREA 1950-09-26'), 금성 → Kumsong, 제주 → Cheju-do, 대한제국 → Korean Empire, 동양척식 → Oriental Development Company(IA 1921 사업설명서), 금강산 → Diamond Mountains Korea, 윤봉길 → Hongkew Park bombing 1932(NARA 1932 사진), 사진신부 → picture brides. 'Korea'를 빼 엉뚱한 결과만 늘어난 후보(Bloody Ridge·Triangle Hill·Gloucestershire)는 채택하지 않음. 골든 topics-probe-corrected.
 

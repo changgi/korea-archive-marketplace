@@ -5524,6 +5524,9 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
                 break
             if re.search(rf"\b{a}\b", eff, re.I):
                 vs.append((b, re.sub(rf"\b{a}\b", b, eff, count=1, flags=re.I)))
+        ym = re.search(r"\b(18[5-9]\d|190\d)\b", eff)
+        if ym:
+            vs.append((f"Corea {ym[1]}", f"Corea {ym[1]}"))  # v2.98 개항기~대한제국기 당대 국호+연도(Node 패리티)
         for src in ("tna", "ia", "nara", "europeana"):
             if src not in want:
                 continue
