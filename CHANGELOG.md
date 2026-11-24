@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.63.0 — AWM IIIF 브리지 보강·원장 재판독 (2026-11-25)
+- IIIF 브리지(/iiif/awm/, korea-archive-mcp lib/ka_iiif.js): 기관 상세 표 전부(자료 유형·매체 형태·제작자·제작지·분쟁·부대·권리 원문)와 본문 Description을 메타·summary로. 'Place made'를 'Place'로만 찾아 장소가 비던 결함, og:description이 없으면 설명이 비던 결함 교정(실측 HOBJ3143).
+- 원장: IIIF_V(브리지 판) — 판이 오르면 이미 보강된 기록을 한 번 다시 판독(awm 2). '자료 유형'·'매체 형태'를 형태 패싯으로. Python 플러그인에는 IIIF 브리지가 없어 패리티 대상 아님.
+
 ## v2.62.1 — 큰 EAD 압축 전송 (2026-11-25)
 - 원장: 수십 MB EAD(실측 19MB·25MB)가 비압축 전송에서 러너·프록시 모두 끊기던 문제 — Accept-Encoding: gzip으로 받아 풀기(전송 2.2MB·1.1MB). nlna 5/5건 지문·보강.
 
