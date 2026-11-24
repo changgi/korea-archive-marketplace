@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.76.0 — IIIF 권리와 출처 표기 분리 (2026-11-25)
+- 원장: IIIF 매니페스트 보강이 attribution·requiredStatement(출처 표기 — '제목 - 링크')를 license보다 먼저 읽어 권리 칸에 출처 문구가 표시되던 결함(Europeana·국가유산청·역사박물관). 권리는 rights·license(권리 URI·문구)에서만, 출처 표기는 attribution 필드에 보존(권리 어휘가 있는 출처 문구만 권리로). 실측 Europeana IL5000015457: 권리 표시가 출처 문구 → 'rightsstatements.org InC(저작권 있음)'. IIIF 기록 일괄 재판독(IIIF_V).
+
 ## v2.75.0 — IIIF 지표 정직화 (2026-11-25)
 - 원장 품질: '기관 IIIF'(32.6%)가 원 기관 제공 매니페스트와 우리 브리지(원 기관 이미지로 구축)를 함께 세던 것을 밝히고(시계열 이름 유지, quality.json definitions), 새 지표로 분리 — IIIF(원 기관 제공) 6.7% · IIIF(원 기관 이미지로 구축) 24.0% · 실물 이미지 합 30.8% · 나머지 기록 봉투. 기록의 iiif_kind도 같은 세 값('브리지를 기관 매니페스트로 부르던' 표기 교정).
 
