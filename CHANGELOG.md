@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.83.0 — 같은 기록 추적 발굴 (2026-11-25)
+- korea-archive-mcp 원장: sameas_pass — 기관이 같은 기록이라고 적은 상대(sameAs·입수처 링크·IA 기술 속 NARA 링크)가 원장에 없으면 그 기관에서 정확한 식별자로 찾아 원장 기록으로 들임(koreanwar_item·nara_search·archive.org metadata). 실측 9/9 — NARA 4(Hungnam Story 등)·6·25전쟁 아카이브센터 4(장진호 철수 기록영상)·IA 1(흥남 철수). relations도 같은 근거로 연결, IA 식별자=NARA 로컬 식별자 자기 오인 교정.
+
 ## v2.82.0 — 기록↔기록 맥락 연결 (2026-11-25)
 - korea-archive-mcp 원장: relations.json — 기관 표기만으로 기록끼리 잇고 관계마다 근거: 같은 기록(다른 소장처 — sameAs·NAID·로컬 식별자 일치), 같은 날(다른 기관 — 기관 날짜 일치), 같은 계열(기관 계층 같은 기록의 날짜 이웃 8건, 파생 계층 제외). 기록 페이지 '관련 기록'·schema.org isRelatedTo·RiC-O rico:isRelatedTo·DCAT·품질 지표. 원장 밖 sameAs는 기관 표기 그대로 표시. 실측(오프라인 시험): 같은 계열 816·같은 날 8·같은 기록 2 간선. 원장 안내(source_profile ledger)에 relations.json(패리티).
 
