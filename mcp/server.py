@@ -1787,7 +1787,8 @@ def _collect_merged(collectors):
                                      **({"series": str(raw["series"])[:80]} if raw.get("series") else {}),
                                      **({"media": str(raw["media"])[:600]} if raw.get("media") else {}),  # URL은 자르면 깨진다
                                      **({"sameAs": str(raw["sameAs"])} if raw.get("sameAs") else {}),
-                                     **({"lid": str(raw["lid"])} if raw.get("lid") else {})}
+                                     **({"lid": str(raw["lid"])} if raw.get("lid") else {}),
+                                     **({"note": str(raw["note"])[:300]} if raw.get("note") else {})}
             except Exception:
                 stats.append(f"{name}:—" + ("⛔정직UA거부" if name in _UA_REFUSED else ""))
     # v1.86: 동일 기록 병합 — sameAs(원본 식별자)가 다른 레코드의 id와 같으면 한 건으로 합치고 출처를 모두 남긴다
@@ -4274,10 +4275,14 @@ def _c_ledger(q, n):
         h = f"{o.get('title', '')} {o.get('partOf') or o.get('partOf_derived', '')} {o.get('id', '')} {' '.join(o.get('sources') or [])} {o.get('date', '')} {mv} {o.get('summary') or o.get('summary_composed', '')}".lower()
         if not (all(t in h for t in toks) or (en and all(t in h for t in en))):
             continue
-        it = {"title": f"[{'+'.join(o.get('sources') or [])} · 발견 {o.get('seen', 1)}회 · 7일 {o.get('seen_7d', 0)} · {o.get('days_total', 1)}일 · 첫 {str(o.get('first_seen', ''))[:10]}{f" · 활용 {o['rank']}위" if o.get('rank') else ''}{f" · 경로 질의 {len(o['found_by'])}" if o.get('found_by') else (' · 경로 원장(파생)' if o.get('found_by_derived') else '')}{f" · 같은 기록 {len(o['same_keys']) + 1}곳 소장({'·'.join(k.split(':')[0] for k in o['same_keys'])})" if o.get('same_keys') else ''}{f" · 날짜 교차 {str((o.get('date_cross') or {}).get('verdict', '')).split('(')[0]}" if o.get('date_cross') else ''}] {'[검색 안내] ' if o.get('entry_type') == '검색 안내' else ''}{o.get('title', '')}{f" ({o['link_note']})" if o.get('link_note') else ''}"[:220],
+        it = {"title": f"[{'+'.join(o.get('sources') or [])} · 발견 {o.get('seen', 1)}회 · 7일 {o.get('seen_7d', 0)} · {o.get('days_total', 1)}일 · 첫 {str(o.get('first_seen', ''))[:10]}{f" · 활용 {o['rank']}위" if o.get('rank') else ''}{f" · 경로 질의 {len(o['found_by'])}" if o.get('found_by') else (' · 경로 원장(파생)' if o.get('found_by_derived') else '')}] {'[검색 안내] ' if o.get('entry_type') == '검색 안내' else ''}{o.get('title', '')}{f" ({o['link_note']})" if o.get('link_note') else ''}"[:220],
               "date": o.get("date") or (f"{o['date_derived']} [파생]" if o.get("date_derived") else ""), "id": o.get("id") or o.get("key"), "series": o.get("partOf") or o.get("partOf_derived", ""), "url": o.get("url", ""), "media": o.get("media", ""), "seen": o.get("seen", 1), "rank": o.get("rank") or 10 ** 9}
         if o.get("sameAs"):
             it["sameAs"] = o["sameAs"]
+        nt = " · ".join(x for x in [f"같은 기록 {len(o['same_keys']) + 1}곳 소장({', '.join(o['same_keys'])})" if o.get("same_keys") else "",
+                                    f"날짜 교차 {str((o.get('date_cross') or {}).get('verdict', '')).split('(')[0]}" if o.get("date_cross") else ""] if x)
+        if nt:
+            it["note"] = nt  # v2.92.1 맥락·증거 — 제목이 잘리지 않게 별도 줄(Node 패리티)
         out.append(it)
     return sorted(out, key=lambda x: (x["rank"], -x["seen"]))[:n]  # v2.7: 활용 순위
 
@@ -5629,6 +5634,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")
              + (f"\n  ↔ 동일 기록: {it['altTitle'][:80]} ({it['sameAs']})" if it.get("altTitle")
                 else (f"\n  ↔ {'함께 묶인 기록' if len(it['sources']) > 1 else '원본'}: {it['sameAs']}" if it.get("sameAs") else ""))
+             + (f"\n  ※ {it['note']}" if it.get("note") else "")
              for it in items[:45]]
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
