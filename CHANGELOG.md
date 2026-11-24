@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.68.0 — 개별 심층 검색 회신의 기록을 원장으로 (2026-11-25)
+- 원장: 적재가 cross_search에서만 일어나 개별 도구(nedb_search 법전·등록류·통합·승정원일기·KTV)로 찾은 기록이 질의·회신 원문에만 남던 공백 — 축적된 사용자 회신 원문에서 거둠(harvest_deep_replies). 회신에 있던 ID·제목·연도·URL만, 근거(질의 지문·모드·월 파일)는 harvested·found_by. 한국사DB는 시대·DB 계층, KTV는 '영상 › 분류'(기존 형식), KTV 개별 영상 식별은 mediadtl. 실측 37건(한국사DB 29·KTV 8). 새 기록은 심층 판독 보강이 순차로 채운다.
+
 ## v2.67.0 — 원장 key 충돌 교정·회신 원문에서 기록 복원 (2026-11-25)
 - nlk 수집기(Node·Python): id에 자료유형(type_name)을 넣어 원장 key가 'nlk:지도자료'처럼 분류어가 되고, 같은 유형의 다른 기록이 한 항목으로 합쳐지던 결함 — id를 기록 고유번호(viewKey)로.
 - 원장: 옛 분류어 key 5건을 지우지 않고 nlk:<viewKey>로 옮김(key_aliases에 옛 key, 여러 번 발견된 항목은 merge_note로 합쳐졌을 가능성 명시). 축적된 질의 회신 원문에서 key 충돌로 사라졌던 기록 6건 복원(recovered — 근거 질의·판). key_of의 분류어 보정은 nlk에만(IA 등 숫자 없는 고유 식별자는 그대로).
