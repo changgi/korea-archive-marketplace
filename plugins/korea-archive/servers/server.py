@@ -119,7 +119,7 @@ _TOPICS = [
     ("강제\\s?이주", "deportation Koreans Soviet 1937", None),
     ("사할린", "Sakhalin Koreans", None),
     # v2.95 증보: 6·25 핵심 용어(Node 패리티 — 구체 표기 먼저)
-    ("피란\\s?수도|임시\\s?수도", "wartime capital Pusan", None),
+    ("피란\\s?수도|임시\\s?수도", "Pusan 1951", None),
     ("휴전\\s?회담|정전\\s?회담|휴전\\s?협상|정전\\s?협상", "armistice negotiations Korea", None),
     ("서울\\s?수복|9[·.]28\\s?수복", "Seoul recapture 1950", None),
     ("북진", "UN advance north Korea 1950", None),
@@ -127,7 +127,7 @@ _TOPICS = [
     ("네이팜", "napalm Korea", None),
     ("민간인\\s?학살|양민\\s?학살", "civilian massacre Korea", None),
     ("보도\\s?연맹", "Bodo League massacre", None),
-    ("거창\\s?사건|거창\\s?양민", "Geochang massacre", None),
+    ("거창\\s?사건|거창\\s?양민", "Kochang incident", None),
     ("국민\\s?방위군", "National Defense Corps Korea", None),
     ("위문\\s?공연|위문", "troop entertainment Korea", None),
     ("전쟁\\s?미망인", "war widows Korea", None),
