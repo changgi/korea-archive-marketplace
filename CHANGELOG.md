@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.57.0 — 인물 전거로 표기 변이 연결 (2026-11-25)
+- 원장 주제 색인: 같은 한국역대인물 UCI를 가진 인물 개념(김익·金熤, 영조·조선 영조, 숙빈·淑嬪, 효명세자·孝明世子)을 지우지 않고 skos:exactMatch로 서로 연결. subjects.json authority_groups에 UCI별 표기 묶음 축적. 실측 4묶음.
+
 ## v2.56.0 — 장서각 개체 태깅·인물 전거(UCI) · 인물·기관 패싯 (2026-11-25)
 - nedb_search mode=jsg: 해제 안의 기관 개체 태깅(인명·지명·관청명·관직명·나라명·건물명·문헌명·서명)을 '○○(장서각 태깅):' 줄로, 인명 전거(한국역대인물 UCI)를 '인물 전거(한국역대인물 UCI):' 줄로 출력. 원문 태그만 옮긴다(추출·추정 없음). Node·Python 패리티, 골든 jsg-entity-authority.
 - 원장: 인명→인물·지명→장소·관청명→기관 패싯으로 축적, 인물 개념에 UCI(skos:notation·dct:identifier). 기록별 authority 필드. DEEP_V jsg=2로 기존 장서각 기록 재판독. 연대 키 추가(발행년도·기간·생산 기간·생산시기·Publication Date·일자).
