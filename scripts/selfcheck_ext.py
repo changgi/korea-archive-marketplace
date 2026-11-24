@@ -41,8 +41,7 @@ CTX.verify_mode = ssl.CERT_NONE
 #   Accept·Accept-Language 없이 요청하면 서울기록원·6·25아카이브가 503을 낸다.
 #   그 503을 "서버 장애"로 읽으면 몇 시간을 허비한다.
 HEADERS = {
-    "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                   "(KHTML, like Gecko) Chrome/124 Safari/537.36"),
+    "User-Agent": "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)",  # v2.36 정직 UA(브라우저 위장 제거)
     "Accept": "*/*",
     "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
 }

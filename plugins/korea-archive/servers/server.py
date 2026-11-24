@@ -768,7 +768,7 @@ def gallica_search(query: str, max_results: int = 15, year_from: int | None = No
         url = (f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2"
                f"&query={urllib.parse.quote(cql)}&maximumRecords={min(max_results,50)}"
                f"&startRecord={(page - 1) * max_results + 1}")
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": _UA_KO})
         with urllib.request.urlopen(req, timeout=40) as r:
             return ET.fromstring(r.read().decode("utf-8", "replace"))
 
@@ -836,7 +836,7 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
     # YEAR:[A TO B] 열린 범위(*)·다중 qf 실측 검증 (2026-11-18)
     if year_from or year_to: params.append(("qf", f"YEAR:[{year_from or '*'} TO {year_to or '*'}]"))
     url = "https://api.europeana.eu/record/v2/search.json?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": _UA_KO})
     with urllib.request.urlopen(req, timeout=40) as r:
         data = _json.loads(r.read().decode())
     items = data.get("items") or []
@@ -1656,7 +1656,7 @@ def report_template(kind: str = "report") -> str:
 # ══════════ 국내 아카이브 수집기 — 자동 브라우징(서버 사이드 fetch·파싱) v1.9.0 ══════════
 import urllib.parse as _up, urllib.request as _ur, html as _html, datetime as _dt, hashlib as _hl
 
-_UA_KO = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
+_UA_KO = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)"  # v2.36 정직 UA(브라우저 위장 제거 — CLAUDE.md 접근 원칙, Node 패리티). 거부 기관은 우회 없이 표시
 
 
 def _http_text(url, timeout=15):
@@ -2434,7 +2434,7 @@ def _c_indy(q, n):
 def _c_much(q, n):
     """대한민국역사박물관 근현대사아카이브 — POST 검색 역공학(2026-11-21). 소장품·포스터·간행물(근현대 실물)."""
     req = _ur.Request("https://archive.much.go.kr/search.do", data=_up.urlencode({"searchQuery": q}).encode(),
-                      headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/x-www-form-urlencoded"})
+                      headers={"User-Agent": _UA_KO, "Content-Type": "application/x-www-form-urlencoded"})
     with _ur.urlopen(req, timeout=25) as r:
         b = r.read().decode("utf-8", "replace")
     out = []
@@ -2461,7 +2461,7 @@ def _c_oldnews(q, n):
     """대한민국신문아카이브(국립중앙도서관) — POST JSON 역공학(2026-11-21). 1883~1960 신문 기사 전문."""
     req = _ur.Request("https://nl.go.kr/newspaper/search_newspaper.do",
                       data=json.dumps({"search_keyword": q, "page_size": min(n, 10), "page_no": 1}).encode(),
-                      headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json",
+                      headers={"User-Agent": _UA_KO, "Content-Type": "application/json",
                                "Referer": "https://nl.go.kr/newspaper/keyword_search.do"})
     with _ur.urlopen(req, timeout=25) as r:
         d = json.loads(r.read().decode("utf-8", "replace"))
@@ -2470,7 +2470,7 @@ def _c_oldnews(q, n):
         if ws:
             req2 = _ur.Request("https://nl.go.kr/newspaper/search_newspaper.do",
                                data=json.dumps({"search_keyword": ws[0], "page_size": min(n, 10), "page_no": 1}).encode(),
-                               headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json",
+                               headers={"User-Agent": _UA_KO, "Content-Type": "application/json",
                                         "Referer": "https://nl.go.kr/newspaper/keyword_search.do"})
             with _ur.urlopen(req2, timeout=25) as r:
                 d = json.loads(r.read().decode("utf-8", "replace"))
@@ -3014,7 +3014,7 @@ def _oldnews_mode(query: str, max_results: int) -> str:
             y2 = int(bm.group(3)) if bm.group(3) else 9999
             req = _ur.Request("https://nl.go.kr/newspaper/search_bodytext.do",
                               data=json.dumps({"search_keyword": kw, "page_size": (30 if y1 else min(max_results, 10)), "page_no": 1}).encode(),
-                              headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/json",
+                              headers={"User-Agent": _UA_KO, "Content-Type": "application/json",
                                        "Referer": "https://nl.go.kr/newspaper/bodytext_search.do"})
             with _ur.urlopen(req, timeout=25) as r:
                 d2 = json.loads(r.read().decode("utf-8", "replace"))
@@ -3043,7 +3043,7 @@ def _oldnews_mode(query: str, max_results: int) -> str:
             cid = cm.group(1)
             def fetch():
                 req = _ur.Request(f"https://nl.go.kr/newspaper/news_detail.do?content_id={cid}&ko_trans=no&abstractExist=false",
-                                  headers={"User-Agent": "Mozilla/5.0", "Referer": "https://nl.go.kr/newspaper/detail.do"})
+                                  headers={"User-Agent": _UA_KO, "Referer": "https://nl.go.kr/newspaper/detail.do"})
                 with _ur.urlopen(req, timeout=25) as r:
                     return r.read().decode("utf-8", "replace")
             d = json.loads(_cached_text("oldnewsD:" + cid, 24 * 3600, fetch, "newspaperKorName"))
@@ -3283,7 +3283,7 @@ def _earchive_mode(query: str, max_results: int) -> str:
             opener = _ur.build_opener(_ur.HTTPCookieProcessor(_cj.CookieJar()))
             def post(url, extra):
                 req = _ur.Request(url, data=_up.urlencode({**base, **extra}).encode(),
-                                  headers={"User-Agent": "Mozilla/5.0", "Content-Type": "application/x-www-form-urlencoded",
+                                  headers={"User-Agent": _UA_KO, "Content-Type": "application/x-www-form-urlencoded",
                                            "Referer": "https://archive.history.go.kr/search/searchResult.do"})
                 with opener.open(req, timeout=25) as r:
                     return r.read().decode("utf-8", "replace")
@@ -4540,7 +4540,7 @@ _AKS_CAT = [dict(zip(("id", "up", "grp", "name"), l.split("|"))) for l in _AKS_R
 
 
 def _aks_text(url, timeout=25):
-    req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    req = _ur.Request(url, headers={"User-Agent": _UA_KO,
                                     "Referer": _AKS_BASE + "/viewer/viewer.do"})
     with _ur.urlopen(req, timeout=timeout) as r:
         return r.read().decode("utf-8", "replace")

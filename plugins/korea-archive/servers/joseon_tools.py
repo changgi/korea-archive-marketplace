@@ -37,8 +37,7 @@ _CTX.check_hostname = False
 _CTX.verify_mode = ssl.CERT_NONE
 
 _HDR = {
-    "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                   "AppleWebKit/537.36 Chrome/124"),
+    "User-Agent": "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)",  # v2.36 정직 UA(브라우저 위장 제거)
     "Referer": "https://db.history.go.kr/",
     "Content-Type": "application/x-www-form-urlencoded",
 }
