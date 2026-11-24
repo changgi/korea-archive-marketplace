@@ -4215,7 +4215,7 @@ def _c_ledger(q, n):
         if not (all(t in h for t in toks) or (en and all(t in h for t in en))):
             continue
         it = {"title": f"[{'+'.join(o.get('sources') or [])} · 발견 {o.get('seen', 1)}회 · 7일 {o.get('seen_7d', 0)} · {o.get('days_total', 1)}일 · 첫 {str(o.get('first_seen', ''))[:10]}{f" · 활용 {o['rank']}위" if o.get('rank') else ''}{f" · 경로 질의 {len(o['found_by'])}" if o.get('found_by') else (' · 경로 원장(파생)' if o.get('found_by_derived') else '')}] {'[검색 안내] ' if o.get('entry_type') == '검색 안내' else ''}{o.get('title', '')}{f" ({o['link_note']})" if o.get('link_note') else ''}"[:220],
-              "date": o.get("date", ""), "id": o.get("id") or o.get("key"), "series": o.get("partOf") or o.get("partOf_derived", ""), "url": o.get("url", ""), "media": o.get("media", ""), "seen": o.get("seen", 1), "rank": o.get("rank") or 10 ** 9}
+              "date": o.get("date") or (f"{o['date_derived']} [파생]" if o.get("date_derived") else ""), "id": o.get("id") or o.get("key"), "series": o.get("partOf") or o.get("partOf_derived", ""), "url": o.get("url", ""), "media": o.get("media", ""), "seen": o.get("seen", 1), "rank": o.get("rank") or 10 ** 9}
         if o.get("sameAs"):
             it["sameAs"] = o["sameAs"]
         out.append(it)
