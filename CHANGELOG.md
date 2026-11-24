@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.52.0 — IA·TNA 원문 지문 · 비공개 매니페스트 표시 (2026-11-25)
+- 원장(korea-archive-mcp scripts/ledger_merge.py): IA·TNA 기록을 기관 공개 메타데이터 API(archive.org/metadata — 기술 메타+원본 파일 md5 · TNA Discovery 상세 API) 정규형으로 지문 감시(SRC_FIX, 판 SRC_PARSER_V='src1').
+- NDL 매니페스트가 비공개 응답(checkResult NG)이면 기관 주소를 지우지 않고 iiif_status로 표시 — '기관 IIIF' 지표에서 빼고, 컬렉션·KV·질의별 IIIF는 브리지 매니페스트로 잇는다(깨진 뷰어 링크 방지). 서버 응답·도구 스키마 변화 없음(원장 전용).
+
 ## v2.51.0 — 국가기록원 기록 원문 지문 감시 (2026-11-25)
 - 원장(korea-archive-mcp scripts/ledger_merge.py): 지문 감시 대상에서 빠져 있던 국가기록원 기록 40건을 포함. 원장 상세 판독기를 archives_fields로 분리해 보강(enrich)·지문(fixity)이 같은 판독기를 쓴다. 판독기 판 AR_PARSER_V='ar1' — 판독기 수정과 원문 변경을 구분. 서버 응답·도구 스키마 변화 없음(원장 전용).
 
