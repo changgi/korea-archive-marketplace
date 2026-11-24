@@ -3228,9 +3228,9 @@ def _commons_mode(query: str, max_results: int) -> str:
         fm = re.match(r"^https?://commons\.wikimedia\.org/wiki/(File:.+)$", qd, re.I) or re.match(r"^(File:.+)$", qd, re.I)
         if fm:
             title = _up.unquote(fm.group(1)).replace("_", " ")
-            raw = _cached_text("commonsD:" + title, 24 * 3600,
+            raw = _cached_text("commonsD2:" + title, 24 * 3600,  # v2.65 범주(숨김 제외)도 — Node 패리티
                                lambda: json.dumps(http_json(
-                                   "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo"
+                                   "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo%7Ccategories&clshow=!hidden&cllimit=20"
                                    "&iiprop=url%7Cextmetadata%7Csize&format=json&titles=" + _up.quote(title),
                                    headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp; archival discovery)"}),
                                    ensure_ascii=False), "imageinfo")
@@ -3278,6 +3278,7 @@ def _commons_mode(query: str, max_results: int) -> str:
             return (f"위키미디어 공용 파일 판독 — {title.removeprefix('File:')}\n{meta}\n"
                     f"라이선스: {lic or '(미표기)'} → 권리 초판정 {rights}\n"
                     + (f"출처(원 소장처): {g('Credit')[:160]}\n" if g("Credit") else "")
+                    + (f"범주(Commons): {'; '.join(re.sub(r'^Category:', '', str(c.get('title', ''))) for c in (page.get('categories') or [])[:12])}\n" if page.get("categories") else "")
                     + (f"【설명】\n{g('ImageDescription')[:1200]}\n" if g("ImageDescription") else "")
                     + nline
                     + (f"원본 이미지: {str(ii.get('url')).split('?')[0]}\n" if ii.get("url") else "")

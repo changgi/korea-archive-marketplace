@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.65.0 — Commons 범주: 계층·분류 (2026-11-25)
+- nedb_search mode=commons: 파일의 Commons 범주(숨김 범주 제외)를 '범주(Commons):' 줄로 판독(캐시 키 판 올림). Node·Python 패리티, 골든 commons-categories.
+- IIIF 브리지(/iiif/commons/): 범주를 메타로. 원장: IIIF_V commons=2로 재판독, 원 기관 계층이 없는 Commons 기록(22건)은 첫 범주로 'Commons › 범주' 계층(근거 표시), 범주는 분류 패싯으로 축적.
+
 ## v2.64.0 — DigitalNZ 기록 API 보강·지문 (2026-11-25)
 - 원장: dnz 기록을 원장 key의 레코드 번호로 DigitalNZ records API(익명)에서 지문 감시·빈 칸 보강 — description→요약, 콘텐츠 제공처·범주·날짜·생산자·발행처·저작권(원문)·이용 조건(원문)·주제→메타. 권리 표시가 기록별 원문으로('All rights reserved'·'Unknown'). SRC_FIX 규칙이 '^'로 시작하면 원장 key에 적용. 실측 8/8건, 재확인 지문 변경 0. 서버 응답·도구 스키마 변화 없음.
 
