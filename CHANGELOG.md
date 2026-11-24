@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.46.1 — 한국사DB 거짓 0건 방지 · GET 보조 경로 (2026-11-24)
+- 결함 수정: v2.39.1의 '끊긴 응답 받은 만큼 판독'이 결과가 없는 앞부분만 받은 경우에도 채택돼 0건으로 보고 — 법전 모드는 '조운은 법전에 수록되어 있지 않습니다'라는 거짓 결론(경국대전 호전·漕轉에 있음)을 냈다(golden nedb-live-subdb #239 실측). 끊긴 본문은 결과 건수('총 N건', 태그 사이 허용)가 있을 때만 채택, 아니면 오류로.
+- POST가 끝내 실패하면 같은 인자의 GET으로 한 번 더(실측: 한국사DB 검색 GET도 같은 결과 — 옛 'GET 재현 불가' 기록 정정). 실패 안내문도 '0건으로 단정하지 않음'으로. Node jdbPost·Python joseon_tools._post/_decode·_nedb_live 패리티.
+- 골든 nedb-law-no-false-absence(must_not '법전에 수록되어 있지 않습니다').
+
 ## v2.46.0 — 런타임·워크플로 판 정렬 (2026-11-24)
 - CI가 Node 20(2026-04 지원 종료)으로 빌드하던 것 → 프로덕션 Vercel과 같은 Node 24로. package.json engines.node "24.x".
 - 모든 워크플로 액션을 Node 24 실행 판으로: checkout@v6 · setup-node@v6 · setup-python@v7(두 저장소) — 'Node.js 20 is deprecated' 경고 제거, Node 20 런타임 제거 시 자동화(ledger·golden·health 등) 중단 예방.

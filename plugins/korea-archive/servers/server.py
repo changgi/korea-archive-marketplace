@@ -2103,7 +2103,7 @@ def _nedb_live(q, per=3):
                 try:
                     return r.read().decode("utf-8", "replace")
                 except _hc.IncompleteRead as e:  # v2.39.1 본문 조기 끊김(기관 측) — 받은 만큼 판독(Node 패리티)
-                    if not e.partial:
+                    if not e.partial or not re.search(r"총[\s\S]{0,40}?[\d,]+[\s\S]{0,20}?건", e.partial.decode("utf-8", "replace")):  # v2.46.1 건수 없는 조각 불채택
                         raise
                     return e.partial.decode("utf-8", "replace")
         try:
@@ -4432,7 +4432,7 @@ def _joseon_mode(query: str, mode: str, span: int, n: int) -> str:
                 out += "\n★ " + r["alert"]
             return out + '\n■ 원문 이미지 접근 지식(실측 2026-08-18) — GET·web_fetch 불가, ImageServlet 직접 URL은 브라우저에서 열림:\nhttps://kyudb.snu.ac.kr/ImageServlet.do?imgFileNm=[파일명]&path=/data01/stream/[item_cd]/IMG/[book_cd]/[book_cd]_0001/\nitem_cd 5종(자료 성격별): ART 도설·회화 / ETC 두루마리·축 / DRR 등록류 / FND 재정·사목 / POL 정책·절목.\n파일명 2형: 표준 [book_cd]_00_IH_0001_[nnn]a.jpg · POL계 [book_cd]_00IH_0001_[nnnn].jpg (밑줄 없음·4자리).\n★반드시 첫 장 URL을 실제로 받아 패턴 확정 후 순회 — 추정 순회는 전부 실패한다(200 OK·0바이트 함정 포함). 게재는 소장기관 허가 확인(02-880-5316).'
     except Exception as e:
-        return f"조선 심층 판독({mode}) 실패: {e} — 한국사DB 계열은 전부 POST이며 GET 재현 불가. 잠시 후 재시도."
+        return f"조선 심층 판독({mode}) 실패: {e} — 한국사DB 응답이 끊겨 결과 건수를 확인하지 못했습니다(POST·GET 모두 시도 — 0건으로 단정하지 않음). 잠시 후 재시도."
     return f"알 수 없는 mode: {mode}"
 
 

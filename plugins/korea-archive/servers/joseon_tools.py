@@ -53,11 +53,14 @@ POLITE_DELAY = 0.4          # 요청 간격
 RETRY_WAIT = 20             # 실패 시 대기
 
 
+_COUNT = re.compile(r"총[\s\S]{0,40}?[\d,]+[\s\S]{0,20}?건")
+
+
 def _decode(resp) -> str:
     try:
         b = resp.read()
     except http.client.IncompleteRead as e:  # v2.39.1 본문이 선언 길이보다 일찍 끊김(기관 측) — 받은 만큼 판독(Node 패리티)
-        if not e.partial:
+        if not e.partial or not _COUNT.search(e.partial.decode("utf-8", "replace")):  # v2.46.1 결과 건수 없는 조각은 채택 안 함(거짓 0건 방지)
             raise
         b = e.partial
     if resp.headers.get("Content-Encoding") == "gzip":
@@ -74,6 +77,14 @@ def _post(url: str, params: dict, timeout: int = 90, retries: int = 2) -> str:
         except Exception:
             if attempt < retries - 1:
                 time.sleep(RETRY_WAIT)
+    # v2.46.1 POST가 끝내 실패하면 같은 인자의 GET(한국사DB 검색 결과 동일 실측 — Node jdbPost 패리티)
+    try:
+        gh = {k: v for k, v in _HDR.items() if k.lower() != "content-type"}
+        t = _decode(urllib.request.urlopen(urllib.request.Request(url + ("&" if "?" in url else "?") + data.decode(), headers=gh), timeout=timeout, context=_CTX))
+        if _COUNT.search(t):
+            return t
+    except Exception:
+        pass
     return ""
 
 
