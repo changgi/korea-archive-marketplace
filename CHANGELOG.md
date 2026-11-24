@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.94.0 — 다국어 변환 증보(피란민·1·4후퇴·전쟁고아) (2026-11-25)
+- TOPICS(Node·Python 동일): 피란민|피난민|피란|피난|避難民|難民|беженц → refugees Korea(fr réfugiés Corée), 1·4후퇴 → Seoul evacuation January 1951, 전쟁고아|고아원 → war orphans Korea. 실측: '피란민' 교차 검색에서 NARA·IA·Europeana가 변환 없이 일반 'Korea' 자료만 돌려주던 결함. 골든 topics-refugees.
+
 ## v2.93.0 — 교차 검색 제목 잘림 교정 (2026-11-25)
 - cross_search 결과 줄(Node·Python): 제목 95자 자르기를 앞 꼬리표('[원장 발견 횟수·순위 …] ') 뒤 실제 제목에 적용 — 원장 결과의 꼬리표가 95자를 거의 다 써 'Withdrawal of 1st M'처럼 제목이 사라지던 문제(운영 실측). 골든 ledger-same-record에 제목 확인.
 
