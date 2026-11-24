@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.46.0 — 런타임·워크플로 판 정렬 (2026-11-24)
+- CI가 Node 20(2026-04 지원 종료)으로 빌드하던 것 → 프로덕션 Vercel과 같은 Node 24로. package.json engines.node "24.x".
+- 모든 워크플로 액션을 Node 24 실행 판으로: checkout@v6 · setup-node@v6 · setup-python@v7(두 저장소) — 'Node.js 20 is deprecated' 경고 제거, Node 20 런타임 제거 시 자동화(ledger·golden·health 등) 중단 예방.
+
 ## v2.45.0 — IIIF 구조 검증(CI) (2026-11-24)
 - scripts/iiif_check.py: IIIF Presentation 3 핵심 규칙(@context·id·type·label 언어 맵·Collection 항목·Canvas→AnnotationPage→Annotation·이미지 캔버스 크기·metadata/summary/requiredStatement·rights 단일 URI)을 의존성 없이 검사. 실측: docs 정적 IIIF 477개 + 프로덕션 브리지 매니페스트 표본 20개(전체 참조 11,495) 오류 0. 고장 사본 6종(rights 텍스트·label 문자열·캔버스 크기 누락·target 불일치·v2 context·metadata 문자열) 전부 검출 확인.
 - verify(모든 push·PR: 정적) · ledger(매일 커밋 뒤: 정적+브리지 표본 20) 워크플로에 편입.
