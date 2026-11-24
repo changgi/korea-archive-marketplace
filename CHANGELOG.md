@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.67.0 — 원장 key 충돌 교정·회신 원문에서 기록 복원 (2026-11-25)
+- nlk 수집기(Node·Python): id에 자료유형(type_name)을 넣어 원장 key가 'nlk:지도자료'처럼 분류어가 되고, 같은 유형의 다른 기록이 한 항목으로 합쳐지던 결함 — id를 기록 고유번호(viewKey)로.
+- 원장: 옛 분류어 key 5건을 지우지 않고 nlk:<viewKey>로 옮김(key_aliases에 옛 key, 여러 번 발견된 항목은 merge_note로 합쳐졌을 가능성 명시). 축적된 질의 회신 원문에서 key 충돌로 사라졌던 기록 6건 복원(recovered — 근거 질의·판). key_of의 분류어 보정은 nlk에만(IA 등 숫자 없는 고유 식별자는 그대로).
+
 ## v2.66.0 — UN 디지털도서관 판독: 기관 MARC XML (2026-11-25)
 - nedb_search mode=un: 기관 MARC XML(/record/{id}/export/xm)을 1순위로 — 기록 HTML은 봇 확인(202·빈 본문), recjson은 제목·날짜가 비어 판독이 공란이던 결함(실측 4132698). 제목·문서기호(791/191)·유형(930, VOT=표결 기록)·날짜·의제(991)·관련 문서(993)·주제·요약·파일. 실패 시 recjson. Node·Python 패리티, 골든 un-marc-detail.
 - 원장: DEEP_V un=2 재판독, 유형·의제로 'UN 디지털도서관 › 유형 › 의제' 계층(근거 표시).

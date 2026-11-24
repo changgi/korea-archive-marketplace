@@ -2063,8 +2063,9 @@ def _c_nlk(q, n):
         if lk.startswith("/"):
             lk = "https://www.nl.go.kr" + lk
         tn = _xtag(it, "type_name")
+        vk = re.search(r"viewKey=([^&#\s]+)", lk)  # v2.67 기록 고유번호 — 종전 id=자료유형이라 같은 유형의 다른 기록이 원장에서 한 key로 합쳐지던 결함
         out.append({"title": _xtag(it, "title_info") or _xtag(it, "title"), "date": _xtag(it, "pub_year_info"),
-                    "id": tn, **({"series": tn} if tn else {}), "url": lk})
+                    "id": (vk.group(1) if vk else _xtag(it, "control_no")) or "", **({"series": tn} if tn else {}), "url": lk})
     return out
 
 # nedb: 국사편찬위 한국사DB의 data.go.kr 공식 개방파일(KOGL)을 인덱싱해 웹 배치한 것을 검색 — robots 무관(라이브 스크래핑 없음).
