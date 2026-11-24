@@ -76,7 +76,7 @@ _TOPICS = [
     ("만민\\s?공동회", "Independence Club mass meeting Seoul 1898", None),
     ("경술\\s?국치|한일\\s?병합|한일\\s?합병|韓國倂合|韓国併合", "Japan annexation of Korea 1910", "annexion de la Corée 1910"),
     ("토지\\s?조사\\s?사업", "land survey Chosen 1910s", None),
-    ("제주\\s?4[·.]3|4[·.]3\\s?사건", "Cheju uprising 1948", None),  # v2.96 일반 제주보다 먼저(Node 패리티)
+    ("제주\\s?4[·.]3|4[·.]3\\s?사건", "Cheju-do 1948", None),  # v2.96 일반 제주보다 먼저(Node 패리티)
     ("동양\\s?척식(?:\\s?주식\\s?회사)?|東洋拓殖", "Oriental Development Company Korea", None),
     ("산미\\s?증식", "rice production Chosen Japan", None),
     ("신사\\s?참배|神社参拝", "Shinto shrine worship Korea", None),
@@ -85,7 +85,7 @@ _TOPICS = [
     ("학병|학도병", "Korean student soldiers Japanese army", None),
     ("지원병|징병|徵兵", "Korean conscription Japanese army", None),
     ("근로\\s?정신대|여자\\s?정신대", "women volunteer labor corps Korea", None),
-    ("관동\\s?대지진|간토\\s?대지진|간토\\s?학살|関東大震災", "Kanto earthquake 1923 Koreans massacre", None),
+    ("관동\\s?대지진|간토\\s?대지진|간토\\s?학살|関東大震災", "earthquake Tokyo 1923 Koreans", None),
     ("6[·.]10\\s?만세", "June 10 movement 1926 Korea", None),
     ("광주\\s?학생\\s?운동", "Kwangju student movement 1929", None),
     ("신간회", "Singanhoe Korea", None),
@@ -235,7 +235,7 @@ _TOPICS = [
     ("을사\\s?조약|을사\\s?늑약|乙巳條約", "Japan Korea protectorate treaty 1905", None),
     ("아관\\s?파천|俄館播遷", "Kojong Russian legation 1896", None),
     ("헤이그\\s?특사|해아\\s?밀사", "Hague secret emissaries Korea 1907", "La Haye Corée 1907"),
-    ("제주\\s?4[·.]3|4[·.]3\\s?사건", "Cheju uprising 1948", None),
+    ("제주\\s?4[·.]3|4[·.]3\\s?사건", "Cheju-do 1948", None),
     ("여순\\s?사건|여수.순천\\s?사건", "Yosu rebellion 1948", None),
     ("신탁\\s?통치", "Korea trusteeship", "tutelle Corée"),
     ("미군정|미\\s?군정", "USAMGIK military government Korea", None),
