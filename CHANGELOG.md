@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.43.0 — 주제 색인 연결 데이터(SKOS·RiC-O) (2026-11-24)
+- docs/data/subjects.jsonld: 패싯별 skos:ConceptScheme + 용어별 skos:Concept(기관 표기 prefLabel·출처 수집처·기록 수). 개념 URI는 표기 기반으로 안정.
+- discovered.jsonld의 RiC-O 기록이 rico:hasOrHadSubject(주제·분류·시대·매체)·rico:isAssociatedWithPlace(장소)로 개념을 가리킴 — 다른 지식그래프·목록 도구가 그대로 연결. 실측: 기록 105건 주제 연결 · 10건 장소 연결 · 개념 103 · 끊긴 링크 0.
+- source_profile('ledger') 안내(Node·Python 패리티).
+
 ## v2.42.0 — 주제 색인(패싯) · 원장 주제어 검색 (2026-11-24)
 - docs/data/subjects.json·subjects.html: 원 기관이 붙인 주제·장소·분류·시대·매체 용어를 패싯별로 축적(기관 표기 그대로, 지우지 않음, 용어별 기록·수집처·처음/마지막). 서울기록원 연관정보는 코드로 패싯 구분(GEOL 장소·TOPIC 주제·FUNC 분류). 현 원장 실측: 시대 38 · 주제 34 · 장소 15 · 분류 12 · 매체 3 용어.
 - cross_search(sources='ledger')가 기록 메타 값·요약까지 검색 — 제목에 없는 기관 주제어(예: 전자사료관 '중공군개입')로도 찾음. Node·Python 패리티, 골든 ledger-subject-search, source_profile 안내.
