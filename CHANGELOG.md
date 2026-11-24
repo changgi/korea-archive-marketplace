@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.54.0 — IA·TNA 기술 메타 보강(기관 메타데이터 API) (2026-11-25)
+- 원장: 지문용으로 받은 IA·TNA 메타데이터 API 응답에서 비어 있는 칸만 채운다(덮어쓰지 않음, 원문 그대로, 근거 summary_basis·meta_basis). IA description→요약 · 생산자·생산일·발행처·매체·면 수·이용 제한(access-restricted-item·licenseurl·rights)→메타. TNA scopeContent→요약 · 참조번호·생산 기간·소장처·생산자·물리 형태·법적 지위·이용조건→메타. 권리 표시가 수집처 일반 정책 대신 기록별 원문(예: TNA 'Unrestricted', IA 대출 전용)으로. 'No Description' 같은 자리표시 문구는 요약으로 쓰지 않음.
+
 ## v2.53.0 — 다매체: OAI-PMH Dublin Core · BibTeX (2026-11-25)
 - 원장: records.oai_dc.xml(OAI-PMH ListRecords, Dublin Core — 아카이브·도서관 하베스터가 그대로 수집) · records.bib(BibTeX @misc — LaTeX·학위논문). 파생 날짜·계층은 [파생] 표기, 권리는 원 기관 표기, IIIF(기관 또는 브리지)는 dc:relation. 실측: 389건, XML 파싱 정상, BibTeX 키 389/389 고유.
 - source_profile(ledger) 안내에 두 형식 추가(Node·Python 패리티), 골든 ledger-media-formats 보강.
