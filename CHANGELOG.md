@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.97.1 — 변환어 실측 교정 3 (2026-11-25)
+- TOPICS(Node·Python): topics_probe '약함' 39개의 후보 표기를 NARA·IA로 재고 상위 결과 확인 후 9개 교정 — 서울 수복 → recapture of Seoul(NARA 'RECAPTURE OF SEOUL, KOREA 1950-09-26'), 금성 → Kumsong, 제주 → Cheju-do, 대한제국 → Korean Empire, 동양척식 → Oriental Development Company(IA 1921 사업설명서), 금강산 → Diamond Mountains Korea, 윤봉길 → Hongkew Park bombing 1932(NARA 1932 사진), 사진신부 → picture brides. 'Korea'를 빼 엉뚱한 결과만 늘어난 후보(Bloody Ridge·Triangle Hill·Gloucestershire)는 채택하지 않음. 골든 topics-probe-corrected.
+
 ## v2.97.0 — 변환어 실측 자동화 (2026-11-25)
 - korea-archive-mcp: scripts/topics_probe.py + topics-probe 워크플로(매월 4일·수동) — TOPICS 영문 변환어마다 NARA·IA 결과 수·상위 제목·관련 신호를 docs/data/topics_probe.json에 날짜별 축적(지우지 않음, 점검 질의는 X-KA-Probe=topics). 'weak' 목록이 기관 색인에 맞춘 교정 후보. 첫 실측: 169개 중 약함 39개(청산리·보도연맹·을미사변·갑신정변 등 — 학술 명칭이 기관 색인과 어긋나는 후보).
 
