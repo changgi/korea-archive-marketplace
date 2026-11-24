@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.97.0 — 변환어 실측 자동화 (2026-11-25)
+- korea-archive-mcp: scripts/topics_probe.py + topics-probe 워크플로(매월 4일·수동) — TOPICS 영문 변환어마다 NARA·IA 결과 수·상위 제목·관련 신호를 docs/data/topics_probe.json에 날짜별 축적(지우지 않음, 점검 질의는 X-KA-Probe=topics). 'weak' 목록이 기관 색인에 맞춘 교정 후보. 첫 실측: 169개 중 약함 39개(청산리·보도연맹·을미사변·갑신정변 등 — 학술 명칭이 기관 색인과 어긋나는 후보).
+
 ## v2.96.2 — 변환어 실측 교정 2 (2026-11-25)
 - TOPICS(Node·Python): 거창 사건 → 'Kochang incident'(NARA·IA 실측 — 'Geochang massacre' 0건, 'Kochang incident'는 무초 대사 국무부 보고 1951~52), 피란수도·임시수도 → 'Pusan 1951'('wartime capital Pusan'은 2차대전 작전보고만).
 
