@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.37.0 — 규장각·KTV 자동 검색 복구(정직 UA 그대로) (2026-11-24)
+- 규장각: 403의 원인은 UA가 아니라 사이트 개편 — 검색 POST가 CSRF 토큰을 요구(응답 'CSRF Token Validation Failed'). 공개 GET 검색으로 전환, 개편 마크업(data-book_cd) 판독. 실측 '절목' 20행·book_cd 매핑(奎18933 → GK18933_00, 古4256-21 → GR32733_00). Node jKyu·Python joseon_tools 패리티.
+- KTV e영상역사관: ktv.go.kr 통합검색은 쿠키 확인 리다이렉트(303)로 자동 요청 불가 → e영상역사관(ehistory.go.kr) 자체 분류 목록 7종(대한뉴스·미공개 대한뉴스·문화영화·대통령기록영상·정부기록사진집·국가기록사진·한국소개사진) GET 검색으로 대체. 제목·호수·제작연도/촬영일자·썸네일·상세 링크. 질의의 분류명은 분류 한정('대한뉴스 서울' → 대한뉴스에서 '서울'), 여러 낱말 0건이면 첫 낱말 재시도. 옛 경로는 보조로 유지.
+- 정직 UA 거부 표 비움(장치 유지), health '접근 제한: 없음'. golden ktv-ehistory-search·kyudb-get-search 추가, ktv-full-title 새 구조로.
+
 ## v2.36.0 — 정직 UA 일원화 · 프록시 우회 제거 (2026-11-24)
 - CLAUDE.md 접근 원칙("UA 위장·프록시 우회 금지") 위반 정리: Node 공용 UA·고문서자료관 UA·Python `_UA_KO`·개별 요청 8곳·kla/ia·harvester·joseon_tools·selfcheck·스킬 참조 스크립트의 브라우저 UA → `KoreaArchiveMCP/2.36 (+저장소; archival discovery; non-commercial research)`. `FETCH_PROXY_PREFIX`(allorigins·jina) 경유 폴백 제거.
 - 전후 비교(프로덕션 golden 70여 케이스·관련성 감사 33곳): 정직 UA에서 달라진 곳은 **규장각(HTTP 403)**·**KTV e영상역사관(0건)** 두 곳뿐. 우회하지 않고 `UA_REFUSED` 표로 표시 — 해당 도구 응답·cross_search 채널(`⛔정직UA거부`)·health '접근 제한' 절에 브라우저 경로·자동 수집 허용 문의처. golden은 원래 패턴 또는 명시 표시를 통과로(조용한 0건은 실패).

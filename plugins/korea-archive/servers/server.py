@@ -1658,10 +1658,7 @@ import urllib.parse as _up, urllib.request as _ur, html as _html, datetime as _d
 
 _UA_KO = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)"  # v2.36 정직 UA(브라우저 위장 제거 — CLAUDE.md 접근 원칙, Node 패리티). 거부 기관은 우회 없이 표시
 # v2.36 정직 UA 거부 기관 — 우회하지 않고 표시(Node UA_REFUSED 패리티)
-_UA_REFUSED = {
-    "kyudb": {"name": "서울대 규장각한국학연구원", "since": "2026-11-24", "how": "정직 UA 요청에 HTTP 403", "browse": "https://kyudb.snu.ac.kr/search/search.do", "contact": "02-880-5316"},
-    "ktv": {"name": "KTV e영상역사관", "since": "2026-11-24", "how": "정직 UA 요청에 결과 0건(같은 질의가 브라우저 UA 시절 정상)", "browse": "https://www.ktv.go.kr/totalSearch/ehistory", "contact": "KTV 국민방송"},
-}
+_UA_REFUSED = {}  # v2.37 비움 — 규장각 403은 UA가 아니라 사이트 개편(POST CSRF)이었고 GET으로 복구, KTV는 e영상역사관 자체 목록 검색으로 복구(2026-11-24 실측). 새 거부가 확인되면 여기에 추가(위장하지 않음)
 
 
 def _ua_refused_note(k, q=""):
@@ -2735,7 +2732,7 @@ def _c_kyudb(q, n):
     실측 ~10s(12s 타임박스 근접) → 6h TTL 캐시(마커 奎 — 결과 있을 때만 캐시)."""
     if _jt is None:
         return []
-    raw = _cached_text("kyudb5:" + q, 6 * 3600,
+    raw = _cached_text("kyudb6:" + q, 6 * 3600,
                        lambda: json.dumps(_jt.kyujanggak_search(q, area="both"), ensure_ascii=False), "奎")
     try:
         r = json.loads(raw)
@@ -3549,7 +3546,65 @@ def _gonghun_mode(query: str, max_results: int) -> str:
                 "https://e-gonghun.mpva.go.kr/user/ContribuReportList.do?goTocode=20001")
 
 
+_EH = "https://www.ehistory.go.kr"
+_EH_LISTS = [("koreanews/korea_news", "대한뉴스"), ("koreanews/korea_newskc", "미공개 대한뉴스"), ("movie/culture", "문화영화"), ("photo/government", "정부기록사진집"),
+             ("photo/nation", "국가기록사진"), ("photo/korea", "한국소개사진"), ("movie/president", "대통령기록영상")]  # 분류명 = 각 페이지 제목(2026-11-24 실측)
+
+
+def _ehistory_search(q, n):
+    """v2.37 e영상역사관(ehistory.go.kr) 자체 분류 목록 검색 — GET search_type=all·search_text로 걸러진 타일. Node ehistorySearch 패리티."""
+    def one(pl):
+        path, label = pl
+        b = _cached_text(f"eh:{path}:{q}", 6 * 3600, lambda: _http_text(f"{_EH}/{path}?search_type=all&search_text={_up.quote(q)}", 25), "tileList")
+        out = []
+        for li in b.split("<li>")[1:]:
+            m = re.search(r'<a href="(/view/(?:movie|photo)\?[^"]+)"', li); t = re.search(r'<strong class="title">([\s\S]*?)</strong>', li)
+            if not m or not t:
+                continue
+            dl = _norm(re.sub(r"<[^>]+>", " ", (re.search(r'<span class="date">([\s\S]*?)</span>\s*</div>', li) or [None, ""])[1]))
+            ym = re.search(r"(1[89]\d\d|20\d\d)(?:[.년]\s*(\d{1,2}))?(?:\.(\d{1,2}))?", dl)
+            no = re.search(r"(\d{2,4})호", dl); img = re.search(r'<img src="([^"]+)"', li)
+            title = _norm(_html.unescape(re.sub(r"<[^>]+>", "", t.group(1))))
+            dt = "-".join(x for x in ((ym.group(1), ym.group(2) and ym.group(2).zfill(2), ym.group(3) and ym.group(3).zfill(2)) if ym else ()) if x)
+            md = re.search(r"mediadtl=(\d+)", m.group(1))
+            out.append({"title": f"{title}{f' ({no.group(1)}호)' if no else ''}"[:120], "date": dt, "id": f"{label}:{md.group(1)}" if md else "",
+                        "series": label, "url": _EH + m.group(1).replace("&amp;", "&"), **({"media": ("" if img.group(1).startswith("http") else _EH) + img.group(1)} if img else {})})
+        return out
+    def search_in(L, kw):
+        nonlocal q
+        q = kw
+        lists = []
+        with _cf.ThreadPoolExecutor(max_workers=7) as ex:
+            for f in [ex.submit(one, pl) for pl in L]:
+                try: lists.append(f.result(timeout=25))
+                except Exception: lists.append([])
+        seen, out = set(), []
+        for k in range(20):
+            for l in lists:
+                if k < len(l) and l[k]["url"] not in seen and len(out) < n:
+                    seen.add(l[k]["url"]); out.append(l[k])
+        return out
+    # 질의에 분류명이 있으면 그 분류만·나머지 낱말로, 여러 낱말이 0건이면 첫 낱말로 한 번 더(Node 패리티)
+    toks = str(q).split(); names = {l: (p_, l) for p_, l in _EH_LISTS}
+    cats = [names[t] for t in toks if t in names]; kw = " ".join(t for t in toks if t not in names)
+    if cats and kw and kw != q:
+        return search_in(cats, kw)
+    q0 = q; r0 = search_in(_EH_LISTS, q0)
+    return r0 if r0 or len(toks) < 2 else search_in(_EH_LISTS, toks[0])
+
+
 def _c_ktv(q, n):
+    """v2.37 e영상역사관 자체 목록 검색 우선(ktv.go.kr 통합검색은 쿠키 확인 리다이렉트로 자동 요청 불가) → 없으면 아래 옛 경로."""
+    try:
+        eh = _ehistory_search(q, n)
+    except Exception:
+        eh = []
+    if eh:
+        return eh
+    return _c_ktv_legacy(q, n)
+
+
+def _c_ktv_legacy(q, n):
     """KTV e영상역사관 — ktv.go.kr 통합검색 iframe GET 실측(2026-11-19).
     v1.94: 기본 정렬이 '최신순'(sort 무효 실측)이라 최근 대통령 영상이 상위 독점 → 기록 탭별 병렬 조회·교차 병합, 대통령 기록영상(DT)은 뒤로."""
     tabs = [("DH", "대한뉴스"), ("MH", "문화영화"), ("DK", "미공개 대한뉴스"), ("BK", "정부기록사진집"), ("PT", "국가기록사진"), ("", "전체")]
@@ -4114,7 +4169,7 @@ def _pipeline_freshness():
         except Exception as e:
             out.append(f"🔴 {label}: 확인 실패({str(e)[:30]})")
     return ("\n\n자동 파이프라인 신선도:\n" + "\n".join(out)
-            + "\n\n접근 제한(정직 UA 거부 — 우회하지 않음, v2.36):\n" + "\n".join(f"⛔ {k} {r['name']}: {r['how']} (실측 {r['since']}) · 브라우저 {r['browse']}" for k, r in _UA_REFUSED.items()))
+            + "\n\n접근 제한(정직 UA 거부 — 우회하지 않음):\n" + ("\n".join(f"⛔ {k} {r['name']}: {r['how']} (실측 {r['since']}) · 브라우저 {r['browse']}" for k, r in _UA_REFUSED.items()) or "없음 — 전 기관 정직 UA로 수집 중"))
 
 
 def _c_ledger(q, n):

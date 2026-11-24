@@ -540,11 +540,11 @@ def kyujanggak_search(query: str, area: str = "both") -> dict:
     out = {"query": query, "sections": {}}
 
     for code, label in areas:
-        data = urllib.parse.urlencode({
-            "totalSearchString": query, "searchArea": code}).encode()
+        # v2.37 사이트 개편(2026-11-24): POST는 CSRF 토큰 필수(403) — 공개 GET 검색으로(Node 패리티)
+        qs = urllib.parse.urlencode({"totalSearchString": query, "searchArea": code})
         try:
-            req = urllib.request.Request(KYU + "/search/search.do",
-                                         data=data, headers=khdr)
+            gh = {k: v for k, v in khdr.items() if k.lower() != "content-type"}
+            req = urllib.request.Request(KYU + "/search/search.do?" + qs, headers=gh)
             page = _decode(urllib.request.urlopen(req, timeout=90, context=_CTX))
         except Exception as e:
             out["sections"][label] = {"error": f"{type(e).__name__} {getattr(e, 'code', '')}".strip()}  # v2.36 HTTP 코드 보존(403 = 정직 UA 거부 표시)
@@ -562,8 +562,8 @@ def kyujanggak_search(query: str, area: str = "both") -> dict:
                           "body": re.sub(r"\.\.\.$", "", (m.group(6) or "")).strip()[:160]})
         # v2.35 행별 book_cd ↔ 청구기호(앞 행=원본 GK… 우선, 뒤 마이크로필름 TM… 무시) — /book/view.do?book_cd= GET 고정 상세(Node 패리티)
         codes = {}
-        for seg in page.split('class="schli"')[1:]:
-            cm = re.search(r"청구기호\s*:\s*([^\n\t]{2,30})", re.sub(r"<[^>]+>", "", seg));  # 태그 제거 — 검색어 강조가 청구기호를 끊던 것 bm = re.search(r"fn_totalSearchResultView\([^)]*?'([A-Z]{1,4}\d[\w-]*_\d\d)'", seg)
+        for seg in re.split(r'class="schli[ "]', page)[1:]:  # v2.37 개편 마크업 class="schli search-view-anchor"
+            cm = re.search(r"청구기호\s*:\s*([^\n\t]{2,30})", re.sub(r"<[^>]+>", "", seg));  # 태그 제거 — 검색어 강조가 청구기호를 끊던 것 bm = re.search(r'data-book_cd="([A-Z]{1,4}\d[\w-]*_\d\d)"', seg) or re.search(r"fn_totalSearchResultView\([^)]*?'([A-Z]{1,4}\d[\w-]*_\d\d)'", seg)
             if cm and bm: codes.setdefault(re.sub(r"\s+", " ", cm.group(1)).strip(), bm.group(1))
         for i in items:
             if codes.get(i["call_number"]): i["book_cd"] = codes[i["call_number"]]
