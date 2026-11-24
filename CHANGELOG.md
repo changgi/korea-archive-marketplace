@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.51.0 — 국가기록원 기록 원문 지문 감시 (2026-11-25)
+- 원장(korea-archive-mcp scripts/ledger_merge.py): 지문 감시 대상에서 빠져 있던 국가기록원 기록 40건을 포함. 원장 상세 판독기를 archives_fields로 분리해 보강(enrich)·지문(fixity)이 같은 판독기를 쓴다. 판독기 판 AR_PARSER_V='ar1' — 판독기 수정과 원문 변경을 구분. 서버 응답·도구 스키마 변화 없음(원장 전용).
+
 ## v2.50.0 — 연대 보강: 기관 메타 날짜 항목 (2026-11-24)
 - 원장: 연대 판정에 생산기간(전자사료관)·발간연도(국외문화유산)·date(IA·Europeana) 추가. 인수·등록·업로드일(보존이력·addeddate)은 기록 시점이 아니라 제외. 연대 채움 83.5%→85.6%(실측).
 - 원장: 생산기간 시작·발간연도를 date_derived로 세움(근거 '기관 메타 — 생산기간(시작)/발간연도'). 원장 검색은 date가 없으면 date_derived를 '[파생]'으로 표시. Node·Python 패리티, 골든 ledger-derived-date.
