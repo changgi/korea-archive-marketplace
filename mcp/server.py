@@ -5531,6 +5531,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
             if src not in want:
                 continue
             for label, vq in vs:
+                if src == "nara" and re.match(r"^Corea \d{4}$", vq):
+                    continue  # v2.98.1 NARA는 성씨 Corea·날짜 문서철로 흐려져 제외(Node 패리티)
                 jobs.append((f"{src}·{label}", (lambda src=src, vq=vq: _COLLECT[src](vq, n))))
     items, stats = _collect_merged(jobs)
     _resolve_origins(items, stats)
