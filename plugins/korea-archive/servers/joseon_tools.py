@@ -287,6 +287,11 @@ def joseon_item_read(level_id: str, max_chars: int = 20000) -> dict:
     # 본문 시작점
     if level_id.startswith("jlaw"):
         k = lines.index("다음글") + 1 if "다음글" in lines else None
+        if k is None and "자료인용방법" in lines:  # v2.69.1 현 조문 페이지 — '자료인용방법' 다음이 조문 제목, '상위목록' 다음부터 본문(Node 패리티)
+            c0 = lines.index("자료인용방법")
+            c1 = lines.index("전체목록", c0) if "전체목록" in lines[c0:] else -1
+            if c1 > c0: title = " ".join(lines[c0 + 1:c1])
+            if "상위목록" in lines[c0:]: k = lines.index("상위목록", c0) + 1
     else:
         k = next((i for i, l in enumerate(lines)
                   if l.startswith("◯") or l.startswith("○")), None)
@@ -350,7 +355,7 @@ def joseon_item_read(level_id: str, max_chars: int = 20000) -> dict:
         }
 
     end = next((i for i, l in enumerate(lines[k:], k)
-                if "경기도 과천시" in l or "개인정보" in l), k + 250)
+                if "경기도 과천시" in l or "개인정보" in l or l == "디지털역사자료 인용방법"), k + 250)
     body = " ".join(lines[k:end])[:max_chars]
 
     is_law = level_id.startswith("jlaw")
