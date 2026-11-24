@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.59.0 — 분류 축적: 형태·재질·기술 수준 패싯 (2026-11-25)
+- 원장 주제 색인: 기관 메타의 자료 형태(문서유형·기록물형태·매체유형·사료구분·사료유형·format) → '형태', 재질(기관 분류 계층 그대로, 쉼표로만 분할) → '재질', 기술 단계(item·fileUnit·Piece) → '기술 수준' 패싯. SKOS 개념 체계·RiC-O 연결 자동. 실측 형태 21·재질 18·기술 수준 4.
+
 ## v2.58.1 — 원장 읽기 결함 교정·단위 시험 (2026-11-25)
 - v2.58에서 lib/ledger.js readDay의 줄 끝 주석이 같은 줄의 `const len = …`을 삼켜 /api/ledger 읽기가 'len is not defined'로 실패(배포 직후 실측 발견) → 주석을 별도 줄로 교정.
 - 재발 방지: scripts/ci-ledger-unit.mjs(모의 Redis로 readDay in·q·qp·stash·stashCall 실행)를 verify 워크플로에 추가 — 문법 검사로는 잡히지 않는 결함.
