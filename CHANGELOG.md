@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.44.0 — 연결 데이터 표준 파서 검증(CI) (2026-11-24)
+- scripts/rdf_check.py: 공개 JSON-LD(RiC-O·SKOS)를 rdflib로 파싱하고 SPARQL로 끊긴 주제·장소 링크·개념 prefLabel/inScheme 누락 검사. ledger 워크플로가 매일 커밋 뒤 실행(원장 저장은 막지 않음), 실패 시 auto-health 이슈.
+
 ## v2.43.0 — 주제 색인 연결 데이터(SKOS·RiC-O) (2026-11-24)
 - docs/data/subjects.jsonld: 패싯별 skos:ConceptScheme + 용어별 skos:Concept(기관 표기 prefLabel·출처 수집처·기록 수). 개념 URI는 표기 기반으로 안정.
 - discovered.jsonld의 RiC-O 기록이 rico:hasOrHadSubject(주제·분류·시대·매체)·rico:isAssociatedWithPlace(장소)로 개념을 가리킴 — 다른 지식그래프·목록 도구가 그대로 연결. 실측: 기록 105건 주제 연결 · 10건 장소 연결 · 개념 103 · 끊긴 링크 0.
