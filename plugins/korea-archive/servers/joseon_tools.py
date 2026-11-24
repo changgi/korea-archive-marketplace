@@ -564,7 +564,7 @@ def kyujanggak_search(query: str, area: str = "both") -> dict:
         # v2.35 행별 book_cd ↔ 청구기호(앞 행=원본 GK… 우선, 뒤 마이크로필름 TM… 무시) — /book/view.do?book_cd= GET 고정 상세(Node 패리티)
         codes = {}
         for seg in page.split('class="schli"')[1:]:
-            cm = re.search(r"청구기호\s*:\s*([^<\n]{2,30})", seg); bm = re.search(r"fn_totalSearchResultView\([^)]*?'([A-Z]{1,4}\d[\w-]*_\d\d)'", seg)
+            cm = re.search(r"청구기호\s*:\s*([^\n\t]{2,30})", re.sub(r"<[^>]+>", "", seg));  # 태그 제거 — 검색어 강조가 청구기호를 끊던 것 bm = re.search(r"fn_totalSearchResultView\([^)]*?'([A-Z]{1,4}\d[\w-]*_\d\d)'", seg)
             if cm and bm: codes.setdefault(re.sub(r"\s+", " ", cm.group(1)).strip(), bm.group(1))
         for i in items:
             if codes.get(i["call_number"]): i["book_cd"] = codes[i["call_number"]]
