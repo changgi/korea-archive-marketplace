@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.64.0 — DigitalNZ 기록 API 보강·지문 (2026-11-25)
+- 원장: dnz 기록을 원장 key의 레코드 번호로 DigitalNZ records API(익명)에서 지문 감시·빈 칸 보강 — description→요약, 콘텐츠 제공처·범주·날짜·생산자·발행처·저작권(원문)·이용 조건(원문)·주제→메타. 권리 표시가 기록별 원문으로('All rights reserved'·'Unknown'). SRC_FIX 규칙이 '^'로 시작하면 원장 key에 적용. 실측 8/8건, 재확인 지문 변경 0. 서버 응답·도구 스키마 변화 없음.
+
 ## v2.63.0 — AWM IIIF 브리지 보강·원장 재판독 (2026-11-25)
 - IIIF 브리지(/iiif/awm/, korea-archive-mcp lib/ka_iiif.js): 기관 상세 표 전부(자료 유형·매체 형태·제작자·제작지·분쟁·부대·권리 원문)와 본문 Description을 메타·summary로. 'Place made'를 'Place'로만 찾아 장소가 비던 결함, og:description이 없으면 설명이 비던 결함 교정(실측 HOBJ3143).
 - 원장: IIIF_V(브리지 판) — 판이 오르면 이미 보강된 기록을 한 번 다시 판독(awm 2). '자료 유형'·'매체 형태'를 형태 패싯으로. Python 플러그인에는 IIIF 브리지가 없어 패리티 대상 아님.
