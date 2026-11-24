@@ -4097,10 +4097,12 @@ def _c_ledger(q, n):
             o = json.loads(ln)
         except Exception:
             continue
+        if o.get("entry_type") == "결함 출력":
+            continue  # v2.34 옛 파서 오류 출력 — 원장에는 보존, 검색 결과에선 제외(Node 패리티)
         h = f"{o.get('title', '')} {o.get('partOf') or o.get('partOf_derived', '')} {o.get('id', '')} {' '.join(o.get('sources') or [])} {o.get('date', '')}".lower()
         if not (all(t in h for t in toks) or (en and all(t in h for t in en))):
             continue
-        it = {"title": f"[{'+'.join(o.get('sources') or [])} · 발견 {o.get('seen', 1)}회 · 7일 {o.get('seen_7d', 0)} · {o.get('days_total', 1)}일 · 첫 {str(o.get('first_seen', ''))[:10]}{f" · 활용 {o['rank']}위" if o.get('rank') else ''}] {o.get('title', '')}"[:220],
+        it = {"title": f"[{'+'.join(o.get('sources') or [])} · 발견 {o.get('seen', 1)}회 · 7일 {o.get('seen_7d', 0)} · {o.get('days_total', 1)}일 · 첫 {str(o.get('first_seen', ''))[:10]}{f" · 활용 {o['rank']}위" if o.get('rank') else ''}] {'[검색 안내] ' if o.get('entry_type') == '검색 안내' else ''}{o.get('title', '')}{f" ({o['link_note']})" if o.get('link_note') else ''}"[:220],
               "date": o.get("date", ""), "id": o.get("id") or o.get("key"), "series": o.get("partOf") or o.get("partOf_derived", ""), "url": o.get("url", ""), "media": o.get("media", ""), "seen": o.get("seen", 1), "rank": o.get("rank") or 10 ** 9}
         if o.get("sameAs"):
             it["sameAs"] = o["sameAs"]
