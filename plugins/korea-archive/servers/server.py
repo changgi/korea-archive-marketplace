@@ -4406,7 +4406,8 @@ def _joseon_mode(query: str, mode: str, span: int, n: int) -> str:
         if mode == "item":
             r = _jt.joseon_item_read(q, max_chars=3000)
             if r.get("body_status") == "ok":
-                return (f"[{q}] {r.get('title', '')}\n{r['body']}\n({r['chars']}자) {r['url']}"
+                mline = " · ".join(f"{kk}: {v}" for kk, v in r.get("meta") or [])
+                return (f"[{q}] {r.get('title', '')}\n" + (mline + "\n" if mline else "") + f"{r['body']}\n({r['chars']}자) {r['url']}"
                         f"\n※ {r.get('citation_note', '')} 조문이면 mode=sibling으로 형제 조 확인.")
             return f"[{q}] {r.get('title', '')} — {r.get('body_status')}: {r.get('note', '')} {r.get('url', '')}"
         if mode == "sibling":

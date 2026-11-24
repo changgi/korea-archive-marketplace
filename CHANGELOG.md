@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.61.0 — 한국사DB 기록 판독: 시대별 경로·기술 항목 본문 (2026-11-25)
+- nedb_search mode=item: 근대(kd·ij·npda)·현대(dh·pn)·고대(sg) DB 기록을 조선 경로로 요청해 404가 나던 결함 교정(시대별 경로). '◯' 표시가 없는 기록(현대 자료·각사등록 장계)은 기술 항목(제목·연월일·출전·발신자·수신자·발신일·문서분류)을 메타 줄로, 그 뒤를 본문으로 판독 — 본문이 있는데 '미공개'로 오판하던 결함 교정. 인용 고지를 시대·형식별로. Node·Python 패리티(joseon_tools), 골든 nedb-item-era-path·nedb-item-label-body.
+- 원장: 한국사DB 기록 심층 판독(DEEP nedb) — 기술 항목→메타, 본문 앞부분→요약, 미공개는 '본문 공개: 미공개' 메타(부재가 아니라 비공개라는 증거). 연대 키에 연월일·발신일.
+
 ## v2.60.0 — 데이터 목록(DCAT)·schema.org Dataset (2026-11-25)
 - 원장: catalog.jsonld(DCAT Catalog·Dataset — 산출물 20종 Distribution: 내려받기 URL·형식·바이트·SHA-256, 수집처 목록, 일일 갱신, 권리 원칙)와 index.html의 schema.org Dataset JSON-LD(Google 데이터셋 검색 등 자동 수집). 재실행 시 중복 삽입 없음.
 - source_profile(ledger) 안내에 catalog.jsonld 추가(Node·Python 패리티), 골든 ledger-media-formats 보강.

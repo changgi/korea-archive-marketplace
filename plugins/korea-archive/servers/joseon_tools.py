@@ -112,10 +112,19 @@ def _lines(s: str) -> list:
             html.unescape(re.sub(r"(?s)<[^>]+>", "\n", s)).split("\n") if l.strip()]
 
 
+# v2.61 시대별 상세 경로 — 근대·현대·고대 DB를 조선 경로로 요청해 404가 나던 결함(실측 dh_·sg_). Node 패리티
+_J_ERA = {"kd": "modern", "ij": "modern", "npda": "modern", "dh": "contemp", "pn": "contemp", "sg": "ancient"}
+_J_LABELS = ["제목", "연월일", "출전", "발신자", "수신자", "발신일", "문서분류", "작성자", "날짜", "작성일"]
+
+
+def _era(level_id: str) -> str:
+    return _J_ERA.get(str(level_id).split("_")[0], "joseon")
+
+
 def _url_for(level_id: str) -> str:
     """법령과 등록류는 상세 경로가 다르다. 혼동하면 빈 페이지가 온다."""
     path = "/joseon/item/level.do?levelId=" if level_id.startswith("jlaw") \
-           else "/joseon/level.do?levelId="
+           else f"/{_era(level_id)}/level.do?levelId="
     return DB + path + level_id
 
 
@@ -281,6 +290,25 @@ def joseon_item_read(level_id: str, max_chars: int = 20000) -> dict:
         k = next((i for i, l in enumerate(lines)
                   if l.startswith("◯") or l.startswith("○")), None)
 
+    if k is None and not level_id.startswith("jlaw"):  # v2.61 '◯' 표시가 없는 기록 — 기술 항목(제목·연월일·출전·발신자…) 뒤가 본문
+        hoi = lines.index("HOI") if "HOI" in lines else -1
+        t2 = lines[hoi - 1] if hoi > 0 else ""
+        stop = next((i for i, l in enumerate(lines) if "개인정보취급방침" in l or "경기도 과천시" in l), len(lines))
+        meta = []
+        for l in lines[max(0, hoi):stop]:
+            if l in _J_LABELS: meta.append([l, []])
+            elif meta: meta[-1][1].append(l)
+        if meta:
+            rest = meta[-1][1][1:]; meta[-1][1] = meta[-1][1][:1]; ttl = t2 or title
+            while rest and rest[0] in (ttl, t2): rest = rest[1:]
+            mv = [[kk, re.sub(r"\s+", " ", " ".join(v))[:200]] for kk, v in meta if v]  # Node jClean과 같은 공백 정규화(&nbsp; 포함)
+            body = re.sub(r"\s+", " ", " ".join(rest))[:max_chars]
+            if body:
+                era = _era(level_id)
+                return {"level_id": level_id, "title": ttl, "body": body, "chars": len(body), "body_status": "ok", "url": _cite(level_id), "meta": mv, "era": era,
+                        "citation_note": (f"원문 수록({ {'contemp': '현대', 'modern': '근대', 'ancient': '고대'}[era]} 자료) — 출전을 병기해 인용." if era != "joseon"
+                                          else "원문 수록(등록류 장계 등) — 출전·발신일 병기 인용.")}
+            title = ttl
     if k is None:
         status = "not_published" if title else "parse_failed"
         return {
