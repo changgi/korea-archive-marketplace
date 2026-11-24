@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.40.0 — 메타 합성 요약 · 고문서 문서 심층 판독 (2026-11-24)
+- 기관 요약이 없는 기록에 원 기관 메타 값만 이은 '[메타 합성]' 요약(summary_composed — 생성·추정 없음, 식별자·링크·권리·계보·내부 안내 제외). 요약 채움 68% → 76%(합성 포함). 기관 요약과 분리 보존, CSL abstract·quality.json 별도 항목.
+- 고문서자료관 발굴 문서: 분류 ID(aks_cat)를 남기고(옛 발굴은 한 번 재발굴) nedb_search(mode=aks, '분류/UCI') 심층 판독 — 면 수·UCI.
+- 썸네일 8%는 권리 규칙(SVG 카드·공공누리 변경금지·권리 미확인 제외) 결과 — 완화하지 않음(MAINTAINING 명기).
+
 ## v2.39.1 — 한국사DB 끊긴 응답 판독 (2026-11-24)
 - 한국사DB가 본문을 선언 길이보다 일찍 끊어 보내는 응답(UND_ERR_RES_CONTENT_LENGTH_MISMATCH — 기관 측, golden nedb-live-subdb·mode record/law 전부 0건 실측) → 받은 만큼 보존해 판독(결과는 페이지 앞부분). Node jdbPost 스트림 직접 읽기, Python IncompleteRead.partial(joseon_tools·_nedb_live) 패리티.
 
