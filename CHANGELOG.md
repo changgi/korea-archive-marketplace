@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.38 — 교차 수집 '확정 0' 6차 교정: JSON API (2026-11-25)
+- 공용 판별 countZero/_count_zero — TNA·IA·Europeana·신문아카이브·DigitalNZ·Commons·NL-NA는 결과가 비면 응답의 건수 필드가 명시적 0일 때만 0건, 오류 본문·필드 누락은 조회 실패(Node·Python 패리티). 진짜 0건(무의미 질의)은 0 유지 실측. 도구 스키마 변경 없음.
+
 ## v3.37 — 교차 수집 '확정 0' 5차 교정 (2026-11-25)
 - KTV(e영상역사관 목록별 0건 표지·목록 전부 실패·옛 경로도 빔 → 조회 실패), AWM('Sorry no results found' 명시일 때만 0건) — Node·Python 패리티. 남은 heritage·foia는 국내 리전 전용이라 미실측. 도구 스키마 변경 없음.
 

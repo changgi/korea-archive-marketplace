@@ -1994,15 +1994,18 @@ def _collect_merged(collectors):
 def _c_tna(q, n, yr=None):  # v2.99.1 yr = 생산연도 필터(Node 패리티)
     q = _ko_en(q) or q
     query = f'"{q.strip()}"' if re.match(r"^[A-Z]+ \d+/\d+$", q.strip()) else q
+    p = {"sps.searchQuery": query, "sps.resultsPageSize": min(n, 50), "sps.page": 1,
+         **({"sps.dateFrom": f"{yr}-01-01", "sps.dateTo": f"{yr}-12-31"} if yr else {})}
+    data = http_json(T.API + "?" + T.qs(p))  # v3.38 건수 필드(count) 원본 확인을 위해 1페이지 직접 조회
     out = []
-    for batch, _t in T._search(query, page_size=min(n, 50), max_pages=1, sleep=0, **({"date_from": f"{yr}-01-01", "date_to": f"{yr}-12-31"} if yr else {})):
+    for batch in [T._records(data)]:
         for r in batch:
             rec = T._extract(r, "x", q)
             ref = str(rec.get("local_id", "") or "")
             out.append({"title": rec.get("title", ""), "date": rec.get("date", ""),
                         "id": ref, **({"series": ref.split("/")[0]} if "/" in ref else {}),
                         "url": rec.get("url", "")})
-    return out[:n]
+    return _count_zero(out[:n], data.get("count") == 0, "TNA")
 
 def _ia_queries(q):  # v2.24 IA 관련성(Node iaQueries 패리티)
     return [q] if re.search(r"\w+:", q) else [f"title:({q}) AND mediatype:(texts OR movies OR image)", f"({q}) AND NOT mediatype:(web OR collection OR account)"]
@@ -2015,6 +2018,8 @@ def _ia_search(q, rows, fl, page=1):
         d = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(qq) + f"&{fl}&rows={min(100, rows * 2)}&page={page}&output=json")
         if ((d.get("response") or {}).get("numFound") or 0) > 0:
             break
+    if not isinstance((d.get("response") or {}).get("numFound"), int):
+        raise RuntimeError("IA 결과 판독 불가(numFound 없음 — 오류 응답·개편 가능)")  # v3.38
     r = d.get("response") or {}
     docs = [x for _, _, x in sorted(((0 if str(x.get("identifier", "")).startswith("gov.") else 2 if str(x.get("identifier", "")).startswith("youtube-") else 1, i, x) for i, x in enumerate(r.get("docs") or [])), key=lambda t: (t[0], t[1]))]
     return {"response": {"numFound": r.get("numFound", 0), "docs": docs[:rows]}}
@@ -2161,11 +2166,12 @@ def _c_europeana(q, n):
     key = os.environ.get("EUROPEANA_API_KEY") or "api2demo"
     d = http_json("https://api.europeana.eu/record/v2/search.json?" +
                   urllib.parse.urlencode({"wskey": key, "query": q, "rows": n, "profile": "standard"}))
-    return [{"title": (it.get("title") or ["?"])[0], "date": (it.get("year") or [""])[0],
+    return _count_zero([{"title": (it.get("title") or ["?"])[0], "date": (it.get("year") or [""])[0],
              "id": it.get("id", ""),
              **({"series": (it.get("dataProvider") or [""])[0]} if (it.get("dataProvider") or [""])[0] else {}),
              **({"media": _eu_media(it)} if _eu_media(it) else {}),
-             "url": str(it.get("guid", "")).split("?")[0]} for it in (d.get("items") or [])]
+             "url": str(it.get("guid", "")).split("?")[0]} for it in (d.get("items") or [])],
+        d.get("success") is True and d.get("totalResults") == 0, "Europeana")
 
 def _nara_chain(rec):
     # NARA 계보(v1.80): ancestors → "RG n › 시리즈" 축약 체인 (수집기·전용 도구·판정 공용)
@@ -2587,6 +2593,13 @@ def _c_ndl(q, n):
     return out
 
 
+def _count_zero(out, ok, name):
+    """v3.38 JSON API 확정 0(Node countZero 패리티) — 결과가 비면 기관 건수 필드가 명시적 0일 때만 0건, 아니면 조회 실패."""
+    if not out and not ok:
+        raise RuntimeError(f"{name} 결과 판독 불가(0건 수치 없음 — 오류 응답·개편 가능)")
+    return out
+
+
 def _zero_or(out, body, rx, name, raw=False):
     """v3.36 확정 0 판별(Node zeroOr 패리티) — 결과가 비었으면 기관 0건 표지(실측 정규식)가 있을 때만 0건, 없으면 조회 실패."""
     if not out and not re.search(rx, str(body) if raw else re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", str(body)))):
@@ -2721,7 +2734,7 @@ def _c_oldnews(q, n):
                     "date": str(h.get("issued_date") or ""), "id": uri,
                     **({"series": first(h.get("newspaperKorName"))} if first(h.get("newspaperKorName")) else {}),
                     "url": (f"https://nl.go.kr/newspaper/detail.do?content_id={uri}" if uri else "https://nl.go.kr/newspaper/")})
-    return out
+    return _count_zero(out, d.get("total_count") == 0, "신문아카이브")
 
 
 def _c_commons(q, n):
@@ -2731,6 +2744,8 @@ def _c_commons(q, n):
     d = http_json("https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&format=json"
                   f"&gsrlimit={min(n, 10)}&gsrsearch=" + _up.quote(en) + "&prop=categories%7Cimageinfo&clshow=!hidden&cllimit=3&iiprop=url",
                   headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp; archival discovery)"})
+    if d.get("error"):  # v3.38 0건 = query 키 없이 batchcomplete만(실측)
+        raise RuntimeError(f"Commons API 오류: {str(d['error'].get('code') if isinstance(d['error'], dict) else d['error'])[:60]}")
     pages = sorted(((d.get("query", {}) or {}).get("pages") or {}).values(), key=lambda p: p.get("index", 0))
     out = []
     for it in pages:
@@ -2746,7 +2761,7 @@ def _c_commons(q, n):
                     **({"media": iiu} if iiu else {}),
                     **({"sameAs": sa} if sa else {}),
                     "url": "https://commons.wikimedia.org/wiki/" + _up.quote(t.replace(" ", "_"))})
-    return out
+    return _count_zero(out, bool(d.get("query")) or "batchcomplete" in d, "Commons")
 
 
 def _c_nlna(q, n):
@@ -2768,7 +2783,7 @@ def _c_nlna(q, n):
                     "date": str(r.get("period", "")), "id": str(r.get("id", "")),
                     **({"series": ser} if ser else {}),
                     "url": "https://www.nationaalarchief.nl/onderzoeken/archief/" + _up.quote(str(r.get("id", "")))})
-    return out
+    return _count_zero(out, d.get("total_hits") == 0, "NL-NA")
 
 
 def _c_nzarch(q, n):
@@ -2889,7 +2904,7 @@ def _c_dnz(q, n):
                     "date": str(r.get("display_date") or ""), "id": str(r.get("id") or ""),
                     **({"series": cp + (" › " + pc if pc else "")} if cp else {}),
                     "url": str(r.get("landing_url") or "")})
-    return out
+    return _count_zero(out, (d.get("search") or {}).get("result_count") == 0, "DigitalNZ")
 
 
 def _c_awm(q, n):
