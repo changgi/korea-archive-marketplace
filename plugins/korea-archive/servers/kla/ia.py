@@ -4,7 +4,7 @@
 from __future__ import annotations
 import hashlib, json, os, re, time, urllib.request, urllib.parse
 
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
+UA = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)"  # v2.36 정직 UA(브라우저 위장 제거 — 거부 기관은 우회 없이 표시)
 
 def _get(url: str, binary=False, timeout=90):
     req = urllib.request.Request(url, headers={"User-Agent": UA})

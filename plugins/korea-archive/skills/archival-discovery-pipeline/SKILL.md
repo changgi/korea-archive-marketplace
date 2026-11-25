@@ -76,7 +76,13 @@ python scripts/analyze_video.py auto <영상> --out <디렉터리>
 python scripts/analyze_video.py survey   <영상> --out <디렉터리>   # 전 구간 그리드
 python scripts/analyze_video.py textscan <영상> --out <디렉터리>   # 문자 후보 상위 N개
 python scripts/analyze_video.py scenes   <영상> --out <디렉터리>   # 장면 전환
+python scripts/analyze_video.py keyscenes <영상|URL> --out <디렉터리> # ★주요 장면: 전환 탐지→장면별 최선명 프레임(원본 해상도)→scenes.json+밀착 인화
 ```
+
+**주요 장면 해설(keyscenes, v1.93)** — ffmpeg scene 필터 1회 통과로 전환을 찾고, 2.5초 미만 장면은 합치고, 장면마다
+30·50·70% 지점 중 가장 선명한 프레임을 원본 해상도로 뽑는다(리더·암전 자동 제외). 해설은 프레임을 직접 보고 *보이는 것만*
+scenes.json의 각 장면에 caption으로 적는다. 웹·모바일은 `ia_search(identifier=…)`의 【영상 장면 프레임】(IA 시각 코드 썸네일)과
+`report_template(kind="video")` 규칙으로 같은 산출물을 만든다(스킬-서버 패리티).
 
 ### 문자 후보 탐지의 원리
 

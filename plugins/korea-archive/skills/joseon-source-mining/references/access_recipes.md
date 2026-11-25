@@ -13,8 +13,7 @@ ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 HDR = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                  "AppleWebKit/537.36 Chrome/124",
+    "User-Agent": "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)",  # 정직 UA — 위장 금지
     "Referer": "https://db.history.go.kr/",
     "Content-Type": "application/x-www-form-urlencoded",
 }

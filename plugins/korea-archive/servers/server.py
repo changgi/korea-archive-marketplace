@@ -41,6 +41,14 @@ def _dom_groups(mod):
             return getattr(mod, _n)
     return []
 
+def _title_cut(t):
+    """v2.93 앞 꼬리표([원장 발견 횟수·순위 …])는 95자 몫에서 빼고 실제 제목을 95자까지(Node titleCut 패리티)"""
+    m = re.match(r"^\[[^\]]{0,160}\] ", str(t))
+    return m.group(0) + t[m.end():m.end() + 95] if m else str(t)[:95]
+
+
+QUICK_PROFILES = {'nrich': ['국립문화유산연구원 국가유산 지식이음', "cross_search(sources=nrich) · nedb_search(mode='nrich') — 국외문화유산 DB 12,569건(명칭·시대·소장처·국가) + 발간자료 Open API(보고서·초록·목차·연구분야·공공누리 유형, 무키)", "nedb_search(mode='nrich', query='ov:번호'|'rep:번호'|상세 URL) — 계층 국외문화유산 › 국가 › 소장처 / 발간자료 › 연구분야. 국외소재문화유산 조사(1992~, 3만 7천여 점·보고서 36권) https://www.nrich.go.kr/kor/page.do?menuIdx=336", '대부분 공공누리 제4유형(출처표시·비상업·변경금지 — 원형 그대로). robots Allow. 정직 UA, 상세 24h 캐시. okchf와 교차확인'], 'okchf': ['국외소재문화유산재단 대국민 아카이브', "cross_search(sources=okchf) · nedb_search(mode='okchf') — 국외문화유산 6천여 건·사진아카이브 1,800여 건(통합검색), 상세=소장국가·소장처·관리번호·소장경위·시대·재질·크기·출판정보·설명", "nedb_search(mode='okchf', query=<상세 URL>) — 계층 유형 › 소장국가 › 소장처 · 발간 보고서(국외 소장 한국문화재 조사보고서) https://www.overseaschf.or.kr/okchf/data/US_DF_PD.do", '소장기관과 공개 협의된 정보 — 이미지·설명 게재는 재단·소장처 이용조건 확인(허가 전 링크만). 접근: robots.txt 전체 Disallow(표시 — 발굴 우선 원칙), 정직 UA·요청 최소'], 'ledger': ['KOREA ARCHIVE 발견 누적 원장', 'cross_search(sources=ledger) — 사용자들이 도구로 이미 발굴한 기록(매일 누적 · 발견 경로로 질의·회신 원문과 연결)', 'https://changgi.github.io/korea-archive-mcp/data/ — CSV·JSONL·RiC-O·IIIF 컬렉션(최근 300건 KV) · 새 발견 구독 feed.xml(Atom) · 인용 records.csl.json(Zotero)·records.ris(EndNote)·records.bib(BibTeX) · 하베스터 records.oai_dc.xml(OAI-PMH Dublin Core) · IIIF 변경 발견 activity/collection.json(Change Discovery 1.0 — 매니페스트 생성·갱신 활동, 하베스터가 변경분만) · 자동 점검 질의·회신 queries/probe/(활용 집계와 분리) · 데이터 목록 catalog.jsonld(DCAT·schema.org Dataset — 포털·검색엔진 수집) · 기록별 영구 페이지 r/<slug>.html(맥락·증거·IIIF·권리·인용문, schema.org — 색인 r/index.json)·기계 판독 r/<slug>.json(원장 항목·관계·인용)·sitemap.xml · 연대 timeline.json · 계층 tree.html·분류 classifications.json · 기록↔기록 맥락 연결 relations.json(같은 기록·같은 날·같은 계열, 관계마다 근거 — 기록 페이지 관련 기록 칸) · 발견 경로 provenance.json · 질의별 발굴 기록 q/<질의 지문>.json(IIIF 컬렉션 — 질의 한 건 = 기록물 한 건)·q/index.html · 질의·회신 queries/ · 주제 색인 subjects.html·subjects.json(기관 주제어·지명·분류·시대·매체 패싯) · SKOS 개념 체계 subjects.jsonld(RiC-O 기록이 rico:hasOrHadSubject·isAssociatedWithPlace로 연결) · 데이터 품질 추이 quality.json(항목별 채움률 일별) · 기록마다 권리 표시+근거(rights_view·rights_basis) · 일일 기록물 등록부 records/(산출물 SHA-256·직전 등록부 해시 사슬 — 위변조·소실 검증) · SHA256SUMS', "원 기관 권리 표기를 따름 — 발견 횟수·처음 발견일 표시, 'all'에는 포함되지 않음(명시 호출)"], 'gallery': ['KOREA ARCHIVE IIIF 갤러리', 'cross_search(sources=gallery) — 30곳 탐방·100선 실물 기록 800장(권리 확인 완료)', "iiif.html#sNNN/k 딥줌 · iiif/m/sNNN.json 매니페스트 · cross_search format='iiif'로 컬렉션 합류", '이미지별 권리 표시(공공누리 제4유형은 원본 무변경) — 출처 대장 기반'], 'jacar': ['일본 아시아역사자료센터 JACAR', 'cross_search(sources=jacar) — 한→일 변환·레퍼런스코드', "nedb_search(mode=jacar, 'A0401…') 상세 + ±8×100 인접 채굴, 원본 PDF는 国立公文書館 뷰어", 'JACAR 이용약관: 출처(센터·소장관·레퍼런스코드) 표기 조건 2차 이용 원칙 허용'], 'earchive': ['국사편찬위원회 전자사료관', 'cross_search(sources=earchive)', "nedb_search(mode=earchive, '키워드|순번') — 열람·이용조건·등록번호", '사료별 이용조건 표기(공개/제한적 이용) — 원 소장처 권리 확인'], 'awm': ['호주 전쟁기념관 AWM', 'cross_search(sources=awm) — 최대 10건 상세', 'awm.gov.au/collection/C… 페이지(공개 이미지 최대 640px)', "'Copyright expired - public domain' 표기분만 게재"], 'nlna': ['네덜란드 국립문서보관소', 'cross_search(sources=nlna) — 문서군(inventaris)', '사진은 Europeana dataset 1417 → nationaalarchief.nl 원본(TIFF 16비트 주의)', 'Anefo 등 CC0/Publiek Domein 다수 — 사진별 확인'], 'dnz': ['디지털NZ DigitalNZ', 'cross_search(sources=dnz) — NZ 30여 기관 집계', '각 제공기관 페이지(usage·rights 필드)', '재이용 표기(No known restrictions·CC) 확인 — Papers Past 1950년대는 usage Unknown 다수'], 'nzarch': ['뉴질랜드 기록원 Archives NZ', 'cross_search(sources=nzarch) — 라이브 실패 시 주간 정적 인덱스', "nedb_search(mode=nzarch, 'R22438362') — R번호 상세", '기록별 접근 상태(Open 등) — 본 사이트는 봇 차단(Incapsula)'], 'commons': ['위키미디어 공용', 'cross_search(sources=commons)', 'nedb_search(mode=commons, File URL) — 라이선스·원 소장처, NARA 번호면 원본 자동 대조', '업로더 표기는 2차 정보 — 원 소장처 카탈로그로 확정'], 'un': ['UN 디지털도서관', 'cross_search(sources=un) — 문서기호 시리즈', 'nedb_search(mode=un, recid) — 요약·주제·PDF 6개 언어', 'UN 공식문서는 퍼블릭 도메인(ST/AI/189/Add.9/Rev.2)'], 'ndl': ['일본 국립국회도서관 NDL', 'cross_search(sources=ndl) — 당대 자료(~1945) 우선', "dl.ndl.go.jp IIIF(<pid>/R<7자리>) — 'Access Restrictions: PDM' 확인", 'PDM(보호기간 만료) 표기분 자유 이용 · 동시 요청 시 429'], 'i815': ['독립기념관 한국독립운동정보시스템', 'cross_search(sources=i815)', "nedb_search(mode=i815, 상세 URL) 본문 · '사전:이름' 인명사전", '공공누리 표시 없는 원문이미지는 사전 협의 대상(041-560-0445)'], 'gonghun': ['공훈전자사료관(국가보훈부)', 'cross_search(sources=gonghun) — 이름', 'nedb_search(mode=gonghun, mngNo) — 공적조서·공훈록 전문', '공훈록 텍스트 인용 시 출처 표기 · 인물 사진은 수형 사진 제외'], 'ktv': ['KTV e영상역사관', 'cross_search(sources=ktv) — 기록 탭(대한뉴스·문화영화·사진집) 병합', 'nedb_search(mode=ktv, view URL) — 영상 해설 / 사진 판독(공공누리 유형·원본 경로)', '사진은 표시 유형대로(4유형=원형) · 영상 무표시분은 KTV 나누리 신청'], 'oldnews': ['대한민국신문아카이브(국립중앙도서관)', 'cross_search(sources=oldnews) — 단일 핵심어가 잘 걸림(띄어쓴 다어절은 완화 재검색)', "nedb_search(mode=oldnews, CNTS-…) 색인어 · '본문:…|연대' OCR", '1946년 이전 지면 보호기간 만료 — 국립중앙도서관 출처 표기'], 'much': ['대한민국역사박물관 근현대사아카이브', 'cross_search(sources=much)', 'nedb_search(mode=much, idnbr) — 재질·크기·공공누리 유형·원본 이미지 링크', '공공누리 유형(4유형=변경금지·비상업) 준수'], 'indy': ['국가기록원 독립운동판결문', 'cross_search(sources=indy) — 이름(동명이인 주의)', 'nedb_search(mode=indy, 상세 URL) — 죄명·주문·사건개요·원문 뷰어', '판결문은 저작권법 제7조 비보호 저작물 — 국가기록원 출처 표기'], 'heritage': ['국가유산청 국가유산포털', 'cross_search(sources=heritage) — 지정 종목', "nedb_search(mode=heritage, 'kdcd-asno-ctcd') — 해설·원본 이미지 목록", '사진은 공공누리 유형 확인 후 이용'], 'kyudb': ['서울대 규장각한국학연구원', 'cross_search(sources=kyudb)', 'nedb_search(mode=kyujanggak) — 목록+해제(절목류는 해제에서)', '원문 이미지 게재는 기관 허가(02-880-5316)'], 'jsg': ['한국학중앙연구원 장서각', 'cross_search(sources=jsg)', 'nedb_search(mode=jsg, K2-…) — 서지·해제 전문', '이미지 게재는 공문 신청·허가 대상'], 'aks': ['한국고문서자료관', 'cross_search(sources=aks) — 172개 소장처', 'nedb_search(mode=aks) — 소장처→분류→문서 면', '사이트 재이용 조건 미표기 — 게재 전 기관 확인']}  # v1.96.4: 상세 프로파일 없는 18곳 간이 프로파일
+
 mcp = FastMCP("korea-archive")
 
 def _fmt(recs: list[dict], limit: int) -> str:
@@ -56,6 +64,92 @@ def _fmt(recs: list[dict], limit: int) -> str:
 # 몽골어 등 어떤 언어로 질의해도 주제 사전이 인식해 대상 색인 언어로 변환한다.
 # 실측: IA 장진호 1건 vs "Chosin Reservoir" 139건, Gallica 병인양요 0 vs 5,853건.
 _TOPICS = [
+    # v2.96 증보: 개항기~일제강점기~해방 공간 용어(Node 패리티 — 구체 표기 먼저)
+    ("강화도\\s?조약|조일\\s?수호\\s?조규|병자\\s?수호\\s?조약", "Treaty of Kanghwa 1876", "traité de Kanghwa 1876"),
+    ("개항(?!장)|문호\\s?개방", "Korea treaty ports opening", "ouverture des ports Corée"),
+    ("임오\\s?군란", "Imo incident 1882 Korea", None),
+    ("갑신\\s?정변", "Kapsin coup 1884 Korea", None),
+    ("갑오\\s?개혁|갑오\\s?경장", "Kabo reform 1894 Korea", None),
+    ("을미\\s?사변", "assassination Queen Min 1895", "assassinat reine Min 1895"),
+    ("독립\\s?협회", "Independence Club Korea", None),
+    ("독립\\s?신문", "The Independent newspaper Seoul 1896", None),
+    ("만민\\s?공동회", "Independence Club mass meeting Seoul 1898", None),
+    ("경술\\s?국치|한일\\s?병합|한일\\s?합병|韓國倂合|韓国併合", "Japan annexation of Korea 1910", "annexion de la Corée 1910"),
+    ("토지\\s?조사\\s?사업", "land survey Chosen 1910s", None),
+    ("제주\\s?4[·.]3|4[·.]3\\s?사건", "Cheju-do 1948", None),  # v2.96 일반 제주보다 먼저(Node 패리티)
+    ("동양\\s?척식(?:\\s?주식\\s?회사)?|東洋拓殖", "Oriental Development Company", None),
+    ("산미\\s?증식", "rice production Chosen Japan", None),
+    ("신사\\s?참배|神社参拝", "Shinto shrine worship Korea", None),
+    ("창씨\\s?개명|創氏改名", "name change policy Korea Japan", None),
+    ("황국\\s?신민|내선\\s?일체", "Japanese assimilation policy Korea", None),
+    ("학병|학도병", "Korean student soldiers Japanese army", None),
+    ("지원병|징병|徵兵", "Korean conscription Japanese army", None),
+    ("근로\\s?정신대|여자\\s?정신대", "women volunteer labor corps Korea", None),
+    ("관동\\s?대지진|간토\\s?대지진|간토\\s?학살|関東大震災", "earthquake Tokyo 1923 Koreans", None),
+    ("6[·.]10\\s?만세", "June 10 movement 1926 Korea", None),
+    ("광주\\s?학생\\s?운동", "Kwangju student movement 1929", None),
+    ("신간회", "Singanhoe Korea", None),
+    ("조선어\\s?학회", "Korean Language Society", None),
+    ("물산\\s?장려", "Korean products promotion movement", None),
+    ("독립군", "Korean independence army Manchuria", None),
+    ("청산리", "Battle of Qingshanli 1920", None),
+    ("봉오동", "Battle of Fengwudong 1920", None),
+    ("의열단", "Uiyoldan Korean righteous brotherhood", None),
+    ("윤봉길", "Hongkew Park bombing 1932", None),
+    ("이봉창", "Lee Bong-chang 1932", None),
+    ("유관순", "Yu Gwan-sun", None),
+    ("손기정", "Sohn Kee-chung Kitei Son", None),
+    ("베를린\\s?올림픽", "Berlin Olympics 1936", None),
+    ("광복(?!군)|8[·.]15", "Korea liberation 1945", "Corée libération 1945"),
+    ("건국\\s?준비\\s?위원회|건준", "Committee for Preparation of Korean Independence", None),
+    ("모스크바\\s?3상\\s?회의|삼상\\s?회의", "Moscow Conference 1945 Korea", None),
+    ("좌우\\s?합작", "Left-Right Coalition Committee Korea 1946", None),
+    ("5[·.]10\\s?총?선거", "Korea election May 1948", None),
+    ("정부\\s?수립", "establishment Republic of Korea 1948", None),
+    ("제헌\\s?국회", "Constituent National Assembly Korea 1948", None),
+    ("반민\\s?특위|반민족\\s?행위", "Special Committee anti-national activities Korea", None),
+    ("농지\\s?개혁", "land reform Korea", None),
+    ("4[·.]19|4월\\s?혁명", "April Revolution 1960 Korea", None),
+    ("5[·.]16", "May 16 coup 1961 Korea", None),
+    ("하와이\\s?이민", "Korean immigrants Hawaii", None),
+    ("사진\\s?신부", "picture brides", None),
+    ("이민|移民", "Korean emigration", "émigration coréenne"),
+    ("재일\\s?조선인|재일\\s?한국인|在日朝鮮人", "Koreans in Japan Zainichi", None),
+    ("고려인|카레이스키", "Koryo-saram Soviet Koreans", None),
+    ("강제\\s?이주", "deportation Koreans Soviet 1937", None),
+    ("사할린", "Sakhalin Koreans", None),
+    # v2.95 증보: 6·25 핵심 용어(Node 패리티 — 구체 표기 먼저)
+    ("피란\\s?수도|임시\\s?수도", "Pusan 1951", None),
+    ("휴전\\s?회담|정전\\s?회담|휴전\\s?협상|정전\\s?협상", "armistice negotiations Korea", None),
+    ("서울\\s?수복|9[·.]28\\s?수복", "recapture of Seoul", None),
+    ("북진", "UN advance north Korea 1950", None),
+    ("폭격|공습|爆擊|轰炸", "bombing Korea", "bombardement Corée"),
+    ("네이팜", "napalm Korea", None),
+    ("민간인\\s?학살|양민\\s?학살", "civilian massacre Korea", None),
+    ("보도\\s?연맹", "Bodo League massacre", None),
+    ("거창\\s?사건|거창\\s?양민", "Kochang incident", None),
+    ("국민\\s?방위군", "National Defense Corps Korea", None),
+    ("위문\\s?공연|위문", "troop entertainment Korea", None),
+    ("전쟁\\s?미망인", "war widows Korea", None),
+    ("상이\\s?군인|상이\\s?용사", "disabled veterans Korea", None),
+    ("유엔\\s?기념\\s?공원|유엔\\s?묘지|UN\\s?묘지", "United Nations Memorial Cemetery Pusan", None),
+    ("국군|한국군|國軍", "ROK Army", "armée sud-coréenne"),
+    ("인민군|북한군|朝鮮人民軍", "North Korean Army", "armée nord-coréenne"),
+    ("미군(?!\\s?정)|美軍|美军", "US Army Korea", "armée américaine Corée"),
+    ("해병대|海兵隊", "Marines Korea", None),
+    ("공수\\s?작전|공수\\s?부대|낙하산", "airborne Korea", None),
+    ("상륙정|상륙함", "landing craft Korea", None),
+    ("야전\\s?병원|이동\\s?외과\\s?병원|병원선", "field hospital Korea", "hôpital Corée"),
+    ("적십자|赤十字", "Red Cross Korea", "Croix-Rouge Corée"),
+    ("구호\\s?물자|구호|원조", "relief Korea", None),
+    ("이산\\s?가족", "separated families Korea", None),
+    ("전사자|전몰자|戰死者", "killed in action Korea", None),
+    ("유해\\s?발굴|유해\\s?송환", "remains recovery Korea", None),
+    ("훈장|무공\\s?훈장|勳章", "decoration medal Korea", None),
+    ("종군\\s?기자", "war correspondents Korea", "correspondants de guerre Corée"),
+    ("삐라|선전\\s?전단|전단", "leaflets Korea", "tracts Corée"),
+    ("심리전", "psychological warfare Korea", None),
+    ("방송|放送", "radio broadcast Korea", None),
     ("인천\\s?상륙\\s?작전|인천\\s?상륙|仁川上陸|仁川登陆|Инчхонская десантная", "Inchon landing", None),
     ("장진호|長津湖|长津湖", "Chosin Reservoir", None),
     ("흥남\\s?철수|흥남|興南", "Hungnam evacuation", None),
@@ -82,7 +176,7 @@ _TOPICS = [
     ("러일전쟁|日露戦争|日俄战争", "Russo-Japanese War Korea", "guerre russo-japonaise"),
     ("청일전쟁|日清戦争|甲午战争", "Sino-Japanese War Korea 1894", None),
     ("일제\\s?강점기|조선총독부|朝鮮總督府|朝鮮総督府|植民地朝鮮", "Chosen Japan colonial", None),
-    ("대한제국|大韓帝國|大韓帝国", "Korean Empire Corea", "Empire de Corée"),
+    ("대한제국|大韓帝國|大韓帝国", "Korean Empire", "Empire de Corée"),
     ("맥아더|マッカーサー|麦克阿瑟|Макартур", "MacArthur", None),
     ("이승만|李承晩|李承晚", "Syngman Rhee", None),
     ("김일성|金日成", "Kim Il Sung", None),
@@ -92,13 +186,59 @@ _TOPICS = [
     ("부산|釜山|Пусан", "Pusan", "Fusan"),
     ("평양|平壌|平壤|Пхеньян", "Pyongyang", None),
     ("인천|제물포|仁川", "Inchon", "Chemulpo"),
-    ("제주|濟州|济州|Чеджу", "Cheju Quelpart", "Quelpaert"),
+    ("제주|濟州|济州|Чеджу", "Cheju-do", "Quelpaert"),
     ("해방|解放", "Korea liberation 1945", "Corée libération 1945"),
     ("영상|필름|映像|フィルム|视频|кинохроника", "film", None),
     ("사진|寫真|写真|照片|фотографи\\w*", "photograph", "photographie"),
     ("지도|地圖|地图|карт[аы]\\w*", "map", "carte"),
     ("신문|新聞|新闻|газет\\w*", "newspaper", "journal"),
     ("전투|戦闘|战斗|битва|сражение", "battle", "bataille"),
+    # ── v1.17 증보: 6·25 후기 단계 전투·지명·개항기~해방 인물·사건 (route.js 패리티) ──
+    ("지평리|砥平里", "Chipyong-ni", "bataillon français Corée Chipyong-ni"),
+    ("가평\\s?전투|加平", "Kapyong", None),
+    ("노근리|老斤里", "No Gun Ri", None),
+    ("철의\\s?삼각지?대?", "Iron Triangle Korea", None),
+    ("폭찹\\s?힐|폭찹\\s?고지", "Pork Chop Hill", None),
+    ("피의\\s?능선", "Bloody Ridge Korea", None),
+    ("저격\\s?능선|狙擊稜線|狙击岭", "Sniper Ridge Korea", None),
+    ("삼각\\s?고지|상감령|上甘嶺|上甘岭", "Triangle Hill Korea", None),
+    ("금성\\s?전투|金城\\s?戰鬪|金城战役", "Kumsong", None),
+    ("청천강|淸川江|清川江", "Chongchon River", None),
+    ("부산\\s?교두보|워커\\s?라인", "Pusan Perimeter", None),
+    ("피란민|피난민|난민|피란|피난|避難民|避难民|難民|难民|беженц\\w*", "refugees Korea", "réfugiés Corée"),  # v2.94 Node 패리티
+    ("1[·.]4\\s?후퇴", "Seoul evacuation January 1951", None),
+    ("전쟁\\s?고아|고아원|戰爭孤兒|战争孤儿", "war orphans Korea", "orphelins Corée"),
+    ("유엔군|국제연합군|국련군|联合国军", "United Nations forces Korea", "forces ONU Corée"),
+    ("중공군|인민지원군|志願軍|志愿军", "Chinese forces Korea", None),
+    ("리지웨이|リッジウェイ|李奇微", "Ridgway", None),
+    ("밴\\s?플리트|밴플리트", "Van Fleet", None),
+    ("원산|元山|Вонсан", "Wonsan", None),
+    ("대구|大邱|Тэгу", "Taegu", None),
+    ("대전\\s?전투|大田", "Taejon", None),
+    ("개성|開城|开城|Кэсон", "Kaesong", None),
+    ("철원|鐵原|铁原", "Chorwon", None),
+    ("금강산|金剛山|金刚山", "Diamond Mountains Korea", "monts Kumgang"),
+    ("독도|獨島|独岛|다케시마|竹島", "Dokdo Takeshima Liancourt Rocks", None),
+    ("명성황후|명성왕후|민비|閔妃", "Queen Min Korea", "reine Min Corée"),
+    ("고종\\s?황제|고종|高宗", "Kojong", None),
+    ("안중근|安重根", "An Jung-geun Ito Hirobumi", None),
+    ("이토\\s?히로부미|伊藤博文", "Ito Hirobumi Korea", None),
+    ("김구|金九", "Kim Koo", None),
+    ("안창호|安昌浩", "Ahn Chang-ho", None),
+    ("3[·.]1\\s?운동|삼일\\s?운동|三一運動|만세\\s?운동", "Korean independence movement 1919", "mouvement du 1er mars Corée"),  # v2.99.6 실측(Node 패리티)
+    ("위안부|慰安婦|慰安妇", "comfort women", "femmes de réconfort"),
+    ("강제\\s?동원|강제\\s?징용|징용|徵用|征用", "Korean forced labor conscription", None),
+    ("광복군|光復軍|光复军", "Korean Liberation Army", None),
+    ("임시\\s?정부|臨時政府|临时政府", "Korean Provisional Government", None),
+    ("동학|東學|东学|갑오\\s?농민", "Tonghak rebellion", "Tonghak"),
+    ("의병|義兵|义兵", "Righteous Army Korea insurgents", "insurgés Corée"),
+    ("을사\\s?조약|을사\\s?늑약|乙巳條約", "Japan Korea protectorate treaty 1905", None),
+    ("아관\\s?파천|俄館播遷", "Kojong Russian legation 1896", None),
+    ("헤이그\\s?특사|해아\\s?밀사", "Hague secret emissaries Korea 1907", "La Haye Corée 1907"),
+    ("제주\\s?4[·.]3|4[·.]3\\s?사건", "Cheju-do 1948", None),
+    ("여순\\s?사건|여수.순천\\s?사건", "Yosu rebellion 1948", None),
+    ("신탁\\s?통치", "Korea trusteeship", "tutelle Corée"),
+    ("미군정|미\\s?군정", "USAMGIK military government Korea", None),
     # Corea·Coreia 등 라틴 표기는 넣지 않는다: 당대 표기 변형 검색(tna_search "Corea" 등)이
     # Korea로 강제 치환되면 방법론이 무력화됨. 악상 있는 Corée만 프랑스어 확정으로 사상.
     ("조선|한국|고려|朝鮮|韓國|韩国|朝鲜|Корея|Коре[еию]|Corée|كوريا|קוריאה"
@@ -130,20 +270,75 @@ def _ko_en(q):
     return _to_index_lang(q, "en")
 
 
+_TNA_GENERIC = re.compile(r"^(battle|battles|records?|files?|documents?|papers?|the|of|in|and|on|for|a|an)$", re.I)
+
+
+def _tna_variants(q):
+    """v1.96.7: TNA는 단어 전부 일치·어형 그대로 — 'Korean War prisoners' 41 vs 'Korea POW' 216(실측). 표기 변형·일반어 제거 질의 병행. Node 패리티."""
+    s = str(q).strip()
+    if not re.search(r"\s", s) or '"' in s or re.match(r"^[A-Z]+ \d+(/\d+)?$", s):
+        return [s]
+    v = [s]
+
+    def add(x):
+        x = re.sub(r"\s+", " ", x).strip()
+        if x and x not in v:
+            v.append(x)
+    sw = re.sub(r"\bKoreans?\b", "Korea", s)
+    add(sw)
+    pw = lambda x: re.sub(r"\bwar POW\b", "POW", re.sub(r"\bprisoners?\b", "POW", re.sub(r"\bprisoners? of war\b", "POW", x, flags=re.I), flags=re.I), flags=re.I)
+    if pw(sw) != sw:
+        add(pw(sw).replace("Korea War POW", "Korea POW"))
+    core = " ".join(w for w in sw.split(" ") if not _TNA_GENERIC.match(w))
+    if core != sw:
+        add(core)
+    return v[:4]
+
+
 @mcp.tool()
-def tna_search(query: str, max_results: int = 20) -> str:
+def tna_search(query: str, max_results: int = 20, year_from: int | None = None,
+               year_to: int | None = None, page: int = 1) -> str:
     """영국 국립기록관(TNA) Discovery에서 한국 관련 기록 검색. 한국어·일본어·중국어·러시아어 등
     다국어 질의를 영문 색인어로 자동 변환(임진강→Imjin River, 長津湖→Chosin Reservoir,
     Корейская война→Korean War …). 참조코드('FO 371/84053')는 자동으로 정확구 처리.
+    year_from/year_to=연대 범위(실측: Korea 13,533→1950~51 한정 2,553건), page=결과 페이지.
     예: '임진강 전투', 'Korea armistice', 'FO 371 FK1015'"""
     en = _ko_en(query)
     eff = en or query
     q = f'"{eff}"' if re.match(r"^[A-Z]+ \d+/\d+$", eff.strip()) else eff
-    recs = []
-    for batch, total in T._search(q, page_size=min(max_results, 100), max_pages=1, sleep=0):
-        recs += [T._extract(r, "mcp", eff) for r in batch]
+    def _run(qq):
+        rr, tt = [], 0
+        for batch, total in T._search(qq, page_size=min(max_results, 100), max_pages=1, sleep=0,
+                                      start_page=page,
+                                      date_from=f"{year_from}-01-01" if year_from else None,
+                                      date_to=f"{year_to}-12-31" if year_to else None):
+            rr += [T._extract(r, "mcp", eff) for r in batch]; tt = total
+        return rr, tt
+    vs = _tna_variants(q) if page == 1 else [q]
+    recs, total = _run(vs[0])
+    vinfo = []
+    seen_ids = {str(r.get("id") or r.get("reference") or r.get("title")) for r in recs}
+    cap = max_results + -(-max_results // 2)
+    for vq in vs[1:]:
+        try:
+            r2, t2 = _run(vq)
+        except Exception:
+            continue
+        vinfo.append(f"'{vq}' {t2}건")
+        for r in r2:
+            k = str(r.get("id") or r.get("reference") or r.get("title"))
+            if k not in seen_ids and len(recs) < cap:
+                seen_ids.add(k); r = dict(r); r["title"] = f"{r.get('title', '')} ⟨변형 '{vq}'⟩"; recs.append(r)
     tag = f" → 영문 자동 변환 '{eff}'" if en else ""
-    return f"TNA 검색 '{query}'{tag} — 총 {total}건 중 {len(recs[:max_results])}건:\n" + _fmt(recs, max_results)
+    yt = f" [연대 {year_from or ''}~{year_to or ''}]" if (year_from or year_to) else ""
+    pt = f" (p.{page})" if page > 1 else ""
+    hint = ("\n※ 연대 필터는 연대 미상(Date unknown) 기록을 제외합니다 — 무필터로 재시도해 비교하십시오."
+            if (year_from or year_to) and not recs else "")
+    vnote = (f"\n※ 표기 변형 병행(TNA는 단어 그대로 전부 일치): {' · '.join(vinfo)} — ⟨변형⟩ 표시 행이 원 질의에서 빠졌던 기록. 더 보려면 그 변형으로 재검색."
+             if vinfo else "")
+    tid = (recs[0].get("tna_id") if recs else None)
+    tfoot = (f"\n※ 계층·IIIF(v2.1): 기록마다 {_NARA_ORIGIN}/iiif/tna/<C-id>/manifest.json(실제 계보 부서›시리즈›피스) · 상위·하위는 /collection.json — 예: {_NARA_ORIGIN}/iiif/tna/{tid}/manifest.json · 시리즈 펼쳐 보기: {_NARA_ORIGIN}/iiif/tna/{tid}/collection.json" if tid else "")
+    return f"TNA 검색 '{query}'{tag}{yt}{pt} — 총 {total}건 중 {len(recs)}건:\n" + _fmt(recs, len(recs)) + hint + vnote + tfoot
 
 @mcp.tool()
 def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
@@ -167,17 +362,254 @@ def tna_adjacent_mine(reference: str, radius: int = 5) -> str:
             lines.append(f"   {ref} | ERROR {e}")
     return f"인접 확장 {series}/{piece}±{radius}:\n" + "\n".join(lines[:60])
 
+_NARA_ORIGIN = "https://korea-archive-mcp.vercel.app"
+
+
+def _bridge_url(src, id_):
+    """v1.99 IIIF 브리지 2(국가유산·역사박물관·AWM·위키미디어) 공개 주소 — Node lib/ka_iiif.js bridgeUrl 패리티."""
+    return f"{_NARA_ORIGIN}/iiif/{src}/{_up.quote(str(id_), safe='')}/manifest.json"
+
+
+def _rec_token(it, query="", inst="", part=""):
+    """v2.0 기록 봉투 토큰(Node lib/rec_iiif.js encodeEnv·envelopeOf 패리티) — raw deflate + base64url. 서버 /iiif/rec/{token}/manifest.json이 해독."""
+    import zlib as _z, base64 as _b, datetime as _d
+    env = {"s": it.get("sources") or [], "t": _clean(it.get("title", ""))[:160], "d": it.get("date") or "", "i": it.get("id") or "", "u": it.get("url") or "",
+           "p": part or it.get("series") or "", "n": inst, "m": it.get("media") or "", "q": str(query)[:120],
+           "at": _d.datetime.now(_d.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    if it.get("sameAs"):
+        env["sa"] = it["sameAs"]
+    c = _z.compressobj(9, _z.DEFLATED, -15)
+    raw = c.compress(json.dumps(env, ensure_ascii=False, separators=(",", ":")).encode()) + c.flush()
+    return _b.urlsafe_b64encode(raw).decode().rstrip("=")
+
+
+def _rec_url(tok):
+    return f"{_NARA_ORIGIN}/iiif/rec/{tok}/manifest.json"
+
+
+def _kv_hash(coll):
+    """검색 결과 컬렉션 전체를 KV 한 링크(#c=)로 — 서버 저장 없음."""
+    import zlib as _z, base64 as _b
+    c = _z.compressobj(9, _z.DEFLATED, -15)
+    raw = c.compress(json.dumps(coll, ensure_ascii=False, separators=(",", ":")).encode()) + c.flush()
+    return "https://changgi.github.io/korea-archive-mcp/kv.html#c=" + _b.urlsafe_b64encode(raw).decode().rstrip("=")
+
+
+def _kv_url(m):
+    return "https://changgi.github.io/korea-archive-mcp/kv.html?manifest=" + _up.quote(m, safe="")
+
+
+def _iiif_for(u, id_=None):
+    """v1.98: 기록 URL → IIIF 매니페스트(기관 IIIF·NARA 브리지·우리 갤러리). v1.99: 국가유산·역사박물관·AWM·위키미디어 브리지. Node iiifFor 패리티."""
+    u = str(u or "")
+    _di = re.match(r"^(ksm|portrait|gwaebul|diary|mokgan|jcphoto|arch|design|pattern|oldbook|hyanggyo|stone|gaesong|assay):(\d+)$", str(id_ or ""))
+    if _di:  # v2.18 연구DB 이미지 데이터셋 → 국립문화유산연구원 IIIF 브리지(Node 패리티)
+        return f"{_NARA_ORIGIN}/iiif/nrich/{_di.group(1)}-{_di.group(2)}/manifest.json"
+    mt = re.search(r"discovery\.nationalarchives\.gov\.uk/details/r/([A-Za-z0-9]{2,20})", u)
+    if mt:  # v2.1: TNA 실제 계층 브리지
+        return f"{_NARA_ORIGIN}/iiif/tna/{mt.group(1)}/manifest.json"
+    if "heritage.go.kr" in u and re.match(r"^\d{2}-[0-9A-Za-z]+-\d{2}$", str(id_ or "")):
+        return _bridge_url("heritage", id_)
+    _nm = re.search(r"portal\.nrich\.go\.kr/kor/(overseasSearchView|ksmUsrView|portraitNdUsrView|buddhaNdUsrView)\.do\S*?(?:mseq|ksm_idx|portrait_idx|buddha_idx)=(\d+)", u)
+    if _nm:  # v2.17 국립문화유산연구원 IIIF 브리지(Node iiifFor 패리티)
+        return f"{_NARA_ORIGIN}/iiif/nrich/{ {'overseasSearchView': 'ov', 'ksmUsrView': 'ksm', 'portraitNdUsrView': 'portrait', 'buddhaNdUsrView': 'gwaebul'}[_nm.group(1)] }-{_nm.group(2)}/manifest.json"
+    for rx, sname in ((r"much\.go\.kr/.*idnbr=([A-Z]{2}[\w-]+)", "much"), (r"awm\.gov\.au/collection/(C\d+)", "awm")):
+        mm = re.search(rx, u)
+        if mm:
+            return _bridge_url(sname, mm.group(1))
+    _kt = re.search(r"ehistory\.go\.kr/view/(photo|movie)\?(\S+)", u)
+    if _kt:  # v3.5 KTV e영상역사관 브리지(Node ktvId·iiifFor 패리티)
+        _q = dict(_up.parse_qsl(_kt.group(2).replace("&amp;", "&"))); _v = [_q.get(k, "") for k in ("mediasrcgbn", "mediaid", "mediadtl")]
+        if all(_v):
+            return _bridge_url("ktv", "~".join([_kt.group(1), *_v] + ([_q["mediagbn"]] if _q.get("mediagbn") else [])))
+    mm = re.search(r"commons\.wikimedia\.org/wiki/(File(?:%3A|:)[^?#]+)", u, re.I)
+    if mm:
+        return _bridge_url("commons", _up.unquote(mm.group(1)).replace("_", " "))
+    for rx, f in ((r"catalog\.archives\.gov/id/(\d+)", lambda m: f"{_NARA_ORIGIN}/iiif/nara/{m.group(1)}/manifest.json"),
+                  (r"korea-archive-mcp/iiif\.html#(s\d+)", lambda m: f"https://changgi.github.io/korea-archive-mcp/iiif/m/{m.group(1)}.json"),
+                  (r"archive\.org/details/([^/?#]+)", lambda m: f"https://iiif.archive.org/iiif/3/{m.group(1)}/manifest.json"),
+                  (r"europeana\.eu/(?:[a-z]{2}/)?item/([^/]+)/([^/?#]+)", lambda m: f"https://iiif.europeana.eu/presentation/{m.group(1)}/{m.group(2)}/manifest"),
+                  (r"dl\.ndl\.go\.jp/pid/(\d+)", lambda m: f"https://dl.ndl.go.jp/api/iiif/{m.group(1)}/manifest.json")):
+        m = re.search(rx, u)
+        if m:
+            return f(m)
+    g = re.search(r"ark:/12148/([a-z0-9]+)", u, re.I)
+    return f"https://gallica.bnf.fr/iiif/ark:/12148/{g.group(1)}/manifest.json" if g and "gallica" in u else ""
+
+
+def _nara_urls(naid):
+    m = f"{_NARA_ORIGIN}/iiif/nara/{naid}/manifest.json"
+    return {"manifest": m, "collection": f"{_NARA_ORIGIN}/iiif/nara/{naid}/collection.json", "ric": f"{_NARA_ORIGIN}/iiif/nara/{naid}/record.jsonld",
+            "kv": "https://changgi.github.io/korea-archive-mcp/kv.html?manifest=" + __import__("urllib.parse").parse.quote(m, safe=""),
+            "catalog": f"https://catalog.archives.gov/id/{naid}"}
+
+
+def _img_size(url):
+    """이미지 앞 128KB만 받아 JPEG SOF·PNG IHDR·GIF 헤더로 크기 판독(IIIF 캔버스 필수값). Node imageSize 패리티."""
+    import urllib.request as _r
+    try:
+        q = _r.Request(url, headers={"Range": "bytes=0-131071", "User-Agent": "KoreaArchiveMCP/1.0 (IIIF bridge)"})
+        b = _r.urlopen(q, timeout=8).read(131072)
+    except Exception:
+        return None
+    if b[:2] == b"\x89P":
+        return int.from_bytes(b[16:20], "big"), int.from_bytes(b[20:24], "big"), "image/png"
+    if b[:2] == b"GI":
+        return b[6] | b[7] << 8, b[8] | b[9] << 8, "image/gif"
+    if b[:2] == b"\xff\xd8":
+        i = 2
+        while i + 9 < len(b):
+            if b[i] != 0xFF:
+                i += 1; continue
+            m = b[i + 1]; ln = b[i + 2] << 8 | b[i + 3]
+            if 0xC0 <= m <= 0xCF and m not in (0xC4, 0xC8, 0xCC):
+                return b[i + 7] << 8 | b[i + 8], b[i + 5] << 8 | b[i + 6], "image/jpeg"
+            i += 2 + ln
+    return None
+
+
+
+def _nara_yr(d):
+    d = d or {}; y = d.get("year") or str(d.get("logicalDate") or "")[:4]
+    return f"{d['dateQualifier'] + ' ' if d.get('dateQualifier') else ''}{y}" if y else ""
+
+
+def _nara_span(r):
+    s = _nara_yr(r.get("coverageStartDate") or r.get("inclusiveStartDate")); e = _nara_yr(r.get("coverageEndDate") or r.get("inclusiveEndDate"))
+    return (s if s == e or not e else e if not s else f"{s}~{e}") if (s or e) else ""
+
+
+def _nara_spans(rec):
+    """v3.0 포괄 기간 — productionDates가 없으면 이 기록 자체 coverage/inclusive 범위, 그도 없으면 가장 가까운 상위 계층(RG·collection 제외) 범위(Node naraSpans 패리티)."""
+    pd = (rec.get("productionDates") or [{}])[0]
+    if pd.get("logicalDate") or pd.get("year") or pd.get("proximatePhrase"): return []
+    own = _nara_span(rec)
+    if own: return [("포괄 기간(이 기록)", own)]
+    for a in reversed(rec.get("ancestors") or []):
+        if not re.search(r"recordGroup|collection", str(a.get("levelOfDescription") or ""), re.I) and _nara_span(a):
+            return [("포괄 기간(상위 계층)", f"{_nara_span(a)} — {a.get('levelOfDescription')} NAID {a.get('naId')}(이 기록 자체 날짜 아님)")]
+    return []
+
+
+def _nara_iiif_manifest(naid, key, max_canvas=40):
+    """v1.98 NARA→IIIF 브리지(Node lib/nara_iiif.js buildNaraManifest 패리티): 계보 partOf·생산일 navDate·권리 원문·판독 지문·
+    디지털 객체(표시 이미지=캔버스, TIFF·PDF·영상=rendering)."""
+    import hashlib as _h, datetime as _d
+    d = http_json(f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1", headers={"x-api-key": key})
+    hits = (((d.get("body") or {}).get("hits") or {}).get("hits") or [])
+    rec = ((hits[0].get("_source") or {}).get("record") or {}) if hits else {}
+    if not rec or int(rec.get("naId") or 0) != int(naid):
+        return None
+    U = _nara_urls(naid); L = lambda t, lang="en": {lang: [str(t or "")[:1000]]}; MV = lambda k, v: {"label": L(k, "ko"), "value": L(v, "none")}
+    ch = [{"naId": a.get("naId"), "level": str(a.get("levelOfDescription") or ""), "rg": a.get("recordGroupNumber") or "", "title": str(a.get("title") or "")[:160]} for a in rec.get("ancestors") or []]
+    ct = " › ".join(re.sub(r"\s+", " ", f"{re.sub('recordGroup', 'RG', a['level'], flags=re.I)}{' ' + str(a['rg']) if a['rg'] else ''} {a['title']} [NAID {a['naId']}]").strip() for a in ch)
+    u0 = rec.get("useRestriction") or {}; ur = u0 if isinstance(u0, str) else " · ".join(x for x in [u0.get("status"), u0.get("note"), "/".join(u0.get("specificUseRestrictions") or [])] if x)
+    a0 = rec.get("accessRestriction") or {}; ar = a0 if isinstance(a0, str) else " · ".join(x for x in [a0.get("status"), a0.get("note"), "/".join(a0.get("specificAccessRestrictions") or [])] if x)
+    pd = (rec.get("productionDates") or [{}])[0]; ld = str(pd.get("logicalDate") or "")
+    nav = ld[:10] + "T00:00:00Z" if re.match(r"^\d{4}-\d{2}-\d{2}", ld) else (f"{pd.get('year')}-01-01T00:00:00Z" if re.match(r"^\d{4}$", str(pd.get("year") or "")) else "")
+    dt = str(pd.get("logicalDate") or pd.get("year") or pd.get("proximatePhrase") or "")[:10]
+    scope = str(rec.get("scopeAndContentNote") or "").strip(); fp = _h.sha256(scope.encode()).hexdigest()[:16] if scope else ""
+    cre = " · ".join(c.get("heading") for c in rec.get("creators") or [] if c.get("heading"))
+    ru = (((rec.get("physicalOccurrences") or [{}])[0].get("referenceUnits") or [{}])[0]).get("name", "")
+    dob = rec.get("digitalObjects") or []
+    md = [x for x in [MV("NAID", str(naid)), rec.get("localIdentifier") and MV("로컬 식별자", rec["localIdentifier"]), MV("기술 수준", rec.get("levelOfDescription") or ""),
+                      ch and MV("계보(상위 계층)", ct), cre and MV("생산자", cre), dt and MV("생산일", dt), *[MV(k, v) for k, v in _nara_spans(rec)], ru and MV("소장단위(열람·복제 청구)", ru),
+                      ur and MV("이용 제한(원문)", ur), ar and MV("접근 제한(원문)", ar), MV("디지털 객체", f"{len(dob)}점"),
+                      scope and MV("기술 지문(sha256-16)", fp + " — 범위·내용 기술 판독 시점 지문, 불일치=카탈로그 개정"),
+                      MV("판독 시각", _d.datetime.now(_d.timezone.utc).isoformat()), MV("변환", "KOREA ARCHIVE 통합검색 NARA→IIIF 브리지 v1.98 (원 데이터: NARA Catalog API v2)")] if x]
+    rights = ("http://rightsstatements.org/vocab/NoC-US/1.0/" if re.search(r"unrestricted", ur, re.I) and not re.search(r"restricted\s*[-–]|possibly|fully", ur, re.I)
+              else "http://rightsstatements.org/vocab/UND/1.0/")
+    kind = lambda o: (lambda t: "img" if re.search(r"\.(jpe?g|png|gif)\b|image/(jpe?g|png|gif)", t) else "tiff" if re.search(r"\.tiff?\b|tiff", t) else "pdf" if "pdf" in t
+                      else "video" if re.search(r"\.(mp4|mov|m4v)\b|video", t) else "audio" if re.search(r"\.(mp3|wav)\b|audio", t) else "other")((str(o.get("objectType") or "") + " " + str(o.get("objectUrl") or o.get("objectFilename") or "")).lower())
+    FMT = {"tiff": "image/tiff", "pdf": "application/pdf", "video": "video/mp4", "audio": "audio/mpeg", "other": "application/octet-stream"}
+    imgs = [o for o in dob if kind(o) == "img"][:max_canvas]
+    with _cf.ThreadPoolExecutor(max_workers=6) as ex:
+        sizes = list(ex.map(lambda o: _img_size(o.get("objectUrl")), imgs))
+    items, skipped = [], []
+    for o, sz in zip(imgs, sizes):
+        if not sz or not sz[0] or not sz[1]:
+            skipped.append(o); continue
+        cid = f"{U['manifest']}/canvas/{len(items) + 1}"
+        items.append({"id": cid, "type": "Canvas", "label": L(o.get("objectFilename") or f"Image {len(items) + 1}"), "width": sz[0], "height": sz[1],
+                      "metadata": [x for x in [MV("파일", o.get("objectFilename") or ""), o.get("objectFileSize") and MV("크기", f"{int(o['objectFileSize']) / 1048576:.1f} MB"), MV("객체 URL", o.get("objectUrl"))] if x],
+                      "items": [{"id": cid + "/p", "type": "AnnotationPage", "items": [{"id": cid + "/p/a", "type": "Annotation", "motivation": "painting", "target": cid,
+                                                                                        "body": {"id": o.get("objectUrl"), "type": "Image", "format": sz[2], "width": sz[0], "height": sz[1]}}]}]})
+    rend = [{"id": o.get("objectUrl"), "type": {"video": "Video", "audio": "Sound", "pdf": "Text"}.get(kind(o), "Image"),
+             "label": L(f"{o.get('objectFilename') or o.get('objectUrl')}" + (f" ({int(o['objectFileSize']) / 1048576:.1f} MB)" if o.get("objectFileSize") else "")),
+             "format": FMT.get(kind(o), "application/octet-stream")} for o in ([o for o in dob if kind(o) != "img"] + skipped)[:80]]
+    par = ch[-1] if ch else None
+    man = {"@context": "http://iiif.io/api/presentation/3/context.json", "id": U["manifest"], "type": "Manifest", "label": L(rec.get("title") or f"NAID {naid}"),
+           **({"summary": L(scope[:1500])} if scope else {}), "metadata": md, **({"navDate": nav} if nav else {}), "rights": rights,
+           "requiredStatement": {"label": L("출처", "ko"), "value": L(f"National Archives and Records Administration (NARA), NAID {naid}" + (f" ({rec['localIdentifier']})" if rec.get("localIdentifier") else ""))},
+           "provider": [{"id": "https://www.archives.gov/", "type": "Agent", "label": L("U.S. National Archives and Records Administration"),
+                         "homepage": [{"id": "https://catalog.archives.gov/", "type": "Text", "label": L("NARA Catalog"), "format": "text/html"}]}],
+           "homepage": [{"id": U["catalog"], "type": "Text", "label": L("NARA Catalog record"), "format": "text/html"}],
+           "seeAlso": [{"id": U["ric"], "type": "Dataset", "label": L("RiC-O 기록 기술(JSON-LD) — 계층·증거", "ko"), "format": "application/ld+json", "profile": "https://www.ica.org/standards/RiC/ontology"}],
+           **({"partOf": [{"id": _nara_urls(par["naId"])["collection"], "type": "Collection", "label": L(f"{par['level']} {'RG ' + str(par['rg']) + ' ' if par['rg'] else ''}{par['title']}".strip())}]} if par else {}),
+           **({"rendering": rend} if rend else {}), "items": items}
+    if not items:  # v2.0: 표시 이미지가 없으면 기록 카드 캔버스(연속 열람에서 빠지지 않게) — Node 패리티
+        man["metadata"].append(MV("표시 가능한 이미지", "없음 — 원본 매체는 rendering(내려받기) 참조" if dob else "디지털 사본 없음 — 원본은 NARA 열람 청구"))
+        tok = _rec_token({"sources": ["nara"], "title": rec.get("title") or "", "date": dt, "id": f"NAID {naid}" + (f" · {rec['localIdentifier']}" if rec.get("localIdentifier") else ""), "url": U["catalog"]},
+                         "NARA→IIIF 브리지", "U.S. National Archives and Records Administration (NARA)", ct[:200])
+        cid = f"{U['manifest']}/canvas/1"; card = f"{_NARA_ORIGIN}/iiif/rec/{tok}/card.svg"
+        man["items"] = [{"id": cid, "type": "Canvas", "label": L("기록 카드(기술 메타데이터 — 디지털 이미지 없음)", "ko"), "width": 1200, "height": 900,
+                         "items": [{"id": cid + "/p", "type": "AnnotationPage", "items": [{"id": cid + "/p/a", "type": "Annotation", "motivation": "painting", "target": cid,
+                                                                                          "body": {"id": card, "type": "Image", "format": "image/svg+xml", "width": 1200, "height": 900}}]}]}]
+    return man
+
+
 @mcp.tool()
 def nara_search(query: str, record_group: int | None = None,
-                moving_images_only: bool = False, max_results: int = 20) -> str:
+                moving_images_only: bool = False, max_results: int = 20, page: int = 1,
+                naid: int | None = None, radius: int = 3, output: str = "text") -> str:
     """미국 NARA 카탈로그 검색 (환경변수 NARA_API_KEY 필요 — Catalog_API@nara.gov 발급).
+    output="iiif" + naid → 그 기록을 IIIF Presentation 3 매니페스트로(계보 partOf·생산일 navDate·권리·판독 지문·디지털 객체, 공개 URL로 KV·Mirador에서 열림).
     다국어 질의(한국어·日本語·中文·Русский 등)는 영문 색인어로 자동 변환(장진호/長津湖→Chosin Reservoir …).
     record_group으로 RG 교차 정밀검색(예: 242), moving_images_only로 영상 한정."""
     key = os.environ.get("NARA_API_KEY")
     if not key: return "NARA_API_KEY 미설정 — Catalog_API@nara.gov 로 무료 발급(이름+이메일)."
+    if naid and output == "iiif":  # v1.98 NARA→IIIF 브리지 — 맥락(계보)·증거성(판독 시각·기술 지문·권리 원문)·다매체(rendering)
+        try:
+            man = _nara_iiif_manifest(int(naid), key)
+            if not man:
+                return f"[NAID {naid}] 카탈로그에 없음 — NAID를 확인하십시오."
+            U = _nara_urls(naid); lite = dict(man, items=man["items"][:12])
+            js = json.dumps(lite, ensure_ascii=False, separators=(",", ":"))
+            if len(js) > 15000:
+                lite = dict(lite, items=lite["items"][:4]); lite.pop("summary", None); js = json.dumps(lite, ensure_ascii=False, separators=(",", ":"))
+            return (f"NARA→IIIF [NAID {naid}] {man['label']['en'][0][:90]}\n캔버스 {len(man['items'])}장 · 원본 매체(rendering) {len(man.get('rendering') or [])}건 · "
+                    f"계보 {'있음(partOf → 상위 컬렉션)' if man.get('partOf') else '없음'} · navDate {man.get('navDate') or '—'}\n"
+                    f"■ 공개 매니페스트(누구나·어느 IIIF 뷰어든): {U['manifest']}\n■ KV로 보기: {U['kv']}\n"
+                    f"■ 상위 계층 컬렉션: {man['partOf'][0]['id'] if man.get('partOf') else '—'} · 이 기록의 하위 컬렉션: {U['collection']}\n■ RiC-O JSON-LD(지식그래프·기록관리 등재): {U['ric']}\n"
+                    f"■ 매니페스트 JSON" + (f"(앞 {len(lite['items'])}장 — 전체는 위 URL)" if len(man["items"]) > len(lite["items"]) else "") + f":\n{js}")
+        except Exception as e:
+            return f"NARA→IIIF 실패({str(e)[:80]}) — 공개 URL로 재시도: {_nara_urls(naid)['manifest']}"
+    if naid:  # NAID ± 인접 채굴 — v2는 단수 naId만 수용(naIds=400 실측) → 순차 조회. 간격: 사진 ±3·색인 ±1
+        import time as _t
+        ids = [i for i in range(naid - radius, naid + radius + 1) if i > 0]
+        lines = []
+        for i in ids:
+            try:
+                d2 = http_json(f"https://catalog.archives.gov/api/v2/records/search?naId={i}&limit=1",
+                               headers={"x-api-key": key})
+                hits2 = (((d2.get("body") or {}).get("hits") or {}).get("hits") or [])
+                rec = ((hits2[0].get("_source") or {}).get("record") or {}) if hits2 else {}
+                if rec.get("naId") and int(rec["naId"]) == i:
+                    po2 = _nara_chain(rec)  # v1.82: 인접 채굴에도 계보 — 중심과 같은 시리즈인지 즉시 판별
+                    lines.append(f"{'★' if i == naid else ' '} [NAID {i}] {rec.get('title','')[:95]} | "
+                                 f"{rec.get('localIdentifier','')}" + (f" | {po2}" if po2 else "")
+                                 + f" | https://catalog.archives.gov/id/{i}")
+                else:
+                    lines.append(f"  [NAID {i}] (없음)")
+            except Exception as e:
+                lines.append(f"  [NAID {i}] 오류({e})")
+            _t.sleep(0.15)
+        return (f"NARA NAID 인접 채굴 {naid}±{radius} (★=중심, 한국 관련 여부는 제목으로 판별):\n"
+                + "\n".join(lines)
+                + "\n※ 간격 지식: 사진 계열 ±3·색인 ±1 — 하나 찾으면 양옆을 훑는다(query_bank identifiers).")
     _en = _ko_en(query)
     query = _en or query
-    params = {"q": query, "limit": min(max_results, 100), "page": 1}
+    params = {"q": query, "limit": min(max_results, 100), "page": page}
     if record_group: params["recordGroupNumber"] = record_group
     if moving_images_only: params["typeOfMaterials"] = "Moving Images"
     data = http_json("https://catalog.archives.gov/api/v2/records/search?" + qs(params),
@@ -186,37 +618,128 @@ def nara_search(query: str, record_group: int | None = None,
     rows = []
     for h in (hits.get("hits") or [])[:max_results]:
         rec = (h.get("_source") or {}).get("record") or {}
-        rows.append(f"- [NAID {rec.get('naId')}] {rec.get('title','')[:100]} "
-                    f"| {rec.get('localIdentifier','')} | https://catalog.archives.gov/id/{rec.get('naId')}")
+        po = _nara_chain(rec)
+        nd = _nara_date(rec)
+        ndo = len(rec.get("digitalObjects") or [])  # v1.82: 디지털 객체 수 — 원본 매체 유무를 목록에서 판별(다매체)
+        rows.append(f"- [NAID {rec.get('naId')}] {rec.get('title','')[:100]}" + (f" ({nd})" if nd else "")
+                    + f" | {rec.get('localIdentifier','')}" + (f" · 원본 {ndo}점" if ndo else " · 디지털 사본 없음")
+                    + f" | https://catalog.archives.gov/id/{rec.get('naId')}"
+                    + (f"\n  계보: {po}" if po else ""))
     total = hits.get("total", {}); total = total.get("value") if isinstance(total, dict) else total
-    return f"NARA '{query}'" + (f" (RG {record_group})" if record_group else "") + f" — 총 {total}건:\n" + ("\n".join(rows) or "(0건)")
+    rline = ""
+    if record_group:
+        rc, rb = auto_rights({"rg_series": f"RG {record_group}", "archive": "NARA"})
+        rline = (f"\n권리 초판정(RG {record_group}): {rc} — {rb}"
+                 f"\n※ 건별 실확인: judge_rights(naid=<NAID>) — 카탈로그 Use Restriction 실조회로 A/C 확정")
+    return f"NARA '{query}'" + (f" (RG {record_group})" if record_group else "") + f" — 총 {total}건:\n" + ("\n".join(rows) or "(0건)") + rline
 
 @mcp.tool()
-def ia_search(query: str = "", identifier: str = "", max_results: int = 15) -> str:
+def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
+              year_from: int | None = None, year_to: int | None = None, page: int = 1,
+              radius: int = 0) -> str:
     """archive.org 고급 검색. 예: 'identifier:111-adc*', 'collection:universal_newsreels AND korea',
     'mediatype:movies AND (keijo OR chosen)'. 다국어 질의(한국어·日本語·中文 등)는 영문 색인어로
     자동 변환. identifier를 주면 해당 아이템의 메타데이터·원본 파일 목록(다운로드 전 크기 파악)을
     대신 반환한다."""
+    if identifier and radius > 0:  # 일련번호 인접 채굴 — identifier 말미 숫자 ±N 존재 확인(TNA식)
+        import time as _t
+        m = re.match(r"^(.*?)(\d+)$", identifier)
+        if not m:
+            return f"'{identifier}' — 말미가 숫자가 아니라 인접 채굴 불가. radius=0으로 단건 메타 조회."
+        stem, nums = m.group(1), m.group(2)
+        base_n, pad = int(nums), len(nums)
+        lines = []
+        for i in range(base_n - min(radius, 8), base_n + min(radius, 8) + 1):
+            if i < 0:
+                continue
+            id2 = stem + str(i).zfill(pad)
+            try:
+                md2 = (http_json(f"https://archive.org/metadata/{_up.quote(id2)}") or {}).get("metadata")
+                lines.append(f"{'★' if i == base_n else ' '} {id2} | {str(md2.get('title',''))[:85]} "
+                             f"({md2.get('date','')}) https://archive.org/details/{id2}" if md2 else f"  {id2} (없음)")
+            except Exception:
+                lines.append(f"  {id2} (없음)")
+            _t.sleep(0.2)
+        return (f"archive.org 인접 채굴 {stem}[{base_n}±{min(radius, 8)}] (★=중심):\n" + "\n".join(lines)
+                + "\n※ 같은 컬렉션의 절반이 다른 표기로 기술돼 검색에 안 걸리는 사례 — 번호 옆 훑기로 복구(열한 겹의 벽 §8).")
+    def _ia_scenes(ident, data):
+        """v1.93: 영상 기록 장면 분석 — IA 파생 썸네일(.thumbs/<id>_<초>.jpg)을 시각 코드 장면 프레임으로(웹·모바일 경로)."""
+        md = data.get("metadata") or {}
+        if md.get("mediatype") != "movies":
+            return ""
+        th = sorted(f["name"] for f in (data.get("files") or []) if re.search(r"\.thumbs/.+_(\d{6})\.jpg$", f.get("name", "")))
+        vid = next((f for f in (data.get("files") or []) if re.search(r"\.(mp4|mpeg4)$", f.get("name", ""), re.I)
+                    and re.search(r"mpeg4|h\.264", f.get("format", ""), re.I)), None)
+        naid = (re.search(r"catalog\.archives\.gov/id/(\d+)", str(md.get("description") or "")) or [None, None])[1]
+        pick = [th[round(i * (len(th) - 1) / 11)] for i in range(12)] if len(th) > 12 else th
+        def mmss(nm):
+            sec = int(re.search(r"_(\d{6})\.jpg$", nm).group(1))
+            return f"{sec // 60:02d}:{sec % 60:02d}"
+        out = f"\n【영상 장면 프레임 — {len(th)}개 중 {len(pick)}개(시각 코드)】\n" + "\n".join(
+            f"- {mmss(nm)}  https://archive.org/download/{ident}/{nm}" for nm in pick)
+        if vid:
+            out += f"\n영상 파일: https://archive.org/download/{ident}/{_up.quote(vid['name'])} ({round(float(vid.get('length') or 0))}초)"
+        if naid:
+            out += f"\n↔ NARA 원본 NAID {naid} — judge_rights(naid={naid})로 권리 실확인"
+        return out + ("\n➤ 장면 해설: 각 프레임을 열어 '보이는 것만' 기술(인물 수·장비·문자·지형) → report_template(kind=video) 규칙으로 장면 해설 카드."
+                      " 로컬은 analyze_video.py keyscenes로 장면 전환 기반 대표 프레임(고해상).")
+
     if identifier:
         data = http_json(f"https://archive.org/metadata/{identifier}")
         md = data.get("metadata") or {}
+        if not md:  # v1.96.1: 없는 식별자 — undefined 대신 명시
+            return f"archive.org '{identifier}' — 항목 없음(식별자 오기 또는 미등록). ia_search(query=…)로 검색하거나 NARA 원본은 nara_search·judge_rights(naid)로."
         files = [f for f in (data.get("files") or []) if f.get("source") == "original"][:10]
         return (f"제목: {md.get('title')}\n설명: {str(md.get('description'))[:300]}\n"
                 f"연대: {md.get('date')} | 라이선스: {md.get('licenseurl') or md.get('rights') or '표기 없음'}\n"
-                "원본 파일:\n" + "\n".join(f"- {f['name']} ({int(f.get('size',0))/1e6:.1f}MB)" for f in files))
+                "원본 파일:\n" + "\n".join(f"- {f['name']} ({int(f.get('size',0))/1e6:.1f}MB)" for f in files)
+                + _ia_scenes(identifier, data))
     if not query:
         return "query 또는 identifier 중 하나는 필수."
+    disp = query
     query = _ko_en(query) or query
+    if year_from or year_to:  # date:[A TO B] + page 실측 검증 (2026-11-18)
+        query = f"({query}) AND date:[{year_from or 1800}-01-01 TO {year_to or 2030}-12-31]"
     import urllib.parse
-    data = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(query) +
-                     f"&fl[]=identifier&fl[]=title&fl[]=date&rows={max_results}&output=json")
+    data = _ia_search(query, max_results, "fl[]=identifier&fl[]=title&fl[]=date&fl[]=licenseurl", page)  # v2.24 관련성 질의
     docs = (data.get("response") or {}).get("docs") or []
     nf = (data.get("response") or {}).get("numFound")
-    return f"archive.org '{query}' — 총 {nf}건:\n" + "\n".join(
-        f"- {d.get('identifier')} | {str(d.get('title'))[:90]} | https://archive.org/details/{d.get('identifier')}"
-        for d in docs) if docs else f"archive.org '{query}' — 0건"
+    yt = f" [연대 {year_from or ''}~{year_to or ''}]" if (year_from or year_to) else ""
+    pt = f" (p.{page})" if page > 1 else ""
+
+    def _lshort(lu):
+        m = re.search(r"(publicdomain/(?:mark|zero)|licenses/[a-z-]+)", str(lu or ""))
+        return m.group(1).replace("licenses/", "CC ") if m else ""
+    if not docs:
+        return f"archive.org '{disp}'{yt}{pt} — 0건"
+    body = "\n".join(
+        f"- {d.get('identifier')} | {str(d.get('title'))[:90]}"
+        + (f" | 권리:{_lshort(d.get('licenseurl'))}" if _lshort(d.get('licenseurl')) else "")
+        + f" | https://archive.org/details/{d.get('identifier')}" for d in docs)
+    return (f"archive.org '{disp}'{yt}{pt} — 총 {nf}건:\n" + body
+            + "\n※ 권리 미표기 건은 judge_rights 초판정 — 발굴 우선, 권리는 표시.")
 
 JB_STRAT = {
+    'recipes': """발굴 완주 레시피 — 주제 유형별 발굴→판독→권리 순서 (전 단계 실측 검증, 2026-11-21)
+공통 원칙: ①cross_search로 폭 확보(variants=당대 표기) ②신호가 나온 소스의 전용 도구/판독 모드로 심층 ③권리는 표시(judge_rights·naid·라이선스) ④0건=부재가 아니다(표기 변형·인접 채굴·관리 행정으로 전환).
+
+① 인물(독립운동가): gonghun(이름→mngNo→공훈록·수형기록. 훈격·이명 확보) + i815 '사전:이름'(인명사전 — 전기 전문·생몰·본관·이명) → 이명·한자명으로 i815·oldnews 재검색(당대 신문 — oldnews는 '본문:이명' OCR 전문까지) → jacar(일본 측 — 한자명) → commons(초상·PD) → 수형기록의 판결문 원문은 indy(국가기록원 판결문 테마관 — 판결기관·주문·원문) 직행.
+② 한국전쟁 전투·부대: koreanwar(협약 — archRfcd→koreanwar_item 인접 채굴) → nara(RG 교차+naid 인접, judge_rights(naid) 실확인) → tna(연대 필터)·awm(가평 등 영연방)·nlna(네덜란드) → un(안보리 결의 — recid 판독으로 PDF) → commons(PD 사진·원 소장처 역추적).
+③ 조선 제도·고문헌: nedb law(법전 근거)→★sibling(형제 조 전수)→sjw(최초 용례) → kyujanggak(목록+해제)·jsg(청구기호→해제 전문) → aks(문중 고문서) → 인용 2층위 준수.
+④ 일제강점기 정책·기관: ndl(총독부 간행물·통계연보·관보) ⇄ jacar(공문서 메타·인접 ±100) → nedb(한국사DB)·earchive('키워드|순번' 이용조건) → i815(민족 측 시각 대조).
+⑤ 도시·공간사(서울 등): seoul_archives_search(기록 단위→상세 URL 판독) → heritage(국보·사적+해설 전문 — 공간의 유산 맥락) → archives → ktv(view URL 판독) → much(실물·포스터) → commons·ia(항공·거리 사진) → cities 열쇠(Keijo·1914 경계).
+⑥ 사진·영상·실물 소싱(게재용): commons(File 판독 — PD→A, 원본 고해상) → ia(radius) → nara(naid 실확인) → ktv(공공누리 표시 확인 — 영상은 무표시 多) → much(공공누리 자동판정 — 포스터·실물) → heritage(유산 해설·공공누리) → 게재윤리 4단계·출처 표기.
+※ 각 단계의 투입 형식은 cross_search 푸터와 nedb_search 설명이 안내. 전 산출물 제작은 "풀패키지".""",
+    'allies': """한국전 참전·지원국 발굴 지도 — 22개국 소스 매핑 (◉=보유 소스 직행 / ○=대체 경로)
+◉ 미국: nara(RG 111·127·242·342·428)·ia·earchive(국내 수집 원문) ◉ 영국: tna(WO 281 부대 전쟁일지·ADM·AIR)
+◉ 호주: awm(사진·유물 — PD 다수, 가평) ◉ 네덜란드: nlna(주한대사관 2.05.202·UN파견대 2.13.56·적십자 2.19.309)
+◉ 프랑스: gallica(차단 시 브라우저) + 지평리·단장의 능선 프랑스대대는 TOPICS 프랑스어 사상 자동
+○ 캐나다: LAC는 Turnstile 차단 — PPCLI(가평)는 awm·tna 영연방 교차로 ○ 터키: nara RG 407 + ia "Turkish Brigade Kunu-ri"
+○ 전투 참전(태국·필리핀·콜롬비아·에티오피아·그리스·벨기에·룩셈부르크·뉴질랜드·남아공): nara(유엔군 RG)·ia에서
+  부대 고유명 영문 병기 — Kagnew Battalion(에티오피아)·PEFTOK/10th BCT(필리핀)·Gloster(영)·Van Heutsz(네)
+○ 의료지원(스웨덴·덴마크·노르웨이·이탈리아·인도·서독): ia·europeana — 병원선 Jutlandia(덴)·NORMASH(노)·
+  60th Parachute Field Ambulance(인도) 등 고유명 검색
+※ 공통 열쇠: 부대 고유명(영문)+Korea 병기 · 유엔군 총괄은 nara RG 333(극동사령부) · UN 아카이브는 챌린지 보류(명세 참조).""",
     'walls': "열한 겹의 벽 — 한국 기록이 안 찾아지는 11가지 이유와 대응 (실증 기반)\n1 일본식 독음: 금강산→Soto Kongo — 일제기 자료는 일본식 지명 병렬 / 2 로마자 철자: Corea·Korea 둘 다 / 3 기계번역 함정: 번역이 아니라 대조표(사람이 만들고 조합은 AI) / 4 외래 명명: 원산=Port Lazareff·제주=Quelpaert·거문도=Port Hamilton / 5 인명 표기: topic=persons 참조 / 6 언어 8+개국어 / 7 출처주의 분류: 찍은 사람이 서랍을 정한다(이승만 사진이 해병대 127-R-1438에) / 8 식별자: topic=identifiers / 9 기술심도: 제목만 있고 내용 없음 — 안을 열어야 함 / 10 결락: ①물리 소실(되찾을 수 없음)·②목록에 없는 것(목록에 올리면 되찾음 — 궁내청 의궤 77종 2011 환수 실증) / 11 음력/양력: 조선 기록=음력·서양=양력(대한제국 양력 채택 1896.1.1) — 두 자료를 겹칠 때 사건 순서가 뒤집힐 수 있다.\n부록 — 한자 전사 오류 복원: 연호·간지·서명 3중 교차로 원 한자 확정(예: '한풍원년 신예'→咸豊元年 辛亥, 1851).",
     'identifiers': "식별자 해독 — 번호가 곧 정보다 (첫 건은 검색어로, 나머지 수십 건은 번호 규칙으로)\n· NARA 참조코드 127-GR-223-A164360 = 기록군-시리즈-주제묶음-낱건. 주제 묶음이 차면 다음 번호(223→226 실증). NAID 간격은 계열마다 다름(사진 3·색인 1) — 하나 찾으면 ±1·±3 다 넣기.\n· 컬렉션 번호대: 같은 컬렉션인데 절반은 Chosen, 절반은 Seoul로 기술 — 검색어로는 절반만 걸린다 → NAID 앞뒤 훑기.\n· 같은 기관 안에서도 표기가 갈린다: 'Log of U.S.S.' vs 'Smooth Log of the USS' → 수식어 빼고 고유명만.\n· TNA 옆 훑기: 계열번호만 넣기(OCB 1→부산항 해도 82건·140년). 금지: 계열번호+주제어 조합(0건). 결락은 X 접미어(FO 881/9951X 병합 선언 등) — 남은 짝으로 우회. 지도는 MPKK·MFQ 등으로 추출 이관 — 원 문서철 번호로 역검색.\n· Gallica ark: btv1b=도판·필사 / bpt6k=인쇄본 — 같은 책이 형태별로 갈린다. · 6·25아카이브: 수집연도-국가-매체-일련(인접 채굴 가능). [8층 코드 지도] 미 국무부 십진분류 895 실전: .00 정치(★625-711 구간=1919.4~1928.6 — 3·1운동·임시정부) · .04 재판·형무소 · .10 공안(치안유지법) · .20 군사 · .40 사회·교육 · .50 경제·이민(하와이·미주) · .60 산업 · .71 통신 — 총독부 재정은 일본 코드 894.51(895가 0건이어도 없는 게 아니다). 검색창에 숫자 그대로.",
     'persons': "인명 열쇠 — 지명은 나라마다 갈리지만 사람 이름은 하나다\n절차: 자료 하나를 찾으면 찍은·쓴·모은·채집한 사람 이름으로 재검색 — 한 건이 컬렉션으로 열린다(Vráz→대한제국 사진 66건: 기관이 지명을 현대 표기 Inchon으로 정비해 Chemulpo 검색은 2건뿐이었다).\n표기 변형 생성: 이=Lee·Yi·Rhee·Ri / 김=Kim·Gim / 박=Park·Pak·Bak + 성명 도치(장면=Myun Chang, Dr. John)·현지 발음(서영해=Seu Ring-Hai).\n색인 함정: NARA Personalities 색인은 알파벳만이 기준 — 편철 제목에 Korea가 없어 '한국 자료'로는 안 걸린다. 구간 경계 이름(Kim·Park)은 두 칸 다 열기. 시기 구간 1940-54/1955-81 별도.\n독립운동가는 독립기념관 인명사전(search.i815.or.kr)이 이명·가명·호를 대신 생성. 채집자명은 체류국 비중 확인 — coreana와 교집합 검색으로 판정. [성씨별 색인 칸 지도·NAID] 최 Choi=109921404 · 정/전/천=109921404-405 · 서/손 Sue-Sun=109921580·Soon=109921572 · 윤 Youn=109921617 · 유/이 Yu=109921751 · 양/안 Y-Yoksi=109921616 · 이 Rhee=109921542 · 호/홍=109921479+480(두 칸 걸침 — 둘 다 열 것).",
@@ -230,7 +753,7 @@ JB_STRAT = {
 def query_bank(topic: str = "list") -> str:
     """검증된 한국 기록 발굴 쿼리 세트 조회. topic: 'list'(그룹 목록) 또는 그룹ID
     (예 'G-07' 구한말, 'G-08' 일제강점기, 'G-17' 간접키워드, 'N-05' NARA 시리즈, 'RG' 교차매핑, 'TNA' 레이어)
-    전략 지식: 'walls'(열한 겹의 벽), 'identifiers'(식별자 해독), 'persons'(인명 열쇠), 'crosscheck'(국내외 대조), 'world'(6개국 서고 지도), 'cities'(도시명 계보)."""
+    전략 지식: 'walls'(열한 겹의 벽), 'identifiers'(식별자 해독), 'persons'(인명 열쇠), 'crosscheck'(국내외 대조), 'world'(6개국 서고 지도), 'cities'(도시명 계보), 'allies'(한국전 참전·지원 22개국 발굴 지도)."""
     if topic == "list":
         lines = [f"{gid}: {ko} ({len(kws)}개)" for gid, ko, _en, _d, kws in KC.COMMON_GROUPS]
         lines += [f"{gid}: {ko} ({len(kws)}개)" for gid, ko, _en, kws in KN.NARA_GROUPS]
@@ -268,9 +791,78 @@ def query_bank(topic: str = "list") -> str:
     return "해당 그룹 없음 — topic='list'(해외 G/N/RG/TNA) 또는 'domestic'"
 
 @mcp.tool()
-def judge_rights(rg_series: str, title: str = "", archive: str = "") -> str:
+def judge_rights(rg_series: str = "", title: str = "", archive: str = "", naid: int | None = None) -> str:
     """권리 등급 자동 초기판정 (보고서 §30 플로 1~3단계). A/B=공개가능, C=허가필요, D=지위불명.
-    ※ 최종 확정은 사람이 §30 5단계로 서면 판정할 것."""
+    공공누리(KOGL) 제1~4유형 자동 인식 — 어느 필드든 'KOGL 2'·'공공누리 제1유형' 표기 투입 시 조건 판정.
+    naid 지정 시 NARA 카탈로그 Use Restriction 필드를 실제 조회해 자동판정(Unrestricted 실확인 → A 확정,
+    Restricted → C). 발굴 우선, 권리는 표시. ※ 최종 확정은 사람이 §30 5단계로 서면 판정할 것."""
+    if naid:  # NAID 실확인 자동판정 — "Unrestricted 확인 시 A 상향" 규칙의 자동화
+        import re as _re
+        key = os.environ.get("NARA_API_KEY")
+        if not key:
+            return (f"NAID 실확인은 서버 NARA_API_KEY 필요 — rg_series 초판정을 사용하거나 "
+                    f"catalog.archives.gov/id/{naid} 의 Use Restriction을 직접 확인하십시오.")
+        try:
+            d = http_json(f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1",
+                          headers={"x-api-key": key})
+            hits = (((d.get("body") or {}).get("hits") or {}).get("hits") or [])
+            rec = ((hits[0].get("_source") or {}).get("record") or {}) if hits else {}
+            if not rec.get("naId") or int(rec["naId"]) != naid:
+                return f"[NAID {naid}] 카탈로그에 없음 — NAID를 확인하거나 rg_series 초판정을 사용하십시오."
+            ur = rec.get("useRestriction") or {}
+            urs = ur if isinstance(ur, str) else " · ".join(
+                x for x in [ur.get("status"), ur.get("note"), "/".join(ur.get("specificUseRestrictions") or [])] if x)
+            rgnum = rec.get("recordGroupNumber") or next(
+                (a.get("recordGroupNumber") for a in (rec.get("ancestors") or []) if a.get("recordGroupNumber")), "")
+            cls, basis = auto_rights({"rg_series": f"RG {rgnum}" if rgnum else rg_series,
+                                      "title_orig": rec.get("title") or title, "archive": "NARA"})
+            if _re.search(r"unrestricted", urs, _re.I) and not _re.search(r"restricted\s*[-–]|possibly|fully restricted", urs, _re.I):
+                cls, basis = "A", f"NARA 카탈로그 Use Restriction '{urs}' 실확인 — 제한 없음 확정 (출처 표기 권장)"
+            elif _re.search(r"restricted", urs, _re.I):
+                cls, basis = "C", f"NARA 카탈로그 Use Restriction '{urs}' 실확인 — 제한 표기, 기관 확인 필요"
+            elif urs:
+                basis += f" · Use Restriction '{urs[:80]}' (판정 불변 — 문구 확인 필요)"
+            else:
+                basis += " · 카탈로그에 Use Restriction 미기재 — RG 초판정 유지"
+            # 맥락(v1.80): ancestors 전 계층 체인 — RG › 시리즈 › 파일단위, 각 층 NAID 포함(상·하위 항행 좌표)
+            chain = " › ".join(
+                (f"{_re.sub(r'recordGroup', 'RG', str(a.get('levelOfDescription') or ''), flags=_re.I)} "
+                 f"{a.get('recordGroupNumber') or ''}"
+                 + (" " + str(a.get("title"))[:60] if a.get("title") else "")
+                 + (f" [NAID {a.get('naId')}]" if a.get("naId") else "")).strip()
+                for a in (rec.get("ancestors") or []))
+            chain = _re.sub(r"\s+", " ", chain)
+            # 증거성(v1.80): 범위·내용 기술(scope note) 발췌 + 판독 시점 본문 지문
+            import hashlib as _hs
+            scope = str(rec.get("scopeAndContentNote") or "").strip()
+            sfp = _hs.sha256(scope.encode("utf-8")).hexdigest()[:16] if scope else ""
+            # 맥락·다매체(v1.82): 생산자·생산일·소장단위(청구 좌표)·디지털 객체 직링크
+            cre = str(((rec.get("creators") or [{}])[0] or {}).get("heading", ""))[:90]
+            nd = _nara_date(rec)
+            ru = str(((((rec.get("physicalOccurrences") or [{}])[0] or {}).get("referenceUnits") or [{}])[0] or {}).get("name", ""))[:80]
+            dob = rec.get("digitalObjects") or []
+            def _rank(o):  # v1.96.2: 최선 원본(TIFF>JPG/영상>PDF, 큰 파일)
+                t = f"{o.get('objectType','')} {o.get('objectUrl','')}"
+                w = 3 if re.search(r"tiff?\b", t, re.I) else 2 if re.search(r"jpe?g|mp4|mov|video", t, re.I) else 1 if re.search(r"pdf", t, re.I) else 0
+                try:
+                    sz = float(o.get("objectFileSize") or 0)
+                except (TypeError, ValueError):
+                    sz = 0
+                return w * 1e12 + sz
+            d0 = max(dob, key=_rank) if dob else {}
+            return (f"[NAID {naid}] {rec.get('title','')[:95]}\n"
+                    f"{f'RG {rgnum} · ' if rgnum else ''}https://catalog.archives.gov/id/{naid}\n"
+                    + (f"계보: {chain[:280]}\n" if chain else "")
+                    + (f"생산: {' · '.join(x for x in [cre, nd] if x)}\n" if (cre or nd) else "")
+                    + (f"소장단위: {ru} (열람·복제 청구 좌표)\n" if ru else "")
+                    + (f"디지털 객체 {len(dob)}점 — 최선 원본: {str(d0.get('objectUrl',''))[:160]}"
+                       + (f" ({str(d0.get('objectType'))[:30]})" if d0.get("objectType") else "") + "\n" if dob
+                       else "디지털 사본 없음 — 카탈로그에 디지털 객체 미등록(medialz URL도 HTML만 반환 실측) · 열람은 소장단위에 복제 청구\n")
+                    + (f"【범위·내용】 {scope[:400]}\n본문 지문(sha256-16): {sfp} — 판독 시점 기술(記述) 전문 기준. 재판독 지문 불일치=카탈로그 기술 개정 발생.\n" if scope else "")
+                    + f"등급: {cls}\n근거: {basis}\n※ 카탈로그 실확인 기반 자동판정 — 공개 전 수동 확정 필수, D등급 공개 금지\n"
+                    + f"※ 인접 채굴: nara_search(query='', naid={naid}, radius=3) — 사진 ±3·색인 ±1 간격.")
+        except Exception as e:
+            return f"[NAID {naid}] 카탈로그 조회 실패({str(e)[:60]}) — rg_series 초판정으로 폴백하십시오."
     cls, note = auto_rights({"rg_series": rg_series, "title_orig": title, "archive": archive})
     return f"등급: {cls}\n근거: {note}\n※ 자동 초기판정 — 공개 전 수동 확정 필수, D등급 공개 금지"
 
@@ -280,7 +872,8 @@ def _gallica_ko_fr(q):
 
 
 @mcp.tool()
-def gallica_search(query: str, max_results: int = 15) -> str:
+def gallica_search(query: str, max_results: int = 15, year_from: int | None = None,
+                   year_to: int | None = None, page: int = 1) -> str:
     """프랑스 국립도서관 Gallica 검색 (SRU API, 키 불요). 다국어 질의(한국어·日本語·中文 등)를
     프랑스어 색인어로 자동 변환(병인양요→expédition de Corée 1866, 선교사→missionnaires, 조선→Corée …).
     프랑스어 직접 입력도 가능 — 'Corée', 'guerre de Corée', 'Séoul', 'Tchosen'. 구한말
@@ -288,27 +881,71 @@ def gallica_search(query: str, max_results: int = 15) -> str:
     import urllib.parse, urllib.request, xml.etree.ElementTree as ET
     fr = _gallica_ko_fr(query)
     eff = fr or query
-    q = urllib.parse.quote(f'gallica all "{eff}"' if '"' not in eff else f'gallica all {eff}')
-    url = (f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2"
-           f"&query={q}&maximumRecords={min(max_results,50)}")
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=40) as r:
-        root = ET.fromstring(r.read().decode("utf-8", "replace"))
+    base = f'gallica all "{eff}"' if '"' not in eff else f'gallica all {eff}'
+    # 연대 필터: BnF 공식 색인 dc.date(>=·<= 지원, api.bnf.fr) — 진단 응답이면 후처리 폴백
+    date_clause = (f' and dc.date >= "{year_from}"' if year_from else "") + \
+                  (f' and dc.date <= "{year_to}"' if year_to else "")
     ns = {"srw": "http://www.loc.gov/zing/srw/", "dc": "http://purl.org/dc/elements/1.1/"}
-    total = root.find(".//srw:numberOfRecords", ns)
-    lines = []
-    for rec in root.findall(".//srw:record", ns)[:max_results]:
-        def g(tag):
-            e = rec.find(f".//dc:{tag}", ns)
-            return (e.text or "").strip() if e is not None and e.text else ""
-        lines.append(f"- {g('title')[:100]} ({g('date')}) [{g('type')[:20]}] {g('identifier')}")
-    return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "")
-            + f" — 총 {total.text if total is not None else '?'}건:\n"
+
+    def _sru(cql):
+        url = (f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2"
+               f"&query={urllib.parse.quote(cql)}&maximumRecords={min(max_results,50)}"
+               f"&startRecord={(page - 1) * max_results + 1}")
+        req = urllib.request.Request(url, headers={"User-Agent": _UA_KO})
+        with urllib.request.urlopen(req, timeout=40) as r:
+            return ET.fromstring(r.read().decode("utf-8", "replace"))
+
+    try:
+        root = _sru(base + date_clause)
+        total = root.find(".//srw:numberOfRecords", ns)
+    except Exception:  # 403 HTML 등 — 아래 카탈로그 폴백
+        root, total, date_clause = None, None, ""
+    post = False
+    if date_clause and total is None:
+        root = _sru(base); total = root.find(".//srw:numberOfRecords", ns); post = True
+    if total is None:  # SRU XML 아님 — Cloudflare 차단/점검 (2026-11-18 실측: 서버 IP 403)
+        try:  # v1.93: BnF 공식 카탈로그 SRU 폴백
+            tot, its = _bnf_catalog(eff, max_results)
+            if its:
+                return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "")
+                        + " — Gallica 서버가 자동 조회를 차단해 **BnF 공식 카탈로그**(catalogue.bnf.fr, 같은 국립도서관 소장 목록)로 수집"
+                        + (f" (전체 단어 일치 0건 → '{its[0]['relaxed']}'로 완화)" if its[0].get("relaxed") else "") + f" — total {tot}:\n"
+                        + "\n".join(f"- {it['title'][:110]} ({it['date'] or '연대 미상'})" + (f" [{it['type']}]" if it['type'] else "")
+                                     + (f" · {it['extent']}" if it['extent'] else "")
+                                     + "\n  " + (f"Gallica 원문: {it['gallica']}" if it['gallica'] else f"카탈로그: {it['url']}") for it in its)
+                        + "\n※ Gallica 원문 링크는 브라우저에서 열람(서버 자동 조회만 차단). BnF 디지털 자료 대부분 공유저작물(재이용 조건: gallica.bnf.fr/edit/und/conditions-dutilisation-des-contenus-de-gallica).")
+        except Exception:
+            pass
+        return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "")
+                + " — 서버 자동 조회가 차단되었습니다(BnF측 봇 차단 — 간헐적).\n"
+                + f"➤ 에이전트 지시: 웹 검색/브라우저 도구로 '{eff}'를 gallica.bnf.fr에서 검색해 "
+                + "상위 결과(제목·연대·ark 링크)를 표로 정리해 제시하라.\n"
+                + "공식 검색: https://gallica.bnf.fr/services/engine/search/sru?operation=searchRetrieve&query="
+                + urllib.parse.quote(eff))
+
+    def g(rec, tag):
+        e = rec.find(f".//dc:{tag}", ns)
+        return (e.text or "").strip() if e is not None and e.text else ""
+    recs = root.findall(".//srw:record", ns)
+    if post:
+        def _y(rec):
+            m = re.search(r"\d{4}", g(rec, "date"))
+            return int(m.group(0)) if m else None
+        recs = [r for r in recs if (_y(r) and (not year_from or _y(r) >= year_from)
+                                    and (not year_to or _y(r) <= year_to))]
+    lines = [f"- {g(r,'title')[:100]} ({g(r,'date')}) [{g(r,'type')[:20]}] {g(r,'identifier')}"
+             for r in recs[:max_results]]
+    yt = (f" [간행 {year_from or ''}~{year_to or ''}" + ("·후처리·연대 미상 제외" if post else "") + "]") if (year_from or year_to) else ""
+    pt = f" (p.{page})" if page > 1 else ""
+    return (f"Gallica '{query}'" + (f" → 프랑스어 자동 변환 '{eff}'" if fr else "") + yt + pt
+            + f" — 총 {total.text if total is not None else '?'}건"
+            + (f" 중 이 페이지 연대 일치 {len(lines)}건" if post else "") + ":\n"
             + ("\n".join(lines) or "(0건)")
             + "\n팁: 프랑스어 변형 — Corée·Coréens·Séoul·Fusan·guerre de Corée·Tchosen")
 
 @mcp.tool()
-def europeana_search(query: str, max_results: int = 15, media_type: str | None = None) -> str:
+def europeana_search(query: str, max_results: int = 15, media_type: str | None = None,
+                     year_from: int | None = None, year_to: int | None = None, page: int = 1) -> str:
     """유럽 문화유산 통합 검색 Europeana (58개국 4,000+ 기관). 키 없이 즉시 작동(공용 데모 키) —
     대량 사용 시 apis.europeana.eu 무료 키를 EUROPEANA_API_KEY로. 다국어 질의(한국어·日本語·中文 등)는
     영문 색인어로 자동 변환. media_type: 'VIDEO'|'IMAGE'|'TEXT'|'SOUND'. 예: europeana_search('Corée', media_type='IMAGE')"""
@@ -316,19 +953,30 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
     key = os.environ.get("EUROPEANA_API_KEY") or "api2demo"
     demo = not os.environ.get("EUROPEANA_API_KEY")
     query = _ko_en(query) or query
-    params = {"wskey": key, "query": query, "rows": min(max_results, 50), "profile": "standard"}
-    if media_type: params["qf"] = f"TYPE:{media_type.upper()}"
+    params = [("wskey", key), ("query", query), ("rows", min(max_results, 50)),
+              ("profile", "standard"), ("start", (page - 1) * max_results + 1)]
+    if media_type: params.append(("qf", f"TYPE:{media_type.upper()}"))
+    # YEAR:[A TO B] 열린 범위(*)·다중 qf 실측 검증 (2026-11-18)
+    if year_from or year_to: params.append(("qf", f"YEAR:[{year_from or '*'} TO {year_to or '*'}]"))
     url = "https://api.europeana.eu/record/v2/search.json?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": _UA_KO})
     with urllib.request.urlopen(req, timeout=40) as r:
         data = _json.loads(r.read().decode())
     items = data.get("items") or []
+
+    def _rshort(r):
+        v = (r[0] if isinstance(r, list) and r else r) or ""
+        m = re.search(r"(publicdomain/(?:mark|zero)|licenses/[a-z-]+|vocab/[A-Za-z-]+)", str(v))
+        return m.group(1).replace("licenses/", "CC ").replace("vocab/", "") if m else ""
     lines = []
     for it in items[:max_results]:
         title = (it.get("title") or ["?"])[0]
         year = (it.get("year") or [""])[0]
         prov = (it.get("dataProvider") or [""])[0]
-        lines.append(f"- {str(title)[:90]} ({year}) — {str(prov)[:40]} | {it.get('guid','')}")
+        rt = _rshort(it.get("rights"))
+        lines.append(f"- {str(title)[:90]} ({year}) — {str(prov)[:40]}"
+                     + (f" | 권리:{rt}" if rt else "") + f" | {str(it.get('guid','')).split('?')[0]}"
+                     + (f"\n  원본: {_eu_media(it)}" if _eu_media(it) else ""))
     return (f"Europeana '{query}'" + (f" [{media_type}]" if media_type else "")
             + f" — 총 {data.get('totalResults')}건:\n" + ("\n".join(lines) or "(0건)")
             + ("\n※ 공용 데모 키(api2demo) 사용 중 — 레이트리밋 시 EUROPEANA_API_KEY 설정 권장." if demo else "")
@@ -336,15 +984,15 @@ def europeana_search(query: str, max_results: int = 15, media_type: str | None =
 
 
 
-REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (18) — 잡지·저널급 편집 기준
+REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (19) — 잡지·저널급 편집 기준
 1. 파일명: [주제영문]_records_[연도범위].html — 조사 완료 시 기본 산출물
 2. 지면 구조(잡지형): masthead → kicker → 표제(h1) → standfirst → byline(기관 chip) → 목차(nav.toc) → 히어로 figure → Ⅰ서사 → Ⅱ핵심 기록 카드 → Ⅲ영상 필름스트립 → Ⅳ전수 목록 표 → Ⅴ재현 쿼리(details) → Ⅵ권리·게재 윤리 → 출처 총람(.sources) → footer
 3. 서사 우선: 표만 나열 금지 — 발굴 경위·의미를 에세이로 서술(리드 문단 .lead 드롭캡, 풀인용 .pull 1개 이상). 문단이 실물을 설명하면 그 문단 옆에 인라인 도판(.fig-inline 플로트)을 배치 — 잡지처럼 글과 그림이 같은 화면에 보이게. 문체는 담백·구체 — 과장어(놀라운·혁신적 등)와 AI투 금지
-4. 실물 이미지 필수: 게재 가능(권리 A/B+게재윤리 1·2단계) 기록은 기관 공개 원본을 base64 임베드 — 히어로 1장+핵심 기록마다, 공개 컷은 전량(.sheet 콘택트시트·컷별 라벨). 비식별판 우선. 이미지는 max-width:100% 자동 축소. 환경별: 로컬=base64 임베드 / 웹·모바일(파일·base64 불가)=기관 공개 원본 URL을 img src로 직접 참조하고 footer에 그 사실을 명기. 한 장도 못 실으면 사유를 Ⅵ절에 명기
+4. 실물 이미지 필수: 게재 가능(권리 A/B+게재윤리 1·2단계) 기록은 기관 공개 원본을 base64 임베드 — 히어로 1장+핵심 기록마다, 공개 컷은 전량(.sheet 콘택트시트·컷별 라벨). 비식별판 우선. 이미지는 max-width:100% 자동 축소. 원본 URL은 cross_search(format='csv'·'manifest')의 media 열(실조회 검증 직링크 — NARA·commons 등)을 우선 사용. 환경별: 로컬=base64 임베드 / 웹·모바일(파일·base64 불가)=기관 공개 원본 URL을 img src로 직접 참조하고 footer에 그 사실을 명기. 한 장도 못 실으면 사유를 Ⅵ절에 명기
 5. 모든 이미지에 figcaption + .credit 필수: "출처: 기관 정식명(국가) · 식별자 · 촬영자/생산자 · 원본 링크" — 출처 없는 이미지는 싣지 않는다
 6. 영상 기록은 .film 필름스트립: 장면 전환마다 프레임을 충분히 추출(권장 8~16장)해 타임코드(.tc)+한 줄 설명으로 나열 — 표제가 가린 장면(ETC 뒤)을 드러내 원본을 직접 보고 싶게 만든다. 슬레이트·표지판 판독 프레임은 별도 확대 figure. 블록 끝에 .cta "▶ 원본 영상 보기 — [기관] 카탈로그"
-7. 핵심 기록 3~6건은 .record 카드로: 이미지 + 한국어 제목(원제 병기) + .prov 출처 계보(국가→기관→RG/시리즈→상자→식별자) + 요약 + 바로가기 버튼 + 권리 배지
-8. 전수 목록 표(부록형): 식별자·원제 / 연대 / 소장처·청구정보(RG·Entry·Box) / 내용 / 바로가기(원문→해제→카탈로그) / 권리초판 배지(b-A 공개확정 · b-B PD추정 · b-C 허가필요 · b-D 지위불명)
+7. 핵심 기록 3~6건은 .record 카드로: 이미지 + 한국어 제목(원제 병기) + .prov 출처 계보(국가→기관→RG/시리즈→상자→식별자) + 요약 + 바로가기 버튼 + 권리 배지 — .prov의 시리즈 층은 cross_search(format='csv'·'manifest')의 partOf 값을 그대로 옮긴다(수기 재구성 금지 — 지면과 데이터의 계보 일치)
+8. 전수 목록 표(부록형): 식별자·원제 / 연대 / 소장처·계보(partOf — RG·시리즈·수집구조)·청구정보 / 내용 / 바로가기(원문→해제→카탈로그) / 권리초판 배지(b-A 공개확정 · b-B PD추정 · b-C 허가필요 · b-D 지위불명)
 9. 출처 명시(전 지면): byline·본문에 기관 chip(국기 이모지+정식명 — 🇺🇸 NARA · 🇬🇧 TNA · 🇫🇷 BnF Gallica · 🇪🇺 Europeana · 🇺🇸 archive.org · 🇰🇷 국가기록원 · 🇰🇷 KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 등), 말미 .sources에 인용 기관 총람(국기·정식명·청구정보·이용조건·링크)
 10. 재현 쿼리는 details 접이식 — 실제 실행한 쿼리만(목적/쿼리/URL 인코딩 실행 링크). '0건 ≠ 부재' note(인접 상자 ±2·피스 ±15 권고) 포함
 11. 종합 색인·최신 연구 목록(ul.src) — details로 접어도 된다
@@ -354,7 +1002,8 @@ REPORT_RULES = """HTML 발굴 보고서 작성 규칙 (18) — 잡지·저널급
 15. 인쇄 대응: 템플릿의 @media print 유지 — 보고서는 그대로 출판물처럼 인쇄 가능해야 한다
 16. 링크 신뢰장치: ①digitised 기록은 카탈로그 무료 미리보기 이미지를 공식 엔드포인트로 확보해 원문 figure로 임베드(예: TNA /image/getimage — 워터마크 원상태, 유료 전체본은 안내만) ②그 외 주요 링크는 페이지 캡쳐본 figure+credit(갈무리 일자) ③자동화 차단 시 명기하고 API 기술 원문 인용표로 대체. 훈격·날짜·건수는 API 원문 대조 '검증 기록'으로 — 초판 오류는 정정 이력을 남긴다
 17. 카드뉴스·포스터 병행: 보고서와 함께 캐러셀(기본 8장, 1080×1080)과 포스터 시리즈(1080×1350 세로형 4~6장 — 표제·인물·문서·검증·초대의 연작 서사, 같은 검수 기준 — insta-carousel 스킬 또는 report_template(kind='carousel') 참조)을 제작하고, 보고서 말미 '카드뉴스' 절에 .cards-grid로 임베드한다 — 무크롭 전체 노출 + 카드별 figcaption, 잘림·겹침 금지. 커버는 히어로와 같은 실물 이미지, 검증 노트·따라하기 카드 포함, 보고서와 출처 대장 공유. PNG 원본·caption.txt·sources.txt를 보고서와 함께 납품
-18. 더 보기 절(Ⅷ): 출처 총람 직전에 관련 공개 콘텐츠 소개 — 뉴스(📰)·기관 아카이브(🏛️)·해설/백과(📚)·SNS/영상 등을 카테고리 이모지+한 줄 설명으로. 접속 확인한 링크만(확인일 명기), 미확보 카테고리는 그 사실+추천 검색어 명시 — 발굴을 현재의 기억과 잇는 절"""
+18. 더 보기 절(Ⅷ): 출처 총람 직전에 관련 공개 콘텐츠 소개 — 뉴스(📰)·기관 아카이브(🏛️)·해설/백과(📚)·SNS/영상 등을 카테고리 이모지+한 줄 설명으로. 접속 확인한 링크만(확인일 명기), 미확보 카테고리는 그 사실+추천 검색어 명시 — 발굴을 현재의 기억과 잇는 절
+19. 수집기록 매니페스트 부록(증거성 상속): 보고서 끝에 cross_search(format='manifest') JSON을 <details> 부록으로 그대로 수록 — provenance(질의·소스·수집시각·재현 호출)와 기록별 heldBy·영속 식별자가 보고서를 떠나 전파되어도 따라간다. 카드뉴스·포스터 등 2차 매체에는 sources.txt에 매니페스트 identifier(kad-…)와 재현 호출문을 1줄 명기 — 어떤 매개로 변환되어도 원 발굴로 되돌아올 수 있게(현용기록물의 맥락·증거성 유지)"""
 
 REPORT_TEMPLATE = """<!DOCTYPE html>
 <html lang="ko">
@@ -611,8 +1260,8 @@ REPORT_TEMPLATE = """<!DOCTYPE html>
 CAROUSEL_RULES = """인스타 캐러셀 카드뉴스 제작 규칙 (12) — 1080×1080 PNG 6~10장 + 캡션·출처 대장
 1. 파이프라인: 재료 파악 → 발굴조사(실존 대상이면) → 실물 이미지 소싱·라이선스 판정 → 서사 설계 → HTML 카드 작성 → 1080×1080 렌더 → 전 카드 육안 검수(생략 금지) → 캡션·해시태그. 발굴조사 요지: 넓게→좁게+표기 변형 병렬(query_bank), 인접 채굴(식별번호 ±5~15 — tna_adjacent_mine·koreanwar_item radius), 공개 상태 🟢완전공개/🟡카탈로그만/🔴미공개 3단계 실검색 판정(0건≠부재 — 판정일 명기). 디지털 밖 필드 조사(제보·소장자 인터뷰·다락방 실물): 전래 경위 확인→공개 기록 사전 조사→녹취·게재 동의(기록으로)→앞뒷면 촬영(뒷면 메모가 최고 소재)→생존 인물 식별 시 동의 필수·포로/사망자 존엄 기준→구술의 부대명·날짜·지명을 새 검색어로 환류
 2. 서사 아크(장수에 맞게 병합, 기본 8장): ①커버 후킹(실물 풀블리드+숫자·반전 훅) ②디테일/원리 확대 ③~⑥증거(실물 이미지 카드 — 심장) ⑦정리(표·지도·타임라인) ⑧검증 노트 ⑨따라하기(재현 단계) ⑩CTA(행동 1개+댓글 유도+출처·권리 고지)
-3. 실물 이미지가 신뢰를 만든다: 주제가 실존 대상(기관·유물·사건·인물)이면 퍼블릭 도메인/공공누리 실물을 능동 발굴해 쓴다. 기관 비식별(블러)판 제공 시 우선 사용
-4. 이미지 카드마다 출처 캡션(.credit) 필수: "출처: 기관 정식명, 식별번호 (라이선스)" — 식별번호를 알면서 생략하면 부정확한 출처다. 이미지별 출처 대장(sources.txt) 동봉, 라이선스 미확정이면 '게시 전 [권리자] 확인' 안내
+3. 실물 이미지가 신뢰를 만든다: 주제가 실존 대상(기관·유물·사건·인물)이면 퍼블릭 도메인/공공누리 실물을 능동 발굴해 쓴다. cross_search media 열의 직링크(실조회 검증 원본) 우선, 기관 비식별(블러)판 제공 시 우선 사용
+4. 이미지 카드마다 출처 캡션(.credit) 필수: "출처: 기관 정식명, 식별번호 (라이선스)" — 식별번호를 알면서 생략하면 부정확한 출처다. 시리즈 계보(partOf)를 알면 "기관 › 시리즈" 1줄 병기(데이터의 partOf 값 그대로). 이미지별 출처 대장(sources.txt) 동봉, 라이선스 미확정이면 '게시 전 [권리자] 확인' 안내
 5. 사실 검증 워크플로우(5단계, 생략 없이): ①제목↔생산일자·기술 대조(제목은 후대 요약일 뿐) ②식별번호(NAID·원판번호·참조코드)로 원 소장기관 역추적 ③복수 기관 한·영 재기술 교차 대조(불일치가 최고의 카드 소재) ④어록·수치는 1차 출처만 — 실증 안 된 어록 금지(전승은 '전해지는 말'), 검증 불가한 비교 대신 산술 ⑤정정 이력(처음 판단→근거→확인일) 기록 — 정정 자체가 검증 노트 카드
 6. 레이아웃 다양화: 같은 아키타입 반복 금지 — 한 캐러셀에 3개 이상 혼합(풀블리드 커버·타임라인·인물+폴라로이드·문서 인용 docquote·빅넘버·목록 reel·파노라마 필름스트립·부채꼴 스택)
 7. 겹침·잘림 절대 금지(최다 결함): 모든 콘텐츠는 .col(하단 안전영역 150px) 안에 — 페이지번호·브랜드와 구조적으로 안 겹치게. credit에 margin-top:auto 금지(고정 마진). 이미지는 고정 높이+object-fit:cover. 세로 예산: 키커+제목 제외 콘텐츠 가용 ~650px — 초과하면 잘린다
@@ -984,19 +1633,53 @@ CTA bar: 발굴 보고서 공개 — KOREA ARCHIVE 통합검색 / Tiny credit: {
 
 CITATION_GUIDE = '인용 형식 가이드 — 한국사DB·국회도서관 (khdb-citation·nanet-citation 스킬의 서버판. 사용자의 논문·보고서 인용 요청에 이 형식을 적용하라)\n\n■ 한국사데이터베이스(db.history.go.kr) — 국사편찬위원회\n· 영구 인용 URL: http://db.history.go.kr/id/[기사ID]  (검색 URL은 POST라 재현 불가 — 반드시 /id/ 형식)\n· 각주(국내 표준): 저자, 〈[문서 제목]〉 작성일.(편찬기관 편, 연도, 《[총서명 권호]》) http://db.history.go.kr/id/[기사ID] (accessed YYYY.M.D.)\n· 참고문헌: [편찬기관]. 『[총서명]』. [권호]. 국사편찬위원회 한국사데이터베이스(http://db.history.go.kr), 검색일: YYYY.MM.DD.\n· 연대기(실록·승정원일기): 『[자료명]』 [왕명 연호년 월일(간지)], 국사편찬위원회 한국사데이터베이스, http://db.history.go.kr/id/[기사ID] (검색일: YYYY.MM.DD.)\n· 예: 조선총독부 고등법원 예심계, 〈한용운 신문조서〉 1919.8.27.(국사편찬위원회 편, 1990, 《한민족독립운동사자료집 12》) http://db.history.go.kr/id/hd_012r_0010_0310 (accessed 2026.3.13.)\n· ★인용 2층위 필수 고지 — 법전·편람(조선시대법령자료)은 한문 원문 제공 → 원문 인용 가능(표점은 DB 형태·교감본 미대조 명기). 등록·일기(비변사등록·승정원일기)는 국역만 노출 → 한문 역구성은 학술 인용 불가.\n· 출처 표기: KOGL — 국사편찬위원회 출처 표기.\n\n■ 국회도서관 전자도서관(dl.nanet.go.kr)\n· 영구 인용 URL: https://dl.nanet.go.kr/SearchDetailView.do?cn=[CN코드]  (CN코드가 식별자 — 예 KDMT1201319543)\n· 학위논문 각주: 저자명, 「논문 제목」, 학위논문(석사/박사), 대학교 대학원 학과명, YYYY.M, 쪽수.\n· 학위논문 참고문헌: 저자명. 「논문 제목」. 학위논문(석사/박사). 대학교 대학원 학과명, YYYY. 대한민국 국회도서관 전자도서관(https://dl.nanet.go.kr/SearchDetailView.do?cn=CN코드), 검색일: YYYY.MM.DD.\n· APA: 저자성, 이름. (연도). 제목 [학위 종류, 대학교명]. 국회도서관 전자도서관. https://dl.nanet.go.kr/SearchDetailView.do?cn=CN코드\n· Chicago: 저자명, “제목” (학위논문(박사), 대학교명, 연도), 쪽수. https://dl.nanet.go.kr/SearchDetailView.do?cn=CN코드 (검색일: YYYY년 MM월 DD일).\n· 단행본·학술기사·정부간행물도 같은 골격 — 「」=논문/기사, 『』=서명·총서명, CN코드 URL 동봉.\n\n공통 원칙: 검색일 명기 · 링크는 실확인한 것만 · 기사ID/CN코드 없는 인용은 재현 불가이므로 금지.'
 
+IIIF_GUIDE = 'IIIF 갤러리 규칙 (v1.97 — 발굴 기록을 \'연속으로 보는\' 이미지 열람 경로. 로컬=build_iiif.py, 웹·모바일=cross_search format=\'iiif\' + 아래 뷰어 골격)\n\n1. 공개 갤러리(바로 쓰기): https://changgi.github.io/korea-archive-mcp/iiif.html — 30곳 탐방·100선 실물 기록 800장(129 시리즈).\n   · 격자/연속/확대(딥줌) · \'▶ 전체 연속 보기\'(자동 넘김 3~12초·전체 화면·스페이스=멈춤) · 아래 띠 = 800장 전체(시리즈 경계 표시)\n   · 딥링크: iiif.html#s070/3 (070번 시리즈 3번째 장 확대) · 검색창=기관·기록·연대\n   · IIIF Presentation 3.0: iiif/collection.json(시리즈 129 매니페스트) · iiif/all.json(800장 한 매니페스트 — 처음부터 끝까지 이어보기) · iiif/m/sNNN.json(시리즈별)\n   · 자체 뷰어 KV (Korea Archive Viewer): https://changgi.github.io/korea-archive-mcp/kv.html?manifest=<URL> — 어떤 기관의 IIIF든(v2·v3 매니페스트·컬렉션) 딥줌·메타데이터·⧉ 나란히 비교(&compare=<URL2>)·회전·공유 링크(&canvas=n). 컬렉션을 열면 모든 기록의 모든 이미지가 한 줄로 이어진다(‹ ›·← →·전체 썸네일 띠·자동 넘김이 기록 경계를 넘어 계속, \'전체 n / N\' 표시). 기본값=우리 컬렉션 800장.\n   · 외부 뷰어: https://projectmirador.org/embed/?iiif-content=<매니페스트 URL> · https://uv-v4.netlify.app/#?manifest=<URL> — 우리 all.json·collection.json 모두 열림(실측). GitHub Pages가 CORS * 허용\n   · 계층: iiif/hierarchy.json(최상위 › 부 16 컬렉션 c/sNN-NN.json › 시리즈 129 매니페스트 › 이미지 800 캔버스) — 매니페스트마다 partOf(부·최상위), 캔버스마다 seeAlso(출처 대장 ledger.json)·고정성(sha256)·navDate·권리 근거·NARA 원 계보.\n   · 데이터: iiif/records.csv(장마다 식별자·연대·권리·계보·sha256·원 기관) · iiif/records.jsonld(RiC-O — RecordSet 계층·Record·Instantiation·PROV·owl:sameAs NARA).\n1-b. NARA→IIIF 브리지(v1.98 — NARA는 IIIF 미제공): https://korea-archive-mcp.vercel.app/iiif/nara/<NAID>/manifest.json — 맥락(ancestors 계보 metadata + partOf → 상위 /collection.json), 증거성(판독 시각·범위·내용 기술 sha256-16·이용/접근 제한 원문·소장단위·rights NoC-US/UND), 다매체(JPG·PNG 캔버스 + TIFF·PDF·영상 rendering), navDate. /collection.json=시리즈·파일단위 하위 기록(계보 대조로 확인한 것만) · /record.jsonld=RiC-O. 도구: nara_search(naid, output=\'iiif\') · cross_search(format=\'iiif\'|\'manifest\')가 NARA 결과에 이 주소를 단다.\n1-c. IIIF 브리지 2(v1.99 — IIIF 미제공 기관): https://korea-archive-mcp.vercel.app/iiif/{heritage|much|awm|commons}/<id>/manifest.json — heritage=국가유산청(id kdcd-asno-ctcd: 종목·지정번호·시대·소유·소재·해설+이미지 목록) · much=역사박물관(idnbr: 명칭·국적/시대·분류·재질·작가·크기·공공누리 유형 원문) · awm=호주 전쟁기념관(C-id: 수장번호·생산일·장소·저작권 만료 표시) · commons=위키미디어(File:…: 라이선스·작가·1600px+원본). 공통: 판독 시각·설명 지문(sha256-16)·원 기관 homepage·navDate. 정직한 식별자(KoreaArchiveMCP UA)로만 요청 — 자동 요청을 거부하는 기관은 기술적 불능으로 표시.\n1-e. TNA→IIIF(v2.1 — 실제 계층 재구성): https://korea-archive-mcp.vercel.app/iiif/tna/<C-id>/manifest.json — Discovery parentId를 따라 \'부서 › 분과 › 시리즈 › 피스\'를 복원해 metadata·partOf(→ /iiif/tna/<부모>/collection.json)로, 참조번호·기간·소장·법적 지위·공개 상태·이전 참조·기술 지문·판독 시각. /collection.json=하위 기록(하위 계층=컬렉션, 말단=기록 봉투 — 추가 요청 없이 열림). KV는 하위 컬렉션 30개까지 자동 펼침(기관 서버 예의), 나머지는 폴더.\n1-d. 기록 봉투 IIIF(v2.0 — IIIF·브리지가 없는 모든 기록을 IIIF로 \'구축\'): cross_search(format=\'iiif\')가 나머지 기록을 https://korea-archive-mcp.vercel.app/iiif/rec/<token>/manifest.json 로 만든다. 토큰=발견한 기록의 봉인된 기술(출처·식별자·연대·계열·원 기관 URL·원본 매체·발견 질의·발견 시각 — 서버 저장 없음). 계층이 없으면 \'기관 › 계열 › 기록\'을 구축해 명시, 증거=발견 경로·시각·봉투 지문(sha256-16), 원본 이미지가 있으면 그 이미지, 없으면 \'기록 카드\'(card.svg — 실제 기술 메타데이터만) 캔버스, /record.jsonld=RiC-O+PROV(발견 행위). format=\'manifest\'의 iiif 필드도 모든 기록에 붙는다.\n   · 결과 계층(v2.2): 컬렉션은 \'기관 › 계열\'별 하위 컬렉션으로 묶인다(규장각은 사부분류 史部 › 政法類 › … 를 계열로) — KV는 계열 머리말과 함께 전체를 이어 보여 준다.\n   · 검색 결과 전체를 링크 하나로: 응답의 \'KV 연속 보기\' 링크(kv.html#c=<압축 컬렉션>) — 기관 IIIF·브리지·기록 봉투가 한 줄로 이어진다(서버 저장 없음, 링크=컬렉션). 전파는 이 링크 하나로.\n2. 기관별 IIIF 지원(실측 2026-11-22) — 원본은 기관 IIIF로 열면 원 해상도 딥줌:\n   · Internet Archive: https://iiif.archive.org/iiif/3/<identifier>/manifest.json\n   · Europeana: https://iiif.europeana.eu/presentation/<dataset>/<record>/manifest (v2)\n   · Gallica: https://gallica.bnf.fr/iiif/ark:/12148/<ark>/manifest.json (서버 IP 자동 조회는 403 — 브라우저 뷰어에서 열림)\n   · NDL: https://dl.ndl.go.jp/api/iiif/<PID>/manifest.json · 이미지 API https://dl.ndl.go.jp/api/iiif/<PID>/R<7자리>/full/1600,/0/default.jpg (PDM·internet 확인 후)\n   · 위키미디어 공용: IIIF 없음 → Special:FilePath/<파일>?width=1600 정지 이미지 캔버스\n   · NARA·TNA·국내 기관(국가기록원·NLK·장서각·규장각·AKS 등): IIIF 미제공 → 정지 이미지(직접 받은 원본) 캔버스, 이미지 게재 권리 확인 필수\n3. 웹·모바일 경로: cross_search(query, format=\'iiif\') → (a) IIIF Collection — 결과 중 기관 IIIF가 있는 기록의 원 매니페스트 묶음 (b) 위키미디어 등 정지 이미지 Manifest. 이 JSON을 아래 뷰어 골격의 DATA에 넣어 아티팩트로 게시하면 \'연속 이미지 뷰\'가 된다. 로컬(Claude Code)=python3 docs/promo/build_iiif.py(출처 대장 ledger.json → collection·all·시리즈 매니페스트·이미지·썸네일).\n4. 권리 3단계(게재 시): ① 재이용 가능(PD·Unrestricted·CC·이용 제한 없음·기관 약관 허용) → 긴 변 1600px로 줄여 게재 ② 공공누리 제4유형 → 원본 파일을 크기·화질 변경 없이 그대로(자르기·글씨·필터 금지) ③ 웹페이지 캡처·이용 허가 필요(장서각·규장각·AKS All Rights Reserved·독립기념관 무표시) → 이미지 대신 원 기관 링크만. 캔버스마다 식별자·연대·소장·권리·보이는 것(metadata)과 원 기관 homepage를 단다. 포로·묘지·수형자 사진은 싣지 않는다. 협약기관(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터) 기록은 requiredStatement에 출처.\n5. 매니페스트 최소 구조(Presentation 3): {"@context":"http://iiif.io/api/presentation/3/context.json","id":<URL>,"type":"Manifest","label":{"ko":[..]},"items":[{"id":<canvas>,"type":"Canvas","width":W,"height":H,"label":{"ko":[..]},"metadata":[{"label":{"ko":["권리"]},"value":{"ko":[..]}}],"items":[{"id":<page>,"type":"AnnotationPage","items":[{"id":<anno>,"type":"Annotation","motivation":"painting","target":<canvas>,"body":{"id":<이미지 URL>,"type":"Image","format":"image/jpeg","width":W,"height":H}}]}]}]}. 검증: https://presentation-validator.iiif.io/validate?version=3.0&url=<URL>\n6. 뷰어 골격(아티팩트·정적 페이지 — OpenSeadragon, v2/v3 매니페스트·컬렉션 모두 읽어 전체를 한 줄로 이어 넘김):\n<!DOCTYPE html><meta charset="utf-8"><title>IIIF 연속 보기</title>\n<style>body{margin:0;background:#0b0c0f;color:#eee;font-family:system-ui}#v{height:78vh}#bar{display:flex;gap:8px;align-items:center;padding:8px}#strip{display:flex;gap:5px;overflow-x:auto;padding:6px}#strip img{height:56px;opacity:.5;cursor:pointer}#strip img.on{opacity:1;outline:2px solid #e0b04a}</style>\n<div id="bar"><button id="p">‹</button><button id="play">▶ 자동</button><button id="n">›</button><span id="t"></span></div><div id="v"></div><div id="strip"></div>\n<script src="https://cdn.jsdelivr.net/npm/openseadragon@4.1.1/build/openseadragon/openseadragon.min.js"></script>\n<script>\nconst SRC = [\'https://changgi.github.io/korea-archive-mcp/iiif/all.json\']; // ← 매니페스트·컬렉션 URL 또는 cross_search format=\'iiif\' JSON 객체\nconst L = (x) => typeof x === \'string\' ? x : x ? (Object.values(x)[0] || [])[0] || x[\'@value\'] || \'\' : \'\';\nasync function load(s, out) { const j = typeof s === \'string\' ? await (await fetch(s)).json() : s;\n  const isColl = /Collection/.test(j.type || j[\'@type\'] || \'\');\n  if (isColl) { for (const m of (j.items || j.manifests || [])) await load(m.items ? m : (m.id || m[\'@id\']), out).catch(() => {}); return out; }\n  const cvs = j.items || (j.sequences && j.sequences[0].canvases) || [];\n  for (const c of cvs) { const b = c.items ? c.items[0].items[0].body : c.images[0].resource; const svc = [].concat(b.service || [])[0];\n    out.push({ t: L(j.label) + \' · \' + L(c.label), src: svc ? (svc.id || svc[\'@id\']) + \'/info.json\' : { type: \'image\', url: b.id || b[\'@id\'] }, th: ((x) => x && (x.id || x[\'@id\']))([].concat(c.thumbnail || [])[0]) || (svc ? (svc.id || svc[\'@id\']) + \'/full/,80/0/default.jpg\' : b.id || b[\'@id\']) }); }\n  return out; }\n(async () => { const A = []; for (const s of SRC) await load(s, A).catch((e) => console.warn(\'IIIF 불러오기 실패\', s, e));\n  const v = OpenSeadragon({ id: \'v\', prefixUrl: \'https://cdn.jsdelivr.net/npm/openseadragon@4.1.1/build/openseadragon/images/\', showNavigator: true });\n  const st = document.getElementById(\'strip\'); st.innerHTML = A.map((a, i) => `<img loading="lazy" src="${a.th}" data-i="${i}">`).join(\'\');\n  let k = 0, tm = null; const go = (i) => { if (i < 0 || i >= A.length) return; k = i; v.open(A[k].src); document.getElementById(\'t\').textContent = `${k + 1}/${A.length} ${A[k].t}`;\n    st.querySelectorAll(\'img\').forEach((x, j) => x.classList.toggle(\'on\', j === k)); st.children[k].scrollIntoView({ inline: \'center\', block: \'nearest\' }); };\n  p.onclick = () => go(k - 1); n.onclick = () => go(k + 1); st.onclick = (e) => e.target.dataset.i && go(+e.target.dataset.i);\n  play.onclick = () => { if (tm) { clearInterval(tm); tm = null; play.textContent = \'▶ 자동\'; } else { tm = setInterval(() => go(k + 1 < A.length ? k + 1 : 0), 5000); play.textContent = \'❚❚ 멈춤\'; } };\n  document.onkeydown = (e) => { if (e.key === \'ArrowLeft\') go(k - 1); if (e.key === \'ArrowRight\') go(k + 1); }; go(0); })();\n</script>\n7. 산출 체크: 캔버스 수 = 게재 이미지 수 · 이미지마다 권리 표시 · 링크 전용 항목 목록 동봉 · 검증기 okay · 모바일(가로 넘침 없음) 확인.'  # v1.97: IIIF 갤러리 규칙·기관별 IIIF·권리 3단계·뷰어 골격(Node 패리티)
+VIDEO_GUIDE = "영상 기록 장면 해설 규칙 (v1.93 — 영상 분석 기능의 서버판. 로컬=analyze_video.py keyscenes, 웹·모바일=IA 시각 코드 프레임)\n\n1. 영상 찾기: cross_search/nara_search로 영상 기록 → 권리 실확인(judge_rights(naid) — Unrestricted=A, 연방 저작물 Undetermined=B 명기, Restricted=장면 사용 금지·제목만 인용). 협약기관(koreanwar) 영상은 입수처 NARA NAID로 원본 권리 확인.\n2. 장면 추출 — 환경별 경로:\n   · 로컬(Claude Code): python analyze_video.py keyscenes <영상|URL> --out <dir> — ffmpeg scene 전환 탐지 → 장면별 가장 선명한 프레임(원본 해상도, 업스케일 금지) · 리더/암전 자동 제외 → scenes.json(start·end·dur·대표 시각) + _keyscenes.jpg 밀착 인화.\n   · 웹·모바일: ia_search(identifier=<IA 영상 id>) → 【영상 장면 프레임】 시각 코드 목록(IA 파생 썸네일 .thumbs/<id>_<초>.jpg)을 열어 장면을 본다. NARA 사본(예: 428-npc-170)은 IA에 같은 번호로 있는 경우가 많다(cross_search nara,ia가 [nara+ia]로 묶음). KTV(ehistory.go.kr) 영상은 nedb_search(mode=ktv, view URL)의 해설 목록(장면 순서)을 시각 코드 대용으로 쓴다.\n3. 장면 해설은 '보이는 것만': 인물 수·복장·장비(전차·함정·선체 번호)·지형·화면 속 문자. 불명은 '판독 불가'. 사건 해석(무엇을 위한 폭파인가 등)은 기록 표제·기술(NARA Scope and Content·KTV 해설)에서 인용할 때만, 인용 출처를 붙인다.\n4. 장면 해설 카드(1080×1080): 프레임 원본을 가득(object-fit cover, 업스케일 시 흐림 감수 대신 원 크기 근처 배치) + 좌상단 시각 코드 칩(mm:ss) + 하단 2줄 해설 + 장면 번호(n/N) + 출처 한 줄(기관·식별자·권리). 영상 1편 = 표지(대표 장면) + 장면 4~8장 + 밀착 인화(전 장면 타임라인) 1장.\n5. 타임라인 카드: 밀착 인화(시각 코드 포함)로 영상 전체 흐름을 한 장에 — '몇 분 몇 초에 무엇이 보이는가'가 증거성의 핵심.\n6. 존엄: 포로·시신·부상자 클로즈업 장면은 해설 카드에서 제외(게재윤리 4단계).\n7. 출처 표기: 기관 정식명 · 영상 식별자(NAID/IA id/KTV mediaid) · 장면 시각 · 권리 등급 — 프레임마다."
 ANNOTATION_GUIDE = "기록 해설형 어노테이션 규칙 — 상세판 (record-annotation 스킬의 서버판. 웹에서는 HTML/아티팩트로 동일 문법 구현)\n\n1. 영역 표시: 점선 영역 박스(dashed 1.5~2px) + 박스 모서리 바깥 번호 칩 — 점 찍기·내용 가림 금지. 좌표는 %(x,y,w,h)로 기록해 어느 해상도에서도 재현.\n2. 전처리: 레터박스(검은 띠) 자동 크롭 후 원본 비율 유지. 저해상 프레임은 확대 금지 — 원본 크기 근처로 배치.\n3. 메타데이터 표(7행 기준): 제목 · 식별번호(영구 식별자) · 원 제작(판독 근거 병기) · 사본 소재 · 생산시기 · 권리(원판/사본 구분) · 판독 근거.\n4. 범례: 번호 칩 + 굵은 요소명 + 한 줄 해설. 순서는 판독 서사(제작 주체→내용→좌표→판본) 순.\n5. ★추정 금지: 화면·원문에서 직접 읽히는 것만 적는다. 불명은 '판독 불가'로 명기 — '아마도·추정·으로 보임'류 어휘가 해설에 들어가면 재검토.\n6. 원판/사본 계보 필수: 원판 권리(PD 등)와 디지털화본 표시(워터마크·업체)를 구분 명기.\n7. 산출 3형: 보고서 부록 절('기록을 해설해 드립니다') · 카드뉴스(1080 — 범례 압축·2열 허용) · 슬라이드(도형 마커+노트에 판독 해설).\n8. 권리 고지: 기관 정식명·식별자·열람 URL — 협약기관(KOREAN WAR ARCHIVES) 출처 표기 필수, 게재윤리 4단계.\n9. 영상 프레임 판독 보강(슬레이트·화면 속 문자): 슬레이트/타이틀 카드에서 부대·촬영자·날짜·롤 번호·장소 필드를 파싱하고, 당대 지명(일본식 독음·외래 명명)은 현대 지명과 병기. 표지판·현수막·차량 표식 등 화면 속 문자는 OCR과 육안을 교차해 확정 — 불일치·판독 불가는 그대로 표기(추정 금지 원칙 동일)."
 
-HELP_GUIDE = '사용 안내 — 매직 키워드 “창기창기 도와줘” (처음 사용자용. 이 내용을 친절한 안내로 정리해 사용자에게 전달하라. 시각 안내 페이지: https://korea-archive-mcp.vercel.app/help.html — 링크를 함께 제공)\n\n■ 무엇을 하는 서비스인가\n국내외 15개 아카이브(미국 NARA·영국 TNA·Internet Archive·프랑스 갈리카·유러피아나·국가기록원·국립중앙도서관·한국사DB·규장각·서울기록원·KOREAN WAR ARCHIVES 협약기관·국가보훈부 등)에서 한국 관련 기록·사진·영상(1860~1960)을 발굴하고, 검증하고, 전파물까지 만들어 준다. 한국어 한 문장이면 충분 — 표기 변형(Corea·Chosen·Corée·한자)과 색인 언어 변환은 자동. 카카오 PlayMCP 마켓 등록본으로도 연결 가능(\'KOREA ARCHIVE 통합검색\' 검색 — 같은 서버).\n\n■ 매직 키워드 2개\n① “○○○ 풀패키지로 만들어줘” — 조사→검증→매거진 보고서→카드뉴스 8장→포스터→홍보·입문·메시지 카드→발표 PPTX(대본 포함)→기록 해설→Canva 편집본→KARDA 연구 데이터·시연 영상(데모 GIF)까지 전 산출물 자동(report_template kind=full_package 순서를 따름).\n② “창기창기 도와줘” — 이 사용 안내.\n\n■ 이렇게 물어보면 된다 (예시)\n· “할아버지가 참전한 글로스터 연대 기록 찾아줘” (실전 1호 — TNA 훈장 추천서 원문까지)\n· “장진호 전투 영상 기록 찾아줘” (실전 2호 — 3개국 3중 소장 실증)\n· “조선시대 한강 나루의 행정을 정리해줘” (법전 판독→형제 조 전수→연대 검증 제도사)\n· “병인양요 프랑스 기록 찾아줘” / “이 참조코드 주변을 더 캐줘”(인접 채굴) / “이 기록 게재 가능한지 판정해줘”\n\n■ 검증 원칙(차별점) — 실물 기록만(AI 생성 인물·장면 금지)·원문 대조·출처 명시·정정 공개. 통과 산출물에만 검증 낙관.\n\n■ 자주 묻는 것\n· 0건 → 부재가 아니다. 표기 변형·인접 채굴·“대상을 관리한 행정”으로 전환.\n· ZIP 일괄 납품은 로컬 환경 전용 — 웹·모바일은 개별 아티팩트+manifest.\n· 이미지: 웹은 기관 공개 URL 참조 — 원본은 항상 기관 링크에서 열람.\n· 조선 주제 → nedb_search 심층 판독 모드(law·sibling·matrix·origin·record·sjw·kyujanggak).\n\n커넥터: korea-archive-mcp.vercel.app/api/mcp · 안내 페이지: korea-archive-mcp.vercel.app/help.html'
+EXHIBIT_GUIDE = """고문서 전시형 산출물 규칙 — aks-archive-harvester 스킬 ④매개(Mediate) 단계의 서버판 (웹·모바일 동등성).
+nedb_search(mode=aks)로 발굴한 문중·서원 고문서를 전시 페이지·카드뉴스·학습지로 만드는 규칙.
+
+■ 산출물 4종
+① 전시 페이지(단일 HTML): 표제·도입문(lead) → 시대 타임라인 → 문서별 패널(도판+캡션+이야기) → 출처 고지. 인쇄 시 패널 단위로 나뉘는 구성. 웹=아티팩트 미리보기, 로컬=파일 저장.
+② 카드뉴스(1080×1350): 표지 1장 + 문서별 1장 + 클로징 1장. 문서 카드 = 도판(상단 70%)+캡션 띠(하단). 로컬=헤드리스 크롬 렌더, 웹=아티팩트/Canva 커넥터.
+③ 학습지(A4 1장): "이 문서는 무엇인가"(유형·연대·발급자) · "찾아보기"(도판에서 날짜·수취인 찾기) · "생각해보기"(열린 질문 1개) · 요약 박스.
+④ 게시 문구: 2~3문장 + 해시태그 — 기관명·소장처명 반드시 포함.
+
+■ 캡션·서술 규칙 (추정 금지)
+- 제목·문서유형·육안으로 보이는 것만 서술. 탈초(판독문)·번역·인물 생애는 사용자가 제공·확인한 것만 사실로 기술.
+- 캡션 형식: [연대] [발급자→수취인] [문서유형] — 한 줄. 이야기(2문장 이내)는 주제와의 연결만.
+- 검토 미완(사용자 확인 없는 항목)은 "초안" 표기를 지우지 않는다.
+
+■ 권리·출처 (산출물 전체 공통)
+- 전 산출물에 "자료: 한국학중앙연구원 한국고문서자료관 (archive.aks.ac.kr)" 고지 필수.
+- 이미지 재이용은 기관 이용조건을 따름 — 게재 전 judge_rights로 초판정.
+
+■ 전시 페이지 골격 (채워 쓸 것)
+<!doctype html><html lang=ko><head><meta charset=utf-8><title>{{전시제목}}</title><style>
+body{font-family:'Noto Serif KR',serif;max-width:860px;margin:0 auto;padding:2rem;color:#222}
+.lead{font-size:1.15rem;border-left:4px solid #8a6d3b;padding-left:1rem;margin:1.5rem 0}
+.tl{display:flex;gap:.6rem;flex-wrap:wrap;margin:1rem 0}.tl span{background:#f3ede2;padding:.2rem .7rem;border-radius:1rem;font-size:.85rem}
+.panel{page-break-inside:avoid;margin:2.2rem 0;border-top:1px solid #ddd;padding-top:1.4rem}
+.panel img{width:100%;border:1px solid #ccc}.cap{font-size:.92rem;color:#555;margin:.4rem 0}
+.story{margin:.6rem 0}.draft{color:#b33;font-size:.8rem}
+.src{margin-top:3rem;font-size:.85rem;color:#777;border-top:2px solid #8a6d3b;padding-top:.8rem}
+</style></head><body><h1>{{전시제목}}</h1><p class=lead>{{도입문}}</p>
+<div class=tl>{{<span>연대</span>…}}</div>
+<div class=panel><img src="{{도판URL}}"><p class=cap>{{[연대] [발급자→수취인] [문서유형]}}</p><p class=story>{{이야기}}</p><span class=draft>{{검토 미완 시: 초안}}</span></div>
+<p class=src>자료: 한국학중앙연구원 한국고문서자료관 (archive.aks.ac.kr) · 이미지 재이용은 기관 이용조건 준수</p></body></html>"""
+
+HELP_GUIDE = '사용 안내 — 매직 키워드 “창기창기 도와줘” (처음 사용자용. 이 내용을 친절한 안내로 정리해 사용자에게 전달하라. 시각 안내 페이지: https://korea-archive-mcp.vercel.app/help.html — 링크를 함께 제공)\n\n■ 무엇을 하는 서비스인가\n9개국 30개 아카이브(🇺🇸 NARA · 🇬🇧 TNA · Internet Archive · 🇫🇷 갈리카 · 🇪🇺 유러피아나 · 🇯🇵 아시아역사자료센터 JACAR · 🇦🇺 호주 전쟁기념관 · 🇳🇱 네덜란드 국립문서보관소 · 🌐 위키미디어 공용 · 🇺🇳 UN 디지털도서관 · 🇯🇵 NDL 서치 · 🇰🇷 국가기록원·국립중앙도서관(+신문아카이브 1883~1960)·한국사DB·국편 전자사료관·독립기념관·공훈전자사료관·독립운동판결문(국가기록원)·KTV e영상역사관·역사박물관·규장각·장서각·한국고문서자료관·국가유산포털·서울기록원·정보공개포털·KOREAN WAR ARCHIVES 협약기관)에서 한국 관련 기록·사진·영상(1860~현대)을 발굴하고, 검증하고, 전파물까지 만들어 준다. 한국어 한 문장이면 충분 — 표기 변형(Corea·Chosen·Corée·한자·朝鮮)과 색인 언어 변환은 자동. 카카오 PlayMCP 마켓 등록본으로도 연결 가능(\'KOREA ARCHIVE 통합검색\' 검색 — 같은 서버).\n\n■ 매직 키워드 2개\n① “○○○ 풀패키지로 만들어줘” — 조사→검증→매거진 보고서→카드뉴스 8장→포스터→홍보·입문·메시지 카드→발표 PPTX(대본 포함)→기록 해설→Canva 편집본→KARDA 연구 데이터·시연 영상(데모 GIF)까지 전 산출물 자동(report_template kind=full_package 순서를 따름).\n② “창기창기 도와줘” — 이 사용 안내.\n\n■ 이렇게 물어보면 된다 (예시)\n· “할아버지가 참전한 글로스터 연대 기록 찾아줘” (실전 1호 — TNA 훈장 추천서 원문까지)\n· “장진호 전투 영상 기록 찾아줘” (실전 2호 — 3개국 3중 소장 실증)\n· “조선시대 한강 나루의 행정을 정리해줘” (법전 판독→형제 조 전수→연대 검증 제도사)\n· “병인양요 프랑스 기록 찾아줘” / “이 참조코드 주변을 더 캐줘”(인접 채굴) / “이 기록 게재 가능한지 판정해줘”\n· “안중근 공훈록 전문 보여줘”(독립유공자 — 공적조서·수형기록·현충시설까지) / “이 NARA 기록 권리 실확인해줘”(naid)\n· “장진호 기록, 같은 것끼리 묶어서 보여줘” (협약기관 재수집본·인터넷 아카이브·위키미디어 공용 사본을 NARA 원본과 한 건으로 — 원본은 NARA 목록 직접 조회로 실재 확인, 결과에 [nara·원본확인+koreanwar] 표시)\n· “이 의궤 해제 읽어줘”(장서각 K2-…) / “안보리 결의 원문 PDF”(UN recid) / “이 1910년 기사 전문”(독립기념관 URL)\n\n■ 검증 원칙(차별점) — 실물 기록만(AI 생성 인물·장면 금지)·원문 대조·출처 명시·정정 공개. 통과 산출물에만 검증 낙관.\n\n■ 자주 묻는 것\n· 0건 → 부재가 아니다. 표기 변형·인접 채굴·“대상을 관리한 행정”으로 전환.\n· ZIP 일괄 납품은 로컬 환경 전용 — 웹·모바일은 개별 아티팩트+manifest.\n· 이미지: 웹은 기관 공개 URL 참조 — 원본은 항상 기관 링크에서 열람.\n· 조선 주제 → nedb_search 심층 판독 모드(law·sibling·matrix·origin·record·sjw·kyujanggak·aks[한국고문서자료관 — 문중·서원 고문서 172곳]). 심층 판독 11채널 — 발굴 결과의 URL·번호를 nedb_search 모드에 재투입: i815(당대 신문 전문)·gonghun(공적조서·공훈록)·jacar(일본 공문서)·ktv(대한뉴스 해설)·earchive(수집 사료 이용조건)·commons(PD 라이선스)·jsg(장서각 해제)·un(UN 요약·PDF)·oldnews(신문 색인어·관련기사·\'본문:\' OCR 전문)·much(소장품·공공누리 자동판정) + seoul_archives_search(상세 URL). 연합 검색 푸터가 경로를 안내한다.\n· 연대로 좁히기 → 주요 검색 도구의 year_from/year_to. 번호 옆 훑기(인접 채굴) → TNA·NARA(naid)·archive.org(radius)·6·25아카이브. 당대 표기 자동 팬아웃 → cross_search(variants). 채널 상태 → source_profile(\'health\').\n· 데이터화 3종 → cross_search format=\'csv\'(표·통계) · \'karda\'(지식그래프 nodes/edges) · \'manifest\'(수집기록 매니페스트 JSON-LD — 증거성·맥락 보존, 기록관리시스템 등재·다매체 변환의 원천).\n\n커넥터: korea-archive-mcp.vercel.app/api/mcp · 안내 페이지: korea-archive-mcp.vercel.app/help.html · 예제 갤러리(GitHub Pages): changgi.github.io/korea-archive-mcp/ — 30곳 탐방·100선 캐러셀, 전체 기록 IIIF 갤러리(iiif.html — 연속 보기·딥줌·IIIF 매니페스트)'
 
 FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물까지 한 번에 (매직 키워드: "풀패키지" · "전부 다 만들어줘")
 입력은 주제 하나면 충분하다. 아래 순서를 전부 수행해 모든 산출물을 함께 납품한다.
 
 1. 발굴 조사: cross_search + 전문 도구(tna_search/nara_search/koreanwar_search/gallica_search…) — 표기 변형 병렬,
    시리즈 특정+tna_adjacent_mine 인접 채굴(±5~15), 국내 협약기관 교차검증, 카탈로그 API 원문으로 훈격·날짜·건수 검증
-   (정정 발생 시 이력 기록), judge_rights 권리 초판. 조선~대한제국 주제면 심층 판독 경로 추가: nedb_search 모드 활용 — law(법전 근거)→★sibling(조문을 열었으면 형제 조 전수 — 총론만 읽으면 핵심을 놓친다)→matrix(법전 수록 대조로 부재 발견)→origin(어휘 연원)→record(등록류 — 座目 필터)→sjw(최초 용례로 연대 검증)→kyujanggak(목록+해제). 보고서에 제도 재구성 절(등록·측정·운항·동원·보상 + 제도의 끝)·법전 대조표·자기 정정 이력을 추가하고, 인용은 2층위(법전=원문 인용 가능/등록·일기=국역만·역구성 학술 인용 불가) 명기.
+   (정정 발생 시 이력 기록), judge_rights 권리 초판. 핵심 기록은 심층 판독으로 본문·권리 실확인: nedb_search 모드(i815 당대 신문·gonghun 공훈록·ktv 영상·earchive 수집사료·commons PD파일·jsg 해제)와 seoul_archives_search(상세URL)·koreanwar_item·judge_rights(naid). 조선~대한제국 주제면 심층 판독 경로 추가: nedb_search 모드 활용 — law(법전 근거)→★sibling(조문을 열었으면 형제 조 전수 — 총론만 읽으면 핵심을 놓친다)→matrix(법전 수록 대조로 부재 발견)→origin(어휘 연원)→record(등록류 — 座目 필터)→sjw(최초 용례로 연대 검증)→kyujanggak(목록+해제). 보고서에 제도 재구성 절(등록·측정·운항·동원·보상 + 제도의 끝)·법전 대조표·자기 정정 이력을 추가하고, 인용은 2층위(법전=원문 인용 가능/등록·일기=국역만·역구성 학술 인용 불가) 명기.
 2. 실물 이미지 수집: 기관 공개 원본 전량(비식별판 우선) + digitised 기록의 카탈로그 무료 미리보기.
    수집 즉시 출처 대장(sources.txt) 기록. AI 생성 인물·역사 장면 절대 금지.
-3. HTML 보고서: report_template(kind='report') 18규칙 전부 — 히어로 실물·인라인 도판·콘택트시트·원문 미리보기·
+3. HTML 보고서: report_template(kind='report') 19규칙 전부 — 히어로 실물·인라인 도판·콘택트시트·원문 미리보기·
    검증 기록·전수 목록·재현 쿼리·더 보기·카드뉴스 갤러리. 매거진 완성판은 kind=magazine 확장팩을 덧입힌다. 산출 방식 — 로컬: .html 파일 저장 / 웹·모바일: HTML 아티팩트로 게시(파일 저장 불가), 이미지는 기관 공개 URL 참조. 수치는 모든 산출물에서 동일해야 한다.
 4. 캐러셀 8장: report_template(kind='carousel') 12규칙 — 커버는 보고서 히어로와 같은 실물, 검증 노트·따라하기 포함.
    렌더는 환경별: 로컬=헤드리스 렌더 / 웹·모바일=Canva 커넥터 생성→페이지별 PNG 내보내기. 전 장 육안 검수 생략 금지.
@@ -1007,8 +1690,10 @@ FULL_PACKAGE = """풀패키지 오케스트레이션 — 발굴에서 전파물�
 7. 작업 로그(activity_log.md): 조사 중 모든 행위를 시간순 표로 기록 — 단계(발굴/교차검증/검증/수집/산출)·행위·도구와 쿼리·결과 건수·응답 규모. 이어서 분석 절: 도구·채널별 호출 통계와 성과, 0건→방법 전환 회수율, 검증 정정률, 소요·병목, 산출물 규모. LLM 토큰은 정확 집계 불가(클라이언트 영역) — 대리 지표(호출 수·바이트·소요)로 기록하고 그 사실을 명시. 로그+보고서 Ⅴ절+manifest가 감사 추적 3종 세트로 zip에 포함된다.
 8. KARDA 온톨로지 산출물(kad/): 발굴 결과를 관계 그래프 입력으로 변환해 zip에 포함 — karda_nodes.csv(id·type[record/agent/unit/place/event]·label·속성)·karda_edges.csv(source·target·relation·relation_ko·basis·confidence)·kad_readme.txt. 신뢰도 필터: 확정(API·원문 판독)·높음만 그래프 수록, 부분 이하는 tentative로 readme에 명기(그래프 오염 방지). 관계마다 근거(basis)를 남겨 연구 재검증 가능하게. 로컬은 make_metadata.py 활용 가능. 품질 게이트 추가: ①보고서 CSS는 템플릿 전체를 그대로 포함(부분 복사 금지 — 영상 절 등 미사용 스타일도 포함해야 절 추가 시 깨지지 않는다) ②핵심 기록 카드는 수집된 실물이 있으면 반드시 이미지 포함(자료 화면 대체 시 그 사실 명기) ③갤러리·절은 placeholder 주석이 아니라 실제 임베드 — 납품 전 잔존 placeholder 검사. 홍보 카드뉴스 제작 시: 텍스트 위주 금지 — 매거진 실제 지면 캡쳐(표지·차례·본문 스프레드·필름스트립·기록 카드·갤러리·검증 낙관)를 카드마다 수록해 산출물 품질을 눈으로 증명한다. 입문 카드뉴스(키워드 정복형) 병행 제작: 처음 접하는 일반 시민 대상 — 후킹 문구(“○○은 처음이지?”·“○○ 완벽 해설”·“3분 정복”) 적극 사용, 카드마다 키워드 1개를 초대형 타이포로 강조하고 한두 줄 쉬운 설명(중학생 눈높이·비유 허용·전문용어 풀어쓰기), 실물 프레임·지면 캡쳐 동반, 마지막 카드는 “정복 완료!”+다음 키워드 참여 유도. ZIP에는 intro/ 폴더로 수록. 메시지형(미장센 문법) 병행 제작: 강연 오프닝·SNS 임팩트용 카드뉴스+슬라이드 — 1장 = 실물 미장센 이미지 1 + 메시지 한 문장, 서사 아크는 충격 오프닝→과거→반전→블랙아웃 테제(텍스트만)→원칙→결과→선언→CTA. 이미지는 실물 기록만(AI 연출 이미지 금지 — 저해상 프레임은 어둡게 깔아 무드로 사용), 장마다 출처 1줄, 슬라이드판은 발표 노트에 미장센·디렉팅 의도 기록. ZIP에는 message/ 폴더로 수록. 시연 영상(선택): 산출물·서비스 데모 GIF/MP4 병행 — 로컬은 demo-video 스킬(실브라우저 구동 녹화), 웹은 페이지 연속 캡쳐 프레임을 GIF로 합성. ZIP에는 video/ 폴더로 수록. 기록 해설형(도큐먼트 애노테이션) 병행 제작: 서울기록원류 해설 지면 문법 — 기록·프레임 위에 점선 영역 박스+외곽 모서리 번호 칩으로 요소를 하나하나 판독(마커가 내용을 가리지 않게 — 점 찍기 금지, 레터박스 검은 띠 제거 후 원본 비율 유지, 색은 지면 팔레트와 조화)(인장·타이틀·타임코드·워터마크·부대 표식 등), 상단에 메타데이터 표(제목·식별번호·제작·소재·시기·권리), 원판/사본 계보 명기. 판독은 화면·원문에서 직접 읽히는 것만(추정 금지, 불명은 표기). 보고서에는 ‘기록을 해설해 드립니다’ 부록 절로, 카드뉴스·슬라이드로도 병행(슬라이드 노트에 판독 해설). ZIP에는 annotate/ 폴더로 수록.
 
+9. 보존 패키지(SIP — 현용기록물화): cross_search(format='manifest')로 수집기록 매니페스트(JSON-LD — provenance·heldBy·영속 식별자)를 생성해 manifest.json으로 ZIP 최상위에 동봉하고, 보고서 <details> 부록(규칙 19)·sources.txt(identifier+재현 호출 1줄)·karda 산출물(node 키 공유)이 전부 이 매니페스트를 참조하게 한다 — 패키지 전체가 하나의 기록 단위(RecordSet)로 등재·재검증 가능. 다른 매개로 재가공·전파될 때도 manifest.json을 함께 옮기는 것이 원칙.
+
 품질 게이트: 수치 정합 · 전 이미지 캡션+출처(기관 정식명·국가·식별자·링크) · 실확인 링크만(확인일 명기) ·
-게재윤리 4단계(포로·사망자 존엄) · 협약기관 출처 표기 필수."""
+게재윤리 4단계(포로·사망자 존엄) · 협약기관 출처 표기 필수 · manifest.json 동봉(증거성 상속)."""
 
 MAGAZINE_PACK = """매거진 확장팩 — kind='report' 보고서에 덧입히는 표지·목차·뒷표지·시그니처·테마 (일류 저널급)
 사용법: 보고서 골격(kind='report') 완성 후 아래를 추가한다. 표지는 발굴 포스터를 겸한다(별도 포스터 제작 시 같은 구성).
@@ -1064,15 +1749,24 @@ def report_template(kind: str = "report") -> str:
     영상 알림·A4 리플릿)과 실전 검증된 환각 교정 절차를 반환한다.
     사용자가 "풀패키지"(또는 full-package)라고 하면 kind="full_package"를 먼저 호출 — 조사→보고서→캐러셀→포스터
     전 산출물 제작 순서를 받아 그대로 수행한다. kind="help"는 매직 키워드 "창기창기 도와줘"(또는 changgi-help) —
-    처음 사용자 안내(사용법·예시·FAQ+안내 페이지 링크)를 반환한다."""
+    처음 사용자 안내(사용법·예시·FAQ+안내 페이지 링크)를 반환한다.
+    kind="exhibit"은 고문서 전시형(AKS 문중·서원 고문서 — 전시 페이지·카드·학습지 규칙+HTML 골격)을 반환한다.
+    kind="video"는 영상 기록 장면 해설 규칙(장면 추출 로컬/웹 경로·보이는 것만 해설·장면 카드)을 반환한다.
+    kind="iiif"는 IIIF 갤러리 규칙(연속 이미지 뷰 — 공개 갤러리·기관별 IIIF·권리 3단계·매니페스트·뷰어 골격)을 반환한다."""
     if kind == "magazine":
         return MAGAZINE_PACK
     if kind == "help":
         return HELP_GUIDE
     if kind == "citation":
         return CITATION_GUIDE
+    if kind == "video":
+        return VIDEO_GUIDE
+    if kind == "iiif":
+        return IIIF_GUIDE
     if kind == "annotation":
         return ANNOTATION_GUIDE
+    if kind == "exhibit":
+        return EXHIBIT_GUIDE
     if kind == "full_package":
         return FULL_PACKAGE
     if kind == "canva_prompts":
@@ -1083,9 +1777,29 @@ def report_template(kind: str = "report") -> str:
 
 
 # ══════════ 국내 아카이브 수집기 — 자동 브라우징(서버 사이드 fetch·파싱) v1.9.0 ══════════
-import urllib.parse as _up, urllib.request as _ur, html as _html
+import http.client as _hc
+import urllib.parse as _up, urllib.request as _ur, html as _html, datetime as _dt, hashlib as _hl
 
-_UA_KO = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
+_UA_KO = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)"  # v2.36 정직 UA(브라우저 위장 제거 — CLAUDE.md 접근 원칙, Node 패리티). 거부 기관은 우회 없이 표시
+# v2.36 정직 UA 거부 기관 — 우회하지 않고 표시(Node UA_REFUSED 패리티)
+_UA_REFUSED = {}  # v2.37 비움 — 규장각 403은 UA가 아니라 사이트 개편(POST CSRF)이었고 GET으로 복구, KTV는 e영상역사관 자체 목록 검색으로 복구(2026-11-24 실측). 새 거부가 확인되면 여기에 추가(위장하지 않음)
+
+
+def _fail_note(stats):
+    """v2.48 조회 실패(—) 채널은 '그 기관에 없음'이 아님 — 확정 0건과 구분해 명시(Node 패리티)."""
+    failed = list(dict.fromkeys(x.split(":")[0].split("·")[0] for x in stats if re.match(r"^[a-z0-9_]+(?:·[^:]+)?:—", x)))
+    if not failed:
+        return ""
+    return (f"\n※ 조회 실패 채널 {len(failed)}곳({', '.join(failed)}) — 이번 응답에 없을 뿐 그 기관에 기록이 없다는 뜻이 아닙니다(시간 초과·차단·응답 끊김). "
+            f"해당 수집처만 다시: sources='{','.join(failed)}'")
+
+
+def _ua_refused_note(k, q=""):
+    r = _UA_REFUSED.get(k)
+    if not r:
+        return ""
+    return (f"접근 제한(정직 UA 거부) — {r['name']}: {r['how']} (실측 {r['since']}). 위장·우회하지 않습니다. 브라우저로 직접 열람: {r['browse']}"
+            + (f" (검색어 '{q}')" if q else "") + f" · 자동 수집 허용 문의: {r['contact']}")
 
 
 def _http_text(url, timeout=15):
@@ -1105,9 +1819,8 @@ def _browse(url):
 
 def _agent_browse(name, query, url, why="이 기관은 자동 페치가 제한적입니다"):
     return (f"{name} '{query}' — {why}.\n"
-            f"➤ 에이전트 지시: 이 메시지를 그대로 사용자에게 전달하지 마세요. 대신 당신의 웹 검색(WebSearch)으로 "
-            f"'{query}'를 이 기관에서 찾거나, 아래 공식 검색 URL을 열람해 상위 결과(제목·연대·링크)를 정리한 뒤 "
-            f"사용자에게 표로 제시하세요. 결과가 있으면 report_template으로 HTML 보고서화도 가능합니다.\n"
+            f"➤ 다음 단계(안내): 웹 검색이나 브라우저로 아래 공식 검색 URL을 열어 '{query}' 상위 결과(제목·연대·링크)를 "
+            f"표로 정리하면 됩니다. 결과가 있으면 report_template으로 HTML 보고서화도 가능합니다.\n"
             f"공식 검색: {url}")
 
 
@@ -1121,14 +1834,61 @@ def _ddk(it):
     t = re.sub(r"[^a-z0-9가-힣一-鿿]", "", _norm(it.get("title", "")).lower())[:50]
     return (t + "|" + (it.get("id") or ""))[:80]
 
+def _resolve_origins(items, stats):
+    """v1.89: 원본 확인 — 재게시·재수집본의 sameAs NAID가 결과에 없으면 NARA 카탈로그를 직접 조회해
+    원본 실재를 확인하고 계보·날짜·매체를 채운다(최대 4건·6s·24h 캐시)."""
+    key = os.environ.get("NARA_API_KEY")
+    if not key:
+        return
+    todo = [it for it in items if not any(s.startswith("nara") for s in it["sources"])
+            and re.match(r"^NAID \d+$", it.get("sameAs") or "")][:4]
+    if not todo:
+        return
+
+    def one(it):
+        naid = it["sameAs"][5:]
+        raw = _cached_text("naid:" + naid, 24 * 3600, lambda: json.dumps(http_json(
+            f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1", headers={"x-api-key": key})), '"naId"')
+        hits = (((json.loads(raw).get("body") or {}).get("hits") or {}).get("hits") or [])
+        rec = ((hits[0].get("_source") or {}).get("record") or {}) if hits else {}
+        if str(rec.get("naId")) != naid:
+            return False  # 원본 미확인 — 연결 정보만 유지
+        link = f"{it['sources'][0].split('·')[0]}:{it['id'] or it['url']}"
+        if _norm(rec.get("title", "")).lower() != _norm(it["title"]).lower():
+            it["altTitle"] = it["title"][:110]
+        it["title"] = _norm(rec.get("title") or it["title"])
+        it["id"], it["url"], it["sameAs"] = f"NAID {naid}", f"https://catalog.archives.gov/id/{naid}", link
+        po = _nara_chain(rec)
+        if po:
+            it["series"] = po
+        if not it.get("date"):
+            it["date"] = _nara_date(rec)
+        d0 = str(((rec.get("digitalObjects") or [{}])[0] or {}).get("objectUrl", ""))
+        if not it.get("media") and d0:
+            it["media"] = d0
+        it["sources"].insert(0, "nara·원본확인")
+        return True
+    ok = 0
+    try:
+        with _cf.ThreadPoolExecutor(max_workers=4) as ex:
+            for f in _cf.as_completed([ex.submit(one, it) for it in todo], timeout=6):
+                try:
+                    ok += 1 if f.result() else 0
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    if ok:
+        stats.append(f"nara원본확인:{ok}")
+
 def _collect_merged(collectors):
     merged, stats = {}, []
     with _cf.ThreadPoolExecutor(max_workers=8) as ex:
         submitted = [(name, ex.submit(fn)) for name, fn in collectors]
         for name, fut in submitted:
             try:
-                items = fut.result(timeout=45) or []
-                stats.append(f"{name}:{len(items)}")
+                items = fut.result(timeout=12) or []  # 소스별 타임박스 — 최저속 소스가 전체 지연 지배 방지
+                stats.append(f"{name}:{len(items)}" + ("⛔정직UA거부" if not items and name in _UA_REFUSED else ""))
                 for raw in items:
                     if not _norm(raw.get("title", "")):
                         continue
@@ -1138,30 +1898,180 @@ def _collect_merged(collectors):
                             merged[k]["sources"].append(name)
                     else:
                         merged[k] = {"title": _norm(raw.get("title", "")), "date": raw.get("date", ""),
-                                     "id": raw.get("id", ""), "url": raw.get("url", ""), "sources": [name]}
+                                     "id": raw.get("id", ""), "url": raw.get("url", ""), "sources": [name],
+                                     **({"series": str(raw["series"])[:80]} if raw.get("series") else {}),
+                                     **({"media": str(raw["media"])[:600]} if raw.get("media") else {}),  # URL은 자르면 깨진다
+                                     **({"sameAs": str(raw["sameAs"])} if raw.get("sameAs") else {}),
+                                     **({"lid": str(raw["lid"])} if raw.get("lid") else {}),
+                                     **({"note": str(raw["note"])[:300]} if raw.get("note") else {})}
             except Exception:
-                stats.append(f"{name}:—")
-    return list(merged.values()), stats
+                stats.append(f"{name}:—" + ("⛔정직UA거부" if name in _UA_REFUSED else ""))
+    # v1.86: 동일 기록 병합 — sameAs(원본 식별자)가 다른 레코드의 id와 같으면 한 건으로 합치고 출처를 모두 남긴다
+    items = list(merged.values())
+    by_id = {str(it["id"]): it for it in items if it.get("id")}
+    for it in items:  # NARA 고유번호(127-N-A4560형)로도 대조 — 실재할 때만 병합
+        if it.get("lid") and it["lid"] not in by_id:
+            by_id[it["lid"]] = it
+    for it in items:  # v1.91.2: NARA 디지털 객체 파일명(428-npc-171.mp4)으로도 대조
+        fm = re.search(r"/(\d{2,3}[a-z]?-[a-z]{1,6}-\d+[a-z]?)(?:_\d+)?\.\w+$", str(it.get("media") or ""), re.I)
+        if fm and any(s.startswith("nara") for s in it["sources"]) and f"NARA {fm.group(1).upper()}" not in by_id:
+            by_id[f"NARA {fm.group(1).upper()}"] = it
+    drop = set()
+    for it in items:
+        tgt = by_id.get(it.get("sameAs") or "")
+        if not tgt or tgt is it:
+            continue
+        for s2 in it["sources"]:
+            if s2 not in tgt["sources"]:
+                tgt["sources"].append(s2)
+        link = f"{it['sources'][0].split('·')[0]}:{it['id'] or it['url']}"  # 복수 기관 연결은 누적(덮어쓰기 금지)
+        tgt["sameAs"] = f"{tgt['sameAs']} | {link}" if tgt.get("sameAs") and tgt["sameAs"] != link else link
+        if not tgt.get("altTitle") and _norm(it["title"]).lower() != _norm(tgt["title"]).lower():
+            tgt["altTitle"] = it["title"][:110]  # 다른 기관 제목(언어가 다르면) 보존
+        if not tgt.get("date") and it.get("date"):
+            tgt["date"] = it["date"]
+        if not tgt.get("media") and it.get("media"):
+            tgt["media"] = it["media"]  # 원본에 매체가 없으면 재게시본 원본 파일 승계
+        drop.add(id(it))
+    return [it for it in items if id(it) not in drop], stats
 
-def _c_tna(q, n):
+def _c_tna(q, n, yr=None):  # v2.99.1 yr = 생산연도 필터(Node 패리티)
     q = _ko_en(q) or q
     query = f'"{q.strip()}"' if re.match(r"^[A-Z]+ \d+/\d+$", q.strip()) else q
     out = []
-    for batch, _t in T._search(query, page_size=min(n, 50), max_pages=1, sleep=0):
+    for batch, _t in T._search(query, page_size=min(n, 50), max_pages=1, sleep=0, **({"date_from": f"{yr}-01-01", "date_to": f"{yr}-12-31"} if yr else {})):
         for r in batch:
             rec = T._extract(r, "x", q)
+            ref = str(rec.get("local_id", "") or "")
             out.append({"title": rec.get("title", ""), "date": rec.get("date", ""),
-                        "id": rec.get("local_id", ""), "url": rec.get("url", "")})
+                        "id": ref, **({"series": ref.split("/")[0]} if "/" in ref else {}),
+                        "url": rec.get("url", "")})
     return out[:n]
+
+def _ia_queries(q):  # v2.24 IA 관련성(Node iaQueries 패리티)
+    return [q] if re.search(r"\w+:", q) else [f"title:({q}) AND mediatype:(texts OR movies OR image)", f"({q}) AND NOT mediatype:(web OR collection OR account)"]
+
+
+def _ia_search(q, rows, fl, page=1):
+    import urllib.parse
+    d = {}
+    for qq in _ia_queries(q):
+        d = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(qq) + f"&{fl}&rows={min(100, rows * 2)}&page={page}&output=json")
+        if ((d.get("response") or {}).get("numFound") or 0) > 0:
+            break
+    r = d.get("response") or {}
+    docs = [x for _, _, x in sorted(((0 if str(x.get("identifier", "")).startswith("gov.") else 2 if str(x.get("identifier", "")).startswith("youtube-") else 1, i, x) for i, x in enumerate(r.get("docs") or [])), key=lambda t: (t[0], t[1]))]
+    return {"response": {"numFound": r.get("numFound", 0), "docs": docs[:rows]}}
+
 
 def _c_ia(q, n):
     import urllib.parse
     q = _ko_en(q) or q
-    d = http_json("https://archive.org/advancedsearch.php?q=" + urllib.parse.quote(q) +
-                  f"&fl[]=identifier&fl[]=title&fl[]=date&rows={n}&output=json")
+    d = _ia_search(q, n, "fl[]=identifier&fl[]=title&fl[]=date&fl[]=collection")  # v2.24 관련성 질의
+    def _col(x):
+        c = x.get("collection")
+        return (c[0] if isinstance(c, list) and c else c) or ""
+    def _an(x):  # v1.87: NARA 재게시본 식별자 gov.archives.arc.<NAID> → 원본 NAID(44175 실측 일치)
+        m = re.match(r"^gov\.archives\.arc\.(\d+)$", str(x.get("identifier") or ""))
+        return m.group(1) if m else ""
+    def _al(x):  # v1.91.2: NARA 고유번호형 식별자(428-npc-171) → 원본 대조
+        m = re.match(r"^(\d{2,3}[a-z]?-[a-z]{1,6}-\d+[a-z]?)$", str(x.get("identifier") or ""), re.I)
+        return m.group(1).upper() if m else ""
     return [{"title": str(x.get("title", "")), "date": x.get("date", ""), "id": x.get("identifier"),
+             **({"series": str(_col(x))} if _col(x) else {}),
+             **({"sameAs": f"NAID {_an(x)}"} if _an(x) else {"sameAs": f"NARA {_al(x)}"} if _al(x) else {}),
              "url": f"https://archive.org/details/{x.get('identifier')}"}
             for x in ((d.get("response") or {}).get("docs") or [])]
+
+
+def _eu_media(it):
+    """v1.96.3: Europeana 원본 이미지 직링크(edmIsShownBy) — Náprstek esbirky img.php·detail → /predmet/{id} 교정(실측 404)."""
+    u = str(((it.get("edmIsShownBy") or [""])[0]) or "")
+    m = re.search(r"esbirky\.cz/(?:img\.php\?id=|detail/)(\d+)", u)
+    return f"https://www.esbirky.cz/predmet/{m.group(1)}" if m else u
+
+
+def _bnf_sparql(q, n):
+    """v2.23 data.bnf.fr 공식 개방데이터 SPARQL(Node bnfSparql 패리티) — 카탈로그 연결 불가·Gallica 403일 때 우선 경로."""
+    words = [w for w in re.sub(r"[\"'\\{}<>]", " ", str(q)).split() if len(w) > 1 and not w.isdigit()][:4]
+    if not words:
+        return []
+    sp = ("PREFIX dcterms: <http://purl.org/dc/terms/> PREFIX rdarel: <http://rdvocab.info/RDARelationshipsWEMI/> SELECT ?m ?title ?date ?g WHERE { ?m dcterms:title ?title . ?title bif:contains \""
+          + " AND ".join(f"'{w}'" for w in words) + f"\" . OPTIONAL {{ ?m dcterms:date ?date }} OPTIONAL {{ ?m rdarel:electronicReproduction ?g }} }} LIMIT {min(60, n * 4)}")
+    j = json.loads(_http_text("https://data.bnf.fr/sparql?query=" + _up.quote(sp) + "&format=" + _up.quote("application/json"), 25))
+    seen, out = set(), []
+    for b in (j.get("results") or {}).get("bindings", []):
+        m = (b.get("m") or {}).get("value", "")
+        if not m or m in seen:
+            continue
+        seen.add(m)
+        ark = (re.search(r"ark:/12148/[A-Za-z0-9]+", m) or [""])[0]
+        gal = ((b.get("g") or {}).get("value") or "").replace("http:", "https:", 1)
+        gal = gal if "gallica.bnf.fr" in gal else ""
+        out.append({"title": str((b.get("title") or {}).get("value") or "(무제)")[:160], "date": (b.get("date") or {}).get("value", ""), "id": ark,
+                    "gallica": gal, "series": "BnF › data.bnf.fr", "url": gal or re.sub(r"#about$", "", m)})
+    out.sort(key=lambda x: 0 if x["gallica"] else 1)
+    return out
+
+
+def _bnf_catalog(q, n, doctype=""):
+    if doctype == "":  # v1.93.1: 사진·도판(doctype i) 질의 병행 — 디지털화(Gallica 원문) 자료 상위
+        try:  # v2.23 data.bnf.fr 우선(카탈로그 연결 불가 실측)
+            sp = _bnf_sparql(q, n)
+            if sp:
+                return len(sp), sp[:n]
+        except Exception:
+            pass
+        res = []
+        for dt in ("i", None):
+            try:
+                res.append(_bnf_catalog(q, n, dt))
+            except Exception as e:
+                res.append(e)
+        ok = [r for r in res if not isinstance(r, Exception)]
+        if not ok:
+            raise res[-1]
+        seen, allv = set(), []
+        for _, its in ok:
+            for it in its:
+                if it["id"] not in seen:
+                    seen.add(it["id"]); allv.append(it)
+        allv.sort(key=lambda it: 0 if it["gallica"] else 1)
+        if not allv:  # v1.96.3: 'all' CQL 전체 단어 일치 0건 → 숫자·짧은 단어 빼고 핵심어 2개로 완화
+            words = [w for w in str(q).split() if not w.isdigit() and len(w) > 2]
+            q2 = " ".join(words[:2])
+            if q2 and q2 != str(q).strip():
+                t2, i2 = _bnf_catalog(q2, n)
+                for it in i2:
+                    it["relaxed"] = q2
+                return t2, i2
+        return max(t for t, _ in ok), allv[:n]
+    """v1.93: Gallica 서버 IP 403 차단 시 BnF 공식 카탈로그 SRU(catalogue.bnf.fr/api/SRU) 폴백 — UNIMARC 200$a·210/214$d·215$a·856$u(Gallica ark)."""
+    import urllib.parse, urllib.request
+    cql = f'bib.anywhere all "{str(q).replace(chr(34), "")}"' + (f' and bib.doctype any "{doctype}"' if doctype else "")
+    url = ("https://catalogue.bnf.fr/api/SRU?version=1.2&operation=searchRetrieve&recordSchema=unimarcXchange"
+           f"&maximumRecords=20&query={urllib.parse.quote(cql)}")
+    with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": _UA_KO}), timeout=30) as r:
+        xml = r.read().decode("utf-8", "replace")
+    tm = re.search(r"numberOfRecords>(\d+)<", xml)
+    if not tm:
+        raise RuntimeError("BnF 카탈로그 응답 형식 아님")
+    items = []
+    for b in xml.split("<srw:record>")[1:]:
+        def sf(tag, code, _b=b):
+            for m in re.finditer(rf'tag="{tag}"[^>]*>(.*?)</mxc:datafield>', _b, re.S):
+                x = re.search(rf'code="{code}">([^<]*)<', m.group(1))
+                if x:
+                    return x.group(1).strip()
+            return ""
+        ark = (re.search(r'id="(ark:/12148/[^"]+)"', b) or [None, ""])[1]
+        gal = (re.search(r"(https?://gallica\.bnf\.fr/ark:/12148/[A-Za-z0-9]+)", b) or [None, ""])[1]
+        typ = sf("200", "b")
+        items.append({"title": (sf("200", "a") or "(무제)").strip("[]")[:160], "date": sf("210", "d") or sf("214", "d"),
+                      "id": ark, "extent": sf("215", "a"), "type": typ, "gallica": gal,
+                      **({"series": f"BnF › {typ}"} if typ else {}), "url": gal or (f"https://catalogue.bnf.fr/{ark}" if ark else "")})
+    items.sort(key=lambda it: 0 if it["gallica"] else 1)  # Gallica 원문(디지털화) 있는 기록 우선
+    return int(tm.group(1)), items[:n]
 
 def _c_gallica(q, n):
     import urllib.parse, urllib.request
@@ -1169,14 +2079,24 @@ def _c_gallica(q, n):
     qq = urllib.parse.quote('gallica all "' + q.replace('"', '') + '"')
     url = f"https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query={qq}&maximumRecords={n}"
     req = urllib.request.Request(url, headers={"User-Agent": _UA_KO})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        xml = r.read().decode("utf-8", "replace")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            xml = r.read().decode("utf-8", "replace")
+    except Exception:
+        xml = ""
+    if "<srw:numberOfRecords>" not in xml:  # v1.93 BnF 카탈로그 폴백
+        _, its = _bnf_catalog(q, n)
+        return [{"title": it["title"] + (" [Gallica 원문]" if it["gallica"] else ""), "date": it["date"], "id": it["id"],
+                 **({"series": it["series"]} if it.get("series") else {}), "url": it["url"]} for it in its]
     out = []
     for b in xml.split("<srw:record>")[1:n + 1]:
         def g(t, _b=b):
             m = re.search(rf"<dc:{t}[^>]*>([^<]*)<", _b)
             return m.group(1).strip() if m else ""
-        out.append({"title": g("title"), "date": g("date"), "id": g("identifier"), "url": g("identifier")})
+        akm = re.search(r"ark:/12148/(btv|bpt6k|bd6t)", g("identifier"))
+        akn = {"btv": "도판·사진(btv)", "bpt6k": "인쇄본(bpt6k)", "bd6t": "정기간행물(bd6t)"}.get(akm.group(1)) if akm else None
+        out.append({"title": g("title"), "date": g("date"), "id": g("identifier"),
+                    **({"series": akn} if akn else {}), "url": g("identifier")})
     return out
 
 def _c_europeana(q, n):
@@ -1186,7 +2106,22 @@ def _c_europeana(q, n):
     d = http_json("https://api.europeana.eu/record/v2/search.json?" +
                   urllib.parse.urlencode({"wskey": key, "query": q, "rows": n, "profile": "standard"}))
     return [{"title": (it.get("title") or ["?"])[0], "date": (it.get("year") or [""])[0],
-             "id": it.get("id", ""), "url": it.get("guid", "")} for it in (d.get("items") or [])]
+             "id": it.get("id", ""),
+             **({"series": (it.get("dataProvider") or [""])[0]} if (it.get("dataProvider") or [""])[0] else {}),
+             **({"media": _eu_media(it)} if _eu_media(it) else {}),
+             "url": str(it.get("guid", "")).split("?")[0]} for it in (d.get("items") or [])]
+
+def _nara_chain(rec):
+    # NARA 계보(v1.80): ancestors → "RG n › 시리즈" 축약 체인 (수집기·전용 도구·판정 공용)
+    anc = rec.get("ancestors") or []
+    rg = rec.get("recordGroupNumber") or next((a.get("recordGroupNumber") for a in anc if a.get("recordGroupNumber")), "")
+    ser = next((a.get("title") for a in anc if re.search(r"series", str(a.get("levelOfDescription") or ""), re.I) and a.get("title")), "")
+    return " › ".join(x for x in [f"RG {rg}" if rg else "", ser] if x)[:80]
+
+def _nara_date(rec):
+    # NARA 생산일자(v1.82): productionDates 다중 폴백 — logicalDate(ISO)·year·proximatePhrase
+    p = (rec.get("productionDates") or [{}])[0] or {}
+    return str(p.get("logicalDate") or p.get("year") or p.get("proximatePhrase") or "")[:10]
 
 def _c_nara(q, n):
     key = os.environ.get("NARA_API_KEY")
@@ -1199,9 +2134,19 @@ def _c_nara(q, n):
     out = []
     for h in hits:
         rec = (h.get("_source") or {}).get("record") or {}
-        out.append({"title": rec.get("title", ""), "date": "", "id": f"NAID {rec.get('naId')}",
+        po = _nara_chain(rec)
+        d0u = str(((rec.get("digitalObjects") or [{}])[0] or {}).get("objectUrl", ""))
+        out.append({"title": rec.get("title", ""), "date": _nara_date(rec), "id": f"NAID {rec.get('naId')}",
+                    **({"lid": f"NARA {str(rec['localIdentifier']).upper()}"} if rec.get("localIdentifier") else {}),
+                    **({"series": po} if po else {}),
+                    **({"media": d0u} if d0u else {}),
                     "url": f"https://catalog.archives.gov/id/{rec.get('naId')}"})
     return out
+
+def _arch_link(u):
+    """국가기록원 상세 링크 정규화(v2.7.1, Node archLink 패리티) — API가 &amp;로 내려줘 클릭 시 빈 페이지(실측). 해제 + https."""
+    return re.sub(r"^http://www\.archives\.go\.kr", "https://www.archives.go.kr", str(u or "").replace("&amp;", "&"))
+
 
 def _xtag(bl, x):
     m = re.search(rf"<{x}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{x}>", bl, re.S)
@@ -1214,22 +2159,29 @@ def _c_archives(q, n):
     sk = key if ("%" in key) else _up.quote(key)
     xml = _http_text("https://apis.data.go.kr/1741050/openapi/searcharc?serviceKey=" + sk +
                      "&query=" + _up.quote(q) + f"&start=1&limit={n}", 20)
-    return [{"title": _xtag(i, "title"), "date": _xtag(i, "prod_year"), "id": _xtag(i, "prod_name"),
-             "url": _xtag(i, "link")} for i in re.findall(r"<item>(.*?)</item>", xml, re.S)]
+    return [{"title": _xtag(i, "title"), "date": _xtag(i, "prod_year"), "id": (lambda lk: ((re.search(r"rc_rfile_no=(\\d+)", lk).group(1) if re.search(r"rc_rfile_no=(\\d+)", lk) else "")
+                               + ("-" + re.search(r"rc_ritem_no=0*(\\d+)", lk).group(1) if re.search(r"rc_ritem_no=0*(\\d+)", lk) else "")) or _xtag(i, "prod_name"))(_arch_link(_xtag(i, "link"))),
+             **(lambda ser: {"series": ser} if ser else {})(_xtag(i, "prod_name") or (lambda lk: ("[유형] 기록건" if "rc_ritem_no=" in lk else "[유형] 기록물철" if "rc_rfile_no=" in lk else "[유형] 기록정보콘텐츠" if "rc_code=" in lk else ""))(_arch_link(_xtag(i, "link")))),  # v2.3 계열 구축(Node 패리티)
+             "url": _arch_link(_xtag(i, "link"))} for i in re.findall(r"<item>(.*?)</item>", xml, re.S)]
 
 def _c_nlk(q, n):
     key = os.environ.get("NLK_API_KEY")
     if not key:
         return []
-    xml = _http_text("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key) +
-                     "&apiType=xml&srchTarget=total&kwd=" + _up.quote(q) + f"&pageSize={n}&pageNum=1", 20)
+    # 실측 7.7s(최저속 축) — 6h TTL 캐시(마커 <item> — 정상 결과만)
+    xml = _cached_text(f"nlk:{q}:{n}", 6 * 3600,
+                       lambda: _http_text("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key) +
+                                          "&apiType=xml&srchTarget=total&kwd=" + _up.quote(q) + f"&pageSize={n}&pageNum=1", 20),
+                       "<item>")
     out = []
     for it in re.findall(r"<item>(.*?)</item>", xml, re.S):
         lk = _xtag(it, "detail_link") or _xtag(it, "org_link")
         if lk.startswith("/"):
             lk = "https://www.nl.go.kr" + lk
+        tn = _xtag(it, "type_name")
+        vk = re.search(r"viewKey=([^&#\s]+)", lk)  # v2.67 기록 고유번호 — 종전 id=자료유형이라 같은 유형의 다른 기록이 원장에서 한 key로 합쳐지던 결함
         out.append({"title": _xtag(it, "title_info") or _xtag(it, "title"), "date": _xtag(it, "pub_year_info"),
-                    "id": _xtag(it, "type_name"), "url": lk})
+                    "id": (vk.group(1) if vk else _xtag(it, "control_no")) or "", **({"series": tn} if tn else {}), "url": lk})
     return out
 
 # nedb: 국사편찬위 한국사DB의 data.go.kr 공식 개방파일(KOGL)을 인덱싱해 웹 배치한 것을 검색 — robots 무관(라이브 스크래핑 없음).
@@ -1262,15 +2214,79 @@ def _nedb_file_search(recs, q, n):
                 break
     return out
 
+# v2.23 한국사DB 주요 DB 병렬 검색(Node nedbLive 패리티) — 통합검색 GET은 검색어를 무시하고 메뉴만 돌려줘 메뉴 'new' 항목을 결과로 오인하던 결함
+_NEDB_DBS = [("joseon", "bb", "비변사등록", "조선"), ("joseon", "ks", "각사등록", "조선"), ("modern", "kd", "한국독립운동사자료", "근대"), ("modern", "ij", "대한민국임시정부자료집", "근대"),
+             ("modern", "npda", "동아일보", "근대"), ("contemp", "dh", "자료대한민국사", "현대"), ("contemp", "pn", "휴전회담회의록", "현대"), ("ancient", "sg", "삼국사기", "고대")]
+_NEDB_FORM = {"pageIndex": "1", "pageSize": "1", "orderColumn": "levelId", "orderDir": "ASC", "synonym": "off", "chinessChar": "on", "titleWord": "", "titleConjunction": "AND",
+              "contentsWord": "", "contentsConjunction": "AND", "creatorWord": "", "creatorConjunction": "AND", "startDate": "", "endDate": ""}
+
+
+def _nedb_date(i):
+    m = re.search(r"_(1[5-9]\d\d|20\d\d)_(\d\d)_(\d\d)", str(i))
+    return f"{m.group(1)}-{m.group(2)}-{m.group(3)}" if m else ""
+
+
+def _nedb_live(q, per=3):
+    def one(d):
+        site, iid, name, era = d
+        def post():
+            body = _up.urlencode(dict(_NEDB_FORM, searchItemId=iid, pageUnit=str(per), totalWord=q)).encode()
+            req = _ur.Request(f"https://db.history.go.kr/{site}/search/searchResultList.do", data=body, method="POST",
+                              headers={"User-Agent": _OK_UA, "Content-Type": "application/x-www-form-urlencoded", "Referer": "https://db.history.go.kr/"})
+            with _ur.urlopen(req, timeout=25) as r:
+                try:
+                    return r.read().decode("utf-8", "replace")
+                except _hc.IncompleteRead as e:  # v2.39.1 본문 조기 끊김(기관 측) — 받은 만큼 판독(Node 패리티)
+                    if not e.partial or not re.search(r"총[\s\S]{0,40}?[\d,]+[\s\S]{0,20}?건", e.partial.decode("utf-8", "replace")):  # v2.46.1 건수 없는 조각 불채택
+                        raise
+                    return e.partial.decode("utf-8", "replace")
+        try:
+            b = _cached_text(f"nedbL:{iid}:{per}:{q}", 6 * 3600, post, "총")
+        except Exception as e:
+            return {"site": site, "iid": iid, "name": name, "era": era, "total": -1, "rows": [], "err": str(e)[:40]}
+        tm = re.search(r"총\s*([\d,]+)\s*건", _clean(re.sub(r"<script.*?</script>", " ", b, flags=re.S)))
+        rows, seen = [], set()
+        for m in re.finditer(r"fnGoItemLevel\('[^']*',\s*'(\w+)'[^)]*\);[^>]*>(.*?)</a>", b, re.S):
+            t = _clean(m.group(2))
+            if t and m.group(1) not in seen:
+                seen.add(m.group(1)); rows.append({"id": m.group(1), "title": t})
+            if len(rows) >= per:
+                break
+        return {"site": site, "iid": iid, "name": name, "era": era, "total": int(tm.group(1).replace(",", "")) if tm else -1, "rows": rows}  # v2.47 표기 없음 = 확인 불가
+    with _cf.ThreadPoolExecutor(max_workers=8) as ex:
+        return list(ex.map(one, _NEDB_DBS))
+
+
 def _c_nedb(q, n):
+    """v1.93: 개방파일 인덱스 미설정이면 한국사DB 통합검색 라이브 조회 — 검색어가 등장하는 DB를 기록 진입점으로 수집(0건 고정 해소)."""
     recs = _load_nedb_index()
-    return _nedb_file_search(recs, q, n) if recs else []
+    if recs:
+        return _nedb_file_search(recs, q, n)
+    q = re.sub(r"(\d)[·.](\d{1,2})\s*(운동|만세|사건|혁명|선거|수복|후퇴|사태)", r"\1·\2 \3", str(q))  # v2.99.6 숫자 사건명 뒤 띄움(Node 패리티)
+    dbs = sorted([d for d in _nedb_live(q, 2) if d["total"] > 0], key=lambda d: -d["total"])
+    out = []
+    for k in range(2):
+        for d in dbs:
+            if len(d["rows"]) > k and len(out) < n:
+                r = d["rows"][k]
+                out.append({"title": r["title"][:140], "date": _nedb_date(r["id"]), "id": r["id"], "series": f"{d['era']} › {d['name']}", "url": f"https://db.history.go.kr/id/{r['id']}"})
+    return out
 
 
 # ══════════ KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 (koreanwar.or.kr:8443 — 전쟁기념관재단, 협약기관) ══════════
 # MOU 협약: 모든 요청에 프로그램 식별 UA를 싣고 정중한 호출량을 유지한다
 # (robots.txt 404 = 지시 부재; OpenAPI 약관상 대량 크롤링 금지 — 페이지 스캔은 소량으로).
 _KW_BASE = "https://www.koreanwar.or.kr:8443"
+
+
+def _kw_images(b):
+    """v3.5.1 상세 페이지 기록 이미지(사이트 공통 아이콘·로고·버튼 제외) — Node kwImages 패리티."""
+    out = []
+    for u in re.findall(r'<img\b[^>]*?(?:data-[\w-]+|src)="([^"]+\.(?:jpe?g|png|gif|tiff?))(?:\?[^"]*)?"', str(b), re.I):
+        if re.search(r"/(?:resources|static|common|layout|btn|icon|ico|logo|images?/(?:main|sub|common|btn|icon|layout))\b|loding|loading|no_img|blank", u, re.I): continue
+        u = u if re.match(r"^https?:", u) else _KW_BASE + ("" if u.startswith("/") else "/") + u
+        if u not in out: out.append(u)
+    return out[:30]
 _KW_UA = "KoreaArchiveMCP/1.11 (+https://github.com/changgi/korea-archive-mcp; MOU partner integration)"
 
 def _kw_text(url, timeout=20):
@@ -1337,13 +2353,2198 @@ def _kw_api_scan(q, max_pages=None):
         _t.sleep(0.2)
     return {"total": total, "checked": checked, "hits": hits}
 
+def _kw_detail(ref):
+    """v1.86: 협약기관 상세 → 원본 연결 메타(입수처 NARA NAID·생산시기). 국내 재수집본↔해외 원본 동일성 확정용."""
+    if not ref or ref.startswith("book:"):
+        return None
+    b = _cached_text("kwd:" + ref, 24 * 3600, lambda: _kw_text(f"{_KW_BASE}/searchDetail.do?archRfcd=" + _up.quote(ref)), "<dt")
+    rows = [(_clean(k), _clean(v)) for k, v in re.findall(r"<dt[^>]*>\s*(.{1,60}?)\s*</dt>\s*<dd[^>]*>(.{0,400}?)</dd>", b, re.S)]
+    allv = " ".join(v for _, v in rows)
+    naid = (re.search(r"catalog\.archives\.gov/id/(\d+)", allv) or [None, ""])[1]
+    pv = next((v for k, v in rows if "생산시기" in k), "")
+    pm = re.search(r"\d{4}(?:-\d{2}){0,2}", pv)
+    return {"naid": naid, "date": re.sub(r"(-00)+$", "", pm.group(0)) if pm else ""}  # '1950-12-00'(일 미상) → '1950-12'
+
 def _c_koreanwar(q, n):
     _, cards = _kw_search({"keyword": q, "viewType": "archive"})
-    return [{"title": c["title"], "date": "", "id": c["id"], "url": c["url"]} for c in cards[:n]]
+    cards = cards[:n]
+    # v1.86: 상위 5건 상세 병렬 조회(24h 캐시·6s 상한) — 원본 NAID(sameAs)·생산시기 확보 → NARA 원본과 동일 기록 병합
+    det = [None] * len(cards)
+    try:
+        with _cf.ThreadPoolExecutor(max_workers=5) as ex:
+            futs = {ex.submit(_kw_detail, c["id"]): i for i, c in enumerate(cards[:5])}
+            for f in _cf.as_completed(futs, timeout=6):
+                try:
+                    det[futs[f]] = f.result()
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    out = []
+    for i, c in enumerate(cards):
+        d = det[i] or {}
+        out.append({"title": c["title"], "date": d.get("date", ""), "id": c["id"],
+                    **({"series": c["hierarchy"]} if c.get("hierarchy") else {}),  # v1.84: 상위계층 실값 승격
+                    **({"sameAs": f"NAID {d['naid']}"} if d.get("naid") else {}),
+                    "url": c["url"]})
+    return out
+
+_JA_MAP = [("조선총독부", "朝鮮総督府"), ("이토 히로부미", "伊藤博文"), ("강제동원", "強制動員"), ("인천상륙", "仁川上陸"),
+           ("한국전쟁", "朝鮮戦争"), ("창씨개명", "創氏改名"), ("동양척식", "東洋拓殖"), ("조선은행", "朝鮮銀行"),
+           ("재일조선인", "在日朝鮮人"), ("독립운동", "独立運動"), ("임시정부", "臨時政府"), ("3·1운동", "三・一運動"),
+           ("삼일운동", "三・一運動"), ("만주국", "満州国"), ("관동군", "関東軍"), ("황민화", "皇民化"), ("학도병", "学徒兵"),
+           ("위안소", "慰安所"), ("위안부", "慰安婦"), ("독립군", "独立軍"), ("의열단", "義烈団"), ("광복군", "光復軍"),
+           ("연해주", "沿海州"), ("사할린", "樺太"), ("신의주", "新義州"), ("총독부", "総督府"), ("장진호", "長津湖"),
+           ("안중근", "安重根"), ("윤봉길", "尹奉吉"), ("이봉창", "李奉昌"), ("여운형", "呂運亨"), ("김구", "金九"),
+           ("헌병", "憲兵"), ("특고", "特高"), ("징용", "徴用"), ("의병", "義兵"), ("간도", "間島"), ("만주", "満州"),
+           ("경성", "京城"), ("평양", "平壌"), ("부산", "釜山"), ("인천", "仁川"), ("원산", "元山"), ("청진", "清津"),
+           ("상해", "上海"), ("중경", "重慶"), ("조선", "朝鮮"), ("한국", "朝鮮")]
+
+
+def _ko_ja(q):
+    """한→일 출력 사전(JACAR 전용) — 일본어 질의가 영어와 다른 결과축을 연다(실측)."""
+    out, hit = q, False
+    for k, j in _JA_MAP:
+        if k in out:
+            out = out.replace(k, j); hit = True
+    return out if hit else None
+
+
+def _jacar_meta(code):
+    try:
+        h = _cached_text("jacarM:" + code, 24 * 3600,
+                         lambda: _http_text("https://www.jacar.archives.go.jp/das/meta-en/" + code, 25),
+                         "Reference Code")
+    except Exception:
+        return None
+    def g(label):
+        m = re.search(label + r"</(?:th|dt)>\s*<(?:td|dd)[^>]*>\s*(?:<[^>]+>\s*)*([^<]{1,160})", h)
+        return _clean(m.group(1)) if m else ""
+    return {"title": g("Title"), "creator": g("Creator"), "imgs": g("Number of Images"),
+            "org": g("Organisation History"), "cls": g("Classification Levels")}
+
+
+def _jacar_mode(q, span, max_results):
+    """JACAR — 검색(한→일 우선)·레퍼런스코드 메타 직행·±span×100 인접 채굴(간격 100 실측)."""
+    import time as _t
+    try:
+        cm = re.match(r"^([A-Z])(\d{11})$", q)
+        if cm:
+            base = _jacar_meta(q)
+            if not base or not base["title"]:
+                return f"JACAR '{q}' — 해당 레퍼런스코드 없음."
+            out = (f"JACAR [{q}] {base['title']}\n생산: {base['creator'] or '-'} | 이미지 {base['imgs'] or '?'}면 | "
+                   f"{base['org']}" + (f" | {base['cls']}" if base["cls"] else "")
+                   + f"\n원문 뷰어: https://www.jacar.archives.go.jp/das/meta/{q}")
+            sp = min(span, 8)
+            n0 = int(cm.group(2)); lines = []
+            for k in range(-sp, sp + 1):
+                if not k:
+                    continue
+                code = cm.group(1) + str(n0 + k * 100).zfill(11)
+                m3 = _jacar_meta(code)
+                lines.append(f"  {code} | {m3['title'][:80]}" if (m3 and m3["title"]) else f"  {code} (없음)")
+                _t.sleep(0.25)
+            out += f"\n\n[인접 채굴 ±{sp}×100 — 簿冊 내 건 번호 간격 100 실측(±1·±10은 404)]\n" + "\n".join(lines)
+            return out + "\n※ 출처 병기: 国立公文書館アジア歴史資料センター(JACAR), Ref. " + q
+        eff = _ko_ja(q) or _ko_en(q) or q
+        b = _http_text("https://www.jacar.archives.go.jp/aj/search-en?kw=" + _up.quote(eff), 30)
+        rows = []
+        for blk in b.split('<li class="archive-result-table__body-item"')[1:]:
+            c = re.search(r'value="aj\d+/([A-Z]\d{11})"', blk)
+            t = re.search(r'id="row-\d+-title"[\s\S]*?<span\s*>([^<]{3,150})', blk)
+            if c and t:
+                rows.append(f"- [{c.group(1)}] {_clean(t.group(1))[:90]}\n  https://www.jacar.archives.go.jp/das/meta-en/{c.group(1)}")
+            if len(rows) >= max_results:
+                break
+        tag = f" → '{eff}'" if eff != q else ""
+        return (f"JACAR '{q}'{tag} — 이 페이지 {len(rows)}건:\n" + ("\n".join(rows) or "(0건 — 일본어 원표기(한자) 병행 권장)")
+                + "\n※ 레퍼런스코드(영문1+숫자11)를 query로 주면 메타 직행 + span 인접 채굴(±span×100). "
+                  "A=공문서관·B=외무성 외교사료관·C=방위연구소.")
+    except Exception as e:
+        return f"JACAR 조회 실패({e}) — https://www.jacar.archives.go.jp 직접 검색."
+
+
+def _c_ndl(q, n):
+    """일본 국립국회도서관 서치 — OpenSearch 무키(2026-11-21). 총독부 간행물·관보·도판 축(JACAR 공문서와 상보). 한→일 JA_MAP 우선."""
+    # v1.91.1: 일문·한자 입력이 영문 폴백('Korea')으로 바뀌던 결함 교정 — 한글 입력일 때만 영문 폴백, 부분 변환은 폐기
+    hg = lambda t: bool(re.search(r"[\uac00-\ud7a3]", t))
+    ja = _ko_ja(q)
+    if not ja or hg(ja):
+        ja = (_to_index_lang(q, "en") or q) if hg(q) else q
+    def ndlq(f):  # v1.91.1: any= 는 표제 가나순 잡음 상위화 — title= 우선, 0건이면 any= 폴백
+        req = _ur.Request(f"https://ndlsearch.ndl.go.jp/api/opensearch?{f}={_up.quote(ja)}&cnt={min(n, 10)}",
+                          headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
+        with _ur.urlopen(req, timeout=25) as r:
+            return r.read().decode("utf-8", "replace")
+    # v1.96: 수천 건 일치 시 표제 가나순 — 당대 자료(until=1945) 병행, 검색어(신·구자체) 포함 표제 우선
+    try:  # v1.96.5: 타임박스 대응 — 당대 질의 단축(5s), 충분하면 일반 질의 생략
+        req = _ur.Request(f"https://ndlsearch.ndl.go.jp/api/opensearch?title={_up.quote(ja)}&until=1945&cnt={min(n * 2, 20)}",
+                          headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
+        with _ur.urlopen(req, timeout=6) as r:
+            bc = r.read().decode("utf-8", "replace")
+    except Exception:
+        bc = ""
+    try:
+        ba = "" if bc.count("<item>") >= n else ndlq("title")
+    except Exception:
+        ba = ""  # 동시접속 제한 등 — 당대 자료 결과만으로 진행
+    b = (re.sub(r"</channel>[\s\S]*$", "", bc) if "<item>" in bc else "") + ba
+    if "<item>" not in b and not ("<error>" in b and "429" in b):
+        b = ndlq("any")
+    if "<error>" in b and "429" in b:
+        raise RuntimeError("NDL 동시접속 제한(429) — 잠시 후 재시도")
+    kj = str.maketrans("總國鐵經會學臺縣圖廳發實寫眞", "総国鉄経会学台県図庁発実写真")
+    qn = ja.translate(kj).replace(" ", "")
+    its = b.split("<item>")[1:]
+    its = sorted(enumerate(its), key=lambda p: (0 if qn in ((re.search(r"<title[^>]*>([^<]+)", p[1]) or [None, ""])[1]).translate(kj).replace(" ", "") else 1, p[0]))
+    out, seen_l = [], set()
+    for _, item in its:
+        g = lambda t: ((re.search(f"<{t}[^>]*>([^<]+)", item) or [None, ""])[1] or "").strip()
+        title, link = g("title"), g("link")
+        if not title or not link or link in seen_l:
+            continue
+        seen_l.add(link)
+        cat_arr = re.findall(r"<category>([^<]+)", item)  # 자료형·매체(紙/デジタル)
+        cats = "·".join(cat_arr)
+        author = g("author")
+        # v1.96.8: 디지털화 자료는 dl.ndl.go.jp PID 동반(권리·IIIF 열쇠) — Node 패리티
+        pm = re.search(r"dl\.ndl\.go\.jp/(?:api/iiif/|info:ndljp/pid/|pid/)(\d{5,})", item)
+        pid = pm.group(1) if pm else ""
+        out.append({"title": (title + (f" [{cats}]" if cats else "") + (f" — {author}" if author else "") + (f" · 디지털 PID {pid}" if pid else ""))[:140],
+                    "date": g("dc:date"), "id": pid,
+                    **({"series": cat_arr[0]} if cat_arr else {}), "url": f"https://dl.ndl.go.jp/pid/{pid}" if pid else link})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _c_un(q, n):
+    """UN 디지털도서관 — Invenio of=xm(MARCXML) 무키 실측(2026-11-21). 안보리 결의·공식문서. UN Archives(AtoM)와 별개."""
+    qsym = q.strip().upper() if re.match(r"^[A-Z]{1,4}(/[A-Z0-9.()-]+)+$", q.strip(), re.I) else ""  # v1.96.5 문서기호
+    en = f'191:"{qsym}"' if qsym else (_to_index_lang(q, "en") or q)
+    # _http_text의 X-Requested-With 헤더에 Invenio가 빈 응답(실측) — 일반 헤더로 직접 요청
+    req = _ur.Request(f"https://digitallibrary.un.org/search?p={_up.quote(en)}&of=xm&rg={50 if qsym else min(n, 10)}",
+                      headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
+    with _ur.urlopen(req, timeout=25) as r:
+        b = r.read().decode("utf-8", "replace")
+    def sf(seg, tag, code):
+        m = re.search(r'<datafield tag="' + tag + r'"[^>]*>([\s\S]*?)</datafield>', seg)
+        if not m:
+            return ""
+        m2 = re.search(r'<subfield code="' + code + r'">([^<]+)', m.group(1))
+        return m2.group(1) if m2 else ""
+    out = []
+    for seg in re.split(r"<record>", b)[1:]:
+        rm = re.search(r'<controlfield tag="001">(\d+)', seg)
+        if not rm:
+            continue
+        sym = sf(seg, "191", "a")
+        title = _clean(sf(seg, "245", "a") + " " + sf(seg, "245", "b")).rstrip(" /:")
+        out.append({"title": (f"[{sym}] " if sym else "") + title[:110], "date": sf(seg, "269", "a") or sf(seg, "260", "c"),
+                    "id": sym or rm.group(1),
+                    **({"series": "/".join(sym.split("/")[:2])} if sym and "/" in sym else {}),
+                    "url": "https://digitallibrary.un.org/record/" + rm.group(1)})
+        if len(out) >= (50 if qsym else n):
+            break
+    if qsym:  # 기호 정확 일치 우선(191 필드는 접두 일치 — 실측)
+        out.sort(key=lambda it: 0 if it["title"].startswith(f"[{qsym}]") else 1)
+        return out[:n]
+    return out
+
+
+def _c_heritage(q, n):
+    """국가유산포털(국가유산청) OpenAPI — 무키 XML(작업망 차단·icn1 도달 확인). 국보·보물·사적 축."""
+    b = _http_text("https://www.khs.go.kr/cha/SearchKindOpenapiList.do?ccbaMnm1=" + _up.quote(q)
+                   + f"&pageUnit={min(n, 15)}", 25)
+    out = []
+    for it in b.split("<item>")[1:]:
+        g = lambda t: ((re.search(f"<{t}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</{t}>", it) or [None, ""])[1] or "").strip()  # CDATA 대응
+        name = g("ccbaMnm1")
+        if not name:
+            continue
+        cpno = g("ccbaCpno")
+        raw_id = (f"{g('ccbaKdcd')}-{g('ccbaAsno')}-{g('ccbaCtcd')}"
+                  if g("ccbaKdcd") and g("ccbaAsno") and g("ccbaCtcd") else cpno)  # 상세 API 원값 보존
+        title = name + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + (f" [{g('ccmaName')}]" if g("ccmaName") else "") \
+                + (f" — {g('ccbaCtcdNm')} {g('ccsiName')}" if g("ccbaCtcdNm") else "")
+        out.append({"title": title[:110], "date": "", "id": raw_id,
+                    **({"series": g("ccmaName")} if g("ccmaName") else {}),
+                    **({"media": g("imageUrl")} if g("imageUrl") else {}),
+                    "url": (f"https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}" if cpno else "https://www.heritage.go.kr")})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _c_indy(q, n):
+    """국가기록원 독립운동판결문 테마관 — GET 실측(2026-11-21). 판결기관·날짜·주문+상세 딥링크(gonghun 수형기록의 원문 창구)."""
+    b = _http_text("https://theme.archives.go.kr/next/indy/listkeywordSrch.do?keyword=" + _up.quote(q)
+                   + f"&listSize={min(n, 20)}", 25)
+    out = []
+    for m in re.finditer(r'<a href="(/next/indy/viewIndyDetail\.do[^"]+)">\s*<span>\s*([^<]+?)\s*</span>[\s\S]{0,400}?<td class="left">([^<]*)</td>\s*<td>(\d{8})</td>\s*<td class="left">([^<]*)</td>', b):
+        out.append({"title": f"[판결문] {_clean(m.group(2))} — {_clean(m.group(3))} · {_clean(m.group(5))[:40]}"[:115],
+                    **({"series": _clean(m.group(3))} if _clean(m.group(3)) else {}),
+                    "date": m.group(4), "id": "",
+                    "url": "https://theme.archives.go.kr" + m.group(1).replace("&amp;", "&")})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _c_much(q, n):
+    """대한민국역사박물관 근현대사아카이브 — POST 검색 역공학(2026-11-21). 소장품·포스터·간행물(근현대 실물)."""
+    req = _ur.Request("https://archive.much.go.kr/search.do", data=_up.urlencode({"searchQuery": q}).encode(),
+                      headers={"User-Agent": _UA_KO, "Content-Type": "application/x-www-form-urlencoded"})
+    with _ur.urlopen(req, timeout=25) as r:
+        b = r.read().decode("utf-8", "replace")
+    out = []
+    for m in re.finditer(r'<a href="(/archive/[\w/]+view\.do\?idnbr=[^"]+)">[\s\S]{0,420}?<strong>([\s\S]*?)</strong>[\s\S]{0,320}?자료연대\s*:\s*([^<]{1,20})', b):
+        idm = re.search(r"idnbr=([\w\-]+)", m.group(1))
+        seg_cat = (m.group(1).split("/") + ["", "", ""])[2]
+        out.append({"title": _clean(m.group(2))[:110], "date": _clean(m.group(3)), "id": idm.group(1) if idm else "",
+                    **({"series": seg_cat} if seg_cat else {}),
+                    "url": "https://archive.much.go.kr" + m.group(1)})
+        if len(out) >= n:
+            break
+    if len(out) < n:
+        for c in re.finditer(r'<strong>([가-힣 ]{2,12})</strong><span>총 "([\d,]+)건"', b):  # 카테고리 집계 보충
+            if c.group(2) == "0":
+                continue
+            out.append({"title": f"역사박물관 {_clean(c.group(1))} {c.group(2)}건 — 사이트 검색(POST)으로 열람",
+                        "date": "", "id": "", "url": "https://archive.much.go.kr/index.do"})
+            if len(out) >= n:
+                break
+    return out
+
+
+def _c_oldnews(q, n):
+    """대한민국신문아카이브(국립중앙도서관) — POST JSON 역공학(2026-11-21). 1883~1960 신문 기사 전문."""
+    req = _ur.Request("https://nl.go.kr/newspaper/search_newspaper.do",
+                      data=json.dumps({"search_keyword": q, "page_size": min(n, 10), "page_no": 1}).encode(),
+                      headers={"User-Agent": _UA_KO, "Content-Type": "application/json",
+                               "Referer": "https://nl.go.kr/newspaper/keyword_search.do"})
+    with _ur.urlopen(req, timeout=25) as r:
+        d = json.loads(r.read().decode("utf-8", "replace"))
+    if not (d.get("hits") or []) and " " in str(q).strip():  # v1.96.4: 다어절 0건 → 가장 긴 단어로 완화 재검색
+        ws = sorted((w for w in str(q).split() if not w.isdigit()), key=len, reverse=True)
+        if ws:
+            req2 = _ur.Request("https://nl.go.kr/newspaper/search_newspaper.do",
+                               data=json.dumps({"search_keyword": ws[0], "page_size": min(n, 10), "page_no": 1}).encode(),
+                               headers={"User-Agent": _UA_KO, "Content-Type": "application/json",
+                                        "Referer": "https://nl.go.kr/newspaper/keyword_search.do"})
+            with _ur.urlopen(req2, timeout=25) as r:
+                d = json.loads(r.read().decode("utf-8", "replace"))
+    first = lambda v: (v[0] if isinstance(v, list) and v else v) or ""
+    out = []
+    for h in (d.get("hits") or [])[:n]:
+        uri = first(h.get("uri"))
+        out.append({"title": (f"{first(h.get('label'))} — {first(h.get('newspaperKorName'))}"
+                              + (f" [{first(h.get('newsposition'))}]" if first(h.get('newsposition')) else ""))[:110],  # v1.85: 지면 위치(n면 n단) — 신문 인용 좌표
+                    "date": str(h.get("issued_date") or ""), "id": uri,
+                    **({"series": first(h.get("newspaperKorName"))} if first(h.get("newspaperKorName")) else {}),
+                    "url": (f"https://nl.go.kr/newspaper/detail.do?content_id={uri}" if uri else "https://nl.go.kr/newspaper/")})
+    return out
+
+
+def _c_commons(q, n):
+    """위키미디어 공용 — 키 불요 검색 API(PD 사진·NARA/해군 재수집본 다수 — 원 소장처 역추적 창구). 공유 IP 429 시 채널 실패."""
+    en = _to_index_lang(q, "en") or q
+    # v1.81: list=search → generator=search + prop=categories 1콜 전환 — 소속 카테고리(큐레이션 계층)를 목록 레벨에서 확보
+    d = http_json("https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&format=json"
+                  f"&gsrlimit={min(n, 10)}&gsrsearch=" + _up.quote(en) + "&prop=categories%7Cimageinfo&clshow=!hidden&cllimit=3&iiprop=url",
+                  headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp; archival discovery)"})
+    pages = sorted(((d.get("query", {}) or {}).get("pages") or {}).values(), key=lambda p: p.get("index", 0))
+    out = []
+    for it in pages:
+        t = str(it.get("title", ""))
+        cat = str(((it.get("categories") or [{}])[0] or {}).get("title", "")).removeprefix("Category:")
+        iiu = str(((it.get("imageinfo") or [{}])[0] or {}).get("url", "")).split("?")[0]  # v1.84: 원본 파일 직링크(utm 제거 — 절단 없는 영속 URL)
+        # v1.88: NARA 기증본 파일명 규칙 — '… - NARA - <NAID>.tif'(520782 실측 일치) · 'NARA <고유번호> …'(127-N-A4501형)
+        cn = re.search(r"[-_ ]NARA[-_ ]+(\d{5,10})\.\w+$", t, re.I)
+        cl = None if cn else re.match(r"^File:NARA[ _]+(\d{2,3}[A-Z]?-[A-Z0-9]+-[A-Z0-9-]+?)[ _]", t, re.I)
+        sa = f"NAID {cn.group(1)}" if cn else (f"NARA {cl.group(1).upper()}" if cl else "")
+        out.append({"title": t.removeprefix("File:")[:110], "date": "", "id": "",
+                    **({"series": cat[:80]} if cat else {}),
+                    **({"media": iiu} if iiu else {}),
+                    **({"sameAs": sa} if sa else {}),
+                    "url": "https://commons.wikimedia.org/wiki/" + _up.quote(t.replace(" ", "_"))})
+    return out
+
+
+def _c_nlna(q, n):
+    """네덜란드 국립문서보관소 — 공개 JSON API 실측(2026-11-20, Playwright 역추적). 주한 대사관·파견부대 문서군."""
+    # commons는 한국어 네이티브 검색 가능 — TOPICS 미등재어(인명 등)가 'Korea' 단독으로 뭉개지면 원질의 유지(v1.62)
+    t = _ko_en(q)
+    en = q if (not t or t == 'Korea') else t
+    d = json.loads(_http_text(f"https://zvt.nationaalarchief.nl/api/search/eads?page=1&rows={min(n, 10)}"
+                              f"&q={_up.quote(en)}&sortBy=_score", 25))
+    # v1.81: 토이강(toegang) 번호 첫 두 세그먼트 = 형성기관 클러스터(2.05 외무부 등 — 2.05.202 'Zuid-Korea 대사관' 실측)
+    NLNA_CL = {"2.04": "내무부(Binnenlandse Zaken)", "2.05": "외무부(Buitenlandse Zaken)", "2.09": "법무부(Justitie)",
+               "2.10": "식민성(Koloniën)", "2.12": "해군(Marine)", "2.13": "국방부(Defensie)",
+               "2.19": "민간단체 문서", "2.21": "개인·가문 문서", "2.24": "사진·영상 컬렉션"}
+    out = []
+    for r in (d.get("results") or [])[:n]:
+        cl = ".".join(str(r.get("id", "")).split(".")[:2])
+        ser = f"{cl} {NLNA_CL[cl]}" if cl in NLNA_CL else (f"토이강 {cl}" if "." in cl else "")
+        out.append({"title": _clean(str(r.get("title", "")))[:95] + (" [문서군]" if r.get("type") == "ARCHIVE" else ""),
+                    "date": str(r.get("period", "")), "id": str(r.get("id", "")),
+                    **({"series": ser} if ser else {}),
+                    "url": "https://www.nationaalarchief.nl/onderzoeken/archief/" + _up.quote(str(r.get("id", "")))})
+    return out
+
+
+def _c_nzarch(q, n):
+    """Archives NZ Collections(Te Rua Mahara) — 연합검색 공개 API(SSE 프레임 JSON, 무키 평문 GET 실측).
+    v1.58: GH 러너 역공학 10차로 완결. 0건 응답엔 hits 키 없음(totalHits로 판별). 간헐 Incapsula → 정적 인덱스 폴백."""
+    en = _ko_en(q) or q
+
+    def _row(rid, title, acc, date):
+        return {"title": title[:92] + (f" [{acc}]" if acc else ""), "date": date, "id": rid,
+                "url": "https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/" + rid}
+    try:
+        b = _http_text("https://collections.archives.govt.nz/federated-search/customers/aims/search?size=" + str(min(n, 20))
+                       + "&facetSize=0&start=0&isFuzzy=true&sourceId=aims-archive&q=" + _up.quote(en), 25)
+        line = next((l for l in b.split("\n") if l.startswith("data:") and '"totalHits"' in l), None)
+        if not line:
+            raise RuntimeError("no-stream")
+        j = json.loads(line[5:])
+        out = []
+        for h in (j.get("hits") or []):
+            e = h.get("entity") or {}
+
+            def cf(k):
+                try:
+                    return str(e["custom"][k]["value"][0]["value"])
+                except Exception:
+                    return ""
+            row = _row(str(e.get("id") or ""), _clean(str(e.get("name") or "(무제)")), cf("accessStatus"), cf("resultDate"))
+            if cf("series"):
+                row["series"] = cf("series")
+            out.append(row)
+        return out
+    except Exception:  # 간헐 Incapsula — GH 주간 수확 정적 인덱스 폴백(자체 도메인)
+        ix = _cached_text("nzIdx", 6 * 3600, lambda: _http_text("https://korea-archive-mcp.vercel.app/nz-index.json", 20), '"records"')
+        j = json.loads(ix)
+        ql = en.lower()
+        return [_row(str(r.get("id") or ""), str(r.get("title") or "")[:86] + " ·주간인덱스", str(r.get("access") or ""), str(r.get("date") or ""))
+                for r in (j.get("records") or []) if ql in str(r.get("title") or "").lower() or str(r.get("id") or "").lower() == ql][:n]
+
+
+def _nzarch_mode(query: str) -> str:
+    """Archives NZ 상세 판독 — R번호 투입 시 entity 전체 메타 + 메타 지문. Node nedb_search mode='nzarch' 패리티."""
+    q = query.strip()
+    m = re.match(r"^[Rr](\d{5,9})$", q) or re.match(r"^(\d{5,9})$", q)
+    if not m:
+        return "nzarch 판독: R번호(예 R17717658)를 입력하십시오. 번호는 cross_search(sources='nzarch')가 제공."
+    rn = "R" + m.group(1)
+    try:
+        b = _http_text("https://collections.archives.govt.nz/federated-search/customers/aims/search"
+                       "?size=3&facetSize=0&start=0&isFuzzy=false&sourceId=aims-archive&q=" + rn, 25)
+        line = next((l for l in b.split("\n") if l.startswith("data:") and '"totalHits"' in l), None)
+        if not line:  # 간헐 Incapsula — 주간 수확 인덱스로 축약 판독 폴백
+            try:
+                ix = _cached_text("nzIdx", 6 * 3600, lambda: _http_text("https://korea-archive-mcp.vercel.app/nz-index.json", 20), '"records"')
+                r = next((x for x in (json.loads(ix).get("records") or []) if str(x.get("id")) == rn), None)
+                if r:
+                    meta = " · ".join(x for x in (
+                        f"연대 {r.get('date')}" if r.get("date") else "",
+                        f"시리즈 {r.get('series')}" if r.get("series") else "",
+                        f"접근 상태 {r.get('access')}" if r.get("access") else "") if x)
+                    return (f"Archives NZ 판독(축약 — ·주간인덱스, 라이브 간헐 차단 중) — {rn}\n제목: {r.get('title')}\n{meta}\n"
+                            f"레코드: https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/{rn}\n"
+                            "※ 전체 메타(생산 기관·열람 방법·메타 지문)는 라이브 재시도 시 제공. 출처: Archives New Zealand.")
+            except Exception:
+                pass
+            return (f"[{rn}] 간헐 차단 — 잠시 후 재시도 또는 브라우저: "
+                    f"https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/{rn}")
+        j = json.loads(line[5:])
+        hits = j.get("hits") or []
+        h = next((x for x in hits if (x.get("entity") or {}).get("id") == rn), hits[0] if hits else None)
+        if not h:
+            return f"[{rn}] 레코드 미발견 — 번호를 확인하십시오."
+        e = h.get("entity") or {}
+
+        def cf(k):
+            try:
+                return " | ".join(str(v["value"]) for v in e["custom"][k]["value"])
+            except Exception:
+                return ""
+        mfp = _hl.sha256((str(e.get("name") or "") + "\n" + json.dumps(e.get("custom") or {}, ensure_ascii=False, sort_keys=True)).encode("utf-8")).hexdigest()[:16]
+        meta = " · ".join(x for x in (
+            f"기술계층 {e.get('descriptionLevel')}" if e.get("descriptionLevel") else "",
+            f"형태 {cf('itemLevel')}" if cf("itemLevel") else "",
+            f"연대 {cf('resultDate')}" if cf("resultDate") else "",
+            f"소장 {e.get('holdingsLocation')}" if e.get("holdingsLocation") else "") if x)
+        return (f"Archives NZ(Te Rua Mahara) 판독 — {e.get('id') or rn}\n제목: {e.get('name') or '(무제)'}\n{meta}\n"
+                + (f"시리즈: {cf('series')}" + (f" (Series {e.get('parentId')})" if e.get("parentId") else "") + "\n" if cf("series") else "")
+                + (f"생산 기관: {re.sub(r'^Agency:\\s*', '', cf('resultField4'))}\n" if cf("resultField4") else "")
+                + (f"접근 상태: {cf('accessStatus')} — 발굴 우선: 권리는 표시 대상\n" if cf("accessStatus") else "")
+                + (f"열람 방법: {' · '.join(e.get('orderType') or [])}\n" if e.get("orderType") else "")
+                + f"메타 지문(sha256-16): {mfp} — 판독 시점 기술(記述) 전체 기준. 재판독 지문 불일치=기술 개정 발생.\n"
+                + f"레코드: https://collections.archives.govt.nz/web/arena/search#/entity/aims-archive/{e.get('id') or rn}\n"
+                + "※ 출처: Archives New Zealand Te Rua Mahara o te Kāwanatanga — 게재 시 출처 표기. May be restricted는 기관 열람 신청 대상.")
+    except Exception as err:
+        return f"Archives NZ 오류({str(err)[:60]}) — 잠시 후 재시도."
+
+
+def _c_dnz(q, n):
+    """DigitalNZ 집계 API(무키 JSON) — v1.57 합류: Papers Past(직접 차단 — 본 API로 우회 복구)·터닝불도서관·Te Papa 등 NZ 30+기관."""
+    en = _ko_en(q) or q
+    # v1.91.1: 서버 IP 익명 호출 403 실측 — DNZ_API_KEY(digitalnz.org/developers 무료) 설정 시 키 헤더로 호출
+    dk = os.environ.get("DNZ_API_KEY")
+    u = ("https://api.digitalnz.org/v3/records.json?per_page=" + str(min(n, 20))
+         + "&fields=id,title,display_date,landing_url,content_partner,primary_collection&text=" + _up.quote(en))
+    try:
+        req = _ur.Request(u, headers={"User-Agent": _UA_KO, "Accept": "application/json", **({"Authentication-Token": dk} if dk else {})})
+        with _ur.urlopen(req, timeout=25) as r:
+            d = json.loads(r.read().decode("utf-8", "replace"))
+    except Exception as e:
+        if "403" in str(e):
+            raise RuntimeError("HTTP 403 — 서버 IP 익명 호출 차단" + ("(키 거부 — DNZ_API_KEY 확인)" if dk else "(DNZ_API_KEY 미설정 — 등록 시 복구)")
+                               + f" · 대체: digitalnz.org/records?text={_up.quote(en)} 웹 검색")
+        raise
+    out = []
+    for r in ((d.get("search") or {}).get("results") or []):
+        cp = (r.get("content_partner") or [""])[0]
+        pc = (r.get("primary_collection") or [""])[0]
+        out.append({"title": (_clean(str(r.get("title") or "(무제)")) + " — " + cp + ("·" + pc if pc else ""))[:115],
+                    "date": str(r.get("display_date") or ""), "id": str(r.get("id") or ""),
+                    **({"series": cp + (" › " + pc if pc else "")} if cp else {}),
+                    "url": str(r.get("landing_url") or "")})
+    return out
+
+
+def _c_awm(q, n):
+    """호주 전쟁기념관(AWM) — 검색 모자이크(SSR C-id) → 상세 순차로 제목·수장번호 (2026-11-20 실측)."""
+    en = _ko_en(q) or q
+    b = _http_text("https://www.awm.gov.au/advanced-search?query=" + _up.quote(en), 28)
+    ids = []
+    for m in re.finditer(r'href="/collection/(C\d+)"', b):
+        if m.group(1) not in ids:
+            ids.append(m.group(1))
+        if len(ids) >= min(n, 10):  # v1.96.3: 5→10
+            break
+    out = []
+    for cid in ids:
+        try:
+            d = _cached_text("awm:" + cid, 24 * 3600, lambda cid=cid: _http_text("https://www.awm.gov.au/collection/" + cid, 25), "<h1")
+            h1 = re.search(r"<h1[^>]*>\s*(?:<[^>]+>\s*)*([^<]{3,120})", d)
+            acc = re.search(r"(?:Accession Number|ID number)[^A-Z0-9]{0,40}([A-Z0-9/.\-]{3,20})", d)
+            pd = bool(re.search(r"Copyright expired - public domain|publicdomain/mark", d))
+            conf = re.search(r"Date made</th>\s*<td[^>]*>\s*([^<]{2,40})", d)  # v3.0.1 날짜 = 'Date made'(제작일 — c 1919 등). 'Conflict'(Korea, 1950-1953)는 분쟁명이라 날짜로 쓰지 않는다
+            ot = re.search(r"Object type</th>\s*<td>\s*([^<]{2,40})", d)  # v1.81: 소장품 유형(Photograph·Film·Firearm 등 — C285584 실측)
+            out.append({"title": (_clean(h1.group(1)) if h1 else cid) + (" · 권리:PD(저작권 만료)" if pd else ""),
+                        "date": _clean(conf.group(1)) if conf else "",
+                        "id": acc.group(1) if acc else cid,
+                        **({"series": _clean(ot.group(1))} if ot else {}),
+                        "url": "https://www.awm.gov.au/collection/" + cid})
+        except Exception:
+            continue
+    return out
+
+
+def _jsg_text(url, t=25):
+    """v1.96.6: 장서각 병렬 호출 간헐 403 — 백오프 3회(0.9s·1.8s) 후 실패 보고(같은 요청을 늦춰 재시도). Node jsgText 패리티."""
+    e0 = None
+    for k in range(3):
+        try:
+            return _http_text(url, t)
+        except Exception as e:
+            e0 = e
+            if not re.search(r"(403|429|5\d\d)", str(e)):
+                break
+            __import__("time").sleep(0.9 * (k + 1))
+    raise e0
+
+
+def _c_jsg(q, n):
+    """AKS 장서각 — ★검색 파라미터는 q=query|<어> (플레인 q는 무시되고 전체 열람 반환 —
+    Playwright 실브라우저 재역공학으로 확정, 2026-11-20)."""
+    b = _jsg_text("https://jsg.aks.ac.kr/search/group?q=" + _up.quote("query|" + q), 28)
+    out, seen = [], set()
+    for m in re.finditer(r'href="/dir/view\?dataId=([^"]+)"[^>]*>([\s\S]*?)</a>', b):
+        t = _clean(m.group(2))
+        did = m.group(1)
+        if not t or did in seen or re.match(r"^JSG_K1-[1-5]$", did):
+            continue
+        seen.add(did)
+        jid = did[4:] if did.startswith("JSG_") else ""
+        sb = {"K1": "經部(K1)", "K2": "史部(K2)", "K3": "子部(K3)", "K4": "集部(K4)"}.get(jid.split("-")[0])
+        out.append({"title": t[:95], "date": "", "id": jid, **({"series": sb} if sb else {}),
+                    "url": "https://jsg.aks.ac.kr/dir/view?dataId=" + _up.quote(did)})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _c_kyudb(q, n):
+    """서울대 규장각 — 기존 kyujanggak 코어(joseon_tools) 재사용.
+    실측 ~10s(12s 타임박스 근접) → 6h TTL 캐시(마커 奎 — 결과 있을 때만 캐시)."""
+    if _jt is None:
+        return []
+    raw = _cached_text("kyudb6:" + q, 6 * 3600,
+                       lambda: json.dumps(_jt.kyujanggak_search(q, area="both"), ensure_ascii=False), "奎")
+    try:
+        r = json.loads(raw)
+    except Exception:
+        return []
+    sec = (r.get("sections") or {}) if isinstance(r, dict) else {}
+    lst = sec.get("목록")
+    if isinstance(lst, dict):  # v1.96.7: sections 값은 {count, items} — 리스트로 가정해 항상 0건이던 결함
+        rows = [x for x in lst.get("items", []) if x.get("title")]
+        if rows:
+            def _ks(c):
+                km = re.match(r"(奎|古|想白|一簑)", c)
+                return {"奎": "규장각도서(奎)", "古": "고도서(古)", "想白": "상백문고", "一簑": "일사문고"}.get(km.group(1)) if km else None
+            _cl = lambda x: " › ".join(str(x.get("cls") or "").split()[:4])  # v2.2: 사부분류를 계열로(Node 패리티)
+            return [{"title": f"[{x['call_number']}] {x['title']} · {x.get('author', '')}"[:120], "date": x.get("date", ""), "id": x["call_number"],
+                     **({"series": " › ".join(v for v in (_ks(x["call_number"]), _cl(x)) if v)} if (_ks(x["call_number"]) or _cl(x)) else {}),
+                     "url": f"https://kyudb.snu.ac.kr/book/view.do?book_cd={x['book_cd']}" if x.get("book_cd") else "https://kyudb.snu.ac.kr"} for x in rows[:n]]
+        lst = [x.get("call_number") for x in lst.get("items", [])]
+    if not isinstance(lst, list):
+        return []
+    def _kser(t):
+        km = re.search(r"(奎|古|想白|一簑)\s*\d", str(t))
+        return {"奎": "규장각도서(奎)", "古": "고도서(古)", "想白": "상백문고", "一簑": "일사문고"}.get(km.group(1)) if km else None
+    return [{"title": str(t), "date": "", "id": "", **({"series": _kser(t)} if _kser(t) else {}),
+             "url": "https://kyudb.snu.ac.kr"} for t in lst[:n]]
+
+
+_I815_DETAIL = {  # 구분(gubun)→상세 GET 경로 — 목록 contentsFrm(method=get) 역공학(2026-11-20 실측)
+    "2": ("contents/mijooAcademy/mijooAcademyDetailList.do", "mngNo"),
+    "3": ("contents/proGovernment/proGovernmentDetailList.do", "mngNo"),
+    "4": ("contents/independenceFighter/detail.do", "independenceFighterId"),
+    "7": ("contents/missionary/detail.do", "missionaryId"),
+    "8": ("contents/newsPaper/detail.do", "newsPaperId"),
+    "9": ("contents/medicalData/MedicalDataDetailList.do", "mngNo"),
+    "9999": ("contents/microFilm/detail.do", "adminId")}
+
+
+def _c_i815(q, n):
+    """독립기념관 — v1.32 목록 실체화: 최대 카테고리의 실제 자료 제목+GET 딥링크, 나머지는 집계 신호."""
+    base = "https://search.i815.or.kr"
+    b = _http_text(base + "/main/totalSearch.do?searchWord=" + _up.quote(q) + "&searchMenu=all", 28)
+    cats = []
+    for m in re.finditer(r'href="(/main/moreContentsSearchList\.do[^"]*)"[^>]*>([^<]+?)\s*([\d,]+)\s*건<', b):
+        if m.group(3) == "0":
+            continue
+        cats.append({"u": m.group(1).replace("&amp;", "&"), "name": _clean(m.group(2)),
+                     "cnt": int(m.group(3).replace(",", "")), "disp": m.group(3)})
+    out = []
+    if cats:
+        top = max(cats, key=lambda c: c["cnt"])
+        try:
+            lb = _http_text(base + _up.quote(top["u"], safe="/?&="), 28)  # 한글·공백 인코딩(urllib는 비ASCII URL 거부)
+            for m in re.finditer(r'data-mngno="([^"]+)"[^>]*data-gubun="(\d+)"[^>]*>([\s\S]*?)</strong>', lb):
+                d = _I815_DETAIL.get(m.group(2))
+                url = (f"{base}/{d[0]}?{d[1]}={_up.quote(m.group(1))}&sortNo={m.group(2)}" if d else base + top["u"])
+                out.append({"title": f"[{top['name']}] {_clean(m.group(3))}"[:110], "date": "", "id": m.group(1), "series": top["name"], "url": url})
+                if len(out) >= max(2, n - 2):
+                    break
+        except Exception:
+            pass  # 목록 실패 — 집계 신호로 폴백
+    for c in cats:
+        if len(out) >= n:
+            break
+        out.append({"title": f"독립기념관 {c['name']} {c['disp']}건", "date": "", "id": "", "series": c['name'], "url": base + c["u"]})  # v2.3: 집계 신호도 계열(카테고리) 부여
+    return out
+
+
+def _c_gonghun(q, n):
+    """공훈전자사료관(국가보훈부) — 독립유공자 공훈록. 2026-11-20 복구 실측(GET 검색·상세 딥링크).
+    인명 검색 채널(nameKo) — 일반 키워드는 0건이 정상. 성명은 base64(utf8_decode JS), mngNo로 상세 GET 직행."""
+    import base64 as _b64
+    b = _http_text("https://e-gonghun.mpva.go.kr/user/ContribuReportList.do?goTocode=20001"
+                   "&nameKd=NAME_KOR&nameKo=" + _up.quote(q) + "&pageIndex=1&pageUnit=" + str(min(max(n, 1), 10)), 28)
+    out = []
+    for seg in b.split("fnContribuReportView(")[1:]:
+        mn = re.match(r"^'(\d+)'", seg)
+        if not mn:
+            continue
+        bm = re.search(r"utf8_decode\('([A-Za-z0-9+/=]+)'", seg)
+        try:
+            name = _b64.b64decode(bm.group(1)).decode("utf-8") if bm else ""
+        except Exception:
+            name = ""
+        tds = [_clean(x) for x in re.findall(r"<td[^>]*>\s*([^<]{1,60}?)\s*<", seg)]
+        tds = [t for t in tds if t][:6]  # 한자명·생몰년·운동계열·포상년도·포상훈격·생존여부
+        def g(i):
+            return tds[i] if len(tds) > i else ""
+        title = re.sub(r"\s+", " ", f"{name}{f'({g(0)})' if g(0) else ''} {g(1)} · {g(2)} · {g(3)} {g(4)}").strip()
+        out.append({"title": title, "date": g(3), "id": mn.group(1),
+                    **({"series": g(2)} if g(2) else {}),
+                    "url": f"https://e-gonghun.mpva.go.kr/user/ContribuReportDetail.do?goTocode=20001&mngNo={mn.group(1)}&pageTitle=Report"})
+        if len(out) >= n:
+            break
+    return out
+
+
+
+def _heritage_images(kdcd, asno, ctcd, main=""):
+    """v1.95: 국가유산 원본 이미지 — 상세 API imageUrl + 이미지 목록 API(SearchImageOpenapi: imageUrl·ccimDesc) 직링크."""
+    _hs = lambda u: re.sub(r"^http://www\.khs\.go\.kr", "https://www.khs.go.kr", u)
+    urls = [(_hs(main), "대표 이미지")] if main else []
+    try:
+        b = _cached_text(f"heriI:{kdcd}|{asno}|{ctcd}", 24 * 3600,
+                         lambda: _http_text(f"https://www.khs.go.kr/cha/SearchImageOpenapi.do?ccbaKdcd={kdcd}&ccbaAsno={asno}&ccbaCtcd={ctcd}", 25), "<")
+        ims = re.findall(r"<imageUrl>(?:<!\[CDATA\[)?\s*([^<\]]+?)\s*(?:\]\]>)?</imageUrl>", b)
+        ds = re.findall(r"<ccimDesc>(?:<!\[CDATA\[)?\s*([^<\]]*?)\s*(?:\]\]>)?</ccimDesc>", b)
+        for i, u in enumerate(ims):
+            u = _hs(u)
+            if all(u != x for x, _ in urls):
+                urls.append((u, ds[i] if i < len(ds) else ""))
+    except Exception:
+        pass
+    if not urls:
+        return ""
+    return f"【원본 이미지 {len(urls)}점】\n" + "\n".join(f"{i}. {u}" + (f" — {d[:50]}" if d else "") for i, (u, d) in enumerate(urls[:10], 1)) + "\n"
+
+def _heritage_mode(query: str, max_results: int) -> str:
+    """국가유산 심층 — 키워드 목록 / ccbaCpno 상세(해설·시대·소유/관리). cpno=구분1+종목2+시도2+지정8. Node 패리티."""
+    q = query.strip()
+    try:
+        rid = re.match(r"^(\d{2})-([0-9A-Za-z]+)-(\d{2})$", q)  # 목록이 보존한 원값
+        if rid:
+            kdcd, asno, ctcd = rid.group(1), rid.group(2), rid.group(3)
+            b = _cached_text(f"heriD:{kdcd}|{asno}|{ctcd}", 24 * 3600,
+                             lambda: _http_text(f"https://www.khs.go.kr/cha/SearchKindOpenapiDt.do?ccbaKdcd={kdcd}&ccbaAsno={asno}&ccbaCtcd={ctcd}", 25),
+                             "<ccbaMnm1>")
+            g = lambda t: _clean(((re.search(f"<{t}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</{t}>", b) or [None, ""])[1] or ""))
+            name = g("ccbaMnm1")
+            if not name:
+                return f"[{q}] 상세 미매칭 — 포털에서 열람하십시오(목록의 딥링크)."
+            content = g("content")
+            hfp = _hl.sha256(content.encode("utf-8")).hexdigest()[:16] if content else ""  # 판독 시점 해설 지문
+            if len(content) > 3500:
+                content = content[:3500] + f" …(총 {len(content)}자 — 전문은 포털)"
+            meta = " · ".join(x for x in (f"소유 {g('ccbaPoss')}" if g("ccbaPoss") else "",
+                                          f"관리 {g('ccbaAdmin')}" if g("ccbaAdmin") else "",
+                                          f"시대 {g('ccceName')}" if g("ccceName") else "",
+                                          f"소재 {g('ccbaLcad')[:60]}" if g("ccbaLcad") else "") if x)
+            return (f"국가유산 판독 — {name}" + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + f" [{g('ccmaName')}]"
+                    + f"\n{meta}\n" + (f"【해설】\n{content}\n" if content else "")
+                    + (f"본문 지문(sha256-16): {hfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if hfp else "")
+                    + _heritage_images(kdcd, asno, ctcd, g("imageUrl"))
+                    + f"■ IIIF(맥락·증거성 포함, 어느 IIIF 뷰어든): {_bridge_url('heritage', f'{kdcd}-{asno}-{ctcd}')} · KV: {_kv_url(_bridge_url('heritage', f'{kdcd}-{asno}-{ctcd}'))}\n"
+                    + "※ 출처: 국가유산청 국가유산포털 — 게재 시 출처 표기. 사진 이용은 공공누리 유형 확인.")
+        hm = re.search(r"ccbaCpno=(\d{13})", q) or re.match(r"^(\d{13})$", q)
+        if hm:
+            cpno = hm.group(1)
+            kdcd, ctcd, asno8 = cpno[1:3], cpno[3:5], cpno[5:]
+            # asno 포맷이 종목별로 달라 후보 순차 시도(8자리·4자리·무패딩)
+            b = ""
+            # 기관 원값 asno는 13자리('00'+지정4+'0000000') — 실측 역산 후보 최우선
+            for asno in dict.fromkeys(['00' + asno8[:4] + '0000000', asno8, asno8[:4]]):
+                b = _cached_text(f"heriD:{kdcd}|{asno}|{ctcd}", 24 * 3600,
+                                 lambda a2=asno: _http_text(f"https://www.khs.go.kr/cha/SearchKindOpenapiDt.do?ccbaKdcd={kdcd}&ccbaAsno={a2}&ccbaCtcd={ctcd}", 25),
+                                 "<ccbaMnm1>")
+                if re.search(r"<ccbaMnm1>(?:<!\[CDATA\[)?[^<]", b):
+                    used_asno = asno
+                    break
+            g = lambda t: _clean(((re.search(f"<{t}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</{t}>", b) or [None, ""])[1] or ""))
+            name = g("ccbaMnm1")
+            if not name:
+                return (f"[{cpno}] 상세 API 미매칭(기관 식별 편차 — 2026-11-21 명세 기록). "
+                        f"해설은 포털에서: https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}")
+            content = g("content")
+            hfp = _hl.sha256(content.encode("utf-8")).hexdigest()[:16] if content else ""  # 판독 시점 해설 지문
+            if len(content) > 3500:
+                content = content[:3500] + f" …(총 {len(content)}자 — 전문은 포털)"
+            meta = " · ".join(x for x in (f"소유 {g('ccbaPoss')}" if g("ccbaPoss") else "",
+                                          f"관리 {g('ccbaAdmin')}" if g("ccbaAdmin") else "",
+                                          f"시대 {g('ccceName')}" if g("ccceName") else "",
+                                          f"소재 {g('ccbaLcad')[:60]}" if g("ccbaLcad") else "") if x)
+            return (f"국가유산 판독 — {name}"
+                    + (f"({g('ccbaMnm2')})" if g("ccbaMnm2") else "") + f" [{g('ccmaName')}]"
+                    + f"\n{meta}\n"
+                    + (f"【해설】\n{content}\n" if content else "")
+                    + (f"본문 지문(sha256-16): {hfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if hfp else "")
+                    + _heritage_images(kdcd, used_asno, ctcd, g("imageUrl"))
+                    + f"포털 상세: https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}\n"
+                    + "※ 출처: 국가유산청 국가유산포털 — 게재 시 출처 표기(해설문 인용 시 포털 명기). 사진 이용은 공공누리 유형 확인.")
+        items = _c_heritage(q, min(max_results, 15))
+        if not items:
+            return f"국가유산 '{q}' — 0건. 유산 명칭(전각·사적명 등)으로 재시도하십시오."
+        return (f"국가유산 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}" + (f" [{it['id']}]" if it.get("id") else "") + f"\n  {it['url']}" for it in items)
+                + "\n※ 대괄호의 복합 id(예 11-0002230000000-11)를 mode=heritage query로 재투입 → 해설·시대·소유/관리 판독.")
+    except Exception as e:
+        return f"국가유산 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://www.heritage.go.kr"
+
+
+def _indy_mode(query: str, max_results: int) -> str:
+    """독립운동판결문 심층 — 이름 목록 / 상세 URL 판독(죄명·주문·사건개요·원문 뷰어). Node 패리티."""
+    q = query.strip()
+    try:
+        if re.search(r"viewIndyDetail\.do", q) and re.match(r"^https?://theme\.archives\.go\.kr/", q):
+            evnt = (re.search(r"FK_ARCHIVE_EVNT_ID=(\d+)", q) or [None, ""])[1] or ""
+            b = _cached_text("indyD:" + (evnt or q[-40:]), 24 * 3600, lambda: _http_text(q, 25), "판결기관")
+            flat = _clean(b)
+            pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
+            name = pick(r"이름/별명\s*(.{2,40}?)\s*당시나이")
+            age = pick(r"당시나이\s*(.{1,20}?)\s*본적")
+            addr = pick(r"본적/주소\s*(.{2,60}?)\s*판결기관")
+            organ = pick(r"판결기관\s*(\S{2,20})")
+            crime = pick(r"죄명\s*(.{2,50}?)\s*생산년도")
+            sent = pick(r"주문\s*(.{2,100}?)\s*관리번호")
+            vdate = pick(r"판결날짜\s*(\d{8})")
+            kase = pick(r"사건개요\s*([\s\S]{5,900}?)\s*판결문 원문보기")
+            if not name and not kase:
+                return "판결문 상세 파싱 실패 — viewIndyDetail URL을 확인하거나 mode=indy에 이름을 넣으십시오."
+            meta = " · ".join(x for x in (f"본적/주소 {addr}" if addr else "", f"판결기관 {organ}" if organ else "",
+                                          f"판결 {vdate}" if vdate else "") if x)
+            return (f"독립운동판결문 판독 — {name}{f' (당시 {age})' if age else ''}\n{meta}\n"
+                    + (f"죄명: {crime}\n" if crime else "") + (f"주문: {sent}\n" if sent else "")
+                    + (f"【사건개요】\n{kase}\n" if kase else "")
+                    + (f"본문 지문(sha256-16): {_hl.sha256((kase + chr(10) + (sent or '')).encode('utf-8')).hexdigest()[:16]} — 판독 시점 사건개요·주문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if kase else "")
+                    + (f"판결문 원문 뷰어: https://theme.archives.go.kr/viewer/common/archWebViewer.do?archiveEventId={evnt}\n" if evnt else "")
+                    + "※ 출처: 국가기록원 독립운동판결문 — 게재 시 출처 표기. 수형 사실의 존엄 고려(게재윤리). gonghun 수형기록과 교차검증 권장.")
+        items = _c_indy(q, min(max_results, 15))
+        if not items:
+            return f"독립운동판결문 '{q}' — 0건. 이름(이명·한자 포함)으로 재시도하십시오."
+        return (f"독립운동판결문 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']} ({it['date']})\n  {it['url']}" for it in items)
+                + "\n※ 상세 URL을 mode=indy query로 재투입 → 죄명·주문·사건개요·원문 뷰어 판독.")
+    except Exception as e:
+        return f"독립운동판결문 오류({str(e)[:60]}) — 잠시 후 재시도: https://theme.archives.go.kr/next/indy/viewMain.do"
+
+
+def _much_mode(query: str, max_results: int) -> str:
+    """역사박물관 심층 — 키워드 목록 / idnbr·URL 판독(재질·크기·공공누리 유형·설명). Node 패리티."""
+    q = query.strip()
+    try:
+        im = re.search(r"idnbr=([A-Z]{2}[\w\-]+)", q) or re.match(r"^(PS\d[\w\-]{8,})$", q)
+        if im:
+            id2 = im.group(1)
+            b = _cached_text("muchD:" + id2, 24 * 3600,
+                             lambda: _http_text("https://archive.much.go.kr/archive/nrms/view.do?idnbr=" + _up.quote(id2), 25),
+                             "소장품번호")
+            flat = _clean(b)
+            pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
+            mat = pick(r"재질\s*(\S{1,14})\s*작가")
+            artist = pick(r"작가\s*(.{1,40}?)\s*크기")
+            size = pick(r"크기\s*(\S{1,50}?)\s*소장품번호")
+            no2 = pick(r"소장품번호\s*(\S{2,20})")
+            km = re.search(r"제\s*(\d)\s*유형\s*:\s*(.{3,60}?)\s*본 저작물", flat)
+            di = flat.find("이용할 수 있습니다.")
+            desc = flat[di + 11:di + 1700].strip() if di >= 0 else ""
+            desc = re.sub(r"&times;|×", "", re.split(r"자료열람|활용정보|이전글|다음글|사이트맵|COPYRIGHT", desc, flags=re.I)[0]).strip()
+            if not no2 and not desc:
+                return f"[{id2}] 상세 미발견 또는 구조 상이 — idnbr을 확인하거나 mode=much에 검색어를 넣으십시오."
+            rline = ""
+            if km:
+                rc, rb = auto_rights({"rg_series": f"KOGL {km.group(1)}", "title_orig": "", "archive": "역사박물관"})
+                rline = f"\n권리 초판정(공공누리 제{km.group(1)}유형 — {km.group(2).strip()}): {rc} — {rb}"
+            meta = " · ".join(x for x in (f"소장품번호 {no2}" if no2 else "", f"재질 {mat}" if mat else "",
+                                          f"작가 {artist}" if artist else "", f"크기 {size}" if size else "") if x)
+            imgs = []  # v1.95: 원본 이미지 직링크
+            for u in re.findall(r'<img[^>]+src="([^"]+)"', b, re.I):
+                if re.search(r"/(images?|img|common|layout|btn|icon|logo)/", u, re.I) or re.search(r"logo|icon|btn_|blank|kogl|open_?type", u, re.I):
+                    continue
+                if not re.search(r"\.(jpe?g|png|gif)|image|file|down|view", u, re.I):
+                    continue
+                u = u if u.startswith("http") else "https://archive.much.go.kr" + ("" if u.startswith("/") else "/") + u
+                if u not in imgs:
+                    imgs.append(u)
+            imgs = imgs[:6]
+            return ((f"【원본 이미지 {len(imgs)}점】\n" + "\n".join(f"{i}. {u}" for i, u in enumerate(imgs, 1)) + "\n" if imgs else "")
+                    + f"역사박물관 소장품 판독 — [{id2}]\n{meta}{rline}\n"
+                    + (f"【설명】\n{desc}\n" if desc else "")
+                    + f"원문·이미지: https://archive.much.go.kr/archive/nrms/view.do?idnbr={_up.quote(id2)}\n"
+                    + f"■ IIIF(맥락·증거성 포함, 어느 IIIF 뷰어든): {_bridge_url('much', id2)} · KV: {_kv_url(_bridge_url('much', id2))}\n"
+                    + "※ 출처: 대한민국역사박물관 근현대사아카이브 — 게재 시 출처 표기, 공공누리 유형 조건 준수.")
+        items = _c_much(q, min(max_results, 10))
+        if not items:
+            return f"역사박물관 '{q}' — 0건. 사건명·실물 유형(포스터·잡지 등)으로 재시도하십시오."
+        return (f"역사박물관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}" + (f" ({it['date']})" if it.get("date") else "") + f"\n  {it['url']}" for it in items)
+                + "\n※ idnbr(또는 상세 URL)을 mode=much query로 재투입 → 재질·크기·공공누리 유형·설명 판독.")
+    except Exception as e:
+        return f"역사박물관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://archive.much.go.kr"
+
+
+def _oldnews_mode(query: str, max_results: int) -> str:
+    """신문아카이브 심층 — 키워드 목록 / CNTS·URL 판독(색인어·관련기사·주제어). Node 패리티."""
+    q = query.strip()
+    try:
+        bm = re.match(r"^본문[:：]\s*(.+?)(?:\|(\d{4})\s*[-~]\s*(\d{4}))?$", q)
+        if bm:  # OCR 본문 전문('본문:키워드' 또는 '|1905-1910' 연대 한정 — 서버 faceted는 연결 거부라 후처리 필터)
+            kw = bm.group(1).strip()
+            y1 = int(bm.group(2)) if bm.group(2) else 0
+            y2 = int(bm.group(3)) if bm.group(3) else 9999
+            req = _ur.Request("https://nl.go.kr/newspaper/search_bodytext.do",
+                              data=json.dumps({"search_keyword": kw, "page_size": (30 if y1 else min(max_results, 10)), "page_no": 1}).encode(),
+                              headers={"User-Agent": _UA_KO, "Content-Type": "application/json",
+                                       "Referer": "https://nl.go.kr/newspaper/bodytext_search.do"})
+            with _ur.urlopen(req, timeout=25) as r:
+                d2 = json.loads(r.read().decode("utf-8", "replace"))
+            f1 = lambda v: (v[0] if isinstance(v, list) and v else v) or ""
+            dist = " · ".join(f"{k}:{v}" for k, v in sorted((d2.get("by_issuedYear") or {}).items(), key=lambda x: -x[1])[:6])
+            hits2 = [h for h in (d2.get("hits") or [])
+                     if y1 <= (int(str(h.get("issued_date") or "")[:4] or 0)) <= y2][:min(max_results, 10)]
+            rows = []
+            for h in hits2:
+                ex = _clean(str(f1(h.get("highlight_abstract")) or f1(h.get("abstract")) or ""))
+                link = f"https://nl.go.kr/newspaper/detail.do?content_id={f1(h.get('uri'))}" if f1(h.get("uri")) else ""
+                rows.append(f"- {f1(h.get('label'))} — {f1(h.get('newspaperKorName'))} ({h.get('issued_date') or ''})\n  발췌: {ex[:180]}\n  {link}")
+            if not rows:
+                rng = f" ({y1}~{y2})" if y1 else ""
+                return (f"신문아카이브 본문검색 '{kw}'{rng} — 0건."
+                        + (" 상위 30건 내 해당 연대 없음 — 범위를 넓히거나" if y1 else "")
+                        + " 당대 표기(국한문·옛 한글)로 재시도하십시오."
+                        + (f"\n연도 분포(전체): {dist}" if dist else ""))
+            rng = f" (연대 {y1}~{y2} 한정)" if y1 else ""
+            return (f"신문아카이브 OCR 본문검색 '{kw}'{rng} — 전체 {d2.get('total_count') or len(rows)}건"
+                    + (f" · 연도 분포 {dist}" if dist else "") + f"\n표시 {len(rows)}건:\n"
+                    + "\n".join(rows)
+                    + "\n※ 발췌는 OCR 원문(국한문 그대로). CNTS를 mode=oldnews로 재투입 → 색인어·관련기사 연쇄.")
+        cm = re.search(r"content_id=(CNTS-\d+)", q) or re.match(r"^(CNTS-\d+)$", q)
+        if cm:
+            cid = cm.group(1)
+            def fetch():
+                req = _ur.Request(f"https://nl.go.kr/newspaper/news_detail.do?content_id={cid}&ko_trans=no&abstractExist=false",
+                                  headers={"User-Agent": _UA_KO, "Referer": "https://nl.go.kr/newspaper/detail.do"})
+                with _ur.urlopen(req, timeout=25) as r:
+                    return r.read().decode("utf-8", "replace")
+            d = json.loads(_cached_text("oldnewsD:" + cid, 24 * 3600, fetch, "newspaperKorName"))
+            f1 = lambda v: (v[0] if isinstance(v, list) and v else v) or ""
+            if not f1(d.get("label")):
+                return f"[{cid}] 기사 미발견 — CNTS ID를 확인하십시오."
+            subj = " · ".join(str(x).split("|")[0] for x in ((d.get("subjectEvent") or []) + (d.get("subjectPlace") or []))[:8])
+            rel = "\n".join(f"  · {f1(r2.get('label'))} ({f1(r2.get('issued'))}) {f1(r2.get('uri'))}"
+                            for r2 in (d.get("relatedArticles") or [])[:5])
+            kws = ", ".join(d.get("keyword") or [])[:800]
+            return (f"신문아카이브 기사 판독 — {f1(d.get('label'))}\n"
+                    f"{f1(d.get('newspaperKorName'))}"
+                    + (f"({f1(d.get('newspaperForeignName'))})" if f1(d.get("newspaperForeignName")) else "")
+                    + f" · {f1(d.get('issued'))} · 발행 {f1(d.get('publisher'))}\n"
+                    + (f"색인어(기사 내용 재구성): {kws}\n" if kws else "")
+                    + (f"주제: {subj}\n" if subj else "")
+                    + (f"관련기사 연쇄(→ CNTS를 mode=oldnews로 재투입):\n{rel}\n" if rel else "")
+                    + (("원소장처: " + " / ".join(d.get("description") or [])[:200] + "\n") if d.get("description") else "")
+                    + f"원문 이미지(뷰어): https://nl.go.kr/newspaper/detail.do?content_id={cid}\n"
+                    + "※ 출처: 국립중앙도서관 대한민국신문아카이브 — 본문은 이미지 원문(뷰어 열람). 게재 시 신문명·발행일 출처 표기, 원소장처 병기.")
+        items = _c_oldnews(q, min(max_results, 10))
+        if not items:
+            return f"신문아카이브 '{q}' — 0건. 당대 표기(한자·옛 한글)로 재시도하십시오."
+        return (f"신문아카이브 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']} ({it['date']})\n  {it['url']}" for it in items)
+                + "\n※ CNTS ID(또는 상세 URL)를 mode=oldnews query로 재투입 → 색인어·관련기사 연쇄·주제어 판독.")
+    except Exception as e:
+        return f"신문아카이브 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://nl.go.kr/newspaper/"
+
+
+def _un_mode(query: str, max_results: int) -> str:
+    """UN 디지털도서관 심층 — 키워드 목록 / recid·URL 판독(요약·주제·언어별 PDF). Node 패리티."""
+    q = query.strip()
+    try:
+        rm = re.search(r"digitallibrary\.un\.org/record/(\d+)", q) or re.match(r"^(\d{4,9})$", q)
+        if rm:
+            recid = rm.group(1)
+            # v2.66 공개 MARC XML(/export/xm) 1순위 — 기록 HTML은 봇 확인, recjson은 제목·날짜가 비던 결함(실측 4132698). Node 패리티
+            try:
+                def fetch_x():
+                    req = _ur.Request(f"https://digitallibrary.un.org/record/{recid}/export/xm",
+                                      headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp; archival discovery)"})
+                    with _ur.urlopen(req, timeout=25) as rr:
+                        return rr.read().decode("utf-8", "replace")
+                x = _cached_text("unX:" + recid, 24 * 3600, fetch_x, "<record")
+                def df(tag):
+                    return [dict((z.group(1), _clean(z.group(2))) for z in re.finditer(r'<subfield code="(.)">([\s\S]*?)</subfield>', m.group(1)))
+                            for m in re.finditer(rf'<datafield tag="{tag}"[^>]*>([\s\S]*?)</datafield>', x)]
+                t245 = (df("245") or [{}])[0]
+                title = re.sub(r"\s+([:/])", r" \1", re.sub(r"\s*[:/]\s*$", "", " ".join(v for v in (t245.get("a"), t245.get("b"), t245.get("c")) if v)))
+                if title:
+                    g1 = lambda tag, c: ((df(tag) or [{}])[0]).get(c, "")
+                    sym = g1("191", "a") or g1("791", "a")
+                    date = g1("269", "a") or g1("992", "a") or g1("260", "c")
+                    t930 = g1("930", "a"); typ = {"VOT": "표결 기록", "RES": "결의", "DOC": "문서", "MTG": "회의록", "SPE": "발언"}.get(t930, t930)
+                    agenda = "; ".join(" ".join(v for v in (z.get("a"), z.get("c")) if v) for z in df("991"))
+                    agenda = "; ".join([a_ for a_ in agenda.split("; ") if a_][:3])
+                    rel = ", ".join([z.get("a") for z in df("993") if z.get("a")][:6])
+                    subs = "; ".join([z.get("a") for z in df("650") if z.get("a")][:8])
+                    abs_ = " ".join(z.get("a") for z in df("520") if z.get("a"))
+                    files = [z.get("u") for z in df("856") if re.match(r"^https?:", z.get("u") or "")]
+                    en = next((u for u in files if re.search(r"-EN\.pdf$", u, re.I)), "")
+                    return (f"UN 디지털도서관 판독 — {title}\n"
+                            + " · ".join(v for v in (sym and f"문서기호: {sym}", typ and f"유형: {typ}", date and f"날짜: {date}") if v) + "\n"
+                            + (f"의제: {agenda}\n" if agenda else "") + (f"관련 문서: {rel}\n" if rel else "") + (f"주제: {subs}\n" if subs else "")
+                            + (f"【요약】\n{abs_[:1500]}\n" if abs_ else "")
+                            + (f"영문 PDF: {en}\n" if en else "") + (f"파일 {len(files)}종\n" if len(files) > 1 else "")
+                            + f"레코드: https://digitallibrary.un.org/record/{recid}\n"
+                            + "※ UN 공식문서 — 출처 표기 하에 인용 가능(문서기호 병기). 원 데이터: 기관 MARC XML(export/xm).")
+            except Exception:
+                pass  # MARC 실패 — recjson으로
+            def fetch():
+                req = _ur.Request(f"https://digitallibrary.un.org/search?p=recid%3A{recid}&of=recjson&rg=1",
+                                  headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp)"})
+                with _ur.urlopen(req, timeout=25) as r:
+                    return r.read().decode("utf-8", "replace")
+            d = json.loads(_cached_text("unD:" + recid, 24 * 3600, fetch, "recid"))
+            r = d[0] if isinstance(d, list) and d else None
+            if not r:
+                return f"[recid {recid}] 레코드 미발견 — record URL 또는 recid를 확인하십시오."
+            files = [f for f in (r.get("files") or []) if f and f.get("url")]
+            sym = re.sub(r"-[A-Z]{2}\.pdf$", "", (files[0].get("full_name", "") if files else ""), flags=re.I).replace("_", "/")
+            en = next((f for f in files if re.search(r"english", f.get("description") or "", re.I)
+                       or re.search(r"-EN\.pdf$", f.get("full_name") or "", re.I)), None)
+            subs = " · ".join([x.get("term") for x in (r.get("subject") or []) if x.get("term")][:6])
+            abs_ = _clean(str((r.get("abstract") or {}).get("summary") or ""))
+            head = " · ".join(x for x in (f"발행: {(r.get('imprint') or {}).get('date')}" if (r.get("imprint") or {}).get("date") else "",
+                                          f"주제: {subs}" if subs else "") if x)
+            return (f"UN 디지털도서관 판독 — {sym or f'recid {recid}'}\n{head}\n"
+                    + (f"【요약】\n{abs_[:1500]}\n본문 지문(sha256-16): {_hl.sha256(abs_.encode('utf-8')).hexdigest()[:16]} — 판독 시점 요약 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if abs_ else "")
+                    + (f"영문 PDF: {en['url']}\n" if en else "")
+                    + (("전체 언어판 %d종: " % len(files)) + "·".join(f.get("description") or "" for f in files) + "\n" if len(files) > 1 else "")
+                    + f"레코드: https://digitallibrary.un.org/record/{recid}\n"
+                    + "※ UN 공식문서 — 출처 표기 하에 인용 가능(문서기호 병기). 결의·보고서 원문은 PDF 직링크로 분석 투입.")
+        items = _c_un(q, min(max_results, 10))
+        if not items:
+            return f"UN 디지털도서관 '{q}' — 0건. 영문 사건명·문서기호(S/RES/84 등)로 재시도하십시오."
+        return (f"UN 디지털도서관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}" + (f" ({it['date']})" if it.get("date") else "") + f"\n  {it['url']}" for it in items)
+                + "\n※ record URL(또는 recid 숫자)을 mode=un query로 재투입 → 요약·주제·언어별 PDF 직링크 판독.")
+    except Exception as e:
+        return f"UN 디지털도서관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://digitallibrary.un.org"
+
+
+_JSG_ENT = ["인명", "지명", "관청명", "관직명", "나라명", "건물명", "문헌명", "서명"]
+
+
+def _jsg_entities(html_text):
+    """v2.56 장서각 해제의 기관 개체 태깅(data-xsl-tag) — 인명·지명·관청명 등과 인명 전거(한국역대인물 UCI). Node 패리티."""
+    by, uci, seen_u = {}, [], set()
+    for m in re.finditer(r'<span data-xsl-tag="([^"]+)"([^>]*)>([\s\S]*?)(?:<div|</span>)', str(html_text or "")):
+        if m.group(1) not in _JSG_ENT:
+            continue
+        t = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", m.group(3))).strip()
+        if not t or len(t) > 40:
+            continue
+        a = by.setdefault(m.group(1), [])
+        if t not in a and len(a) < 12:
+            a.append(t)
+        u = re.search(r'data-people-uci="([^"]+)"', m.group(2))
+        if u and t not in seen_u:
+            seen_u.add(t); uci.append((t, u.group(1)))
+    return [(k, by[k]) for k in _JSG_ENT if k in by], uci[:20]
+
+
+def _jsg_mode(query: str, max_results: int) -> str:
+    """장서각 심층 — 키워드 목록 / 청구기호·URL 서지+해제 전문 판독(서버 렌더 실측 2026-11-21). Node 패리티."""
+    q = query.strip()
+    try:
+        du = re.search(r"dataId=([^&\s#]+)", q)  # v1.96.6: 고문서(ANC_…)·기타 접두 dataId도 상세 판독
+        g1 = _up.unquote(du.group(1).replace("+", "%2B")) if du else None
+        if not g1:
+            dm = re.match(r"^((?:JSG|ANC)_[\w.+\-]+)$", q) or re.match(r"^([A-Z]\d+(?:-\d+)*(?:[A-Za-z]*\d*)?)$", q)
+            g1 = dm.group(1) if dm else None
+        if g1 and not re.search(r"\s", q) and (re.match(r"^[A-Z]{3}_", g1) or re.match(r"^[A-Z]\d", g1)):
+            did = g1 if re.match(r"^[A-Z]{3}_", g1) else "JSG_" + g1
+            b = _cached_text("jsgD:" + did, 24 * 3600,
+                             lambda: _jsg_text("https://jsg.aks.ac.kr/dir/view?dataId=" + _up.quote(did, safe=""), 25), "청구기호")
+            flat = re.sub(r"\s*한국역대인물(?!정보)", "", _clean(b).replace("&middot;", "·"))  # v1.96.6: 인명 뒤 링크 라벨 제거
+            pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
+            name = pick(r"자료명\(한글\)\s*([^·]{2,60}?)\s*·") or pick(r"자료명\s+(.{2,60}?)\s+(?:xml|저자)")
+            ed = [pick(r"간행년\(왕력\)\s*(.{3,60}?)\s*간행년"), pick(r"판사항\s*(\S{1,20})"), pick(r"간략내용\s*(.{6,200}?)\s*MF")]
+            gx = [x for x in (f"간행: {ed[0]}" if ed[0] else "", f"판본: {ed[1]}" if ed[1] else "",
+                              f"요지: {ed[2]}" if ed[2] and "해제내용" not in flat else "") if x]  # v1.96.8: 의궤 간행·판본·요지
+            for k, rx in (("소장", r"소장정보\s+(.{4,90}?)\s+·"), ("집성", r"집성정보\s+(.{4,90}?)\s+(?:·|형태사항)"),
+                          ("형태", r"형태사항\s+(.{4,90}?)\s+\d{5}\s"), ("출판", r"출판정보\s*:\s*(.{4,90}?)\s*/")):
+                v = pick(rx)
+                if v and did.startswith("ANC_"):
+                    gx.append(f"{k}: " + re.sub(r"\s*·\s*", " · ", v).strip(" ·"))  # 고문서 메타
+            callno = pick(r"청구기호\s*(\S{2,20})")
+            mf = pick(r"MF번호\s*(?!유형분류)(\S{2,20})").rstrip(",")
+            cm = re.search(r"유형분류\s*(\S{2,20})\s*주제분류\s*(\S{2,30})\s*수집분류\s*(\S{2,30})", flat)
+            ih = flat.find("해제내용")  # v1.96.8: 의궤(ARC_) 페이지는 '해제내용 … 【정의】' 형식
+            i0 = ih + 4 if ih >= 0 else flat.find("정의 ")
+            haeje = ""
+            jfp = ""
+            if i0 >= 0:
+                haeje = re.split(r"집필자|관련 멀티미디어|장서각 디지털아카이브 바로가기|13455 경기도", flat[i0:i0 + 6000])[0].strip()
+                jfp = _hl.sha256(haeje.encode("utf-8")).hexdigest()[:16]  # 판독 시점 해제 지문
+                if len(haeje) > 4000:
+                    haeje = haeje[:4000] + f" …(총 {len(haeje)}자 — 전문은 원문 링크)"
+            if not callno and not haeje:
+                return f"'{did}' — 상세 미발견 또는 구조 상이. 청구기호(K2-…)를 확인하거나 mode=jsg에 검색어를 넣으십시오."
+            meta = " · ".join(x for x in (f"청구기호 {callno}" if callno else "", f"MF {mf}" if mf else "",
+                                          cm.group(1) if cm else "", cm.group(2) if cm else "") if x)
+            ent, uci = _jsg_entities(b)
+            return (f"장서각 서지·해제 판독 — {name or did}\n{meta}\n" + ("\n".join(gx) + "\n" if gx else "")
+                    + "".join(f"{k}(장서각 태깅): {'; '.join(v)}\n" for k, v in ent)
+                    + (f"【해제】\n{haeje}\n" if haeje else "")
+                    + (f"본문 지문(sha256-16): {jfp} — 판독 시점 해제 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if haeje else "")
+                    + (f"인물 전거(한국역대인물 UCI): {'; '.join(f'{n}={u}' for n, u in uci)}\n" if uci else "")
+                    + f"원문·이미지: https://jsg.aks.ac.kr/dir/view?dataId={_up.quote(did, safe='')}\n"
+                    + ("※ 고문서 원문 이미지 이용 문의: 장서각 자료보존관리팀 031-730-8874 · 고문서자료관 원자료 병행 확인.\n" if did.startswith("ANC_") else "")
+                    + "※ 출처: 한국학중앙연구원 장서각 — 게재 시 출처 표기, 이미지 재이용은 기관 이용조건 준수. "
+                    "해제 인용은 국역·해설(학술 인용 시 집필 해제임을 명기).")
+        items = _c_jsg(q, min(max_results, 10))
+        if not items:
+            return f"장서각 '{q}' — 0건. 서명·주제어(의궤·등록 등)로 재시도하십시오."
+        return (f"장서각 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}" + (f" [{it['id']}]" if it.get("id") else "") + f"\n  {it['url']}" for it in items)
+                + "\n※ 청구기호(K2-… 등)나 상세 URL을 mode=jsg query로 재투입 → 서지·해제 전문 판독.")
+    except Exception as e:
+        return f"장서각 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://jsg.aks.ac.kr"
+
+
+def _commons_mode(query: str, max_results: int) -> str:
+    """위키미디어 공용 심층 — 키워드 목록 / File URL 판독(라이선스·원 소장처·설명). Node 패리티."""
+    q = query.strip()
+    try:
+        qd = _up.unquote(q) if re.search(r"%[0-9A-Fa-f]{2}", q) else q  # v1.96.4: 'File%3A…' 인코딩 URL 허용
+        fm = re.match(r"^https?://commons\.wikimedia\.org/wiki/(File:.+)$", qd, re.I) or re.match(r"^(File:.+)$", qd, re.I)
+        if fm:
+            title = _up.unquote(fm.group(1)).replace("_", " ")
+            raw = _cached_text("commonsD2:" + title, 24 * 3600,  # v2.65 범주(숨김 제외)도 — Node 패리티
+                               lambda: json.dumps(http_json(
+                                   "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo%7Ccategories&clshow=!hidden&cllimit=20"
+                                   "&iiprop=url%7Cextmetadata%7Csize&format=json&titles=" + _up.quote(title),
+                                   headers={"User-Agent": "KoreaArchiveMCP/1.0 (https://github.com/changgi/korea-archive-mcp; archival discovery)"}),
+                                   ensure_ascii=False), "imageinfo")
+            d = json.loads(raw)
+            page = list(((d.get("query", {}) or {}).get("pages", {}) or {"_": {}}).values())[0]
+            ii = (page.get("imageinfo") or [{}])[0]
+            em = ii.get("extmetadata", {}) or {}
+            g = lambda k: _clean(str((em.get(k) or {}).get("value", "")))
+            lic = g("LicenseShortName")
+            if not ii.get("url") and not lic:
+                return f"'{title}' — 파일 미발견 또는 메타 없음. File: 제목/URL을 확인하십시오."
+            jr = auto_rights({"rg_series": "", "title_orig": "", "archive": lic})  # KOGL(공공누리) 등 공용 판정 규칙 재사용
+            rights = ("A(퍼블릭 도메인 표기)" if re.search(r"public domain", lic, re.I)
+                      else f"B({lic} — 조건 준수 시 이용)" if re.match(r"^cc", lic, re.I)
+                      else f"{jr[0]}({jr[1].replace('[자동초판] ', '')})" if jr[0] != "D"
+                      else f"D('{lic or '미표기'}' — 확인 필요)")
+            meta = " · ".join(x for x in (
+                f"촬영/제작: {g('DateTimeOriginal')[:40]}" if g("DateTimeOriginal") else "",
+                f"작가: {g('Artist')[:70]}" if g("Artist") else "",
+                f"원본 {ii.get('width')}×{ii.get('height')}" if ii.get("width") else "") if x)
+            nline = ""  # v1.91: 파일명의 NARA 번호 → 카탈로그 원본 자동 대조(실재·계보·Use Restriction)
+            nm = re.search(r"[-_ ]NARA[-_ ]+(\d{5,10})\.\w+$", title, re.I)
+            if nm:
+                naid, key = nm.group(1), os.environ.get("NARA_API_KEY")
+                nline = (f"【NARA 원본 대조】 파일명 NAID {naid} — "
+                         + (f"조회 실패, judge_rights(naid={naid})로 재확인\n" if key else f"서버 키 없음, judge_rights(naid={naid})로 확인\n"))
+                if key:
+                    try:
+                        raw = _cached_text("naid:" + naid, 24 * 3600, lambda: json.dumps(http_json(
+                            f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1", headers={"x-api-key": key})), '"naId"')
+                        hits = (((json.loads(raw).get("body") or {}).get("hits") or {}).get("hits") or [])
+                        rec = ((hits[0].get("_source") or {}).get("record") or {}) if hits else {}
+                        if str(rec.get("naId")) != naid:
+                            nline = f"【NARA 원본 대조】 NAID {naid} — 카탈로그에 없음(파일명 번호 오기 가능) → 업로더 라이선스만으로 게재 판단 금지\n"
+                        else:
+                            ur = rec.get("useRestriction") or {}
+                            urs = ur if isinstance(ur, str) else " · ".join(x for x in (ur.get("status"), ur.get("note"), "/".join(ur.get("specificUseRestrictions") or [])) if x)
+                            cls = ("A(제한 없음 실확인)" if re.search(r"unrestricted", urs, re.I) and not re.search(r"restricted\s*[-–]|possibly|fully restricted", urs, re.I)
+                                   else "C(제한 표기 — 기관 확인 필요)" if re.search(r"restricted", urs, re.I) else "판정 보류(Use Restriction 미기재)")
+                            nline = (f"【NARA 원본 대조】 NAID {naid} 원본 실재 확인 — {_norm(rec.get('title') or '')[:110]}\n"
+                                     f"  계보: {_nara_chain(rec) or '—'} · 생산: {_nara_date(rec) or '—'} · 소장 번호: {rec.get('localIdentifier') or '—'}\n"
+                                     f"  Use Restriction '{urs or '미기재'}' → {cls} · https://catalog.archives.gov/id/{naid}\n")
+                    except Exception:
+                        pass  # 실패 — 기본 안내 유지
+            return (f"위키미디어 공용 파일 판독 — {title.removeprefix('File:')}\n{meta}\n"
+                    f"라이선스: {lic or '(미표기)'} → 권리 초판정 {rights}\n"
+                    + (f"출처(원 소장처): {g('Credit')[:160]}\n" if g("Credit") else "")
+                    + (f"범주(Commons): {'; '.join(re.sub(r'^Category:', '', str(c.get('title', ''))) for c in (page.get('categories') or [])[:12])}\n" if page.get("categories") else "")
+                    + (f"【설명】\n{g('ImageDescription')[:1200]}\n" if g("ImageDescription") else "")
+                    + nline
+                    + (f"원본 이미지: {str(ii.get('url')).split('?')[0]}\n" if ii.get("url") else "")
+                    + "파일 페이지: https://commons.wikimedia.org/wiki/" + _up.quote(title.replace(" ", "_")) + "\n"
+                    + "※ 라이선스는 업로더 기재 — 게재 전 원 소장처(NH·NARA 번호 등) 카탈로그와 교차검증(nara_search·judge_rights).")
+        items = _c_commons(q, min(max_results, 10))
+        if not items:
+            return f"위키미디어 공용 '{q}' — 0건. 영문 지명·사건명으로 재시도하십시오."
+        return (f"위키미디어 공용 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}\n  {it['url']}" for it in items)
+                + "\n※ 파일 URL(또는 File:제목)을 mode=commons query로 재투입 → 라이선스·원 소장처·설명 판독.")
+    except Exception as e:
+        return (f"위키미디어 공용 오류({str(e)[:60]}) — 공유 IP 요청 제한(429)일 수 있음. "
+                "잠시 후 재시도 또는 브라우저: https://commons.wikimedia.org")
+
+
+def _earchive_mode(query: str, max_results: int) -> str:
+    """국편 전자사료관 심층 — 키워드 목록 / '키워드|순번' 세션 상세(검색 폼+searchPosition 재제출). Node 패리티."""
+    import http.cookiejar as _cj
+    q = query.strip()
+    try:
+        # v2.35 고정 상세 — catalogView.do?systemId= URL 또는 12자리 systemId(GET, 세션 불필요). Node 패리티
+        smm = re.search(r"catalogView\.do\?systemId=(\d{6,})", q) or re.match(r"^(\d{12})$", q)
+        if smm:
+            u = f"https://archive.history.go.kr/record/catalog/catalogView.do?systemId={smm.group(1)}"
+            def _get():
+                with _ur.urlopen(_ur.Request(u, headers={"User-Agent": _OK_UA}), timeout=25) as r:
+                    return r.read().decode("utf-8", "replace")
+            b = _cached_text("eaD:" + smm.group(1), 24 * 3600, _get, "info-box")
+            dc = lambda x: re.sub(r"\s+", " ", _clean(x or "")).strip()
+            title = dc((re.search(r'<div class="info-box">\s*<div>\s*<p>([\s\S]*?)</p>', b) or [None, ""])[1])
+            row = lambda name: dc((re.search(r'<div class="label">' + re.escape(name) + r'</div>\s*<div class="value">\s*<p>([\s\S]*?)</p>', b) or [None, ""])[1])
+            hb = (re.search(r'<ul class="history-box">([\s\S]*?)<div class="info-box">', b) or [None, ""])[1]
+            hist = [f"{dc(m[1])} {dc(m[0])}"[:120] for m in re.findall(r'title="([^"]{2,160})"[\s\S]*?<span class="type">([^<]{2,40})</span>', hb)]
+            sid = (re.search(r"사료건(?:&nbsp;|\s)*([0-9A-Za-z_]{6,})", b) or [None, ""])[1]
+            if not title:
+                return f"전자사료관 systemId {smm.group(1)} 상세 파싱 실패 — 브라우저로 열람: {u}"
+            F = [(k, row(k)) for k in ("생산자", "생산기간", "문서번호", "소장자(처)", "사료구분", "사료유형", "언어", "취급지명", "주제어")]
+            F = [(k, v) for k, v in F if v]
+            ab, acc, use = row("해제"), row("열람조건"), row("이용조건")
+            return (f"국편 전자사료관 상세 — {title}\n" + " · ".join(x for x in (sid and f"사료건 {sid}", f"systemId {smm.group(1)}") if x) + "\n"
+                    + (f"계층: 국사편찬위원회 전자사료관 › {' › '.join(hist)}\n" if hist else "")
+                    + "".join(f"{k}: {v[:160]}\n" for k, v in F)
+                    + (f"열람조건: {acc}\n" if acc else "") + (f"이용조건: {use}\n" if use else "")
+                    + (f"【해제】\n{ab[:1200]}\n" if ab else "") + f"원문: {u}\n"
+                    + "※ 출처: 국사편찬위원회 전자사료관. 이용조건 문구를 judge_rights에 투입해 초판정. 해외 수집 사료는 원 소장처(NARA 등) 권리 확인 병행.")
+        pm = re.match(r"^(.+)\|(\d{1,3})$", q)
+        if pm:
+            kw, pos = pm.group(1).strip(), pm.group(2)
+            base = {"allSearchQuery": kw, "searchQuery": kw, "searchPageIndex": "1",
+                    "searchPageUnit": "10", "searchPageSize": "10"}
+            opener = _ur.build_opener(_ur.HTTPCookieProcessor(_cj.CookieJar()))
+            def post(url, extra):
+                req = _ur.Request(url, data=_up.urlencode({**base, **extra}).encode(),
+                                  headers={"User-Agent": _UA_KO, "Content-Type": "application/x-www-form-urlencoded",
+                                           "Referer": "https://archive.history.go.kr/search/searchResult.do"})
+                with opener.open(req, timeout=25) as r:
+                    return r.read().decode("utf-8", "replace")
+            post("https://archive.history.go.kr/search/searchResult.do", {})  # 세션 수립
+            b = post("https://archive.history.go.kr/record/catalog/catalogView.do", {"searchPosition": pos})
+            title = _clean((re.search(r'<div class="info-box">\s*<div>\s*<p>([\s\S]*?)</p>', b) or [None, ""])[1] or "")
+            # 메타는 row-box(label/value) 앵커 — 평문 매칭은 내비게이션 메뉴와 혼동(실측)
+            def row_val(name):
+                m = re.search(r'<div class="label">' + name + r'</div>\s*<div class="value">\s*<p>([\s\S]*?)</p>', b)
+                return _clean(m.group(1)) if m else ""
+            sid = (re.search(r"사료건(?:&nbsp;|\s)*([0-9A-Za-z_]{6,})", b) or [None, ""])[1] or ""
+            series = (re.search(r"사료계열\s+([0-9A-Za-z_]{5,24})", _clean(b)) or [None, ""])[1] or ""
+            reg = re.search(r'<th scope="col">등록번호</th>\s*<th scope="col">청구기호</th>\s*</tr>\s*<tr>\s*<td>\s*([0-9A-Za-z]*)\s*</td>\s*<td>\s*([\s\S]*?)\s*</td>', b)
+            if not title:
+                return f"'{kw}' {pos}번 상세 파싱 실패 — 순번 범위(0~9, 페이지1 기준)와 키워드를 확인하십시오."
+            meta = " · ".join(x for x in (f"사료건 {sid}" if sid else "", f"사료계열 {series}" if series else "",
+                                          f"등록번호 {reg.group(1)}" if reg and reg.group(1) else "",
+                                          f"청구기호 {_clean(reg.group(2))}" if reg and _clean(reg.group(2)) else "") if x)
+            acc, use = row_val("열람조건"), row_val("이용조건")
+            return (f"국편 전자사료관 상세 [{kw} · {pos}번] {title}\n{meta}\n"
+                    + (f"열람조건: {acc}\n" if acc else "") + (f"이용조건: {use}\n" if use else "")
+                    + "원문 열람: https://archive.history.go.kr 에서 사료ID·등록번호로 재검색\n"
+                    + "※ 출처: 국사편찬위원회 전자사료관. 이용조건 문구를 judge_rights(archive 필드)에 투입해 초판정. 해외 수집 사료는 원 소장처(NARA 등) 권리 확인 병행.")
+        items = _c_earchive(q, min(max_results, 10))
+        if not items:
+            return f"국편 전자사료관 '{q}' — 0건. 다른 표기·주제어로 재시도하십시오."
+        return (f"국편 전자사료관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- [{i}] {it['title']}" + (f" ({it['id']})" if it.get("id") else "") for i, it in enumerate(items))
+                + f"\n※ '{q}|순번'을 mode=earchive query로 재투입 → 상세 판독(열람·이용조건·등록번호). 순번은 위 대괄호(페이지1 기준 0~9).")
+    except Exception as e:
+        return f"국편 전자사료관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://archive.history.go.kr"
+
+
+def _ktv_mode(query: str, max_results: int) -> str:
+    """KTV e영상역사관 심층 — 키워드 목록 / ehistory view URL 판독(해설·제작연도·상영시간, KOGL). Node 패리티."""
+    q = query.strip()
+    try:
+        if re.match(r"^https?://www\.ehistory\.go\.kr/view/", q):  # ehistory 도메인 한정(임의 URL 페치 방지)
+            b = _cached_text("ktvD:" + q, 24 * 3600,
+                             lambda: _http_text(_up.quote(q, safe="/?&=:%"), 28), "board_header")
+            pick = lambda rx: _clean((re.search(rx, b) or [None, ""])[1] or "")
+            title = pick(r"board_header[\s\S]*?<h4>\s*<strong>([\s\S]*?)</strong>")
+            pdate = pick(r'<p class="date">[\s\S]*?</strong>([\s\S]*?)</p>')
+            ptime = pick(r'<p class="time">[\s\S]*?</strong>([\s\S]*?)</p>')
+            origin = pick(r'<p class="origin">[\s\S]*?</strong>([\s\S]*?)</p>')
+            raw = (re.search(r'<div class="txt">([\s\S]*?)</div>', b) or [None, ""])[1] or ""
+            body = re.sub(r"<[^>]+>", " ", re.sub(r"<br\s*/?>", "\n", raw, flags=re.I))
+            body = "\n".join(re.sub(r"\s+", " ", l).strip() for l in body.split("\n"))
+            body = re.sub(r"\n{3,}", "\n\n", body).strip()
+            if not title and not body:
+                return f"판독 실패 — 영상 상세 구조 상이. 브라우저로 열람: {q}"
+            kfp = _hl.sha256(body.encode("utf-8")).hexdigest()[:16] if body else ""  # 판독 시점 해설 지문
+            if len(body) > 4000:
+                body = body[:4000] + f" …(총 {len(body)}자 — 전문은 원문 링크)"
+            meta = " · ".join(x for x in (f"제작연도: {pdate}" if pdate else "", f"상영시간: {ptime}" if ptime else "",
+                                          f"출처: {origin}" if origin else "") if x)
+            kogl = (re.search(r"공공누리\s*(?:제\s*)?([1-4])\s*유형", b) or [None, ""])[1]  # v1.96.4
+            if "/view/photo?" in q:
+                pimg = []
+                for u in re.findall(r"((?:https?://[^\"'\s]+)?/(?:movie_pds|photo_pds)/[^\"'\s<>]+?\.(?:jpe?g|png|gif))", b, re.I):
+                    u = u if u.startswith("http") else "https://www.ehistory.go.kr" + u
+                    if u not in pimg:
+                        pimg.append(u)
+                m2 = " · ".join(x for x in (f"촬영/제작: {pdate}" if pdate else "", f"출처: {origin}" if origin else "",
+                                            (f"공공누리 제{kogl}유형" + ("(출처표시·상업금지·변경금지 — 자르지 말고 원형 게재)" if kogl == "4" else "")) if kogl else "") if x)
+                return (f"KTV e영상역사관 사진 판독 — {title or '(제목 미상)'}\n{m2}\n" + (f"【설명】\n{body}\n" if body else "")
+                        + (f"원본 이미지: {' · '.join(pimg[:3])}\n" if pimg else "") + f"원문(사진): {q}\n"
+                        + (f"※ judge_rights(archive='KOGL {kogl}')로 초판정." if kogl else "※ 페이지에 공공누리 표시 미검출 — 이용 전 KTV 확인."))
+            return (f"KTV e영상역사관 영상 판독 — {title or '(제목 미상)'}" + (f" [공공누리 제{kogl}유형]" if kogl else "") + f"\n{meta}\n"
+                    + (f"【해설】\n{body}\n" if body else "")
+                    + (f"본문 지문(sha256-16): {kfp} — 판독 시점 해설 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if kfp else "")
+                    + f"원문(영상 재생): {q}\n"
+                    + '※ 권리: 페이지의 공공누리 표시를 확인 — 사진은 표시 유형대로(제4유형=변경·상업 금지), 영상 페이지에 표시가 없으면 KTV 나누리(nanuri.ktv.go.kr) 이용 신청 후 사용(2026-11 실측: 「대한뉴스의 발자취」 영상 무표시). 표시 유형을 judge_rights에 넣어 초판정.')
+        items = _c_ktv(q, min(max_results, 10))
+        if not items:
+            return f"KTV e영상역사관 '{q}' — 0건. '대한뉴스'·사건명·인명으로 재시도하십시오.\n{_ua_refused_note('ktv', q)}"
+        return (f"KTV e영상역사관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- [{it.get('series') or 'e영상역사관'}] {it['title']}" + (f" ({it['date']})" if it.get("date") else "")
+                            + (f"\n  요지: {it['desc']}" if it.get("desc") else "") + f"\n  {it['url']}" for it in items)
+                + "\n※ 기록 탭(대한뉴스·문화영화·미공개 대한뉴스·정부기록사진집·국가기록사진) 교차 병합 — 사이트 기본 최신순이 최근 영상만 올리는 문제 보정."
+                + "\n※ view URL을 mode=ktv query로 재투입 → 영상 해설·제작연도·상영시간 판독.")
+    except Exception as e:
+        return f"KTV 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://www.ehistory.go.kr"
+
+
+def _i815_mode(query: str, max_results: int) -> str:
+    """독립기념관 심층 — 키워드 목록 / detail.do URL 본문 판독. Node nedb_search mode='i815' 패리티."""
+    q = query.strip()
+    try:
+        if re.match(r"^사전\s*[:：]", q):  # 한국독립운동인명사전 — v1.56 복구 합류(retry-blocked 주간 재점검 실측으로 감지)
+            t = re.sub(r"^사전\s*[:：]", "", q).strip()
+            noscript = lambda s: re.sub(r"<script[\s\S]*?</script>", "", s, flags=re.I)
+            if re.match(r"^\d+$", t):  # 상세 — 기본정보(생몰·본관·이명·훈격) + 전기 본문
+                du = ("https://search.i815.or.kr/dictionary/detail.do"
+                      f"?searchWord=&reSearchWord=&searchType=all&index=&id={t}")
+                b = _cached_text("i815W:" + t, 24 * 3600, lambda: _http_text(du, 28), "기본정보")
+                flat = _clean(noscript(b))
+                ix = flat.find("기본정보")
+                if ix < 0:
+                    return f"인명사전 상세 실패(id={t}) — \"사전:이름\" 검색으로 번호를 다시 확보하십시오. 브라우저: {du}"
+                seg = flat[ix:]
+                hm = re.match(r"^기본정보\s*([\s\S]{0,600}?포상훈격\(연도\)\s*\S+)\s", seg)
+                head = hm.group(1) if hm else seg[:350]
+                bio = seg[len(hm.group(0)) if hm else len(head):].strip()
+                cut = re.search(r"참고문헌|저작권 안내", bio)
+                if cut and cut.start() > 0:
+                    bio = bio[:cut.start()].strip()
+                fp = _hl.sha256((head + "\n" + bio).encode("utf-8")).hexdigest()[:16]  # 판독 시점 본문 지문(고정성)
+                if len(bio) > 3200:
+                    bio = bio[:3200] + f" …(전기 총 {len(bio)}자 — 전문은 원문)"
+                return (f"독립기념관 한국독립운동인명사전 — 항목 {t}\n【기본정보】 {head}\n【전기】\n{bio}\n원문: {du}\n"
+                        + f"본문 지문(sha256-16): {fp} — 판독 시점 전문(기본정보+전기) 기준. 재판독 지문 불일치=원문 개정 발생(인용 검증용).\n"
+                        "※ 공공저작물 — 출처 표기(독립기념관 한국독립운동인명사전) 시 이용 가능. "
+                        "이명·한자명은 gonghun·jacar·oldnews(\"본문:이명\") 재검색에 투입.")
+            b = _http_text("https://search.i815.or.kr/dictionary/searchResult.do?searchType=all&searchWord="
+                           + _up.quote(t), 28)
+            rows = []
+            for blk in noscript(b).split("thumb_txt_case01")[1:1 + min(max_results, 15)]:
+                mid = re.search(r"goDetail\((\d+)\)", blk)
+                tt = re.search(r"dict_txt_title[^>]*>([\s\S]*?)</strong>", blk)
+                if not mid or not tt:
+                    continue
+                line = _clean(blk)
+                ser = re.search(r"운동계열:\s*([\s\S]{1,40}?)\s*관련단체:", line)
+                act = re.search(r"주요활동:\s*([\s\S]{1,130}?)\s*본문내용:", line)
+                rows.append(f"- [{mid.group(1)}] {_clean(tt.group(1))}"
+                            + (f" · {ser.group(1).strip()}" if ser else "")
+                            + (f"\n  {act.group(1).strip()}" if act else ""))
+            if not rows:
+                return f"인명사전 '{t}' — 0건. 한자명·이명으로 재시도(이명은 mode=gonghun이 제공)."
+            return (f"한국독립운동인명사전 '{t}' — {len(rows)}건:\n" + "\n".join(rows)
+                    + "\n※ \"사전:번호\" 재투입 → 기본정보(생몰·본관·이명·포상훈격)+전기 전문 판독. 공공저작물(출처 표기).")
+        if re.match(r"^https?://search\.i815\.or\.kr/", q):  # 상세 판독 — i815 도메인 한정(임의 URL 페치 방지)
+            b = _cached_text("i815D:" + q, 24 * 3600,
+                             lambda: _http_text(_up.quote(q, safe="/?&=:%"), 28), "explain")
+            paras = [_clean(m.group(1)) for m in
+                     re.finditer(r'<(?:strong|p)[^>]*class="explain[^"]*"[^>]*>([\s\S]*?)</(?:strong|p)>', b)]
+            paras = [p for p in paras if p]
+            if not paras:
+                return f"판독 실패 — 본문(explain) 없음(목록형 상세 또는 구조 상이). 브라우저로 열람: {q}"
+            flat = _clean(b)
+            np = re.search(r"신문명\s+(.{1,40}?)\s+발행일\s+([\d.\-]+)", flat)
+            prod = re.search(r"생산정보\s+(\S.{0,60}?)\s+(?:기사제목|자료명|자료내용)", flat)
+            body = "\n".join(paras)
+            if len(body) > 4000:
+                body = body[:4000] + f" …(총 {len(body)}자 — 전문은 원문 링크)"
+            return ("독립기념관 자료 판독\n"
+                    + (f"신문명: {np.group(1)} · 발행일: {np.group(2)}\n" if np else "")
+                    + (f"생산정보: {prod.group(1)}\n" if prod else "")
+                    + f"【자료내용】\n{body}\n원문: {q}\n"
+                    + "※ 출처: 독립기념관 한국독립운동정보시스템 — 게재 시 출처 표기. 원문이미지는 페이지 뷰어에서. 권리 초판정: judge_rights.")
+        items = _c_i815(q, min(max_results, 10))
+        if not items:
+            return (f"독립기념관 '{q}' — 0건. 인명·사건명·부대명 등으로 재시도하거나 "
+                    "cross_search(variants=True)로 표기 변형을 팬아웃하십시오.")
+        return (f"독립기념관 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- {it['title']}\n  {it['url']}" for it in items)
+                + "\n※ detail.do URL을 mode=i815 query로 재투입 → 자료 본문 판독. \"사전:이름\" → 한국독립운동인명사전(전기·생몰·훈격).")
+    except Exception as e:
+        return f"독립기념관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: https://search.i815.or.kr"
+
+
+def _gonghun_mode(query: str, max_results: int) -> str:
+    """공훈전자사료관 심층 — 이름 목록 / mngNo 판독(공적조서·공훈록 본문). Node nedb_search mode='gonghun' 패리티."""
+    import base64 as _b64
+    q = query.strip()
+    b64d = lambda s: (_b64.b64decode(s).decode("utf-8") if s else "")
+    try:
+        if re.match(r"^종합\s*[:：]", q):  # 인물 종합 대조 — 레시피 ①의 도구화: 공훈록·인명사전·판결문 3채널 병렬(v1.57)
+            nm = re.sub(r"^종합\s*[:：]", "", q).strip()
+            def _dict3():
+                b = _http_text("https://search.i815.or.kr/dictionary/searchResult.do?searchType=all&searchWord="
+                               + _up.quote(nm), 28)
+                rows = []
+                for blk in re.sub(r"<script[\s\S]*?</script>", "", b, flags=re.I).split("thumb_txt_case01")[1:4]:
+                    mid = re.search(r"goDetail\((\d+)\)", blk)
+                    tt = re.search(r"dict_txt_title[^>]*>([\s\S]*?)</strong>", blk)
+                    if not mid or not tt:
+                        continue
+                    ser = re.search(r"운동계열:\s*([\s\S]{1,40}?)\s*관련단체:", _clean(blk))
+                    rows.append(f"- [사전:{mid.group(1)}] {_clean(tt.group(1))}"
+                                + (f" · {ser.group(1).strip()}" if ser else ""))
+                return rows
+            res = {}
+            for key, fn in (("g", lambda: [f"- [mngNo {it['id']}] {it['title']}" for it in _c_gonghun(nm, 3)]),
+                            ("d", _dict3),
+                            ("j", lambda: [f"- {it['title']} ({it['date']})\n  {it['url']}" for it in _c_indy(nm, 3)]),
+                            ("k", lambda: (lambda P: _nr_people_lines(P, _nr_people_keys(P, nm), 3))(_nr_people()))):
+                try:
+                    res[key] = (fn(), "")
+                except Exception as e:
+                    res[key] = ([], str(e)[:40])
+            sec = lambda t, pair: f"【{t}】\n" + ("\n".join(pair[0]) if pair[0] else f"(0건{' — 오류: ' + pair[1] if pair[1] else ''})")
+            return (f"인물 종합 대조 '{nm}' — 공훈록·인명사전·판결문·연구원 인물 색인 4채널 병렬:\n"
+                    + sec("공훈전자사료관(국가보훈부) — 공적·훈격", res["g"]) + "\n"
+                    + sec("한국독립운동인명사전(독립기념관) — 학술 전기", res["d"]) + "\n"
+                    + sec("독립운동판결문(국가기록원) — 죄명·주문", res["j"]) + "\n"
+                    + sec("국립문화유산연구원 연구DB 인물 — 금석문 찬·서 · 초상화 · 괘불 화승 · 일기 저자(연대=원 데이터 표기, 생몰년과 대조)", res["k"]) + "\n"
+                    + "※ 심층: mngNo 숫자 재투입=공적조서·공훈록·수형기록 · mode=i815 \"사전:번호\"=전기 전문 · mode=indy 상세URL=주문·사건개요·원문 뷰어 · mode=nrich '인물:이름'=연구원 인물 전체·'ksm:번호' 등=기록 판독.\n"
+                    + "※ 대조 포인트: 한자명·생몰 일치로 동명이인 분리 → 훈격(공훈)↔전기(사전)↔형량(판결문) 정합 → 이명 확보 후 oldnews \"본문:이명\"으로 당대 신문 확장.")
+        if re.match(r"^\d+$", q):  # mngNo 상세
+            b = _cached_text("gonghunD:" + q, 24 * 3600,
+                             lambda: _http_text(f"https://e-gonghun.mpva.go.kr/user/ContribuReportDetail.do?goTocode=20001&mngNo={q}&pageTitle=Report", 28),
+                             "achivement_1")
+            pick = lambda rx: (re.search(rx, b) or [None, ""])[1] or ""
+            try:
+                name = b64d(pick(r"utf8_decode\('([A-Za-z0-9+/=]+)',\s*'#namekoDiv'"))
+            except Exception:
+                name = ""
+            hanja = _clean(pick(r"<th>한자</th>\s*<td>([\s\S]*?)</td>"))
+            alias = _clean(pick(r"<th>이명</th>\s*<td>([\s\S]*?)</td>"))
+            try:
+                birth = b64d(pick(r"utf8_decode\('([A-Za-z0-9+/=]*)',\s*'#birthdayenm'"))
+                death = b64d(pick(r"utf8_decode\('([A-Za-z0-9+/=]*)',\s*'#deathdatenm'"))
+            except Exception:
+                birth = death = ""
+            bon = " ".join(x for x in (b64d(m.group(1)) for m in re.finditer(r"utf8_decode\('([A-Za-z0-9+/=]+)',\s*'#famp\d'", b)) if x)
+            aw = re.search(r"포상년도\s*([\d/]+)\s*훈격\s*(\S{1,30})", _clean(b))
+            summary = _clean(pick(r'id="achivement_1"[^>]*>([\s\S]*?)</div>'))
+            i2 = b.find('id="tab2"')
+            rok = rok_info = gfp = ""
+            if i2 >= 0:
+                seg = _clean(b[b.find(">", i2) + 1:i2 + 30000])
+                mi = re.search(r"수록정보[:\s]*([^)]{3,40}\))", seg)
+                rok_info = mi.group(1) if mi else ""
+                body = re.sub(r"^[\s\S]{0,80}?수록정보[:\s]*[^)]{3,40}\)\s*", "", seg).strip()
+                # 본문 경계: 게시판(감사의 글)·JS 찌꺼기 절단. 수형기록·묘소·현충시설 표는 분석 가치가 있어 유지
+                body = re.sub(r"\$\{\w+\}", "", re.sub(r"function\s+fn[\s\S]*$", "", body.split("감사의 글")[0])).strip()
+                rok = body[:4000] + (f" …(총 {len(body)}자 — 전문은 원문 링크)" if len(body) > 4000 else "")
+                gfp = _hl.sha256(((summary or "") + "\n" + body).encode("utf-8")).hexdigest()[:16]  # 판독 시점 본문 지문(고정성)
+            if not name and not summary:
+                return f"[mngNo {q}] 공훈전자사료관 상세 파싱 실패 — 관리번호를 확인하거나 mode=gonghun에 이름으로 검색하십시오."
+            return (f"공훈전자사료관 독립유공자 [관리번호 {q}] {name}{f'({hanja})' if hanja else ''}{f' — 이명: {alias}' if alias else ''}\n"
+                    f"생몰: {birth or '?'} ~ {death or '?'}{f' · 본적: {bon}' if bon else ''}"
+                    + (f"\n포상: {aw.group(1)} {aw.group(2)}" if aw else "") + "\n"
+                    + f"【공적개요(공적조서)】\n{summary or '(없음)'}\n"
+                    + (f"【공훈록{f' — {rok_info}' if rok_info else ''}】\n{rok}\n" if rok else "")
+                    + f"원문: https://e-gonghun.mpva.go.kr/user/ContribuReportDetail.do?goTocode=20001&mngNo={q}&pageTitle=Report\n"
+                    + (f"본문 지문(sha256-16): {gfp} — 판독 시점 전문(공적조서+공훈록) 기준. 재판독 지문 불일치=원문 개정 발생(인용 검증용).\n" if gfp else "")
+                    + "※ 출처: 국가보훈부 공훈전자사료관 — 게재 시 출처 표기. 공적조서·공훈록은 원칙적 수정불가 원문(정부포상 결정·전문가 집필). 권리 초판정: judge_rights.")
+        items = _c_gonghun(q, min(max_results, 10))
+        if not items:
+            return (f"공훈전자사료관 '{q}' — 0건. 인명 검색 채널(독립유공자 공훈록)이므로 이름으로 검색하십시오. "
+                    "이명·한자명도 시도 가치(예: 안응칠→안중근).")
+        return (f"공훈전자사료관 독립유공자 '{q}' — {len(items)}건:\n"
+                + "\n".join(f"- [mngNo {it['id']}] {it['title']}\n  {it['url']}" for it in items)
+                + "\n※ mngNo 숫자를 mode=gonghun query로 재투입 → 공적조서·공훈록 본문 판독.")
+    except Exception as e:
+        return (f"공훈전자사료관 오류({str(e)[:60]}) — 잠시 후 재시도 또는 브라우저: "
+                "https://e-gonghun.mpva.go.kr/user/ContribuReportList.do?goTocode=20001")
+
+
+_EH = "https://www.ehistory.go.kr"
+_EH_LISTS = [("koreanews/korea_news", "대한뉴스"), ("koreanews/korea_newskc", "미공개 대한뉴스"), ("movie/culture", "문화영화"), ("photo/government", "정부기록사진집"),
+             ("photo/nation", "국가기록사진"), ("photo/korea", "한국소개사진"), ("movie/president", "대통령기록영상")]  # 분류명 = 각 페이지 제목(2026-11-24 실측)
+
+
+def _ehistory_search(q, n):
+    """v2.37 e영상역사관(ehistory.go.kr) 자체 분류 목록 검색 — GET search_type=all·search_text로 걸러진 타일. Node ehistorySearch 패리티."""
+    def one(pl):
+        path, label = pl
+        b = _cached_text(f"eh:{path}:{q}", 6 * 3600, lambda: _http_text(f"{_EH}/{path}?search_type=all&search_text={_up.quote(q)}", 25), "tileList")
+        out = []
+        for li in b.split("<li>")[1:]:
+            m = re.search(r'<a href="(/view/(?:movie|photo)\?[^"]+)"', li); t = re.search(r'<strong class="title">([\s\S]*?)</strong>', li)
+            if not m or not t:
+                continue
+            dl = _norm(re.sub(r"<[^>]+>", " ", (re.search(r'<span class="date">([\s\S]*?)</span>\s*</div>', li) or [None, ""])[1]))
+            ym = re.search(r"(1[89]\d\d|20\d\d)(?:[.년]\s*(\d{1,2}))?(?:\.(\d{1,2}))?", dl)
+            no = re.search(r"(\d{2,4})호", dl); img = re.search(r'<img src="([^"]+)"', li)
+            title = _norm(_html.unescape(re.sub(r"<[^>]+>", "", t.group(1))))
+            dt = "-".join(x for x in ((ym.group(1), ym.group(2) and ym.group(2).zfill(2), ym.group(3) and ym.group(3).zfill(2)) if ym else ()) if x)
+            md = re.search(r"mediadtl=(\d+)", m.group(1))
+            out.append({"title": f"{title}{f' ({no.group(1)}호)' if no else ''}"[:120], "date": dt, "id": f"{label}:{md.group(1)}" if md else "",
+                        "series": label, "url": _EH + m.group(1).replace("&amp;", "&"), **({"media": ("" if img.group(1).startswith("http") else _EH) + img.group(1)} if img else {})})
+        return out
+    def search_in(L, kw):
+        nonlocal q
+        q = kw
+        lists = []
+        with _cf.ThreadPoolExecutor(max_workers=7) as ex:
+            for f in [ex.submit(one, pl) for pl in L]:
+                try: lists.append(f.result(timeout=25))
+                except Exception: lists.append([])
+        seen, out = set(), []
+        for k in range(20):
+            for l in lists:
+                if k < len(l) and l[k]["url"] not in seen and len(out) < n:
+                    seen.add(l[k]["url"]); out.append(l[k])
+        return out
+    # 질의에 분류명이 있으면 그 분류만·나머지 낱말로, 여러 낱말이 0건이면 첫 낱말로 한 번 더(Node 패리티)
+    toks = str(q).split(); names = {l: (p_, l) for p_, l in _EH_LISTS}
+    cats = [names[t] for t in toks if t in names]; kw = " ".join(t for t in toks if t not in names)
+    if cats and kw and kw != q:
+        return search_in(cats, kw)
+    q0 = q; r0 = search_in(_EH_LISTS, q0)
+    return r0 if r0 or len(toks) < 2 else search_in(_EH_LISTS, toks[0])
+
+
+def _c_ktv(q, n):
+    """v2.37 e영상역사관 자체 목록 검색 우선(ktv.go.kr 통합검색은 쿠키 확인 리다이렉트로 자동 요청 불가) → 없으면 아래 옛 경로."""
+    try:
+        eh = _ehistory_search(q, n)
+    except Exception:
+        eh = []
+    if eh:
+        return eh
+    return _c_ktv_legacy(q, n)
+
+
+def _c_ktv_legacy(q, n):
+    """KTV e영상역사관 — ktv.go.kr 통합검색 iframe GET 실측(2026-11-19).
+    v1.94: 기본 정렬이 '최신순'(sort 무효 실측)이라 최근 대통령 영상이 상위 독점 → 기록 탭별 병렬 조회·교차 병합, 대통령 기록영상(DT)은 뒤로."""
+    tabs = [("DH", "대한뉴스"), ("MH", "문화영화"), ("DK", "미공개 대한뉴스"), ("BK", "정부기록사진집"), ("PT", "국가기록사진"), ("", "전체")]
+    base = "https://www.ktv.go.kr/totalSearch/ehistory?design=new&collection=ehistory&baseKeyword=" + _up.quote(q)
+    names = {"DT": "대통령 기록영상", "DH": "대한뉴스", "MH": "문화영화", "DK": "미공개 대한뉴스"}
+
+    def one(tab):
+        code, label = tab
+        b = _http_text(base + (f"&ehistoryStleSe={code}" if code else ""), 28)
+        seen, out = set(), []
+        # v1.96.7: 제목은 <dt><a>…</a></dt> 전체 — 검색어 강조 <span>에서 잘리던 결함 교정. 제작일·요지 동반(Node 패리티)
+        for blk in b.split('<div class="list">')[1:]:
+            m = (re.search(r'<dt>\s*<a href="(https://www\.ehistory\.go\.kr/view/[^"]+)"[^>]*>([\s\S]*?)</a>', blk)
+                 or re.search(r'href="(https://www\.ehistory\.go\.kr/view/[^"]+)"[^>]*>([^<]{4,120})', blk))
+            if not m:
+                continue
+            t = _clean(m.group(2)); u = m.group(1).replace("&amp;", "&")
+            if not t or re.search(r"paging|overflow", t) or u in seen:
+                continue
+            seen.add(u)
+            g = (re.search(r"mediagbn=(\w+)", u) or [None, "PT" if "/photo?" in u else ""])[1]
+            dt = (re.search(r"제작일\s*:\s*([\d.]{4,10})", blk) or [None, ""])[1].replace(".00", "").rstrip(".")
+            sn = re.sub(r"^\.\.\.\s*|\s*\.\.\.$", "", _clean((re.search(r"<dd>\s*<p>([\s\S]*?)</p>", blk) or [None, ""])[1]))[:90]
+            out.append({"title": t[:110], "date": dt, "id": "", "series": (names.get(g, "e영상역사관") if label == "전체" else label),
+                        "url": u, **({"desc": sn} if sn else {}), "_dt": g == "DT"})
+        return out
+    lists, errs = [], []
+    with _cf.ThreadPoolExecutor(max_workers=6) as ex:
+        for f in [ex.submit(one, t) for t in tabs]:
+            try:
+                lists.append(f.result(timeout=30))
+            except Exception as e:
+                lists.append([]); errs.append(e)
+    if len(errs) == len(tabs):
+        raise errs[0]
+    seen, out, late = set(), [], []
+    for k in range(10):
+        for l in lists:
+            if k < len(l) and l[k]["url"] not in seen:
+                seen.add(l[k]["url"]); (late if l[k]["_dt"] else out).append(l[k])
+    return [{kk: vv for kk, vv in it.items() if kk != "_dt"} for it in (out + late)[:n]]
+
+
+def _c_earchive(q, n):
+    """국사편찬위 전자사료관 — POST 검색 실측(2026-11-19). NARA 수집 사료(AUS…) 원문 소장. 상세는 세션 기반 — 사료ID 표기."""
+    body = _up.urlencode({"allSearchQuery": q, "searchQuery": q, "searchPageIndex": "1",
+                          "searchPageUnit": str(min(n, 20)), "searchPageSize": "10"}).encode()
+    req = _ur.Request("https://archive.history.go.kr/search/searchResult.do", data=body,
+                      headers={"User-Agent": _OK_UA,  # v2.35 정직 UA(브라우저 위장 제거 — 접근 원칙)
+                               "Content-Type": "application/x-www-form-urlencoded"})
+    with _ur.urlopen(req, timeout=25) as r:
+        b = r.read().decode("utf-8", "replace")
+    out = []
+    # v1.81: 행 하단 스팬 전면 수확 — code(사료ID)·국내외·국가·소장기관·생산기간 (2026-11-21 실측: AUS033… → 미국 › 국립문서기록관리청)
+    for seg in b.split("fnGoCatalogView(")[1:]:
+        tm = re.search(r'title="([^"]{3,140})', seg)
+        if not tm:
+            continue
+        sid = (re.search(r'<span class="code">([^<]+)<', seg) or re.search(r"^'(\d+)'", seg))
+        spans = [_clean(x) for x in re.findall(r'<span class="date">\s*([^<]{1,80}?)\s*</span>', seg[:2500])]
+        meta = [s for s in spans if not s.startswith("생산")]  # [국내외, 국가, 소장기관]
+        inst = (meta[2] if len(meta) > 2 else "").split("(")[0].strip()
+        ser = " › ".join(x for x in [(meta[1] if len(meta) > 1 else ""), inst] if x)
+        prod_s = next((s for s in spans if s.startswith("생산기간")), "")
+        pm = re.search(r"[\d.~\s]{4,24}", prod_s) if prod_s else None
+        prod = pm.group(0).strip() if pm else ""
+        sysm = re.match(r"^'(\d{6,})'", seg)  # v2.35 fnGoCatalogView 첫 인자 = systemId → GET 고정 상세(Node 패리티)
+        out.append({"title": _clean(tm.group(1))[:110], "date": prod,
+                    "id": _clean(sid.group(1)) if sid else "",
+                    **({"series": ser[:60]} if ser else {}),
+                    "url": f"https://archive.history.go.kr/record/catalog/catalogView.do?systemId={sysm.group(1)}" if sysm else "https://archive.history.go.kr"})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _c_jacar(q, n):
+    """일본 아시아역사자료센터(JACAR) — GET 검색 실측(2026-11-19, docs/jacar-access-spec.md). 파라미터는 kw."""
+    # v1.96.5: 일문·한자 입력이 영문으로 바뀌던 결함 — 한글 없는 입력·한→일 사상은 일본어 검색(/aj/search)
+    hg = re.search(r"[\uac00-\ud7a3]", q)
+    ja = _ko_ja(q) if hg else q
+    use_ja = bool(ja) and not re.search(r"[\uac00-\ud7a3]", ja)
+    kw = ja if use_ja else (_ko_en(q) or q)
+    b = _http_text(f"https://www.jacar.archives.go.jp/aj/{'search' if use_ja else 'search-en'}?kw=" + _up.quote(kw), 30)
+    out = []
+    for blk in b.split('<li class="archive-result-table__body-item"')[1:]:
+        c = re.search(r'value="aj\d+/([A-Z]\d{11})"', blk)
+        t = re.search(r'id="row-\d+-title"[\s\S]*?<span\s*>([^<]{3,150})', blk)
+        dm = re.search(r"((?:明治|大正|昭和)[０-９\d]+年(?:[^<]{0,14}?年)?)", blk)
+        if c and t:
+            out.append({"title": _clean(t.group(1)), "date": dm.group(1) if dm else "", "id": c.group(1),
+                        "url": "https://www.jacar.archives.go.jp/das/meta" + ("" if use_ja else "-en") + "/" + c.group(1)})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _c_seoul(q, n):
+    """서울기록원 — v1.36 기록 단위 실체화: /catalog/result 서버 렌더 파싱 + fnDetail 딥링크(/item·/aggregation GET)."""
+    base = "https://archives.seoul.go.kr"
+    deep = base + "/catalog/result?regclass=ALL&query=" + _up.quote(q)
+    b = _http_text(deep, 20)
+    out, used = [], set()
+    # ① 시리즈형: fnDetail 직후 2600자 내 d02 제목 — 제목+딥링크 완결 / 사진 기록건은 상세 판독 안내
+    for seg in b.split("fnDetail('")[1:]:
+        pm = re.match(r"^(/[a-z-]+/\d+)", seg)
+        if not pm:
+            continue
+        path = pm.group(1)
+        tm = re.search(r'<p class="d02">\s*<span><b>([\s\S]*?)</b>', seg[:2600])
+        if tm:
+            tt = _clean(tm.group(1))
+            used.add(tt)
+            out.append({"title": tt[:110], "date": "", "id": path.split("/")[2], "series": path.split("/")[1], "url": base + path})
+        else:
+            out.append({"title": f"[기록건·사진] {path.split('/')[1]} {path.split('/')[2]} — 제목·이용조건은 상세 URL 판독",
+                        "date": "", "id": path.split("/")[2], "url": base + path})
+        if len(out) >= n:
+            break
+    # ② 컬렉션 카드형: d02 제목만(링크 JS 바인딩) — 제목+전체결과 URL 신호
+    if len(out) < n:
+        for m in re.finditer(r'<p class="d02">\s*<span><b>([\s\S]*?)</b>', b):
+            tt = _clean(m.group(1))
+            if not tt or tt in used:
+                continue
+            used.add(tt)
+            out.append({"title": f"[컬렉션] {tt}"[:110], "date": "", "id": "", "url": deep})
+            if len(out) >= n:
+                break
+    # v1.96.7: 기록건(사진) 행은 목록에 제목 없음(썸네일만) → 상세 <title>에서 보강(최대 6건 병렬·5s). Node 패리티
+    need = [it for it in out if it["title"].startswith("[기록건·사진]")][:6]
+
+    def _ttl(it):
+        try:
+            h = _http_text(it["url"], 5)
+            m = re.search(r"<title>[^<]*?상세보기\s*-\s*([^<|]{1,120}?)\s*\|", h)
+            if m:
+                it["title"] = (f"[기록건·{'사진' if '/item/' in it['url'] else '기록'}] " + _clean(m.group(1)))[:110]
+        except Exception:
+            pass
+    if need:
+        with _cf.ThreadPoolExecutor(max_workers=6) as ex:
+            list(ex.map(_ttl, need))
+    return out
+
+
+
+def _open_go_status(q=""):
+    """v1.93: 정보공개포털 상태 실측 — 2026-11-12부터 원문정보 메뉴 '점검 중'. 막힌 사실·기간과 점검 중 가능한 경로를 알린다."""
+    try:
+        t = _clean(_http_text("https://www.open.go.kr/othicInfo/infoList/orginlInfoList.do?searchKeyword=" + _up.quote(q or ""), 12))
+    except Exception as e:
+        return False, f"정보공개포털 응답 실패({e})"
+    if re.search(r"메뉴 점검|점검 중인 메뉴", t):
+        per = (re.search(r"제한 기간\s*([^.]*?\d{4}\.\d{1,2}\.\d{1,2}\.[^재]{0,30})", t) or [None, ""])[1]
+        return True, ("정보공개포털 원문정보 메뉴 점검 중" + (f"(제한 기간 {per.strip()})" if per else "")
+                      + " — 포털 공지: 점검 기간에도 자료 보유 기관에 정보공개청구 가능, 진행은 '신청내역조회'에서 확인")
+    return False, ""
+
+def _c_foia(q, n):
+    """정보공개 원문 라이브 채널: 서울정보소통광장 결재문서 — 전용 도구(foia_search)와 동일 경로."""
+    # 기지 차단(연결 리셋) — 단발 6s fail-fast로 health·연합 탐침 시간 보호. 복구 시 자동 정상화
+    try:
+        b = _http_text("https://opengov.seoul.go.kr/sanction/list?searchKeyword=" + _up.quote(q), 6)
+    except Exception as e:
+        _, msg = _open_go_status(q)
+        raise RuntimeError(f"서울정보소통광장 연결 실패({e})" + (f" · {msg}" if msg else "") + " → foia_search로 청구 경로 안내")
+    seen, out = set(), []
+    for m in re.finditer(r'<a[^>]+href="(/sanction/\d+)"[^>]*>(.*?)</a>', b, re.S):
+        t = re.sub(r"^제목\s*:\s*", "", _clean(m.group(2)))
+        if t and m.group(1) not in seen:
+            seen.add(m.group(1))
+            out.append({"title": t, "date": "", "id": "", "url": "https://opengov.seoul.go.kr" + m.group(1)})
+        if len(out) >= n:
+            break
+    return out
+
+
+def _c_gallery(q, n):
+    """v1.97.1: 우리 IIIF 갤러리 — 30곳 탐방·100선 실물 기록 800장(권리 확인·출처 대장 완비)을 연합 검색에 합류. index.json 6h 캐시. Node 패리티."""
+    GB = "https://changgi.github.io/korea-archive-mcp/"
+    D = json.loads(_cached_text("kaGallery", 6 * 3600, lambda: _http_text(GB + "iiif/index.json", 20), '"series"'))
+    toks = [t for t in str(q).lower().split() if t]
+    en = [t for t in (_ko_en(q) or "").lower().split() if t and t != "korea"]
+    hit = lambda h: all(t in h for t in toks) or (bool(en) and all(t in h for t in en))
+    out = []
+    for S in D["series"]:
+        head = (S["label"] + " " + " ".join(map(str, (S.get("rec") or {}).values())) + " " + S["part"]).lower()
+        cs = [(c, k) for k, c in enumerate(S["c"]) if hit(head + " " + (c["t"] + " " + " ".join(map(str, (c.get("md") or {}).values()))).lower())]
+        if not cs:
+            continue
+        c, k = cs[0]
+        out.append({"title": f"{S['label']} — {c['t']}"[:130] + (f" (+{len(cs) - 1}장)" if len(cs) > 1 else ""),
+                    "date": (c.get("md") or {}).get("연대") or (S.get("rec") or {}).get("date", ""),
+                    "id": f"{S['key']}/{k + 1}", "series": S["part"], "url": f"{GB}iiif.html#{S['key']}/{k + 1}", "media": GB + "iiif/" + c["img"]})
+        if len(out) >= n:
+            break
+    return out
+
+
+_OK_B = "https://www.overseaschf.or.kr"  # v2.11 국외소재문화유산재단 — robots.txt 'Disallow: /'(표시 대상 — 발굴 우선), 정직 UA·요청 최소. Node 패리티
+_OK_UA = "KoreaArchiveMCP/1.0 (+https://github.com/changgi/korea-archive-mcp; archival discovery)"
+
+
+def _ok_get(url):
+    with _ur.urlopen(_ur.Request(url, headers={"User-Agent": _OK_UA}), timeout=20) as r:
+        return r.read().decode("utf-8", "replace")
+
+
+def _ok_list(b):
+    out = []
+    for tr in b.split("<tr>")[1:]:
+        a = re.search(r'href="(/archive/search/(?:photo|category)\.do)(?:;jsessionid=[^?"]*)?\?mode=view&(?:amp;)?srSearchTy=(\w+)&(?:amp;)?id=(\d+)&(?:amp;)?iDivCd=(\d*)"[^>]*>(.*?)</a>', tr, re.S)
+        if not a:
+            continue
+        tds = re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)
+        lis = [x for x in (_clean(m) for m in re.findall(r"<li>(.*?)</li>", a.group(5), re.S)) if x]
+        title = _clean(re.sub(r"<ul.*?</ul>", "", re.sub(r'<span class="mo">.*?</span>', "", a.group(5), count=1, flags=re.S), count=1, flags=re.S))
+        img = (re.search(r'<img[^>]+src="([^"]+)"', tr) or [None, ""])[1]
+        out.append({"title": title, "type": _clean(tds[2]) if len(tds) > 2 else "", "country": lis[0] if lis else "",
+                    "holder": lis[1] if len(lis) > 1 else (_clean(tds[4]) if len(tds) > 4 else ""),
+                    "url": f"{_OK_B}{a.group(1)}?mode=view&srSearchTy={a.group(2)}&id={a.group(3)}&iDivCd={a.group(4)}",
+                    "id": f"{a.group(2)}:{a.group(3)}", "img": (img if img.startswith("http") else _OK_B + img) if img else ""})
+    m = re.search(r"전체 <strong[^>]*>([\d,]+)", b)
+    return out, (m.group(1).replace(",", "") if m else "")
+
+
+_OK_PD = f"{_OK_B}/okchf/data/US_DF_PD.do"  # v2.12 발간자료(조사보고서) 게시판 — 제목+내용(목차) 검색. Node 패리티
+
+
+def _ok_pubs(b):
+    return [{"no": m.group(1), "title": _clean(m.group(3)).replace("\u200b", ""), "img": (_OK_B + m.group(2)) if m.group(2) else "", "url": f"{_OK_PD}?mode=view&articleNo={m.group(1)}"}
+            for m in re.finditer(r'<a href="\?mode=view&(?:amp;)?articleNo=(\d+)[^"]*">\s*<span class="board-item__img">\s*(?:<img src="([^"]+)")?.*?<span class="board-item__tit">(.*?)</span>', b, re.S)]
+
+
+def _ok_pub_search(q):
+    b = _cached_text("okPS:" + q, 6 * 3600, lambda: _ok_get(f"{_OK_PD}?mode=list&srSearchKey=article_title_text&srSearchVal={_up.quote(q)}&articleLimit=10"), "count-all")
+    m = re.search(r'count-all">총 <span>([\d,]+)', b)
+    return _ok_pubs(b), (m.group(1).replace(",", "") if m else "")
+
+
+def _ok_lim(n):
+    return 10 if n <= 10 else 20 if n <= 20 else 50
+
+
+def _c_okchf(q, n):
+    """v2.11 국외소재문화유산재단 대국민 아카이브 — 통합검색(국외문화유산·사진아카이브). 계층=유형 › 소장국가 › 소장처. Node 패리티."""
+    out, _ = _ok_list(_cached_text(f"okL:{n}:{q}", 6 * 3600, lambda: _ok_get(f"{_OK_B}/archive/total-search.do?srSearchVal={_up.quote(q)}&pagerLimit={_ok_lim(n)}"), "data-result"))
+    try:
+        pubs, _ = _ok_pub_search(q)  # 조사보고서(목차) — 소장처 단위 맥락
+    except Exception:
+        pubs = []
+    res = []
+    for r in pubs[:min(3, max(1, n // 3))]:
+        it = {"title": f"[조사보고서] {r['title']}"[:160], "date": "", "id": f"pub:{r['no']}", "series": "발간자료 › 조사보고서", "url": r["url"]}
+        if r["img"]:
+            it["media"] = r["img"]
+        res.append(it)
+    for r in out[:n]:
+        it = {"title": f"[{r['type']}] {r['title']} — {' '.join(x for x in (r['country'], r['holder']) if x)}"[:160], "date": "", "id": r["id"],
+              "series": " › ".join(x for x in (r["type"], r["country"], r["holder"]) if x), "url": r["url"]}
+        if r["img"]:
+            it["media"] = r["img"]
+        res.append(it)
+    return res[:n + min(3, max(1, n // 3))]
+
+
+_OK_ORDER = ["소장국가", "소장처", "소장처 관리번호", "시대", "재질", "크기", "수량(점/책)", "촬영일", "촬영자", "촬영장소", "소장경위", "출판정보", "조사기관"]
+
+
+def _okchf_mode(q, max_results):
+    """국외소재문화유산재단 — 상세 URL/'relic:ID' 판독, 그 밖은 키워드 목록(Node mode=okchf 패리티)."""
+    try:
+        pm = re.search(r"US_DF_PD\.do\S*?articleNo=(\d+)", q) or re.match(r"^pub\s*[:#]\s*(\d+)$", q.strip())
+        if pm:  # 조사보고서 서지·목차
+            url = f"{_OK_PD}?mode=view&articleNo={pm.group(1)}"
+            h = re.sub(r"<script.*?</script>", " ", _cached_text("okP:" + pm.group(1), 24 * 3600, lambda: _ok_get(url), "board-detail__tit"), flags=re.S)
+            tm = re.search(r'board-detail__tit">(.*?)</h5>', h, re.S); title = _clean(tm.group(1)) if tm else f"pub:{pm.group(1)}"
+            ym = re.search(r"발간연도 : <em>([^<]*)", h); yr = _clean(ym.group(1)) if ym else ""
+            F = {}
+            for m in re.finditer(r"<dt>(.*?)</dt>\s*<dd>(.*?)</dd>", h, re.S):
+                k, v = _clean(m.group(1)), _clean(m.group(2))
+                if k and v and k not in F:
+                    F[k] = v
+            fm = re.search(r'<div class="fr-view">(.*?)</div>', h, re.S)
+            toc = [x for x in (_clean(p) for p in (fm.group(1) if fm else "").split("</p>")) if x]
+            return (f"국외소재문화유산재단 조사보고서 판독 — {title}\n" + " · ".join([x for x in [yr and f"발간연도: {yr}"] if x] + [f"{k}: {v}" for k, v in F.items()]) + "\n"
+                    + (f"【목차】\n{chr(10).join(toc)[:2500]}\n목차 지문(sha256-16): {_hl.sha256('|'.join(toc).encode()).hexdigest()[:16]}\n" if toc else "")
+                    + f"원문 뷰어: {url}\n※ 출처: 국외소재문화유산재단 발간자료 — 본문(전자책·PDF)은 재단 누리집 열람. 인용 시 보고서명·발간연도·쪽수 표기. robots 전체 Disallow(표시).")
+        qm = re.match(r"^보고서\s*[:：]\s*(.+)$", q.strip())
+        if qm:
+            items, total = _ok_pub_search(qm.group(1))
+            return (f"국외소재문화유산재단 조사보고서 '{qm.group(1)}'(제목+목차) — 전체 {total or len(items)}건\n" + ("\n".join(f"- {r['title']} {r['url']}" for r in items) or "(0)")
+                    + f"\n※ 서지·목차: nedb_search(mode='okchf', query=<보고서 URL>) · 전체 목록: {_OK_PD}")
+        im = re.match(r"^(relic|relic_gls|redemption)\s*[:#]\s*(\d+)$", q.strip())
+        if im or re.search(r"overseaschf\.or\.kr/archive/search/(photo|category)\.do\S*?[?&]id=\d+", q):
+            ty = im.group(1) if im else ((re.search(r"srSearchTy=(\w+)", q) or [None, "relic"])[1])
+            iid = im.group(2) if im else re.search(r"[?&]id=(\d+)", q).group(1)
+            page = "photo" if ty == "relic_gls" else "search" if ty == "redemption" else "category"
+            dv = (re.search(r"iDivCd=(\d+)", q) or [None, ""])[1]
+            url = f"{_OK_B}/archive/search/{page}.do?mode=view&srSearchTy={ty}&id={iid}&iDivCd={dv}"
+            h = re.sub(r"<script.*?</script>", " ", _cached_text("okD:" + ty + iid, 24 * 3600, lambda: _ok_get(url), "tit-cont"), flags=re.S)
+            tm = re.search(r'<div class="tit-cont">\s*<h2[^>]*>(.*?)</h2>', h, re.S)
+            title = re.sub(r"\s*·\s*$", "", re.sub(r"(\s*·\s*)+", " · ", _clean(re.sub(r"</span>", "", re.sub(r"<span[^>]*>", " · ", tm.group(1)))))) if tm else f"{ty}:{iid}"
+            F = {}
+            for m in re.finditer(r"<(?:th|dt)[^>]*>(.*?)</(?:th|dt)>\s*<(?:td|dd)[^>]*>(.*?)</(?:td|dd)>", h, re.S):
+                k, v = _clean(m.group(1)), _clean(m.group(2))
+                if k and v and k not in F:
+                    F[k] = v
+            desc = re.sub(r"\s*더보기\s*$", "", F.pop("설명", ""))  # 화면 버튼 글자 제거
+            imgs = list(dict.fromkeys(_OK_B + x for x in re.findall(r'<img[^>]+src="(/home/data/attach/[^"]+)"', h)))
+            line = lambda ks: " · ".join(f"{k}: {F[k][:160]}" for k in ks if F.get(k))
+            rows = [line(_OK_ORDER[:3]), line(_OK_ORDER[3:10]), line(["소장경위"]), line(["출판정보", "조사기관"]), line([k for k in F if k not in _OK_ORDER][:6])]
+            return (f"국외소재문화유산재단 아카이브 판독 — {title}\n" + "\n".join(r for r in rows if r) + "\n"
+                    + (f"【설명】\n{desc[:2500]}\n본문 지문(sha256-16): {_hl.sha256(desc.encode()).hexdigest()[:16]} — 판독 시점 설명 전문 기준. 재판독 지문 불일치=원문 개정 발생.\n" if desc else "")
+                    + (f"이미지 {len(imgs)}장(원 기관 썸네일): {' · '.join(imgs[:4])}{' …' if len(imgs) > 4 else ''}\n" if imgs else "")
+                    + f"원문 뷰어: {url}\n"
+                    + "※ 출처: 국외소재문화유산재단 대국민 아카이브 — 소장기관과 공개 협의된 정보. 이미지·설명 게재는 재단·소장처 이용조건 확인 후(허가 전 링크만). robots.txt 전체 Disallow — 자동 대량수집 비허용 표시, 요청 시 1건 판독만.")
+        out, total = _ok_list(_ok_get(f"{_OK_B}/archive/total-search.do?srSearchVal={_up.quote(q)}&pagerLimit={_ok_lim(max_results)}"))
+        return (f"국외소재문화유산재단 아카이브 '{q}' — 전체 {total or len(out)}건 중 {min(len(out), max_results)}건 (유형 › 소장국가 › 소장처)\n"
+                + ("\n".join(f"- [{r['type']}] {r['title']} — {r['country']} · {r['holder']} {r['url']}" for r in out[:max_results]) or "(0)")
+                + "\n※ 상세 판독: nedb_search(mode='okchf', query=<상세 URL>) · 조사보고서: query='보고서:키워드' · 전체 목록 브라우저: https://www.overseaschf.or.kr/archive/total-search.do · 발간 보고서: https://www.overseaschf.or.kr/okchf/data/US_DF_PD.do · robots 전체 Disallow(표시)")
+    except Exception as e:
+        return f"국외소재문화유산재단 조회 실패({str(e)[:60]}) — 브라우저 대체 경로: https://www.overseaschf.or.kr/archive/total-search.do?srSearchVal={_up.quote(q)}"
+
+
+_NR_B = "https://portal.nrich.go.kr"  # v2.13 국립문화유산연구원 국가유산 지식이음 — robots Allow. 발간자료 Open API(무키)·국외문화유산 DB. Node 패리티
+
+
+def _nr_rep_api(q, n):
+    x = _cached_text(f"nrA:{min(n, 20)}:{q}", 6 * 3600, lambda: _ok_get(f"{_NR_B}/kor/originalTotalApi.do?idx=203&firstindex=1&recordcountperpage={min(n, 20)}&st=all&sk={_up.quote(q)}&bunya_cd=&start_year=&end_year="), "<list")
+    out = []
+    for d in re.findall(r"<data>(.*?)</data>", x, re.S):
+        f = {k: v.strip() for k, v in re.findall(r"<md_data(\d+)><!\[CDATA\[(.*?)\]\]></md_data\d+>", d, re.S)}
+        out.append({"idx": f.get("2", ""), "title": _clean(f.get("3", "")), "form": f.get("4", ""), "abs": f.get("5", ""), "year": f.get("6", ""), "field": f.get("7", ""),
+                    "owner": f.get("8", ""), "kogl": f.get("10", ""), "toc": f.get("11", ""), "url": f.get("12") or f"{_NR_B}/kor/originalUsrView.do?menuIdx=1046&info_idx={f.get('2', '')}", "img": f.get("13", "")})
+    return out
+
+
+def _nr_ov_list(q):
+    b = _cached_text("nrL:" + q, 6 * 3600, lambda: _ok_get(f"{_NR_B}/kor/overseasSearchList.do?menuIdx=840&webyn=Y&st=1&pageindex=1&sk={_up.quote(q)}"), "overseasSearch")
+    return [{"mseq": m.group(1), "title": _clean(m.group(2)), "era": _clean(m.group(3)), "holder": _clean(m.group(4)), "nation": _clean(m.group(5)),
+             "url": f"{_NR_B}/kor/overseasSearchView.do?menuIdx=840&mseq={m.group(1)}"}
+            for m in re.finditer(r'<tr>\s*<td[^>]*>\s*\d+\s*</td>\s*<td>\s*<a href="/kor/overseasSearchView\.do\?menuIdx=840&(?:amp;)?mseq=(\d+)">(.*?)</a>\s*</td>\s*<td[^>]*>(.*?)</td>\s*<td[^>]*>(.*?)</td>\s*<td[^>]*>(.*?)</td>', b, re.S)]
+
+
+_NR_DB = "https://changgi.github.io/korea-archive-mcp/data/nrich_db.jsonl"  # v2.15 연구DB 정적 색인(주 1회 수집) — Node nrDb 패리티
+_NR_DS = ["ksm", "portrait", "gwaebul", "diary", "mokgan", "jcbib", "jcphoto", "dict", "arch", "koguryo", "gaesong", "design", "pattern", "oldbook", "hyanggyo", "stone", "journal", "iron", "dolmen", "assay", "material"]
+_NR_DB_MEM = {"n": -1, "rows": []}
+
+
+def _safe(fn, default):
+    try:
+        return fn()
+    except Exception:
+        return default
+
+
+def _nr_db():
+    t = _cached_text("nrDB", 6 * 3600, lambda: _http_text(_NR_DB, 60), '"ds"')
+    if _NR_DB_MEM["n"] != len(t):
+        rows = []
+        for ln in t.split("\n"):
+            if not ln.strip():
+                continue
+            try:
+                o = json.loads(ln)
+            except Exception:
+                continue
+            o["_h"] = " ".join(str(x) for x in [o.get("t"), o.get("a"), o.get("p"), o.get("d"), o.get("x"), *(o.get("m") or {}).values()] if x).lower()
+            rows.append(o)
+        _NR_DB_MEM.update(n=len(t), rows=rows)
+    return _NR_DB_MEM["rows"]
+
+
+def _nr_db_search(q, n, ds=None):
+    toks = [t for t in str(q).lower().split() if t]
+    if not toks:
+        return []
+    rows = [o for o in _nr_db() if (not ds or o["ds"] == ds) and all(t in o["_h"] for t in toks)]
+    rows.sort(key=lambda o: 0 if all(t in str(o.get("t", "")).lower() for t in toks) else 1)
+    return rows[:n]
+
+
+def _nr_db_item(o):
+    return {"title": (f"[{o['dn']}] {o['t']}" + (f" ({o['a']})" if o.get("a") else ""))[:160], "date": o.get("d", ""), "id": o["id"],
+            "series": " › ".join(x for x in ("연구DB", o["dn"], (o.get("p") or "").split(" ")[0]) if x), "url": o.get("u", "")}
+
+
+def _nr_people():  # v2.21 연구원 인물 색인(공용 — '인물:' 모드·gonghun '종합:' 4번째 채널), Node 패리티
+    return json.loads(_cached_text("nrPeople", 6 * 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/nrich/people.json", 60), '"r"'))
+
+
+def _nr_people_keys(P, nm):
+    return [k for k, e in P.items() if e["n"] == nm or k == nm or (e.get("h") and nm in e["h"]) or (len(nm) >= 2 and e["n"].startswith(nm) and len(e["n"]) <= len(nm) + 1)][:8]
+
+
+def _nr_year(d):  # 연대 문자열의 첫 연도(정렬용, Node nrYear 패리티)
+    m = re.search(r"(?<!\d)(\d{3,4})(?!\d)", str(d or ""))
+    return int(m.group(1)) if m else 9999
+
+
+def _nr_people_lines(P, keys, per=3):
+    out = []
+    for k in keys:
+        e = P[k]; tot = sum(len(v) for v in e["r"].values())
+        ex = sorted([[r, *x] for r, v in e["r"].items() for x in v], key=lambda a: _nr_year(a[3]))[:per]
+        out.append(f"- {k} — {tot}건(" + " · ".join(f"{r} {len(v)}" for r, v in e["r"].items()) + ")" + "".join(f"\n  · [{x[0]}] {x[2]}" + (f" · {x[3]}" if x[3] else "") + f" → {x[1]}" for x in ex))
+    return out
+
+
+def _nr_field(f):
+    return " › ".join(x for x in re.split(r"\s*-\s*", str(f or "")) if x)
+
+
+def _c_nrich(q, n):
+    """v2.13 국립문화유산연구원 — 국외문화유산 DB(명칭) + 발간자료(보고서). Node 패리티."""
+    try:
+        ov = _nr_ov_list(q)
+    except Exception:
+        ov = []
+    k = max(2, -(-n // 2))
+    try:
+        rp = _nr_rep_api(q, k)
+    except Exception:
+        rp = []
+    db = _safe(lambda: _nr_db_search(q, n), [])
+    b = []
+    for r in rp[:k]:
+        it = {"title": f"[발간자료] {r['title']}"[:160], "date": r["year"], "id": f"rep:{r['idx']}", "series": " › ".join(x for x in ("발간자료", _nr_field(r["field"])) if x), "url": r["url"]}
+        if r["img"]:
+            it["media"] = r["img"]
+        b.append(it)
+    a = [{"title": f"[국외문화유산] {r['title']} — {' '.join(x for x in (r['nation'], r['holder']) if x)}"[:160], "date": r["era"], "id": f"ov:{r['mseq']}",
+          "series": " › ".join(x for x in ("국외문화유산", r["nation"], r["holder"]) if x), "url": r["url"]} for r in ov[:n]]
+    c = [_nr_db_item(o) for o in db]
+    return (b + c[:k] + a + c[k:])[:n + len(b)]
+
+
+def _nrich_mode(q, max_results):
+    """국립문화유산연구원 — ov:/rep:/상세 URL 판독, '보고서:키워드', 그 밖은 두 DB 목록(Node mode=nrich 패리티)."""
+    try:
+        om = re.search(r"overseasSearchView\.do\S*?mseq=(\d+)", q) or re.match(r"^ov\s*[:#]\s*(\d+)$", q.strip())
+        if om:
+            url = f"{_NR_B}/kor/overseasSearchView.do?menuIdx=840&mseq={om.group(1)}"
+            h = re.sub(r"<script.*?</script>", " ", _cached_text("nrO:" + om.group(1), 24 * 3600, lambda: _ok_get(url), "소장처명"), flags=re.S)
+            F = {}
+            for m in re.finditer(r"<(?:th|dt)[^>]*>(.*?)</(?:th|dt)>\s*<(?:td|dd)[^>]*>(.*?)</(?:td|dd)>", h, re.S):
+                k, v = _clean(m.group(1)), _clean(m.group(2))
+                if k and v and k not in F:
+                    F[k] = v
+            imgs = list(dict.fromkeys(_NR_B + _up.quote(x, safe="/:,()") for x in re.findall(r'<img[^>]+src="(/file_link/[^"]+)"', h)))
+            nm = " · ".join(x for x in (F.get("한글명칭"), F.get("한자명칭"), F.get("원어명칭")) if x) or f"ov:{om.group(1)}"
+            return (f"국립문화유산연구원 국외문화유산 판독 — {nm}\n" + "\n".join(f"{k}: {v[:200]}" for k, v in F.items() if k not in ("한글명칭", "한자명칭", "원어명칭")) + "\n"
+                    + (f"이미지 {len(imgs)}장: {' · '.join(imgs[:4])}\n" if imgs else "") + f"원문 뷰어: {url}\n"
+                    + f"※ 출처: 국립문화유산연구원 국가유산 지식이음 — {F.get('이용범위') or '이용조건 원 기관 확인'}. 공공누리 제4유형은 출처표시·비상업·변경금지(원형 그대로). 국외소재문화유산재단(okchf) 기록과 교차확인 권장.")
+        rm = re.search(r"originalUsrView\.do\S*?info_idx=(\d+)", q) or re.match(r"^rep\s*[:#]\s*(\d+)$", q.strip())
+        if rm:
+            url = f"{_NR_B}/kor/originalUsrView.do?menuIdx=1046&info_idx={rm.group(1)}"
+            h = re.sub(r"<script.*?</script>", " ", _cached_text("nrR:" + rm.group(1), 24 * 3600, lambda: _ok_get(url), "detail_tech"), flags=re.S)
+            tm = re.search(r'<div class="detail_tech[^"]*">\s*<h3 class="tit">(.*?)<a ', h, re.S); title = _clean(tm.group(1)) if tm else f"rep:{rm.group(1)}"
+            F = {}
+            for m in re.finditer(r"<dt[^>]*>(.*?)</dt>\s*<dd[^>]*>(.*?)</dd>", h, re.S):
+                k, v = _clean(m.group(1)), _clean(m.group(2))
+                if k and v and len(k) < 12 and k not in F:
+                    F[k] = v
+            am = re.search(r'<p id="mcctP"[^>]*>(.*?)</p>', h, re.S); ab = _clean(am.group(1)) if am else ""
+            tc = re.search(r'<pre id="listConPre">(.*?)</pre>', h, re.S); toc = [x for x in (_clean(l) for l in (tc.group(1) if tc else "").split("\n")) if x]
+            im = re.search(r'<div class="techBox">.*?<img src="([^"]+)"', h, re.S)
+            return (f"국립문화유산연구원 발간자료 판독 — {title}\n" + " · ".join(f"{k}: {v[:160]}" for k, v in list(F.items())[:8]) + "\n"
+                    + (f"【초록】\n{ab[:1500]}\n본문 지문(sha256-16): {_hl.sha256(ab.encode()).hexdigest()[:16]} — 판독 시점 초록 기준.\n" if ab else "")
+                    + (f"【목차】\n{chr(10).join(toc)[:1800]}\n" if toc else "") + (f"표지: {_NR_B}{im.group(1)}\n" if im else "") + f"원문 뷰어(PDF 열람·내려받기): {url}\n"
+                    + "※ 출처: 국립문화유산연구원 발간자료 — 공공누리 유형은 원문 페이지 표기 확인(대부분 제4유형: 출처표시·비상업·변경금지). 인용 시 보고서명·발행년도·쪽수.")
+        pm2 = re.match(r"^인물\s*[:：]\s*(.+)$", q.strip())
+        if pm2:  # v2.20 인물 색인(Node 패리티)
+            P = json.loads(_cached_text("nrPeople", 6 * 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/nrich/people.json", 60), '"r"'))
+            nm = pm2.group(1).strip()
+            keys = [k for k, e in P.items() if e["n"] == nm or k == nm or (e.get("h") and nm in e["h"]) or (len(nm) >= 2 and e["n"].startswith(nm) and len(e["n"]) <= len(nm) + 1)][:8]
+            if not keys:
+                return f"인물 '{nm}' — 연구DB 인물 색인(금석문 찬·서·제액, 초상화 화가, 괘불 화승, 일기 저자)에 없음. 본문 검색: cross_search(query='{nm}', sources='nrich')"
+            left = [40]; blocks = []
+            for k in keys:
+                e = P[k]; tot = sum(len(v) for v in e["r"].values())
+                lines = []
+                for r, v in e["r"].items():
+                    for x in v[:max(0, min(len(v), left[0]))]:
+                        left[0] -= 1; lines.append(f"  - [{r}] {x[1]}" + (f" · {x[2]}" if x[2] else "") + f" → {x[0]}")
+                blocks.append(f"■ {k} — {tot}건 (" + " · ".join(f"{r} {len(v)}" for r, v in e["r"].items()) + ")" + ("\n" + "\n".join(lines) if lines else ""))
+            return (f"국립문화유산연구원 연구DB 인물 '{nm}' — {len(keys)}명(표기 기준)\n" + "\n".join(blocks)
+                    + "\n※ 기록 판독: nedb_search(mode='nrich', query='<id>') · 동명이인 가능 — 한자 병기로 구분 · 서(書)에는 집자(옛 글씨를 모아 새김)가 포함될 수 있음 · 연대는 원 데이터 표기(피장자 시대·건립 시점 혼재 가능) — 생몰년과 대조 · 인물 색인 https://changgi.github.io/korea-archive-mcp/data/nrich/people.json(주 1회) · RiC-O(인물=rico:Person): data/nrich/export/<키>.jsonld")
+        dm = re.match(r"^(" + "|".join(_NR_DS) + r")\s*[:#]\s*(\S.*)$", q.strip())
+        if dm:  # 연구DB 기록 — 정적 색인 전체 필드
+            o = next((r for r in _nr_db() if r["id"] == f"{dm.group(1)}:{dm.group(2)}"), None)
+            if not o and not dm.group(2).isdigit():  # 'ksm:광개토' = 데이터셋 안 키워드 검색(v2.16, Node 패리티)
+                kw = dm.group(2).strip()
+                hit = _nr_db_search(kw, max_results, dm.group(1))
+                return (f"국립문화유산연구원 연구DB [{dm.group(1)}] '{kw}' — {len(hit)}건\n" + ("\n".join(f"- [{r['dn']}] {r['t']}" + (f" ({r['a']})" if r.get("a") else "") + (f" · {r['d']}" if r.get("d") else "") + (f" · {r['p']}" if r.get("p") else "") + f" → {r['id']}" for r in hit) or "(0)")
+                        + "\n※ 기록 판독: nedb_search(mode='nrich', query='<id>')")
+            if not o:
+                return f"연구DB 기록 {dm.group(1)}:{dm.group(2)} 미발견 — 색인({_NR_DB})은 주 1회 갱신. cross_search(sources='nrich')로 다시 찾으십시오."
+            return (f"국립문화유산연구원 연구DB 판독 — [{o['dn']}] {o['t']}" + (f" · {o['a']}" if o.get("a") else "") + "\n"
+                    + " · ".join(x for x in [o.get("d") and f"연대: {o['d']}", o.get("p") and f"소재·소장: {o['p']}"] if x) + "\n"
+                    + "\n".join(f"{k}: {v}" for k, v in (o.get("m") or {}).items()) + (f"\n【해설(색인 150자)】\n{o['x']}…" if o.get("x") else "")
+                    + f"\n원문 뷰어(전문·이미지): {o.get('u') or '—'}\n"
+                    + f"※ 출처: 국립문화유산연구원 국가유산 지식이음 Open API({o['dn']}) — {('공공누리 ' + o['k']) if o.get('k') else '이용조건 원문 확인'}. 정적 색인 주 1회 갱신(원 기관 요청 없음).")
+        qm = re.match(r"^보고서\s*[:：]\s*(.+)$", q.strip())
+        kq = qm.group(1) if qm else q
+        try:
+            rp = _nr_rep_api(kq, max_results if qm else max(3, -(-max_results // 2)))
+        except Exception:
+            rp = []
+        try:
+            ov = [] if qm else _nr_ov_list(q)
+        except Exception:
+            ov = []
+        return (f"국립문화유산연구원 국가유산 지식이음 '{kq}' — 발간자료 {len(rp)}건" + ("" if qm else f" · 국외문화유산 {len(ov)}건") + "\n"
+                + "\n".join(f"- [발간자료] {r['title']} ({r['year']}) · {r['field']} · {'공공누리 ' + r['kogl'] if r['kogl'] else ''} {r['url']}" for r in rp) + ("\n" if rp else "")
+                + "\n".join(f"- [국외문화유산] {r['title']} — {r['nation']} · {r['holder']} ({r['era']}) {r['url']}" for r in ov[:max_results])
+                + (lambda db: (f"\n연구DB {len(db)}건:\n" + "\n".join(f"- [{o['dn']}] {o['t']}" + (f" ({o['a']})" if o.get("a") else "") + (f" · {o['d']}" if o.get("d") else "") + (f" · {o['p']}" if o.get("p") else "") + f" → {o['id']}" for o in db)) if db else "")([] if qm else _safe(lambda: _nr_db_search(q, max_results), []))
+                + f"\n※ 상세: nedb_search(mode='nrich', query=<상세 URL 또는 ov:번호·rep:번호·연구DB id(ksm:3 등)·'인물:이름'>) · 보고서만: query='보고서:키워드' · 포털 통합검색(브라우저): {_NR_B}/search.do · 국외소재문화유산 조사 현황: https://www.nrich.go.kr/kor/page.do?menuIdx=336")
+    except Exception as e:
+        return f"국립문화유산연구원 조회 실패({str(e)[:60]}) — 브라우저 대체 경로: {_NR_B}/kor/index.do"
+
+
+_OV_ALIAS = {"대영박물관": "영국박물관", "british museum": "영국박물관", "메트로폴리탄박물관": "메트로폴리탄미술관"}
+
+
+def _ov_key(it):
+    t = re.sub(r"^\[[^\]]+\]\s*", "", str(it.get("title", "")))
+    nm = re.sub(r"[(（][^)）]*[)）]|[『』〈〉「」<>\s·]", "", t.split(" — ")[0])
+    h = str(it.get("series", "")).split(" › ")[-1].strip()
+    return f"{nm}|{_OV_ALIAS.get(h.lower()) or _OV_ALIAS.get(h) or h}" if nm and h else ""
+
+
+def _link_overseas(items):
+    """v2.14 국외 소재 교차확인 — okchf·nrich의 '명칭+소장처' 동일 기록을 한 건으로(출처 둘 다, sameAs). Node linkOverseas 패리티."""
+    seen, out = {}, []
+    for it in items:
+        src = (it.get("sources") or [""])[0]
+        ok = re.match(r"^(okchf|nrich)", src) and str(it.get("series", "")).startswith("국외문화유산")
+        k = _ov_key(it) if ok else ""
+        prev = seen.get(k) if k else None
+        if prev and not any(x.split("·")[0] == src.split("·")[0] for x in prev["sources"]):
+            prev["sources"].extend(it["sources"]); prev["sameAs"] = prev.get("sameAs") or it.get("url", ""); prev["crossOv"] = True
+            continue
+        if k:
+            seen[k] = it
+        out.append(it)
+    return out
+
+
+def _pipeline_freshness():
+    """v2.22 자동 파이프라인 신선도(Node 패리티) — 정적 색인·원장이 오래되면 🔴."""
+    import time as _t
+    PB = "https://changgi.github.io/korea-archive-mcp/data/"
+    out = []
+    for label, f, field, mx in (("연구원 연구DB 색인(nrich-harvest, 주 1회)", "nrich_db_meta.json", "harvested", 9), ("발견 누적 원장(ledger, 매일)", "stats.json", "updated", 2.5)):
+        try:
+            j = json.loads(_http_text(PB + f + "?t=" + str(int(_t.time() // 3600)), 20))
+            d = (_dt.datetime.now(_dt.timezone.utc) - _dt.datetime.strptime(j[field][:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=_dt.timezone.utc)).total_seconds() / 86400
+            out.append(f"{'🟢' if d <= mx else '🔴'} {label}: {j[field][:16]} ({d:.1f}일 전, 기준 {mx}일)" + (f" ⚠ 품질 경고 {len(j['warnings'])}" if j.get("warnings") else ""))
+        except Exception as e:
+            out.append(f"🔴 {label}: 확인 실패({str(e)[:30]})")
+    return ("\n\n자동 파이프라인 신선도:\n" + "\n".join(out)
+            + "\n\n접근 제한(정직 UA 거부 — 우회하지 않음):\n" + ("\n".join(f"⛔ {k} {r['name']}: {r['how']} (실측 {r['since']}) · 브라우저 {r['browse']}" for k, r in _UA_REFUSED.items()) or "없음 — 전 기관 정직 UA로 수집 중"))
+
+
+def _c_ledger(q, n):
+    """v2.6: 발견 누적 원장 — 사용자들이 이미 발굴한 기록(검색어 없음)을 다시 검색. docs/data/discovered.jsonl 1h 캐시. 'all'에는 넣지 않음. Node 패리티."""
+    b = _cached_text("kaLedger", 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/discovered.jsonl", 20), '"key"')
+    toks = [t for t in str(q).lower().split() if t]
+    en = [t for t in (_ko_en(q) or "").lower().split() if t and t != "korea"]
+    out = []
+    for ln in b.split("\n"):
+        if not ln.strip():
+            continue
+        try:
+            o = json.loads(ln)
+        except Exception:
+            continue
+        if o.get("entry_type") == "결함 출력":
+            continue  # v2.34 옛 파서 오류 출력 — 원장에는 보존, 검색 결과에선 제외(Node 패리티)
+        mv = " ".join(str(m[1]) for m in (o.get("meta") or []) if len(m) > 1 and not str(m[1]).startswith("http"))  # v2.42 기관 주제어·지명·요약까지 검색(Node 패리티)
+        h = f"{o.get('title', '')} {o.get('partOf') or o.get('partOf_derived', '')} {o.get('id', '')} {' '.join(o.get('sources') or [])} {o.get('date', '')} {mv} {o.get('summary') or o.get('summary_composed', '')}".lower()
+        if not (all(t in h for t in toks) or (en and all(t in h for t in en))):
+            continue
+        it = {"title": f"[{'+'.join(o.get('sources') or [])} · 발견 {o.get('seen', 1)}회 · 7일 {o.get('seen_7d', 0)} · {o.get('days_total', 1)}일 · 첫 {str(o.get('first_seen', ''))[:10]}{f" · 활용 {o['rank']}위" if o.get('rank') else ''}{f" · 경로 질의 {len(o['found_by'])}" if o.get('found_by') else (' · 경로 원장(파생)' if o.get('found_by_derived') else '')}] {'[검색 안내] ' if o.get('entry_type') == '검색 안내' else ''}{o.get('title', '')}{f" ({o['link_note']})" if o.get('link_note') else ''}"[:220],
+              "date": o.get("date") or (f"{o['date_derived']} [파생]" if o.get("date_derived") else ""), "id": o.get("id") or o.get("key"), "series": o.get("partOf") or o.get("partOf_derived", ""), "url": o.get("url", ""), "media": o.get("media", ""), "seen": o.get("seen", 1), "rank": o.get("rank") or 10 ** 9}
+        if o.get("sameAs"):
+            it["sameAs"] = o["sameAs"]
+        nt = " · ".join(x for x in [f"같은 기록 {len(o['same_keys']) + 1}곳 소장({', '.join(o['same_keys'])})" if o.get("same_keys") else "",
+                                    f"날짜 교차 {str((o.get('date_cross') or {}).get('verdict', '')).split('(')[0]}" if o.get("date_cross") else ""] if x)
+        if nt:
+            it["note"] = nt  # v2.92.1 맥락·증거 — 제목이 잘리지 않게 별도 줄(Node 패리티)
+        out.append(it)
+    return sorted(out, key=lambda x: (x["rank"], -x["seen"]))[:n]  # v2.7: 활용 순위
+
+
+def _c_aks(q, n):
+    """한국고문서자료관 소장처 매칭(내장 카탈로그 — 네트워크 0)."""
+    toks = [t for t in q.split() if t]
+    hits = [c for c in _AKS_CAT if toks and all(t in (c["name"] + " " + c["grp"]) for t in toks)]
+    return [{"title": f"[고문서 소장처] {c['name']} ({c['grp']})", "date": "", "id": c["id"],
+             "series": c["grp"], "url": _AKS_BASE + "/viewer/viewer.do"} for c in hits[:n]]
+
+# 소장기관 정식명·국가 — 맥락 강화(v1.71)
+ARCHIVE_META = {
+    "tna": {"n": "The National Archives (영국 국립기록관)", "c": "GB"}, "ia": {"n": "Internet Archive", "c": "INT"},
+    "gallica": {"n": "Gallica (프랑스 국립도서관 BnF)", "c": "FR"}, "europeana": {"n": "Europeana", "c": "EU"},
+    "nara": {"n": "U.S. National Archives (NARA)", "c": "US"}, "archives": {"n": "국가기록원", "c": "KR"},
+    "nlk": {"n": "국립중앙도서관", "c": "KR"}, "nedb": {"n": "국가기록원 개방데이터", "c": "KR"},
+    "koreanwar": {"n": "KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터", "c": "KR"},
+    "jacar": {"n": "아시아역사자료센터 JACAR", "c": "JP"}, "earchive": {"n": "국사편찬위원회 전자사료관", "c": "KR"},
+    "i815": {"n": "독립기념관 한국독립운동정보시스템", "c": "KR"}, "gonghun": {"n": "국가보훈부 공훈전자사료관", "c": "KR"},
+    "ktv": {"n": "KTV e영상역사관", "c": "KR"}, "oldnews": {"n": "국립중앙도서관 대한민국 신문 아카이브", "c": "KR"},
+    "much": {"n": "대한민국역사박물관", "c": "KR"}, "indy": {"n": "국가기록원 독립운동판결문", "c": "KR"},
+    "heritage": {"n": "국가유산청 국가유산포털", "c": "KR"}, "kyudb": {"n": "서울대 규장각한국학연구원", "c": "KR"},
+    "jsg": {"n": "한국학중앙연구원 장서각", "c": "KR"}, "awm": {"n": "Australian War Memorial", "c": "AU"},
+    "nlna": {"n": "Nationaal Archief (네덜란드)", "c": "NL"}, "dnz": {"n": "DigitalNZ (뉴질랜드 집계)", "c": "NZ"},
+    "nzarch": {"n": "Archives New Zealand Te Rua Mahara", "c": "NZ"}, "commons": {"n": "Wikimedia Commons", "c": "INT"},
+    "un": {"n": "UN Digital Library", "c": "INT"}, "ndl": {"n": "일본 국립국회도서관 NDL", "c": "JP"},
+    "seoul": {"n": "서울기록원", "c": "KR"}, "foia": {"n": "정보공개포털·서울소통광장", "c": "KR"},
+    "aks": {"n": "한국학중앙연구원 한국고문서자료관", "c": "KR"},
+    "gallery": {"n": "KOREA ARCHIVE IIIF 갤러리(30곳 탐방·100선 실물 기록)", "c": "KR"},
+    "ledger": {"n": "KOREA ARCHIVE 발견 누적 원장(사용자 발굴 기록)", "c": "KR"},
+    "okchf": {"n": "국외소재문화유산재단 대국민 아카이브", "c": "KR"},
+    "nrich": {"n": "국립문화유산연구원 국가유산 지식이음", "c": "KR"},
+}
+# 증거성 강화(v1.71): 레코드별 심층 판독 재현 호출문
+DEEP_READ = {
+    "gonghun": lambda it: it.get("id") and f"nedb_search(mode='gonghun', query='{it['id']}')",
+    "i815": lambda it: it.get("url") and f"nedb_search(mode='i815', query='{it['url']}')",
+    "un": lambda it: it.get("url") and f"nedb_search(mode='un', query='{it['url']}')",
+    "nzarch": lambda it: it.get("id") and f"nedb_search(mode='nzarch', query='{it['id']}')",
+    "jsg": lambda it: it.get("id") and f"nedb_search(mode='jsg', query='{it['id']}')",
+    "much": lambda it: it.get("url") and f"nedb_search(mode='much', query='{it['url']}')",
+    "indy": lambda it: it.get("url") and f"nedb_search(mode='indy', query='{it['url']}')",
+    "heritage": lambda it: it.get("id") and f"nedb_search(mode='heritage', query='{it['id']}')",
+    "ktv": lambda it: it.get("url") and f"nedb_search(mode='ktv', query='{it['url']}')",
+    "jacar": lambda it: it.get("id") and f"nedb_search(mode='jacar', query='{it['id']}')",
+    "oldnews": lambda it: it.get("id") and f"nedb_search(mode='oldnews', query='{it['id']}')",
+    "commons": lambda it: it.get("url") and f"nedb_search(mode='commons', query='{it['url']}')",
+    "koreanwar": lambda it: it.get("id") and f"koreanwar_item(ref_code='{it['id']}')",
+    "okchf": lambda it: it.get("url") and f"nedb_search(mode='okchf', query='{it['url']}')",
+    "nrich": lambda it: (f"nedb_search(mode='nrich', query='{it['id']}')" if re.match(r"^(ksm|portrait|gwaebul|diary|mokgan|jcbib|jcphoto|dict|arch|koguryo|gaesong|design|pattern|oldbook|hyanggyo|stone|journal|iron|dolmen|assay|material):", str(it.get("id", ""))) else (it.get("url") and f"nedb_search(mode='nrich', query='{it['url']}')")),
+    "nara": lambda it: it.get("id") and ("judge_rights(naid=" + re.sub(r"\D", "", str(it["id"])) + ")"),
+    "seoul": lambda it: it.get("url") and f"seoul_archives_search(query='{it['url']}')",
+}
+# 데이터화×맥락 강화(v1.72): 레코드의 상위 계층(partOf) 추출
+def _part_of(ch, it):
+    if ch == "nara" and it.get("series"):
+        return f"NARA › {it['series']}"
+    if ch == "ndl" and it.get("series"):
+        return f"NDL › {it['series']}"
+    if ch == "awm" and it.get("series"):
+        return f"AWM 유형 › {it['series']}"
+    if ch == "nlna" and it.get("series"):
+        return f"NA(NL) › {it['series']}"
+    if ch == "earchive" and it.get("series"):
+        return f"수집처 › {it['series']}"
+    if ch == "commons" and it.get("series"):
+        return f"Commons › {it['series']}"
+    if ch == "nzarch" and it.get("series"):
+        return f"Series: {it['series']}"
+    if ch == "koreanwar":
+        if it.get("series"):
+            return f"협약 › {it['series']}"
+        m = re.match(r"^(\d{4})-([A-Z]{2})-(\d{2})-([A-Z]+)-([A-Z])-\d+$", str(it.get("id") or ""))
+        if m:
+            return f"수집 {m.group(1)} › {m.group(2)} › {m.group(4)}-{m.group(5)}"
+    if ch == "jacar":
+        o = {"A": "국립공문서관", "B": "외무성 외교사료관", "C": "방위성 방위연구소"}.get(str(it.get("id") or "")[:1])
+        if o:
+            return f"JACAR › {o}"
+    if ch == "oldnews" and it.get("series"):
+        return f"신문 › {it['series']}"
+    if ch == "aks" and it.get("series"):
+        return f"고문서 › {it['series']}"
+    if ch == "nrich" and it.get("series"):
+        return f"국립문화유산연구원 › {it['series']}"
+    if ch == "okchf" and it.get("series"):
+        return f"국외소재문화유산재단 › {it['series']}"
+    if ch == "ledger":
+        return it.get("series", "")
+    if ch == "gallery" and it.get("series"):
+        return f"IIIF 갤러리 › {it['series']}"
+    if ch == "dnz" and it.get("series"):
+        return f"NZ › {it['series']}"
+    if ch == "ia" and it.get("series"):
+        return f"IA Collection › {it['series']}"
+    if ch == "tna" and it.get("series"):
+        return f"TNA › {it['series']}"
+    if ch == "europeana" and it.get("series"):
+        return f"Europeana › {it['series']}"
+    if ch == "gonghun" and it.get("series"):
+        return f"운동계열 › {it['series']}"
+    if ch == "indy" and it.get("series"):
+        return f"판결기관 › {it['series']}"
+    if ch == "heritage" and it.get("series"):
+        return f"지정 › {it['series']}"
+    if ch == "un" and it.get("series"):
+        return f"UN › {it['series']}"
+    if ch == "gallica" and it.get("series"):
+        return f"Gallica › {it['series']}"
+    if ch == "much" and it.get("series"):
+        return f"박물관 › {it['series']}"
+    if ch == "i815" and it.get("series"):
+        return f"자료 › {it['series']}"
+    if ch == "ktv" and it.get("series"):
+        return f"영상 › {it['series']}"
+    if ch == "seoul" and it.get("series"):
+        return f"기술단위 › {it['series']}"
+    if ch == "archives" and it.get("series"):
+        return f"국가기록원 › {it['series'][4:].strip()}" if it["series"].startswith("[유형]") else f"생산기관 › {it['series']}"
+    if ch == "nedb" and it.get("series"):  # v2.3: 편찬 자료군(DB)이 곧 상위 계열
+        return it["series"] if it["series"].startswith("한국사DB") else f"한국사DB › {it['series']}"
+    if ch == "nlk" and it.get("series"):
+        return f"자료유형 › {it['series']}"
+    if ch == "jsg" and it.get("series"):
+        return f"四部 › {it['series']}"
+    if ch == "kyudb" and it.get("series"):
+        return f"소장 › {it['series']}"
+    return None
+
 
 _COLLECT = {"tna": _c_tna, "ia": _c_ia, "gallica": _c_gallica, "europeana": _c_europeana,
             "nara": _c_nara, "archives": _c_archives, "nlk": _c_nlk, "nedb": _c_nedb,
-            "koreanwar": _c_koreanwar}
+            "koreanwar": _c_koreanwar, "jacar": _c_jacar, "earchive": _c_earchive, "i815": _c_i815, "gonghun": _c_gonghun, "kyudb": _c_kyudb, "jsg": _c_jsg, "awm": _c_awm, "nlna": _c_nlna, "dnz": _c_dnz, "nzarch": _c_nzarch, "commons": _c_commons, "un": _c_un, "ndl": _c_ndl, "oldnews": _c_oldnews, "much": _c_much, "indy": _c_indy, "heritage": _c_heritage,
+            "ktv": _c_ktv, "seoul": _c_seoul,
+            "foia": _c_foia, "aks": _c_aks, "gallery": _c_gallery, "ledger": _c_ledger, "okchf": _c_okchf, "nrich": _c_nrich}
 
 
 
@@ -1380,8 +4581,12 @@ def _joseon_mode(query: str, mode: str, span: int, n: int) -> str:
         if mode == "item":
             r = _jt.joseon_item_read(q, max_chars=3000)
             if r.get("body_status") == "ok":
-                return (f"[{q}] {r.get('title', '')}\n{r['body']}\n({r['chars']}자) {r['url']}"
+                mline = " · ".join(f"{kk}: {v}" for kk, v in r.get("meta") or [])
+                return (f"[{q}] {r.get('title', '')}\n" + (mline + "\n" if mline else "") + f"{r['body']}\n({r['chars']}자) {r['url']}"
                         f"\n※ {r.get('citation_note', '')} 조문이면 mode=sibling으로 형제 조 확인.")
+            if r.get("body_status") == "image_only":  # v2.61.1 Node 패리티
+                return (f"[{q}] {r.get('title', '')}\n" + " · ".join(f"{kk}: {v}" for kk, v in r.get("meta") or [])
+                        + f"\n본문 텍스트 없음 — 원문 이미지(지면)로만 제공됩니다(미공개 아님). 원문 열람: {r.get('url', '')}")
             return f"[{q}] {r.get('title', '')} — {r.get('body_status')}: {r.get('note', '')} {r.get('url', '')}"
         if mode == "sibling":
             r = _jt.joseon_sibling_scan(q, span=span)
@@ -1426,15 +4631,277 @@ def _joseon_mode(query: str, mode: str, span: int, n: int) -> str:
             out = f"규장각 '{q}'"
             for label, sec in r.get("sections", {}).items():
                 if "error" in sec:
-                    out += f"\n{label}: 오류({sec['error']})"
+                    out += f"\n{label}: 오류({sec['error']})" + (f"\n{_ua_refused_note('kyudb', q)}" if "403" in str(sec["error"]) else "")
                 else:
-                    out += f"\n{label}: {sec['count']}건 — " + " ".join(x["call_number"] for x in sec.get("items", [])[:12])
+                    its = sec.get("items", [])
+                    if any(x.get("title") for x in its):
+                        out += f"\n{label}: {sec['count']}건\n" + "\n".join(
+                            f"- [{x['call_number']}] {x['title']} · {x.get('author', '')} · {x.get('date', '')} · {x.get('cls', '')}"
+                            + (f"\n  해제: {x['body']}…" if x.get("body") else "") for x in its[:10])
+                    else:
+                        out += f"\n{label}: {sec['count']}건 — " + " ".join(x["call_number"] for x in its[:12])
             if r.get("alert"):
                 out += "\n★ " + r["alert"]
             return out + '\n■ 원문 이미지 접근 지식(실측 2026-08-18) — GET·web_fetch 불가, ImageServlet 직접 URL은 브라우저에서 열림:\nhttps://kyudb.snu.ac.kr/ImageServlet.do?imgFileNm=[파일명]&path=/data01/stream/[item_cd]/IMG/[book_cd]/[book_cd]_0001/\nitem_cd 5종(자료 성격별): ART 도설·회화 / ETC 두루마리·축 / DRR 등록류 / FND 재정·사목 / POL 정책·절목.\n파일명 2형: 표준 [book_cd]_00_IH_0001_[nnn]a.jpg · POL계 [book_cd]_00IH_0001_[nnnn].jpg (밑줄 없음·4자리).\n★반드시 첫 장 URL을 실제로 받아 패턴 확정 후 순회 — 추정 순회는 전부 실패한다(200 OK·0바이트 함정 포함). 게재는 소장기관 허가 확인(02-880-5316).'
     except Exception as e:
-        return f"조선 심층 판독({mode}) 실패: {e} — 한국사DB 계열은 전부 POST이며 GET 재현 불가. 잠시 후 재시도."
+        return f"조선 심층 판독({mode}) 실패: {e} — 한국사DB 응답이 끊겨 결과 건수를 확인하지 못했습니다(POST·GET 모두 시도 — 0건으로 단정하지 않음). 잠시 후 재시도."
     return f"알 수 없는 mode: {mode}"
+
+
+
+# ── 한국고문서자료관(한국학중앙연구원, archive.aks.ac.kr) — 소장처 172곳 (2026-11-17 treeAjax 전수 실측) ──
+# 형식: id|상위경로(upPath)|분류|소장처명. 트리·문서목록은 라이브 조회, 이미지 일괄 수집은 로컬 전용. route.js 패리티.
+_AKS_BASE = "https://archive.aks.ac.kr"
+_AKS_RAW = """L011146|01^0111|문중>서울특별시|서울 마포 반남박씨 대종중
+L011143|01^0111|문중>서울특별시|서울 마포 성주이씨 대종회
+L011144|01^0111|문중>서울특별시|서울 원주김씨 두암 김응남 종가
+L011148|01^0111|문중>서울특별시|서울 전주이씨 경녕군 후손가
+L011145|01^0111|문중>서울특별시|서울 전주이씨 장천군 이보생 후손가
+L011117|01^0111|문중>서울특별시|서울 진주류씨 우강 유태영 후손가
+L016909|01^0169|문중>대구광역시|대구 영천이씨 세효당 후손가
+L013003|01^0130|문중>대전광역시|대전 무수동 안동권씨 유회당 권이진 종가
+L013001|01^0130|문중>대전광역시|대전 회덕 은진송씨 동춘당 송준길 후손가
+L014151|01^0141|문중>경기도|광주 기곡 광주안씨 순암 안정복 종가
+L014160|01^0141|문중>경기도|광주 연안이씨 매간 이익상 종가
+L014158|01^0141|문중>경기도|광주 평산신씨 신대우
+L014153|01^0141|문중>경기도|군포 속달 동래정씨 동래부원군 정난종 종가
+L014140|01^0141|문중>경기도|김포 의령남씨 서윤공 남두장 후손가
+L014156|01^0141|문중>경기도|김포 전주이씨 효헌 이인철 후손가
+L014139|01^0141|문중>경기도|성남 해주오씨 월곡공파 오윤함
+L014163|01^0141|문중>경기도|시흥 반남박씨 금계군 박동량 종가
+L014132|01^0141|문중>경기도|안산 부곡 진주류씨 경성당
+L014115|01^0141|문중>경기도|안성 보체 동래정씨 정홍순 종가
+L014131|01^0141|문중>경기도|안성 해주오씨 오치풍 후손가
+L014154|01^0141|문중>경기도|양근 안동김씨 노가재 김창업 후손가
+L014161|01^0141|문중>경기도|양주 광주정씨
+L014168|01^0141|문중>경기도|양주 사릉 해주정씨 종가
+L014164|01^0141|문중>경기도|여주 산북 전주이씨 완양부원군 이충원 종가
+L014148|01^0141|문중>경기도|여흥민씨 민영환 후손가
+L014152|01^0141|문중>경기도|용인 해주오씨 추탄 오윤겸 종가
+L014167|01^0141|문중>경기도|의정부 장암 반남박씨 서계 박세당 종가
+L014166|01^0141|문중>경기도|의정부 장암 반남박씨 서계 박세당 후손가
+L014165|01^0141|문중>경기도|이천 풍천임씨
+L014303|01^0143|문중>충청북도|제천 한수 연안이씨
+L014423|01^0144|문중>충청남도|공주 안동김씨 청음 김상헌 후손가
+L014421|01^0144|문중>충청남도|공주 전주이씨 숭선군파 종가
+L014422|01^0144|문중>충청남도|공주 진주류씨 금사 유충걸 후손가
+L014418|01^0144|문중>충청남도|논산 노성 파평윤씨 명재 윤증 종가
+L014426|01^0144|문중>충청남도|보령 천궁 경주김씨 직각 김면주 종가
+L014425|01^0144|문중>충청남도|부여 은산 함양박씨 구당 박세영 종가
+L014429|01^0144|문중>충청남도|서산 대교 경주김씨 충민공 김홍익 후손가
+L014432|01^0144|문중>충청남도|서산 대교 경주김씨 학주 김홍욱 종가
+L014433|01^0144|문중>충청남도|서산 대교 경주김씨 학주 김홍욱 후손가
+L014430|01^0144|문중>충청남도|아산 선교 장흥임씨 종가
+L014427|01^0144|문중>충청남도|예산 한곡 한산이씨 수당 고택
+L014431|01^0144|문중>충청남도|예산 한양조씨
+L014428|01^0144|문중>충청남도|청양 안동김씨 삼당 김영 후손가
+L014738|01^0147|문중>전북특별자치도|고창 광산김씨 노산사
+L014734|01^0147|문중>전북특별자치도|고창 신천강씨
+L014724|01^0147|문중>전북특별자치도|고창 흥덕 평해황씨 이재 황윤석 종가
+L014731|01^0147|문중>전북특별자치도|남원 안터 순흥안씨 사제당 안처순 후손가
+L014722|01^0147|문중>전북특별자치도|남원·구례 삭녕최씨
+L014720|01^0147|문중>전북특별자치도|부안 우반 부안김씨
+L014735|01^0147|문중>전북특별자치도|익산 함열 임천조씨
+L014736|01^0147|문중>전북특별자치도|정읍 광산김씨 김흥암 후손가
+L014737|01^0147|문중>전북특별자치도|정읍 광산김씨 옥산서원
+L014719|01^0147|문중>전북특별자치도|진안 정천 전주이씨 서곡 이정영 후손가
+L014804|01^0148|문중>전라남도|구례 오미 문화류씨 운조루
+L014803|01^0148|문중>전라남도|나주 회진 나주임씨 창계 임영 후손가
+L014810|01^0148|문중>전라남도|영광 연안김씨 종가
+L014802|01^0148|문중>전라남도|영광 영월신씨
+L014812|01^0148|문중>전라남도|영암 남평문씨
+L014813|01^0148|문중>전라남도|해남 김해김씨
+L014811|01^0148|문중>전라남도|해남 연동 해남윤씨 녹우당
+L016792|01^0167|문중>경상북도|경주 구정 경주이씨
+L016722|01^0167|문중>경상북도|경주 소정 경주이씨
+L016762|01^0167|문중>경상북도|경주 양동 경주손씨 종가 송첨
+L016712|01^0167|문중>경상북도|경주 옥산 여주이씨 독락당
+L016794|01^0167|문중>경상북도|경주 옥산 여주이씨 치암 이순 종가
+L016798|01^0167|문중>경상북도|경주 용산서원
+L016706|01^0167|문중>경상북도|경주 이조 경주최씨
+L016727|01^0167|문중>경상북도|고령 도진 고령박씨 소윤공 문연재
+L016763|01^0167|문중>경상북도|고령 선산김씨 점필재 김종직 종가
+L016768|01^0167|문중>경상북도|구미 옥산 인동장씨 여헌 장현광 종가
+L016746|01^0167|문중>경상북도|김천 성산이씨 양계 이하 종가
+L016724|01^0167|문중>경상북도|김천 진주강씨 학암 강석귀 종가
+L016744|01^0167|문중>경상북도|봉화 꽃내 무안박씨 회이당 박한 종가
+L016725|01^0167|문중>경상북도|봉화 법전 진주강씨 고암 강임 후손가
+L016775|01^0167|문중>경상북도|봉화 유곡 안동권씨 충재 권벌 종가
+L016776|01^0167|문중>경상북도|봉화 유곡 안동권씨 충재 권벌 후손가
+L016785|01^0167|문중>경상북도|상주 낙동 풍양조씨 양진당 조정
+L016793|01^0167|문중>경상북도|상주 성주이씨 묵재 종가
+L016767|01^0167|문중>경상북도|상주 연안이씨 식산 이만부 종가
+L016766|01^0167|문중>경상북도|상주 우산 진주정씨 우복 정경세 종가
+L016761|01^0167|문중>경상북도|상주 충주박씨 충원군 박동형 종가
+L016769|01^0167|문중>경상북도|성주 명곡 벽진이씨 완석정 이언영 종가
+L016764|01^0167|문중>경상북도|안동 갈전 순흥안씨 종가
+L016713|01^0167|문중>경상북도|안동 금계 의성김씨 학봉 김성일 종가
+L016758|01^0167|문중>경상북도|안동 법흥 고성이씨 종가 임청각
+L016709|01^0167|문중>경상북도|안동 송파 진주하씨 하위지 후손가
+L016701|01^0167|문중>경상북도|안동 수곡 전주류씨 무실 종가
+L016715|01^0167|문중>경상북도|안동 오천 광산김씨 후조당 김부필
+L016717|01^0167|문중>경상북도|안동 주촌 진성이씨 경류정
+L016707|01^0167|문중>경상북도|안동 천전 의성김씨 천상각파
+L016708|01^0167|문중>경상북도|안동 하회 풍산류씨
+L016728|01^0167|문중>경상북도|안동 하회 풍산류씨 북촌댁 화경당
+L016759|01^0167|문중>경상북도|영덕 도곡 무안박씨 무의공 박의장 종가
+L016765|01^0167|문중>경상북도|영덕 도곡 무안박씨 충효당 박선 종가
+L016760|01^0167|문중>경상북도|영덕 재령이씨 충효당 이함 종가
+L016791|01^0167|문중>경상북도|영주 화계 인동장씨 연복군 종가
+L016795|01^0167|문중>경상북도|예천 맛질 함양박씨 미산 박득녕 종가
+L016796|01^0167|문중>경상북도|예천 맛질 함양박씨 박현녕 후손가
+L016780|01^0167|문중>경상북도|예천 진주류씨 서파 유희 가문
+L016741|01^0167|문중>경상북도|의성 아주신씨 오봉 신지제 가문
+L016742|01^0167|문중>경상북도|의성 아주신씨 호계 신적도 가문
+L016774|01^0167|문중>경상북도|청도 함박김씨
+L016721|01^0167|문중>경상북도|칠곡 석전 광주이씨
+L015019|01^0150|문중>경상남도|거창 강동 초계정씨 동계 정온 종가
+L015025|01^0150|문중>경상남도|거창 거창신씨
+L015024|01^0150|문중>경상남도|거창 은진임씨
+L015022|01^0150|문중>경상남도|밀양 밀성박씨 종가 모선정
+L015020|01^0150|문중>경상남도|밀양 사촌 의령남씨 종가 침류정
+L015026|01^0150|문중>경상남도|밀양 창녕조씨 오봉서원
+L015007|01^0150|문중>경상남도|진주 단목 진양하씨 단지 하협 종가
+L015004|01^0150|문중>경상남도|진주 단목 진양하씨 창주 하증 후손가
+L015023|01^0150|문중>경상남도|진주 마진 재령이씨 이재관 후손가
+L015018|01^0150|문중>경상남도|진주 마진 재령이씨 종가
+L015011|01^0150|문중>경상남도|진주 안계 진양하씨 담헌 하우선 종가
+L015005|01^0150|문중>경상남도|진주 운문 진양하씨
+L015002|01^0150|문중>경상남도|함안 두릉 순흥안씨
+L015021|01^0150|문중>경상남도|함양 안의 밀양박씨 지족당 박명부 종가
+L017101|01^0171|문중>강원특별자치도|강릉 전주이씨 선교장 효령대군 후손가
+L016821|01^0168|문중>제주특별자치도|서귀포 사계 진주강씨
+L016814|01^0168|문중>제주특별자치도|제주 경주김씨 문중회
+L016807|01^0168|문중>제주특별자치도|제주 구좌 동래정씨 정석록 후손가
+L016816|01^0168|문중>제주특별자치도|제주 동래정씨 정희현 후손가
+L016819|01^0168|문중>제주특별자치도|제주 애월 김해김씨 김용징 후손가
+L016820|01^0168|문중>제주특별자치도|제주 애월 김해김씨 김희주 후손가
+L016822|01^0168|문중>제주특별자치도|제주 어도 진주강씨 강봉지 후손가
+L016817|01^0168|문중>제주특별자치도|제주 어도 진주강씨 강수황 후손가
+L016818|01^0168|문중>제주특별자치도|제주 어도 진주강씨 강익진 후손가
+L016815|01^0168|문중>제주특별자치도|제주 제주고씨 종친회
+L016810|01^0168|문중>제주특별자치도|제주 조천 곡산강씨 강만식 후손가
+L016811|01^0168|문중>제주특별자치도|제주 조천 곡산강씨 강이진 후손가
+L016806|01^0168|문중>제주특별자치도|제주 조천 김해김씨 김희정 후손가
+L017201|01^0172|문중>인천광역시|강화·부여 창원황씨
+L024712|02^0247|서원향교>경상북도|경주 용산서원
+L024711|02^0247|서원향교>경상북도|경주 장산서원
+L024710|02^0247|서원향교>경상북도|안동 병산서원
+L024807|02^0248|서원향교>경상남도|거창 거창향교
+L024804|02^0248|서원향교>경상남도|김해 김해향교
+L024808|02^0248|서원향교>경상남도|밀양 덕남서원
+L024806|02^0248|서원향교>경상남도|산청 단성향교
+L024802|02^0248|서원향교>경상남도|산청 덕천서원
+L024803|02^0248|서원향교>경상남도|함양 남계서원
+L024801|02^0248|서원향교>경상남도|합천 용연서원
+L024805|02^0248|서원향교>경상남도|합천 합천향교
+L031119|03^0311|박물관도서관>서울특별시|국립고궁박물관
+L031121|03^0311|박물관도서관>서울특별시|한국연구원
+L037702|03^0377|박물관도서관>경기도|경기도박물관
+L037705|03^0377|박물관도서관>경기도|명성황후기념관
+L037701|03^0377|박물관도서관>경기도|여주박물관
+L037801|03^0378|박물관도서관>강원특별자치도|오죽헌·시립박물관
+L037502|03^0375|박물관도서관>충청북도|국립청주박물관
+L039202|03^0392|박물관도서관>세종특별자치시|미래엔 교과서박물관
+L040102|04^0401|공공기관>경기도|국사편찬위원회
+L040101|04^0401|공공기관>경기도|한국학중앙연구원 장서각
+L040301|04^0403|공공기관>서울특별시|규장각한국학연구원
+L054904|05^0549|사찰>경상북도|김천 직지사
+L054901|05^0549|사찰>경상북도|예천 용문사
+L054701|05^0547|사찰>경상남도|고성 옥천사 보장각
+L054702|05^0547|사찰>경상남도|고성 옥천사 청련암
+L061502|06^0615|개인>경기도|신상후 선생님 제공 자료
+L061503|06^0615|개인>경기도|헤이리예술마을뮤지엄카페 타임캡슐
+L061201|06^0612|개인>경상북도|경주 경주이씨 이찬우
+L0619  F02|06^L0619|개인>개인|고문서
+L062001|06^0620|개인>미상|개인
+L074902|07^0749|촌락>경상북도|경주 외동 방어리
+L074901|07^0749|촌락>경상북도|경주 지북동(황성동)
+L074801|07^0748|촌락>경상남도|거제 일운 구조라리
+L074702|07^0747|촌락>제주특별자치도|제주 애월 수산리
+L074703|07^0747|촌락>제주특별자치도|제주 애월 중엄리
+L074701|07^0747|촌락>제주특별자치도|제주 애월 하가리
+L0807  F02|08^L0807|기타>기타|고문서
+L0809  F02|08^L0809|기타>명성황후 편지글(이기대, 다운샘, 2007)|고문서
+L0811  F02|08^L0811|기타>한글서예변천전 도록|고문서"""
+_AKS_CAT = [dict(zip(("id", "up", "grp", "name"), l.split("|"))) for l in _AKS_RAW.strip().splitlines()]
+
+
+def _aks_text(url, timeout=25):
+    req = _ur.Request(url, headers={"User-Agent": _UA_KO,
+                                    "Referer": _AKS_BASE + "/viewer/viewer.do"})
+    with _ur.urlopen(req, timeout=timeout) as r:
+        return r.read().decode("utf-8", "replace")
+
+
+def _aks_chain(base, suf):
+    c = []
+    if suf:
+        c.append(base + suf[:3])
+        if len(suf) > 3:
+            c.append(base + suf)
+    return c
+
+
+def _aks_mode(query: str) -> str:
+    q = query.strip()
+    try:
+        if "/" in q:  # '분류ID/G002+AKS+...' — 문서 노드 면·썸네일(imgnode)
+            fid, did = q.split("/", 1)
+            exact = next((c for c in _AKS_CAT if c["id"] == fid), None)  # 비표준 ID(공백 포함 4건) 정확일치 우선
+            fm = re.match(r"^(L\d{6})(F\d{2,4})?$", fid)
+            col = exact or next((c for c in _AKS_CAT if fm and c["id"] == fm.group(1)), None)
+            if not col:
+                return f"'{fid}' — 소장처 ID 불인식. mode=aks에 소장처명으로 먼저 검색하십시오."
+            up = (col["up"] + "^" + fid) if exact else \
+                "^".join([col["up"], fm.group(1)] + _aks_chain(fm.group(1), fm.group(2) or ""))
+            j = json.loads(_aks_text(f"{_AKS_BASE}/viewer/imgnode.do?itemId=book&gubun=booktree&depth={len(up.split('^')) + 1}"
+                                     f"&upPath={_up.quote(up)}&dataId={_up.quote(did)}&itemType="))
+            items = j.get("imgItems") or []
+            lines = [f"- {i + 1}면: {it.get('filename', '')}"
+                     + (f"\n  썸네일 {_AKS_BASE}{it['thumb']}" if it.get("thumb") else "")
+                     for i, it in enumerate(items[:8])]
+            return (f"한국고문서자료관 문서 '{j.get('infoTitle') or did}' — {len(items)}면"
+                    + (f" · UCI {j['dataUCI']}" if j.get("dataUCI") else "") + "\n" + "\n".join(lines)
+                    + (f"\n… 외 {len(items) - 8}면" if len(items) > 8 else "")
+                    + f"\n※ 원본 고해상 이미지 일괄 수집은 로컬 전용(aks-archive-harvester 스킬 — DZI 타일 복원). "
+                      f"웹에서는 뷰어 열람: {_AKS_BASE}/viewer/viewer.do"
+                    + "\n출처 표기: 한국학중앙연구원 한국고문서자료관. 이미지 재이용은 기관 이용조건 준수.")
+        exact_col = next((c for c in _AKS_CAT if c["id"] == q), None)  # 비표준 ID 포함 정확일치 우선
+        # 비표준 하위 분류('L0809  F0206' — 공백 포함, 카탈로그 밖): 부모 분류(F02)를 카탈로그에서 유도
+        nm = None if exact_col else re.match(r"^(L\d{4,6})(\s+)(F\d{4})$", q)
+        nm_parent = nm and next((c for c in _AKS_CAT
+                                 if c["id"] == nm.group(1) + nm.group(2) + nm.group(3)[:3]), None)
+        m = None if (exact_col or nm_parent) else re.match(r"^(L\d{6})(F\d{2,4})?$", q)
+        if exact_col or nm_parent or m:  # 소장처/분류 노드 → 하위 트리 라이브 조회
+            col = exact_col or nm_parent or next((c for c in _AKS_CAT if c["id"] == m.group(1)), None)
+            if not col:
+                return f"'{q}' — 소장처 목록(172곳)에 없는 ID. mode=aks에 소장처명을 넣어 먼저 검색하십시오."
+            chain = [] if (exact_col or nm_parent) else _aks_chain(m.group(1), m.group(2) or "")
+            up = col["up"] if exact_col else (col["up"] + "^" + col["id"]) if nm_parent else \
+                "^".join([col["up"]] + ([m.group(1)] + chain[:-1] if m.group(2) else []))
+            _aks_url = (f"{_AKS_BASE}/viewer/treeAjax.do?itemId=book&gubun=booktree"
+                        f"&depth={len(up.split('^')) + 1}&upPath={_up.quote(up)}&dataId={_up.quote(q)}&itemType=")
+            b = _cached_text("aks:" + q, 6 * 3600, lambda: _aks_text(_aks_url), "data-dataId")
+            kids = [{"id": k[0], "leaf": "nochild" in k[1], "name": k[2]} for k in
+                    re.findall(r"data-dataId='([^']+)'[\s\S]{0,300}?<span(?:\s+class='([^']*)')?\s+title='([^']*)'", b)]
+            lines = [(f"- [문서] {k['name']}\n  원문 고정 링크(UCI): {_AKS_BASE}/link.do?dataUCI={k['id']}\n  상세: mode=aks query='{q}/{k['id']}'" if k["leaf"]
+                      else f"- [분류 {k['id']}] {k['name']} → mode=aks query='{k['id']}'") for k in kids[:25]]
+            return (f"한국고문서자료관 {col['name']} [{q}] 하위 {len(kids)}건:\n" + ("\n".join(lines) or "(0건)")
+                    + (f"\n… 외 {len(kids) - 25}건" if len(kids) > 25 else "")
+                    + f"\n※ 이미지 일괄 수집=로컬 스킬(aks-archive-harvester), 웹 열람=뷰어 {_AKS_BASE}. "
+                      f"출처 표기: 한국학중앙연구원 한국고문서자료관.")
+        toks = [t for t in q.split() if t]
+        hits = [c for c in _AKS_CAT if toks and all(t in (c["name"] + " " + c["grp"]) for t in toks)]
+        body = "\n".join(f"- [{c['id']}] {c['name']} ({c['grp']})" for c in hits[:20]) \
+            or "(0곳 — 지역명·성씨·호 등으로 재시도. 예: \"송준길\", \"문중 충청\")"
+        return (f"한국고문서자료관 소장처 '{q}' — {len(hits)}/172곳:\n" + body
+                + "\n※ 다음 단계: mode=aks query='L013001'(분류 목록) → query='L013001F02'(문서 목록) → "
+                  "query='분류ID/문서ID'(면·썸네일)."
+                + f"\n172곳 전수는 2026-11 실측 스냅숏 — 신규 소장처는 {_AKS_BASE}에서 확인.")
+    except Exception as e:
+        return (f"한국고문서자료관 자동조회 실패({e}) — 뷰어 직접 열람: {_AKS_BASE}/viewer/viewer.do "
+                f"(분류 트리에서 소장처 탐색)")
 
 
 @mcp.tool()
@@ -1444,7 +4911,53 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
     item=levelId 본문 판독(미공개/파싱실패 구분) · sibling=★형제 조 전수 스캔(조문을 열었으면 반드시 이어 호출) ·
     matrix=법전 수록 대조(쉼표구분 어휘 — 부재의 발견) · origin=어휘 연원('용어' 또는 '용어,영역') ·
     sjw=승정원일기(왕대 분포·최초 용례) · kyujanggak=규장각(목록+해제 동시 — 절목류는 해제에서 발견).
+    aks=한국고문서자료관(소장처 172곳→분류→문서 면·썸네일) · jacar=일본 아시아역사자료센터(한→일 변환 검색·레퍼런스코드 메타 직행·±span×100 인접) ·
+    gonghun=공훈전자사료관 독립유공자(query=이름 검색→mngNo 숫자 투입 시 공적조서·공훈록 본문 판독) ·
+    i815=독립기념관(키워드 목록 · detail.do URL=자료 본문 · '사전:이름/번호'=한국독립운동인명사전 전기·생몰·훈격) ·
+    ktv=KTV e영상역사관(키워드 목록→ehistory view URL 투입 시 영상 해설·상영정보 판독, 공공누리 표시 확인) ·
+    earchive=국편 전자사료관(키워드 목록→'키워드|순번' 투입 시 상세: 열람·이용조건·등록번호) ·
+    commons=위키미디어 공용(키워드 목록→File URL 투입 시 라이선스·원 소장처·설명 판독) ·
+    jsg=장서각(키워드 목록→청구기호 K2-…/URL 투입 시 서지·해제 전문 판독) ·
+    un=UN 디지털도서관(키워드 목록→recid/URL 투입 시 요약·주제·언어별 PDF 직링크) ·
+    oldnews=신문아카이브(키워드 목록 · CNTS/URL=색인어·관련기사 · '본문:키워드[|1905-1910]'=OCR 전문+연대) ·
+    much=역사박물관(→idnbr/URL 투입 시 재질·공공누리·설명) ·
+    indy=판결문(이름→상세 URL 투입 시 죄명·주문·사건개요·원문 뷰어) ·
+    nzarch=NZ기록원(R번호=상세 메타) · okchf=국외소재문화유산재단(상세 URL=소장·설명) · nrich=국립문화유산연구원(국외문화유산 DB·발간자료 초록·목차) ·
+    heritage=국가유산(키워드 목록 — 국보·보물·사적+딥링크. cpno 상세는 기관 식별 편차로 일부만)
+    (query=소장처명 또는 L-ID·분류ID·'분류ID/문서ID').
     판정 우선: '601건'이 아니라 '492건이 座目'을 반환한다. 한자 원표기 병행 권장."""
+    if mode == "aks":
+        return _aks_mode(query)
+    if mode == "jacar":
+        return _jacar_mode(query.strip(), span, max_results)
+    if mode == "gonghun":
+        return _gonghun_mode(query, max_results)
+    if mode == "i815":
+        return _i815_mode(query, max_results)
+    if mode == "ktv":
+        return _ktv_mode(query, max_results)
+    if mode == "earchive":
+        return _earchive_mode(query, max_results)
+    if mode == "commons":
+        return _commons_mode(query, max_results)
+    if mode == "jsg":
+        return _jsg_mode(query, max_results)
+    if mode == "okchf":
+        return _okchf_mode(query, max_results)
+    if mode == "nrich":
+        return _nrich_mode(query, max_results)
+    if mode == "un":
+        return _un_mode(query, max_results)
+    if mode == "oldnews":
+        return _oldnews_mode(query, max_results)
+    if mode == "much":
+        return _much_mode(query, max_results)
+    if mode == "indy":
+        return _indy_mode(query, max_results)
+    if mode == "nzarch":
+        return _nzarch_mode(query)
+    if mode == "heritage":
+        return _heritage_mode(query, max_results)
     if mode != "total":
         return _joseon_mode(query, mode, span, max_results)
     browse = "https://db.history.go.kr/search/searchResultList.do?searchKeywordType=BI&searchKeyword=" + _up.quote(query)
@@ -1455,25 +4968,24 @@ def nedb_search(query: str, db: str = "", max_results: int = 15, mode: str = "to
             or "(0건 — 다른 표기(한자 원표기 등) 시도)"
         return (f"한국사DB(공식 개방파일 인덱스) '{query}' — {len(hits)}건:\n" + body
                 + f"\n※ data.go.kr 공식 파일(KOGL) 기반 — robots 무관. 전체 통합검색(브라우저): {browse}")
-    api = "https://db.history.go.kr/search/searchTotalResult.do?searchKeyword=" + _up.quote(query)
     try:
-        b = _http_text(api, 15)
-        dbs, seen = [], set()
-        for code, inner in re.findall(r'href="/item/(\w+)/main\.do"[^>]*>(.*?)</a>', b, re.S):
-            nm = _clean(inner)
-            if nm and nm not in seen:
-                seen.add(nm); dbs.append(nm)
-        if dbs:
-            return (f"한국사DB '{query}' — 검색어가 등장하는 DB {len(dbs)}종:\n"
-                    + "\n".join("- " + d for d in dbs[:max_results]) + _browse(browse)
-                    + "\n각 DB에서 문서 단위로 열람. 한자 원표기 병행 검색 권장.")
-        return _agent_browse("한국사DB", query, browse, "통합검색에서 매칭 DB 미검출")
+        dbs = _nedb_live(query, 3)
+        hit = sorted([d for d in dbs if d["total"] > 0], key=lambda d: -d["total"])
+        if hit:
+            return (f"한국사DB '{query}' — 주요 {len(_NEDB_DBS)}개 DB 직접 검색(시대별 하위 DB POST): 검색어가 나오는 DB {len(hit)}종\n"
+                    + "\n".join(f"■ [{d['era']}] {d['name']} — {d['total']:,}건\n" + "\n".join(f"  - {r['title'][:90]}" + (f" ({_nedb_date(r['id'])})" if _nedb_date(r['id']) else "") + f" → https://db.history.go.kr/id/{r['id']}" for r in d["rows"]) for d in hit)
+                    + (f"\n(조회 실패: {'·'.join(d['name'] for d in dbs if d['total'] < 0)})" if any(d["total"] < 0 for d in dbs) else "")
+                    + f"\n※ 인용은 db.history.go.kr/id/<levelId>(고정 URL). 비변사등록 座目 제외·형제 조: mode=record·sibling. 그 밖의 DB(실록·승정원일기 등 100여 종): 통합검색(브라우저) {browse}")
+        failed = [d for d in dbs if d.get("total", -1) < 0]; zero = [d for d in dbs if d.get("total") == 0]  # v2.47 Node 패리티
+        return _agent_browse("한국사DB", query, browse, (f"주요 DB 확정 0건 {len(zero)}종 · 조회 실패 {len(failed)}종({'·'.join(d['name'] for d in failed)}) — 부재로 단정하지 마십시오(응답 끊김·지연). 잠시 후 재시도"
+                                                        if failed else "주요 DB 모두 확정 0건 — 한자 원표기·다른 표기로 재시도"))
     except Exception as e:
         return _agent_browse("한국사DB", query, browse, f"자동조회 실패({e})")
 
 
 @mcp.tool()
-def archives_search(query: str, max_results: int = 10) -> str:
+def archives_search(query: str, max_results: int = 10,
+                    year_from: int | None = None, year_to: int | None = None) -> str:
     """국가기록원 국가기록포털(archives.go.kr). 정식 OpenAPI(RSS) — data.go.kr '나라기록물정보 서비스'
     (15000153) 무료 키를 환경변수 ARCHIVES_API_KEY로 설정하면 서버가 자동 검색해 결과를 반환한다.
     키가 없으면 포털 열람 URL을 반환. 노획문서·정부기록. 공공누리(KOGL) 유형 확인 후 이용."""
@@ -1481,8 +4993,9 @@ def archives_search(query: str, max_results: int = 10) -> str:
     portal = "https://www.archives.go.kr/next/newsearch/listSubjectDescription.do?query=" + _up.quote(query)
     if key:
         sk = key if ('%' in key) else _up.quote(key)  # data.go.kr Encoding키는 그대로, Decoding키는 인코딩
+        yfilt = bool(year_from or year_to); yf, yt2 = (year_from or 0), (year_to or 9999)
         api = ("https://apis.data.go.kr/1741050/openapi/searcharc?serviceKey=" + sk
-               + "&query=" + _up.quote(query) + f"&start=1&limit={min(max_results, 50)}")
+               + "&query=" + _up.quote(query) + f"&start=1&limit={50 if yfilt else min(max_results, 50)}")
         try:
             xml = _http_text(api, 20)
             if "searchError" not in xml and "<item>" in xml:
@@ -1491,13 +5004,25 @@ def archives_search(query: str, max_results: int = 10) -> str:
                     return re.sub(r"<[^>]+>", "", m.group(1)).strip() if m else ""
                 tot = t(xml, "total") or "?"
                 items = re.findall(r"<item>(.*?)</item>", xml, re.S)
+                if yfilt:
+                    def _py(i):
+                        m = re.search(r"\d{4}", t(i, "prod_year"))
+                        return int(m.group(0)) if m else None
+                    items = [i for i in items if (_py(i) and yf <= _py(i) <= yt2)]
                 lines = [f"- {t(i,'title')[:90]} ({t(i,'prod_year')}) · {t(i,'prod_name')[:20]} "
-                         f"[{'공개' if t(i,'is_open')=='1' else '비공개'}] {t(i,'link')}"
+                         f"[{'공개' if t(i,'is_open')=='1' else '비공개'}] {_arch_link(t(i,'link'))}"
                          for i in items[:max_results]]
-                return (f"국가기록원 '{query}' — 총 {tot}건:\n" + ("\n".join(lines) or "(0건)")
+                ytag = f" [생산 {year_from or ''}~{year_to or ''} · 상위 50건 내 후처리·연대 미상 제외]" if yfilt else ""
+                return (f"국가기록원 '{query}'{ytag} — 총 {tot}건" + (f" 중 연대 일치 {len(items)}건" if yfilt else "") + ":\n"
+                        + ("\n".join(lines) or "(0건)")
                         + "\n공공누리(KOGL) 유형 확인 후 이용. 비공개 항목은 정보공개청구 대상.")
             m = re.search(r"<message>(.*?)</message>", xml, re.S)
-            return _agent_browse("국가기록원", query, portal, f"API 오류: {m.group(1).strip() if m else '결과 없음'}")
+            if not m and re.search(r"<total>\s*0\s*</total>", xml):  # v1.96.4: 0건을 API 오류로 표기하던 문제
+                return f"국가기록원 '{query}' — 0건(API 정상 응답). 띄어쓰기·다른 표기로 재검색하거나 포털: {portal}"
+            gw = m or re.search(r"<(?:returnAuthMsg|errMsg|resultMsg)>(.*?)</", xml, re.S)  # v2.99.5 data.go.kr 게이트웨이 사유(Node 패리티)
+            cd = re.search(r"<(?:returnReasonCode|resultCode)>(.*?)</", xml, re.S)
+            why = (gw.group(1).strip() + (f" (코드 {cd.group(1).strip()})" if cd else "")) if gw else "해석 불가 응답 — 앞부분 '" + re.sub(r"\s+", " ", xml.replace(key, "***").replace(sk, "***"))[:120] + "'"
+            return _agent_browse("국가기록원", query, portal, f"API 오류: {why}")
         except Exception as e:
             return _agent_browse("국가기록원", query, portal, f"API 오류({e})")
     return _agent_browse("국가기록원", query, portal,
@@ -1505,7 +5030,8 @@ def archives_search(query: str, max_results: int = 10) -> str:
 
 
 @mcp.tool()
-def nlk_search(query: str, collection: str = "total", category: str = "", max_results: int = 15) -> str:
+def nlk_search(query: str, collection: str = "total", category: str = "", max_results: int = 15,
+               year_from: int | None = None, year_to: int | None = None) -> str:
     """국립중앙도서관(nl.go.kr) 디지털 컬렉션 검색. collection: 'total'(전체 소장자료)·'subject'(주제별)·
     'newspaper'(대한민국신문아카이브 1883-1960 고신문, 저작권만료 자유이용)·'gwanbo'(관보)·'exhibit'(전시)·
     'koreanmemory'(코리안메모리)·'overseas'(해외 한국관련자료). NLK_API_KEY(www.nl.go.kr Open API)를 설정하면
@@ -1533,9 +5059,10 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
     note = NOTE.get(c, "")
     key = os.environ.get("NLK_API_KEY")
     if api_ok and key:
+        yfilt = bool(year_from or year_to); yf, yt2 = (year_from or 0), (year_to or 9999)
         base_api = ("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key)
                     + "&apiType=xml&srchTarget=total&kwd=" + _up.quote(query)
-                    + f"&pageSize={min(max_results, 50)}&pageNum=1")
+                    + f"&pageSize={50 if yfilt else min(max_results, 50)}&pageNum=1")
 
         def t(bl, x):
             m = re.search(rf"<{x}>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</{x}>", bl, re.S)
@@ -1544,6 +5071,12 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
         def parse(xml):
             tot = t(xml, "total") or "?"
             items = re.findall(r"<item>(.*?)</item>", xml, re.S)
+            if yfilt:
+                def _py(it):
+                    m = re.search(r"\d{4}", t(it, "pub_year_info") or t(it, "pubYearInfo"))
+                    return int(m.group(0)) if m else None
+                items = [it for it in items if (_py(it) and yf <= _py(it) <= yt2)]
+            matched = len(items)
 
             def pick(bl, tags):
                 for tg in tags:
@@ -1564,15 +5097,17 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
                 lines.append("- " + title[:80] + (f" [{typ}]" if typ else "")
                              + (f" · {pub[:20]}" if pub else "") + (f" ({year})" if year else "")
                              + (f" {lk}" if lk else ""))
-            return tot, lines
+            return tot, lines, matched
         try:
             # 이중채널 동시 수집: (A) 전체 소장자료 + (B) 자료유형(category) 정밀 — 상호보완
             total_xml = _http_text(base_api, 20)
             if "<error" in total_xml:
                 m = re.search(r"<msg>(.*?)</msg>", total_xml)
                 return f"NLK OpenAPI 오류: {m.group(1) if m else '?'} — NLK_API_KEY 확인." + _browse(open_url)
-            a_tot, a_lines = parse(total_xml)
-            out = (f"국립중앙도서관 자동검색(전체 소장자료) '{query}' — 총 {a_tot}건:\n"
+            a_tot, a_lines, a_matched = parse(total_xml)
+            ylab = (f" [발행 {year_from or ''}~{year_to or ''} · 상위 50건 내 후처리·연대 미상 제외]" if yfilt else "")
+            out = (f"국립중앙도서관 자동검색(전체 소장자료) '{query}'{ylab} — 총 {a_tot}건"
+                   + (f" 중 연대 일치 {a_matched}건" if yfilt else "") + ":\n"
                    + ("\n".join(a_lines) or "(0건)"))
             if category:
                 try:
@@ -1580,12 +5115,23 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
                 except Exception:
                     cat_xml = "<error/>"
                 if "<error" not in cat_xml:
-                    b_tot, b_lines = parse(cat_xml)
+                    b_tot, b_lines, _bm = parse(cat_xml)
                     out += (f"\n\n[② 자료유형 '{category}' 정밀 채널 — 총 {b_tot}건 (동시 수집)]\n"
                             + ("\n".join(b_lines) or "(0건)") + "\n※ 전체+자료유형 이중채널(상호보완).")
                 else:
                     out += f"\n(자료유형 '{category}' 채널 오류)"
             else:
+                # v1.96.8: category 미지정이면 '고문헌' 자동 병행 — 현대 영인·번역본이 상위를 채워 원본이 묻힘(실측). Node 패리티
+                if not yfilt:
+                    try:
+                        old_xml = _http_text(base_api + "&category=" + _up.quote("고문헌"), 20)
+                        if "<error" not in old_xml:
+                            o_tot, o_lines, _om = parse(old_xml)
+                            if o_lines:
+                                out += (f"\n\n[② 고문헌(원본) 자동 병행 — 총 {o_tot}건]\n" + "\n".join(o_lines[:6])
+                                        + "\n※ 현대 영인·번역본에 가려지는 원본 고서를 함께 보여 줍니다.")
+                    except Exception:
+                        pass
                 out += "\n※ 전체 카탈로그 대상. category 인자(신문·고문헌 등)로 자료유형 정밀 이중수집 가능."
             out += f" '{name}' 컬렉션 정밀검색: {open_url}" + (f"\n※ {note}" if note else "")
             return out
@@ -1598,23 +5144,56 @@ def nlk_search(query: str, collection: str = "total", category: str = "", max_re
 
 @mcp.tool()
 def seoul_archives_search(query: str, max_results: int = 15) -> str:
-    """서울기록원(archives.seoul.go.kr) 카탈로그를 서버에서 직접 조회 — 검색어와 매칭되는 컬렉션
-    목록과 전체 항목 URL을 반환한다. 서울시 행정기록·시정사진·구술 등 지방기록물."""
-    land = "https://archives.seoul.go.kr/catalog?search_api_fulltext=" + _up.quote(query)
-    deep = "https://archives.seoul.go.kr/catalog/result?regclass=RC_ITEM&search_api_fulltext=" + _up.quote(query)
+    """서울기록원(archives.seoul.go.kr) 기록 단위 검색 — 시리즈·기록건 제목+상세 딥링크.
+    query에 /item·/aggregation 상세 URL 투입 시 심층 판독: 식별번호(RG-SR-IT)·기술계층·법적지위·
+    이용조건(judge_rights 투입)·기술 본문. 서울시 행정기록·시정사진·구술 등 지방기록물."""
+    q = query.strip()
+    deep = "https://archives.seoul.go.kr/catalog/result?regclass=ALL&query=" + _up.quote(q)
+    if re.match(r"^https?://archives\.seoul\.go\.kr/(item|aggregation)/\d+", q):  # 상세 판독 — 도메인 한정
+        try:
+            b = _cached_text("seoulD:" + q, 24 * 3600, lambda: _http_text(q, 25), "기술계층")
+            flat = re.sub(r"\s+", " ", _clean(b).replace("&lt;", "<").replace("&gt;", ">").replace("&nbsp;", " ").replace("&amp;", "&"))
+            pick = lambda rx: ((re.search(rx, flat) or [None, ""])[1] or "").strip()
+            title = pick(r"<-\s*(.{2,90}?)\s+(?:기술계층|생산자)")
+            sid = pick(r"식별번호\s+(\S{4,60})")  # v2.32 RG-SR-FI-IT 35자 이상 — 30자 제한으로 잘리던 결함
+            # v2.32 기관 계층(브레드크럼) — 상위 단계만(원 기관 계층 그대로). Node 패리티
+            crumb = pick(r"기술계층\s+(.+?)\s+생산자\s") or pick(r"기술계층\s+(.+?)\s+기술계층\s")
+            hier = [f"{m[0]} {m[2].strip()}"[:80] for m in re.findall(r"([가-힣]{2,8})\(([A-Za-z][A-Za-z -]{1,20})\)\s+(.+?)(?=\s+[가-힣]{2,8}\([A-Za-z][A-Za-z -]{1,20}\)|$)", crumb) if not m[2].strip().startswith("<-")]
+            producers = [x.strip() for x in re.split(r"(?<=\))\s*,?\s+(?=\S)", pick(r"생산자\s+(.+?)\s+기술계층\s")) if x.strip()][:4]
+            date_p = pick(r"일자\s+\[생산\]\s*(.{0,40}?)\s+(?:연관정보|보존이력|수집|언어)")
+            rtype, ptype, atype = pick(r"기록유형\s+(\S{2,20})"), pick(r"보존유형\s+(\S{2,10})"), pick(r"접근유형\s*(\S{2,10})")
+            custody, transfer = pick(r"보존이력\s+(.{2,120}?)\s+(?:수집/이관 기관|언어|보존유형)"), pick(r"수집/이관 기관\s+(.{2,80}?)\s+(?:언어|보존유형)")
+            related = pick(r"연관정보\s+(.{2,160}?)\s+(?:보존이력|수집/이관|언어)")
+            kinds = " · ".join(x for x in (rtype and f"기록유형 {rtype}", ptype and f"보존유형 {ptype}", atype and f"접근유형 {atype}") if x)
+            extra = ((f"계층: 서울기록원 › {' › '.join(hier)}\n" if hier else "") + (f"생산자: {'; '.join(producers)}\n" if producers else "")
+                     + (f"일자: 생산 {date_p}\n" if re.search(r"\d", date_p) else "") + (kinds + "\n" if kinds else "")
+                     + (f"보존이력: {' · '.join(x for x in (custody, transfer and f'수집/이관 {transfer}') if x)}\n" if custody or transfer else "")
+                     + (f"연관정보: {related}\n" if related else ""))
+            layers = re.findall(r"기술계층\s+(\S{2,20}\([A-Za-z]+\))", flat)
+            layer = layers[-1] if layers else ""  # 첫 일치는 브레드크럼 — 마지막이 본 기록의 계층
+            legal = pick(r"법적지위\s+(\S{2,12})")
+            use = pick(r"이용조건\s*이용유형\s*(.{2,40}?)\s*(?:이용주기|검색도구|공개|관련)")
+            use_note = pick(r"이용주기\s*(.{5,160}?)\s*(?:검색도구|공개|관련)")
+            desc = pick(r"상세정보\s+기술\s+([\s\S]{10,1500}?)\s+(?:생산이력|입수이력|보존이력|관련 기록|열람|공개된)")
+            if not sid and not title and not desc:
+                return f"상세 파싱 실패 — URL을 확인하거나 브라우저로 열람: {q}"
+            meta = " · ".join(x for x in (f"식별번호 {sid}" if sid else "", layer,
+                                          f"법적지위 {legal}" if legal else "") if x)
+            return (f"서울기록원 상세 — {title or '(제목 미상)'}\n{meta}\n" + extra
+                    + (f"이용조건: {use}{f' — {use_note}' if use_note else ''}\n" if use else "")
+                    + (f"【기술】\n{desc}\n" if desc else "") + f"원문: {q}\n"
+                    + "※ 출처: 서울기록원 — 게재 시 출처 표기. 이용조건·법적지위를 judge_rights에 투입해 초판정.")
+        except Exception as e:
+            return f"서울기록원 상세 오류({str(e)[:60]}) — 브라우저로 열람: {q}"
     try:
-        b = _http_text(land, 15)
-        cols = []
-        for href, inner in re.findall(r'href="(/catalog/result\?[^"]*collects=[^"]*)"[^>]*>(.*?)</a>', b, re.S):
-            nm = _clean(inner)
-            if nm and "컬렉션" in nm:
-                cols.append((nm, "https://archives.seoul.go.kr" + href))
-        if cols:
-            lines = [f"- {n}\n  {u}" for n, u in cols[:max_results]]
-            return f"서울기록원 '{query}' — 매칭 컬렉션 {len(cols)}개:\n" + "\n".join(lines) + f"\n전체 항목: {deep}"
-        return _agent_browse("서울기록원", query, deep, "매칭 컬렉션 미검출")
+        items = _c_seoul(q, min(max_results, 20))
+        if items:
+            return (f"서울기록원 '{q}' — {len(items)}건(시리즈·기록건):\n"
+                    + "\n".join(f"- {it['title']}\n  {it['url']}" for it in items)
+                    + f"\n전체 결과: {deep}\n※ 상세 URL을 query로 재투입 → 식별번호·이용조건·기술 본문 판독.")
+        return _agent_browse("서울기록원", q, deep, "기록 미검출")
     except Exception as e:
-        return _agent_browse("서울기록원", query, deep, f"자동조회 실패({e})")
+        return _agent_browse("서울기록원", q, deep, f"자동조회 실패({e})")
 
 
 @mcp.tool()
@@ -1630,7 +5209,15 @@ def warmemo_search(query: str) -> str:
             lines = [f"- {_clean(c)} : {n}건" for c, n in cats[:20]]
             return (f"전쟁기념관 '{query}' — 카테고리별 검색 건수:\n" + "\n".join(lines) + _browse(url)
                     + "\n한국전쟁·군사사 사료 — 해외(NARA·TNA)와 교차검증.")
-        return _agent_browse("전쟁기념관", query, url, "통합검색 결과 미검출")
+        # 구 통합검색 개편(2026-11 실측) → 동일 재단 신 플랫폼(6·25전쟁 아카이브센터)으로 폴백
+        total, cards = _kw_search({"keyword": query, "viewType": "archive"})
+        kl = [f"- [{c['id']}] {c['title'][:90]}\n  {c['url']}" for c in cards[:10]]
+        if kl:
+            return (f"전쟁기념관 구 통합검색(archives.warmemo.or.kr)이 개편되어 결과를 내지 않습니다 — "
+                    f"동일 재단(전쟁기념사업회)의 6·25전쟁 아카이브센터(koreanwar.or.kr, 협약기관)에서 "
+                    f"'{query}' 검색 결과로 대체합니다 (총 {total}건):\n" + "\n".join(kl)
+                    + f"\n※ 상세·인접 채굴: koreanwar_item. 구 사이트 직접 확인: {url}")
+        return _agent_browse("전쟁기념관", query, url, "구 통합검색 개편(결과 구조 소멸) — 신 플랫폼(koreanwar.or.kr)도 0건")
     except Exception as e:
         return _agent_browse("전쟁기념관", query, url, f"자동조회 실패({e})")
 
@@ -1638,6 +5225,50 @@ def warmemo_search(query: str) -> str:
 # ── KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 (협약기관 — MOU) : TNA-style structured toolset ──
 _KW_DEPTH1 = {"수집": "00001041", "기증": "00001042", "기타": "00001047", "구입": "00001054",
               "기탁": "00001073", "제작": "00001125", "이관": "00001179", "차입": "00001410"}
+
+# 후기 단계 전투 검색 앵커 — 서버 큐레이션(기관 전투 DB 아님). 사이트 DB(개전 초기 69건) 미수록 시기 보완.
+# t=통설 전사 시기, x=교차검색 앵커(쿼리·기록군 제안 — 수치·전과 주장 없음). route.js 패리티.
+_KW_ANCHORS = [
+    (r"인천\s?상륙|仁川上陸|(?i:Inchon)", "인천상륙작전", "1950-09-15 ~ 09-19", "en 'Inchon landing' · NARA RG 127(해병)·RG 80 · TNA ADM 116"),
+    (r"서울\s?수복", "서울 수복", "1950-09-22 ~ 09-28", "en 'recapture of Seoul' · koreanwar_search(scope=archive '서울 수복')"),
+    (r"장진호|長津湖|长津湖|(?i:Chosin)", "장진호 전투", "1950-11-27 ~ 12-11", "en 'Chosin Reservoir' · NARA RG 127 · ia_search 'Chosin'"),
+    (r"청천강|淸川江|清川江", "청천강 전투", "1950-11-25 ~ 12-02", "en 'Chongchon River' · NARA RG 407"),
+    (r"흥남|興南|(?i:Hungnam)", "흥남 철수", "1950-12 중순 ~ 12-24", "en 'Hungnam evacuation' · NARA RG 80·RG 127"),
+    (r"1[·.]4\s?후퇴", "1·4 후퇴(서울 재실함)", "1951-01-04", "en 'fall of Seoul 1951'"),
+    (r"지평리|砥平里|(?i:Chipyong)", "지평리 전투", "1951-02-13 ~ 02-15", "en 'Chipyong-ni' · 프랑스대대 — gallica_search 병행"),
+    (r"임진강\s?전투|글로스터|그로스터|(?i:Imjin)", "임진강 전투(글로스터)", "1951-04-22 ~ 04-25", "en 'Imjin River' · TNA WO 281(부대 전쟁일지) — tna_search"),
+    (r"가평|加平|(?i:Kapyong)", "가평 전투", "1951-04-23 ~ 04-25", "en 'Kapyong' · 영연방(호주·캐나다) — tna_search·archives 교차"),
+    (r"피의\s?능선", "피의 능선 전투", "1951-08-18 ~ 09-05", "en 'Bloody Ridge'"),
+    (r"단장의\s?능선|(?i:Heartbreak)", "단장의 능선 전투", "1951-09-13 ~ 10-15", "en 'Heartbreak Ridge' · 프랑스대대 — gallica_search 병행"),
+    (r"백마고지|白馬高地|白马高地", "백마고지 전투", "1952-10-06 ~ 10-15", "en 'White Horse Hill' · NARA RG 407"),
+    (r"저격\s?능선|삼각\s?고지|상감령|上甘[嶺岭]", "저격능선·삼각고지 전투", "1952-10-14 ~ 11월", "en 'Sniper Ridge'·'Triangle Hill'"),
+    (r"폭찹", "폭찹힐 전투", "1953-04 · 1953-07", "en 'Pork Chop Hill'"),
+    (r"금성\s?전투|金城", "금성 전투", "1953-07-13 ~ 07-19", "en 'Kumsong offensive'"),
+    (r"휴전|정전|판문점|(?i:Panmunjom)", "정전협정 조인(판문점)", "1953-07-27", "en 'Korea armistice' · koreanwar_search(scope=archive '정전')"),
+]
+
+
+_TTL_CACHE: dict = {}
+
+
+def _cached_text(key, ttl_s, fn, marker=None):
+    """느리게 변하는 조회의 인메모리 TTL 캐시 — route.js 패리티."""
+    import time as _t
+    hit = _TTL_CACHE.get(key)
+    if hit and _t.time() - hit[0] < ttl_s:
+        return hit[1]
+    v = fn()
+    # 마커(기대 구조)가 있는 정상 응답만 캐시 — 차단·점검 페이지의 6시간 오염 방지
+    if v and len(v) > 100 and (marker is None or marker in v):
+        _TTL_CACHE[key] = (_t.time(), v)
+    return v
+
+
+def _kw_anchor_lines(q):
+    if not q:
+        return []
+    return [f"- [앵커] {n} ({t}) → {x}" for p, n, t, x in _KW_ANCHORS if re.search(p, q)][:5]
+
 
 
 @mcp.tool()
@@ -1648,13 +5279,13 @@ def koreanwar_search(query: str, scope: str = "archive", page: int = 1, max_resu
     추출해 원본 역추적 링크를 제공한다. 55,000여 건: 문서·지도·사진·필름·음원·구술.
     서버측 필터(실측 검증): year_from/year_to=생산연도 범위, acquisition=수집구분(수집·기증·구입·기탁·
     제작·이관·차입·기타), max_results는 pageSize(10/20/50)로 자동 매핑. scope='battle'이면 전투정보
-    DB(개전 초기 69전투 — TNA WO 281·NARA RG 407 교차검증 앵커)를 대신 검색. 자료유형·연대·이용조건
+    DB(개전 초기 69전투 + 후기 단계 서버 앵커 16건 인천상륙~금성 — TNA WO 281·NARA RG 407 교차검증 앵커)를 대신 검색. 자료유형·연대·이용조건
     코드는 source_profile('koreanwar') 참조. KOREANWAR_API_TOKEN 설정 시 OpenAPI 공식 메타 채널(KOGL
     권리정보) 자동 병행. 한글 질의 권장(미군 원본도 한글 재기술 제목으로 히트)."""
     if scope.strip().lower() == "battle":
         list_url = _KW_BASE + "/warList.do"
         try:
-            b = _kw_text(list_url)
+            b = _cached_text('kw:warList', 6 * 3600, lambda: _kw_text(list_url), 'warDetail.do?warIdx=')
             cards = []
             for blk in b.split("/warDetail.do?warIdx=")[1:]:
                 mi = re.match(r"^(\d+)", blk)
@@ -1670,11 +5301,21 @@ def koreanwar_search(query: str, scope: str = "archive", page: int = 1, max_resu
             if matched:
                 lines = [f"- [warIdx {c['idx']}] {c['name']}{' | ' + c['meta'] if c['meta'] else ''}\n"
                          f"  {_KW_BASE}/warDetail.do?warIdx={c['idx']}" for c in matched[:25]]
-                return (f"6·25 전투정보 '{t or '(전체)'}' — {len(matched)}/{len(cards)}건:\n" + "\n".join(lines)
+                anchors = _kw_anchor_lines(t)
+                ab = ("\n\n[후기 단계 검색 앵커 — 서버 큐레이션(기관 전투 DB 아님), 시기는 통설 전사 기준]\n"
+                      + "\n".join(anchors)) if anchors else ""
+                return (f"6·25 전투정보 '{t or '(전체)'}' — {len(matched)}/{len(cards)}건:\n" + "\n".join(lines) + ab
                         + "\n※ 전투명·시기·장소를 앵커로 TNA WO 281·NARA RG 407·koreanwar_search(scope=archive)와 "
-                          "교차. DB는 개전 초기(1950.6.25~9.14) 단계 수록(확장 중).")
-            return (f"6·25 전투정보 '{t}' — 0건 (전체 {len(cards)}건 중). 현재 DB는 개전 초기(1950.6.25~9.14) "
-                    f"전투만 수록 — 이후 시기(백마고지 1952 등)는 미수록. scope=archive로 자료 검색은 가능."
+                          "교차. 기관 DB는 개전 초기(1950.6.25~9.14) 단계 수록(확장 중) — 이후 시기는 위 앵커로 보완.")
+            anchors = _kw_anchor_lines(t)
+            if anchors:
+                return (f"6·25 전투정보 '{t}' — 기관 DB 0건 (개전 초기 {len(cards)}건만 수록)."
+                        + "\n\n[후기 단계 검색 앵커 — 서버 큐레이션(기관 전투 DB 아님), 시기는 통설 전사 기준]\n"
+                        + "\n".join(anchors)
+                        + "\n※ 앵커의 전투명·시기로 scope=archive·nara_search·tna_search를 교차 검색하십시오.")
+            return (f"6·25 전투정보 '{t}' — 0건 (전체 {len(cards)}건 중). 현재 기관 DB는 개전 초기(1950.6.25~9.14) "
+                    f"전투만 수록 — 이후 시기(백마고지 1952 등)는 서버 앵커(인천상륙·장진호·지평리·백마고지·금성 등 16건)로 "
+                    f"보완되니 해당 전투명으로 재질의. scope=archive로 자료 검색은 가능."
                     + _browse(list_url))
         except Exception as e:
             return _agent_browse("6·25 전투정보", query, list_url, f"자동조회 실패({e})")
@@ -1782,8 +5423,23 @@ def koreanwar_item(ref_code: str, radius: int = 0) -> str:
         if naid:
             out += (f"\n↔ NARA 원본 NAID {naid} (입수처 링크 직결) — "
                     f"https://catalog.archives.gov/id/{naid} 에서 고해상 원본·상세 기술 확인")
+            key = os.environ.get("NARA_API_KEY")
+            if key:  # v1.96.2: 시리즈·파일 단위 링크 오인 방지
+                try:
+                    raw = _cached_text("naid:" + naid, 24 * 3600, lambda: json.dumps(http_json(
+                        f"https://catalog.archives.gov/api/v2/records/search?naId={naid}&limit=1", headers={"x-api-key": key})), '"naId"')
+                    hits = (((json.loads(raw).get("body") or {}).get("hits") or {}).get("hits") or [])
+                    lvl = str((((hits[0].get("_source") or {}).get("record") or {}).get("levelOfDescription")) or "") if hits else ""
+                    if lvl and "item" not in lvl.lower():
+                        out += f"\n⚠ 이 NAID는 '{lvl}' 단위(개별 기록 아님) — 협약기관 기록의 원본 낱장은 nara_search(제목·날짜)로 찾아 대조"
+                except Exception:
+                    pass
+        elif rows:
+            out += "\n↔ 입수처 NARA 링크 없음 — 제목·생산시기로 nara_search 대조 필요"
         if rg:
             out += f"\n↔ NARA RG {rg} — nara_search(record_group={rg})로 시리즈 확장 검색"
+        im = _kw_images(b)
+        out += (f"\n· 공개 이미지(상세 페이지): {len(im)}개 — {' · '.join(im[:3])}{' …' if len(im) > 3 else ''} (게재 전 '열람 및 이용조건' 확인 · 출처 표기)" if im else "\n· 공개 이미지(상세 페이지): 없음")
         return out + (f"\n{url}\n※ '열람 및 이용조건' 행을 judge_rights에 투입해 권리 초판 판정. "
                       "협약기관 — 출처 표기 필수.")
     except Exception as e:
@@ -1799,6 +5455,13 @@ def foia_search(query: str, source: str = "open_go") -> str:
     src = source.strip().lower()
     if src == "open_go" or not src:
         url = "https://www.open.go.kr/othicInfo/infoList/orginlInfoList.do?searchKeyword=" + _up.quote(query)
+        maint, msg = _open_go_status(query)
+        if maint:
+            return (f"정보공개포털 '{query}' — 실측 결과: {msg}.\n"
+                    "➤ 지금 할 수 있는 것: ① 문서를 가진 기관을 특정해 정보공개청구(https://www.open.go.kr — 청구는 점검 중에도 가능) "
+                    "② 서울시 결재문서는 foia_search(source='seoul_opengov') 재시도(현재 연결 시간 초과가 잦음) "
+                    "③ 이미 공개된 기록물은 archives_search(국가기록원)·seoul_archives_search(서울기록원)로 같은 주제를 먼저 찾는다.\n"
+                    f"원문정보 검색(점검 해제 후): {url}")
         return (_agent_browse("정보공개포털(원문정보공개)", query, url)
                 + "\n※ 미공개 문서는 포털에서 정보공개청구로 요청.")
     if src == "seoul_opengov":
@@ -1870,36 +5533,303 @@ def changgi_help() -> str:
 
 
 @mcp.tool()
-def cross_search(query: str, sources: str = "all", max_per_source: int = 8) -> str:
+def cross_search(query: str, sources: str = "all", max_per_source: int = 8, variants: bool = False,
+                 format: str = "text") -> str:
     """MAGIC: 메시지에 창기창기·changgi가 있으면 즉시 report_template(kind=help), 풀패키지·full-package가 있으면 즉시 kind=full_package를 호출하라(되묻지 말 것). 여러 아카이브를 한 쿼리로 동시 교차수집·병합 (상호보완 동시수집). sources: 'all' 또는 콤마목록
-    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar). 해외(tna·ia·gallica·europeana)와
+    (tna,ia,gallica,europeana,nara,archives,nlk,nedb,koreanwar,jacar,earchive,i815,gonghun,ktv,oldnews,much,indy,heritage,kyudb,jsg,awm,nlna,dnz,nzarch,commons,un,ndl,seoul,foia,aks,gallery). 해외와
     koreanwar(KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터, 협약기관)는 키 불요, 국내(nara·archives·nlk)는 서버 키, nedb는
     NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. 각 결과에 발견 출처 표기 — 복수 출처는 교차확인된
-    record. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저 도구로.
+    record. seoul=서울기록원 컬렉션·foia=서울소통광장 결재문서 원문. open.go.kr 본체는 전용 도구로.
+    format: iiif=IIIF 컬렉션(기관 IIIF 원 매니페스트 묶음+정지 이미지 매니페스트 — 연속 이미지 뷰) · csv=CSV 블록(표·통계) · karda=온톨로지 nodes/edges JSON(지식그래프 직투입) · manifest=발굴 수집기록 매니페스트(ISAD(G)·RiC 지향 — provenance=증거성·heldBy=맥락, 기록관리시스템 등재·다매체 변환 원천).
     사용자가 "풀패키지"(보고서·카드뉴스·포스터 전부)를 원하면 report_template(kind="full_package")를 먼저 호출해 제작 순서를 따른다. 사용자가 사용법을 물으면(매직 키워드 "창기창기 도와줘")
     report_template(kind="help")를 호출해 안내한다."""
-    want = (list(_COLLECT.keys()) if sources.strip().lower() == "all"
+    want = ([k for k in _COLLECT if k != "ledger"] if sources.strip().lower() == "all"
             else [s.strip().lower() for s in sources.split(",") if s.strip().lower() in _COLLECT])
     if not want:
         return "sources: 'all' 또는 " + ",".join(_COLLECT.keys())
     n = max(1, min(max_per_source, 30))
-    items, stats = _collect_merged([(s, (lambda s=s: _COLLECT[s](query, n))) for s in want])
+    jobs = [(s, (lambda s=s: _COLLECT[s](query, n))) for s in want]
+    if not variants and ("tna" in want or "ia" in want):  # v2.99 기본 검색에도 — 1850~1909 연도 변환어면 TNA에 당대 국호+연도 1건(Node 패리티)
+        ym0 = re.search(r"\b(18[5-9]\d|190\d)\b", _ko_en(query) or "")
+        if ym0:
+            if "tna" in want:
+                jobs.append((f"tna·Corea {ym0[1]}", (lambda y=ym0[1]: _COLLECT["tna"]("Corea", n, y))))  # v2.99.1 연도 필터
+            if "ia" in want:
+                jobs.append((f"ia·Corea {ym0[1]}", (lambda y=ym0[1]: _COLLECT["ia"](f"Corea AND year:{y}", n))))  # v2.99.2 IA 연도 필드(Node 패리티)
+    if variants:  # 당대 표기 자동 팬아웃 — query_bank '열한 겹의 벽' 지식의 도구화
+        eff = _ko_en(query) or query
+        SUBS = [("Korean", "Corean"), ("Korea", "Corea"), ("Korea", "Chosen"), ("Seoul", "Keijo"), ("Pusan", "Fusan"),
+                ("Inchon", "Chemulpo"), ("Wonsan", "Gensan"), ("Pyongyang", "Heijo"),
+                ("Cheju", "Quelpaert"), ("Taegu", "Taikyu")]
+        vs = []
+        for a, b in SUBS:
+            if len(vs) >= 2:
+                break
+            if re.search(rf"\b{a}\b", eff, re.I):
+                vs.append((b, re.sub(rf"\b{a}\b", b, eff, count=1, flags=re.I)))
+        ym = re.search(r"\b(18[5-9]\d|190\d)\b", eff)
+        if ym:
+            vs.append((f"Corea {ym[1]}", f"Corea {ym[1]}"))  # v2.98 개항기~대한제국기 당대 국호+연도(Node 패리티)
+        for src in ("tna", "ia", "nara", "europeana"):
+            if src not in want:
+                continue
+            for label, vq in vs:
+                if src == "nara" and re.match(r"^Corea \d{4}$", vq):
+                    continue  # v2.98.1 NARA는 성씨 Corea·날짜 문서철로 흐려져 제외(Node 패리티)
+                ey = re.match(r"^Corea (\d{4})$", vq)
+                jobs.append((f"{src}·{label}", (lambda src=src, vq=vq, ey=ey: _COLLECT["tna"]("Corea", n, ey[1]) if ey and src == "tna" else _COLLECT["ia"](f"Corea AND year:{ey[1]}", n) if ey and src == "ia" else _COLLECT[src](vq, n))))
+    items, stats = _collect_merged(jobs)
+    _resolve_origins(items, stats)
+    linked = _link_overseas(items)
+    if len(linked) != len(items):
+        stats.append(f"국외 교차확인 {sum(1 for x in linked if x.get('crossOv'))}건")
+        items[:] = linked
     items.sort(key=lambda it: -len(it["sources"]))
-    lines = [f"- [{'+'.join(it['sources'])}] {it['title'][:95]}"
+    if format == "iiif":  # v1.97: 연속 이미지 뷰 — 기관 IIIF 원 매니페스트 컬렉션 + 위키미디어 정지 이미지 매니페스트(Node 패리티)
+        L3 = lambda t: {"ko": [str(t or "")[:200]]}
+        ext, cm, none = [], [], []
+        for it in items:
+            u = str(it.get("url") or ""); src = it["sources"][0].split("·")[0]; m = None
+            a = re.search(r"archive\.org/details/([^/?#]+)", u)
+            e = re.search(r"europeana\.eu/(?:[a-z]{2}/)?item/([^/]+)/([^/?#]+)", u)
+            g = re.search(r"ark:/12148/([a-z0-9]+)", u, re.I)
+            nd = re.search(r"dl\.ndl\.go\.jp/pid/(\d+)", u)
+            ka = re.search(r"korea-archive-mcp/iiif\.html#(s\d+)", u)
+            na = re.search(r"catalog\.archives\.gov/id/(\d+)", u)
+            if na:
+                m = _nara_urls(na.group(1))["manifest"]  # v1.98 NARA→IIIF 브리지
+            elif ka:
+                m = f"https://changgi.github.io/korea-archive-mcp/iiif/m/{ka.group(1)}.json"
+            elif a:
+                m = f"https://iiif.archive.org/iiif/3/{a.group(1)}/manifest.json"
+            elif e:
+                m = f"https://iiif.europeana.eu/presentation/{e.group(1)}/{e.group(2)}/manifest"
+            elif g and "gallica" in u:
+                m = f"https://gallica.bnf.fr/iiif/ark:/12148/{g.group(1)}/manifest.json"
+            elif nd:
+                m = f"https://dl.ndl.go.jp/api/iiif/{nd.group(1)}/manifest.json"
+            if not m and "commons.wikimedia.org" not in u:
+                m = _iiif_for(u, it.get("id")) or None  # v1.99: 국가유산·역사박물관·AWM 브리지
+            gk = f"{(ARCHIVE_META.get(src) or {}).get('n', src)} › {_part_of(src, it) or it.get('series') or '(계열 미상)'}"[:120]  # v2.2: 결과 계층
+            if m:
+                ext.append({"_g": gk, "id": m, "type": "Manifest", "label": L3(f"[{src}] {_clean(it.get('title', ''))}" + (f" ({it['date']})" if it.get("date") else "")),
+                            "homepage": [{"id": u, "type": "Text", "label": L3("원 기관 기록"), "format": "text/html"}]})
+            elif re.search(r"commons\.wikimedia\.org/wiki/File", u) and re.search(r"\.(jpe?g|png|tiff?|gif)$", _up.unquote(u), re.I):
+                cm.append(_up.unquote(u.split("/wiki/")[1]).replace("_", " "))
+            else:  # v2.0: IIIF가 없는 기록 → 기록 봉투 IIIF로 구축(Node 패리티)
+                tok = _rec_token(it, query, (ARCHIVE_META.get(src) or {}).get("n", src), _part_of(src, it) or it.get("series") or "")
+                none.append(f"- [{src}] {_clean(it.get('title', ''))[:70]}")
+                ext.append({"_g": gk, "id": _rec_url(tok), "type": "Manifest", "label": L3(f"[{src}] {_clean(it.get('title', ''))}" + (f" ({it['date']})" if it.get("date") else "") + " · 기록 봉투"),
+                            **({"homepage": [{"id": u, "type": "Text", "label": L3("원 기관 기록"), "format": "text/html"}]} if u else {})})
+        still = None
+        if cm:
+            try:
+                q2 = _up.urlencode({"action": "query", "format": "json", "prop": "imageinfo", "iiprop": "size|url|extmetadata", "iiurlwidth": "1600", "titles": "|".join(cm[:12])})
+                jj = json.loads(_http_text("https://commons.wikimedia.org/w/api.php?" + q2, 20))
+                base = "https://korea-archive-mcp.vercel.app/iiif/wikimedia/" + _up.quote(query)
+                cvs = []
+                for i, pg in enumerate([p0 for p0 in ((jj.get("query") or {}).get("pages") or {}).values() if p0.get("imageinfo")]):
+                    ii = pg["imageinfo"][0]; w = ii.get("thumbwidth") or ii.get("width"); h = ii.get("thumbheight") or ii.get("height"); cid = f"{base}/canvas/{i + 1}"
+                    lic = ((ii.get("extmetadata") or {}).get("LicenseShortName") or {}).get("value", "")
+                    cvs.append({"id": cid, "type": "Canvas", "label": L3(pg["title"].replace("File:", "", 1)), "width": w, "height": h,
+                                "metadata": [{"label": L3("권리"), "value": L3(lic or "파일 페이지 확인")}],
+                                "homepage": [{"id": ii.get("descriptionurl"), "type": "Text", "label": L3("위키미디어 파일 페이지"), "format": "text/html"}],
+                                "items": [{"id": cid + "/p", "type": "AnnotationPage", "items": [{"id": cid + "/p/a", "type": "Annotation", "motivation": "painting", "target": cid,
+                                                                                                  "body": {"id": ii.get("thumburl") or ii.get("url"), "type": "Image", "format": "image/jpeg", "width": w, "height": h}}]}]})
+                if cvs:
+                    still = {"@context": "http://iiif.io/api/presentation/3/context.json", "id": base + "/manifest.json", "type": "Manifest",
+                             "label": L3(f"위키미디어 공용 '{query}' 정지 이미지 {len(cvs)}장"), "items": cvs}
+            except Exception as ex:
+                none.append(f"- [commons] 이미지 정보 조회 실패({str(ex)[:40]}) — 파일 페이지에서 확인")
+        coll = {"@context": "http://iiif.io/api/presentation/3/context.json", "id": "https://korea-archive-mcp.vercel.app/iiif/search/" + _up.quote(query) + "/collection.json",
+                "type": "Collection", "label": L3(f"KOREA ARCHIVE 통합검색 '{query}' — {len(ext)}건(기관 IIIF·브리지·기록 봉투)"), "items": []}
+        groups = []  # v2.2: '기관 › 계열' 하위 컬렉션(계열 2개 이상일 때) — Node 패리티
+        for x in ext[:30]:
+            g = next((y for y in groups if y["k"] == x["_g"]), None)
+            if not g:
+                g = {"k": x["_g"], "items": []}; groups.append(g)
+            g["items"].append({k: v for k, v in x.items() if k != "_g"})
+        coll["items"] = ([{"id": f"{coll['id']}#g{i + 1}", "type": "Collection", "label": L3(f"{g['k']} ({len(g['items'])})"), "items": g["items"]} for i, g in enumerate(groups)]
+                         if len(groups) > 1 else (groups[0]["items"] if groups else []))
+        cj = json.dumps(coll, ensure_ascii=False, separators=(",", ":"))
+        out = (f"IIIF '{query}' — 매니페스트 {len(ext)}건(그중 기록 봉투 {len(none)}건 — IIIF가 없던 기록을 구축) · 정지 이미지 {len(still['items']) if still else 0}장\n"
+               f"■ 전체를 한 번에 연속으로 보기(KV): {_kv_hash(coll)}\n"
+               + (f"① IIIF Collection(기관 원 매니페스트·브리지·기록 봉투):\n{cj}\n" if len(cj) < 13000 else
+                  f"① IIIF Collection {len(ext)}건 — 크기 상한으로 본문 생략(위 KV 링크에 전체 포함). 앞 8건:\n" + "\n".join(f"- {x['label']['ko'][0][:70]}\n  {x['id']}" for x in ext[:8]) + "\n")
+               + (f"\n② 정지 이미지 Manifest(위키미디어 1600px — 권리는 캔버스별):\n{json.dumps(still, ensure_ascii=False, separators=(',', ':'))}\n" if still else "")
+               + (f"\n③ 기록 봉투로 구축한 {len(none)}건(원본 이미지가 있으면 그 이미지, 없으면 기록 카드 · 계층 '기관 › 계열 › 기록' 구축 · 발견 질의·시각·봉투 지문 증거):\n" + "\n".join(none[:12]) + "\n" if none else "")
+               + "\n※ 보기: report_template(kind='iiif')의 뷰어 골격 SRC에 위 JSON 객체를 넣어 아티팩트로 게시하면 전체를 한 줄로 이어 넘기는 연속 이미지 뷰가 된다. 자체 뷰어 KV (Korea Archive Viewer)로 바로: https://changgi.github.io/korea-archive-mcp/kv.html?manifest=<URL>(컬렉션 전체 연속·비교·자동 넘김) · Mirador https://projectmirador.org/embed/?iiif-content=<URL> 로도 열린다. Gallica는 서버 자동 조회가 403이라 브라우저 뷰어에서만 열린다."
+               + "\n※ 예제: 30곳 탐방·100선 800장 공개 갤러리 https://changgi.github.io/korea-archive-mcp/iiif.html · 전체 이어보기 매니페스트 https://changgi.github.io/korea-archive-mcp/iiif/all.json")
+        return out[:23000] + ("\n…(24KB 상한 — max_per_source를 줄여 재요청)" if len(out) > 23000 else "")
+    if format == "manifest":  # 발굴 수집기록 매니페스트 — 발굴 행위 자체를 맥락·증거성 갖춘 현용기록으로(ISAD(G)·RiC 지향)
+        recs = items[:30]
+        now = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        h = 7
+        for c in query:
+            h = (h * 31 + ord(c)) & 0x7FFFFFFF
+        def rid2(it, i):  # karda 그래프와 동일 키 — 상호 참조
+            return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
+        man = {
+            "@context": {"dcterms": "http://purl.org/dc/terms/", "rico": "https://www.ica.org/standards/RiC/ontology#",
+                         "title": "dcterms:title", "date": "dcterms:date", "identifier": "dcterms:identifier",
+                         "provenance": "dcterms:provenance", "accessUrl": "dcterms:source", "media": "dcterms:hasFormat", "iiif": {"@id": "rico:hasOrHadInstantiation", "@type": "@id"},
+                         "sameAs": "http://www.w3.org/2002/07/owl#sameAs", "altTitle": "dcterms:alternative",
+                         "heldBy": {"@id": "rico:hasOrHadHolder"}, "records": {"@id": "rico:hasRecordSetMember"}},
+            "@type": ["DiscoveryManifest", "rico:RecordSet"], "standard": "ISAD(G)/RiC-oriented",
+            "identifier": f"kad-{now[:10]}-{h:x}",
+            "provenance": {  # 증거성 — 수집의 재현 가능한 기술(누가·무엇을·언제·어떻게)
+                "query": query, "sources": ",".join(want), "variants": variants, "collectedAt": now,
+                "tool": "KOREA ARCHIVE 통합검색 cross_search (python plugin)",
+                "reproduce": f"cross_search(query={query!r}, sources={sources!r}, format='manifest')",
+                "channelStats": stats},
+            "records": [(lambda hb, dr: {
+                "@type": "rico:Record", "node": rid2(it, i),
+                "identifier": it.get("id") or None, "title": it["title"], "date": it.get("date") or None,
+                "heldBy": [{"id": k, "name": ARCHIVE_META.get(k, {}).get("n", k), "country": ARCHIVE_META.get(k, {}).get("c", "")} for k in hb],  # 맥락 — 기관 정식명·국가
+                "accessUrl": it.get("url") or None,
+                "evidence": f"API 실조회 {now[:10]}" + (f" · NARA 카탈로그 원본 실재 확인({it.get('id')}) — 사본 {it.get('sameAs') or ''}" if "nara·원본확인" in it["sources"]
+                                                     else (f" · 기관 간 동일 기록 대조({it['sameAs']})" if it.get("sameAs") and len(it["sources"]) > 1 else "")),
+                **({"media": it["media"]} if it.get("media") else {}),  # 다매체 — 원본 매체 직링크(게재 소싱)
+                "iiif": _iiif_for(it.get("url"), it.get("id")) or _rec_url(_rec_token(it, query, (ARCHIVE_META.get(it["sources"][0].split("·")[0]) or {}).get("n", ""), _part_of(it["sources"][0].split("·")[0], it) or it.get("series") or "")),  # v2.0: 모든 기록에 IIIF  # v1.98: IIIF 매니페스트(기관 IIIF·NARA 브리지)
+                **({"sameAs": it["sameAs"]} if it.get("sameAs") else {}),
+                **({"altTitle": it["altTitle"]} if it.get("altTitle") else {}),  # 맥락·증거성 — 기관 간 동일 기록
+                **({"partOf": _part_of(hb[0], it)} if _part_of(hb[0], it) else {}),
+                **({"deepRead": dr} if dr else {})})(  # 증거성 — 판독 재현 호출문
+                sorted({s.split("·")[0] for s in it["sources"]}),
+                (DEEP_READ.get(sorted({s.split("·")[0] for s in it["sources"]})[0], lambda _: None)(it)))
+                for i, it in enumerate(recs)],
+        }
+        man["recordsFixity"] = "sha256:" + _hl.sha256(json.dumps(man["records"], ensure_ascii=False).encode("utf-8")).hexdigest()  # 내장 무결성
+        mj = json.dumps(man, ensure_ascii=False)
+        fx = _hl.sha256(mj.encode("utf-8")).hexdigest()  # 고정성(fixity) — 전파 중 변조 검증
+        return (f"발굴 수집기록 매니페스트 '{query}' — {len(recs)}건 (재현 가능·기관 등재용):\n"
+                + "```json\n" + mj + "\n```"
+                + f"\nfixity(sha256): {fx} — 위 JSON 바이트의 지문. 전파·보관본 대조 시 불일치=변조/손상."
+                + "\n공개 지문 원장(골든 기록 주간 감시·개정 이력): https://korea-archive-mcp.vercel.app/fixity-ledger.json"
+                + "\n※ 현용기록물로서의 발굴기록: provenance(질의·소스·시각·재현 호출)=증거성 · heldBy·식별자=맥락 · fixity=고정성. 이 JSON을 그대로 기록관리시스템·KARDA에 등재."
+                + "\n※ 다매체 변환 사슬: 이 매니페스트 → report_template(kind=report/carousel/full_package)=보고서·카드뉴스 · format='karda'=지식그래프 · format='csv'=데이터셋 · media 필드=원본 매체 직링크(게재 소싱)."
+                + "\n※ 지속가능성: 영속 식별자(archRfcd·NAID·levelId·R번호) 우선 인용 — URL이 썩어도 재발굴 가능. 채널 생존은 source_profile(health)·주간 CI가 감시. 권리는 judge_rights로 기록 단위 표시.")
+    if format == "karda":  # 온톨로지 직출력 — 로컬 스킬 전용이던 KARDA 노드·엣지 지식의 서버화(웹·모바일 동등성)
+        recs = items[:30]
+        srcs = sorted({s.split("·")[0] for it in recs for s in it["sources"]})
+
+        def rid(it, i):
+            return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
+        nodes = [{"id": "topic:" + query, "type": "topic", "label": query}]
+        nodes += [dict({"id": "archive:" + s2, "type": "archive", "label": ARCHIVE_META.get(s2, {}).get("n", s2)}, **({"country": ARCHIVE_META[s2]["c"]} if ARCHIVE_META.get(s2, {}).get("c") else {})) for s2 in srcs]
+        for i, it in enumerate(recs):
+            nd = {"id": rid(it, i), "type": "record", "label": it["title"][:90]}
+            if it.get("id"):
+                nd["identifier"] = it["id"]  # manifest와 동일 식별자 — 상호 참조
+            if it.get("date"):
+                nd["date"] = it["date"]
+            if it.get("url"):
+                nd["url"] = it["url"]
+            if it.get("media"):
+                nd["media"] = it["media"]
+            if it.get("altTitle"):
+                nd["altTitle"] = it["altTitle"]
+            nodes.append(nd)
+        edges = []
+        ser_seen = set()
+        for i, it in enumerate(recs):
+            edges.append({"from": "topic:" + query, "to": rid(it, i), "rel": "FOUND"})
+            po = _part_of(it["sources"][0].split("·")[0], it)
+            if po:  # 계층 맥락 — series 노드·PART_OF 엣지(v1.72)
+                sid = "series:" + po
+                if sid not in ser_seen:
+                    ser_seen.add(sid)
+                    nodes.append({"id": sid, "type": "series", "label": po})
+                edges.append({"from": rid(it, i), "to": sid, "rel": "PART_OF"})
+            for s in sorted({x.split("·")[0] for x in it["sources"]}):
+                edges.append({"from": rid(it, i), "to": "archive:" + s, "rel": "HELD_BY"})
+            if it.get("sameAs"):  # v1.86 기관 간 동일 기록
+                sa = "ext:" + it["sameAs"]
+                if sa not in ser_seen:
+                    ser_seen.add(sa)
+                    nodes.append({"id": sa, "type": "identifier", "label": it["sameAs"]})
+                edges.append({"from": rid(it, i), "to": sa, "rel": "SAME_AS"})
+        return (f"교차수집 '{query}' KARDA 온톨로지 — 채널별 [{' · '.join(stats)}] → "
+                f"노드 {len(nodes)}·엣지 {len(edges)} (레코드 {len(recs)}건, 상한 30):\n"
+                + "```json\n" + json.dumps({"nodes": nodes, "edges": edges}, ensure_ascii=False) + "\n```"
+                + "\n※ 그대로 KARDA·지식그래프 도구(Gephi·Neo4j·vis.js)에 투입. 한 레코드의 복수 HELD_BY=기관 교차확인. "
+                  "권리 초판정: judge_rights. 인물 중심 그래프는 nedb_search(mode=gonghun, \"종합:이름\")과 결합.")
+    if format == "csv":  # 분석 투입용 구조화 출력 — "자료로써 분석할 수 있게"
+        def esc(v):
+            return '"' + str(v if v is not None else "").replace('"', '""') + '"'
+        def ridc(it, i):
+            return "rec:" + (f"{it['sources'][0].split('·')[0]}:{it['id']}" if it.get("id") else f"m{i}")
+        rows = [",".join(esc(x) for x in (ridc(it, i), "+".join(it["sources"]), it["title"], it["date"], it["id"], it["url"],
+                                           _part_of(it["sources"][0].split("·")[0], it) or "", it.get("media", ""), it.get("sameAs", "")))
+                for i, it in enumerate(items[:45])]
+        import zlib as _z, base64 as _b, datetime as _d
+        csv_body = "node,sources,title,date,id,url,partOf,media,sameAs\n" + "\n".join(rows)
+        head = f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
+        ua_note = "".join(f"\n※ {_ua_refused_note(k, query)}" for k in _UA_REFUSED if any(x.startswith(k + ":") and "⛔" in x for x in stats))  # v2.36
+        ua_note = _fail_note(stats) + ua_note
+        tail = "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights." + ua_note
+        # v2.4: 파일로 받기 — 링크 안에 CSV를 압축 봉인(서버 저장 없음, Node /export/csv/{token}.csv 패리티). 24KB·URL 12,000자 넘으면 생략
+        c = _z.compressobj(9, _z.DEFLATED, -15)
+        env = {"q": str(query)[:80], "at": _d.datetime.now(_d.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "csv": csv_body}
+        dl = f"{_NARA_ORIGIN}/export/csv/" + _b.urlsafe_b64encode(c.compress(json.dumps(env, ensure_ascii=False, separators=(",", ":")).encode()) + c.flush()).decode().rstrip("=") + ".csv"
+        fits = len(dl) <= 12000 and len((head + csv_body + tail + dl).encode("utf-8")) + 300 <= 24000
+        return head + csv_body + tail + (f"\n📥 CSV 파일 내려받기(엑셀 한글 BOM 포함): {dl}" if fits else "\n📥 파일 링크 생략(크기 상한) — 위 본문을 .csv로 저장하거나 max_per_source를 줄여 다시 실행")
+    lines = [f"- [{'+'.join(it['sources'])}] {_title_cut(it['title'])}"
              + (f" ({it['date']})" if it['date'] else "") + (f" {it['url']}" if it['url'] else "")
+             + (f"\n  ↔ 동일 기록: {it['altTitle'][:80]} ({it['sameAs']})" if it.get("altTitle")
+                else (f"\n  ↔ {'함께 묶인 기록' if len(it['sources']) > 1 else '원본'}: {it['sameAs']}" if it.get("sameAs") else ""))
+             + (f"\n  ※ {it['note']}" if it.get("note") else "")
              for it in items[:45]]
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
+            + _fail_note(stats)
+            + "".join(f"\n※ {_ua_refused_note(k, query)}" for k in _UA_REFUSED if any(x.startswith(k + ":") and "⛔" in x for x in stats))
             + "\n※ [출처] 복수 표기 = 교차확인된 record. 국내(nara·archives·nlk)는 서버 키, nedb는 "
-            "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. robots가 막은 opengov·서울기록원은 미포함 — 전용 도구/브라우저로.")
+            "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. open.go.kr 본체(브라우저 전용)는 foia_search 전용 도구로.\n※ 발굴 우선 — 권리는 표시: 게재 전 judge_rights(참조코드·KOGL·naid)로 초판정. variants=True로 당대 표기(Corea·Chosen·Keijo…) 자동 팬아웃.\n※ 심층 판독 이어가기: [i815]→nedb_search(mode=i815, 상세URL) · [gonghun]→mode=gonghun(mngNo) · [ktv]→mode=ktv(view URL) · [earchive]→mode=earchive('키워드|순번') · [jacar]→mode=jacar(레퍼런스코드) · [seoul]→seoul_archives_search(상세URL) · [koreanwar]→koreanwar_item(ref_code) · [okchf]→mode=okchf(상세URL·'보고서:') · [nrich]→mode=nrich(ov:·rep:·'보고서:') · [nara]→judge_rights(naid).")
 
 
 @mcp.tool()
 def source_profile(institution: str = "list") -> str:
     """기관 자료·이용·활용구조 프로파일 — 발굴 전략 수립용. 자료구조(계층·분류·식별자·메타),
     이용구조(API·인증·쿼리문법·robots·권리), 활용구조(3대 부정합·키워드셋·교차매핑·인접확장·교차검증 조합).
-    institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia)."""
+    institution: 'list' 또는 키 (tna·nara·ia·gallica·europeana·nedb·archives·nlk·seoul·warmemo·foia);
+    'health'=30채널 골든 질의 일괄 헬스체크(🟢🟡🔴+키 설정 상태)."""
     t = (institution or "list").strip().lower()
+    if t == "health":  # 발굴 우선 원칙의 전제: 깨짐을 스스로 발견한다
+        GOLD = {"tna": "Korea", "ia": "Korea", "gallica": "Corée", "europeana": "Korea", "nara": "Korea",
+                "archives": "한국전쟁", "nlk": "한국전쟁", "nedb": "한강", "koreanwar": "장진호",
+                "jacar": "Chosen", "earchive": "제주도", "i815": "안중근", "gonghun": "안중근", "ktv": "대한뉴스", "oldnews": "의병", "much": "판문점", "indy": "유관순", "heritage": "숭례문", "kyudb": "절목", "jsg": "의궤", "awm": "Kapyong", "nlna": "Korea", "dnz": "Korean War", "nzarch": "Korea", "commons": "Seoul 1950", "un": "Korea armistice", "ndl": "조선총독부",
+                "seoul": "한강", "foia": "회의", "aks": "문중", "gallery": "흥남", "okchf": "불화", "nrich": "미륵사"}
+        keys = {k: bool(os.environ.get(k)) for k in
+                ("NARA_API_KEY", "ARCHIVES_API_KEY", "NLK_API_KEY", "EUROPEANA_API_KEY",
+                 "KOREANWAR_API_TOKEN", "NEDB_INDEX_URL")}
+        import time as _t
+        def _probe(kv):  # 30채널 병렬 탐침 (Node Promise.all 패리티 — 순차 실행은 합산 수십 초)
+            k, q = kv
+            s = _t.monotonic()
+            try:
+                r = _COLLECT[k](q, 3)
+                return (k, q, True, len(r), None, int((_t.monotonic() - s) * 1000))
+            except Exception as e:
+                return (k, q, False, 0, str(e)[:60], int((_t.monotonic() - s) * 1000))
+        with _cf.ThreadPoolExecutor(max_workers=8) as ex:
+            probed = list(ex.map(_probe, GOLD.items()))
+        rows = []
+        for k, q, ok, cnt, err, ms in probed:
+            if ok:
+                rows.append(f"{'🟢' if cnt else '🟡'} {k}: {cnt}건 · {ms}ms (질의 '{q}')"
+                            + ("" if cnt else " — 연결 정상·결과/파싱 0"))
+            else:
+                rows.append(f"🔴 {k}: {err} · {ms}ms")
+        return ("30채널 헬스체크 (골든 질의 실측):\n" + "\n".join(rows)
+                + "\n\n서버 키·설정: " + " · ".join(f"{k}={'✓' if v else '✗'}" for k, v in keys.items())
+                + _pipeline_freshness()
+                + "\n※ 🟡=연결 정상이나 0건(질의 특성 또는 파서 점검 필요) · 🔴=채널 실패(차단·타임아웃) · ms=채널 응답시간. "
+                  "nedb ✗=개방파일 인덱스 미설정.")
+    if t != "list" and t not in PROFILES and t in QUICK_PROFILES:  # v1.96.4 간이 프로파일
+        nm, sr, dt, rt = QUICK_PROFILES[t]
+        return (f"[{t}] {nm} — 간이 프로파일\n· 검색: {sr}\n· 상세 판독: {dt}\n· 권리: {rt}\n"
+                "※ 상세 프로파일(자료·이용·활용구조) 미작성 기관 — 위 경로로 발굴하고 judge_rights로 초판정.")
     if t == "list" or t not in PROFILES:
         lines = "\n".join(f"- {k} ({v['name_ko']}) [{v['category']}]" for k, v in PROFILES.items())
         extra = f"\n\n('{institution}' 프로파일 없음)" if (t != "list" and t not in PROFILES) else ""
@@ -1919,6 +5849,33 @@ def source_profile(institution: str = "list") -> str:
             f"· 3대 부정합: {U['mismatch_summary']}\n· 키워드셋: {U['keyword_ref']}\n· 분류 교차맵: {U['crossmap_ref']}\n"
             f"· 인접확장: {U['adjacent_mining']}\n· 교차검증 조합:\n{combos}\n· 권리판정: {U['rights_rule']}" + vn)
 
+
+# ── PlayMCP 응답 24KB 한도 — UTF-8 바이트 실측 공통 가드(여유 23,800B). route.js 패리티. ──
+_LIMIT_B = 23800
+
+
+def _guard_24k_all():
+    import functools
+    try:
+        tools = mcp._tool_manager._tools  # mcp 1.x 내부 — requirements에서 mcp<2 고정
+    except AttributeError:
+        return
+    for t in tools.values():
+        fn = t.fn
+
+        @functools.wraps(fn)
+        def wrapped(*a, __fn=fn, **k):
+            r = __fn(*a, **k)
+            if isinstance(r, str):
+                b = r.encode("utf-8")
+                if len(b) > _LIMIT_B:
+                    r = (b[:_LIMIT_B].decode("utf-8", "ignore")
+                         + f"\n…[응답 24KB 한도 — {len(b)}B 중 절단. page·max_results로 분할 조회]")
+            return r
+        t.fn = wrapped
+
+
+_guard_24k_all()
 
 if __name__ == "__main__":
     mcp.run()

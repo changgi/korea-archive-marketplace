@@ -1,0 +1,39 @@
+name: verify
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: py_compile (서버 2사본 + 권리장부 2사본 + harvester)
+        run: |
+          python -m py_compile plugins/korea-archive/servers/server.py mcp/server.py \
+            plugins/korea-archive/servers/kla/ledger.py collector/kla/ledger.py \
+            plugins/korea-archive/servers/harvester/tna.py
+      - name: 런타임 등록 (mcp<2 · 도구 20종 · 24KB 가드)
+        run: |
+          pip install -q 'mcp<2'
+          cd plugins/korea-archive/servers
+          python - <<'EOF'
+          import importlib.util, asyncio
+          spec = importlib.util.spec_from_file_location("sut", "server.py")
+          m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+          tools = asyncio.new_event_loop().run_until_complete(m.mcp.list_tools())
+          assert len(tools) == 20, f"도구 수 {len(tools)} != 20"
+          big = "가" * 20000
+          t = m.mcp._tool_manager._tools["judge_rights"]
+          wrapped = t.fn
+          assert hasattr(wrapped, "__wrapped__"), "24KB 가드 미적용"
+          print("OK: 20 tools, guard applied")
+          EOF
+      - name: route.js 패리티 (도구명 diff)
+        run: |
+          git clone --depth 1 https://github.com/changgi/korea-archive-mcp /tmp/mcp
+          node /tmp/mcp/scripts/ci-parity.mjs "$GITHUB_WORKSPACE"

@@ -20,6 +20,9 @@
     # ⑤ 전체 자동 (①②④를 순서대로)
     python analyze_video.py auto <영상> --out <디렉터리>
 
+    # ⑥ 주요 장면 — 장면 전환(ffmpeg scene) → 장면별 가장 선명한 프레임(원본 해상도) → 해설 카드 원천
+    python analyze_video.py keyscenes <영상|URL> --out <디렉터리> [--thr 0.3 --min-len 2.5 --max 16 --scale 1280]
+
 왜 이 순서인가
     처음부터 확대 프레임을 뽑으면 어디를 확대할지 알 수 없다.
     전 구간을 한 장으로 훑어 문자가 보이는 지점을 먼저 찾고,
@@ -59,6 +62,7 @@ def grab(path, t, out, scale=520, crop=None, eq=None, sharp=False):
     if crop:
         w, h, x, y = crop
         vf.append(f"crop=iw*{w}:ih*{h}:iw*{x}:ih*{y}")
+    vf.append("scale=trunc(iw*sar/2)*2:ih,setsar=1")  # v1.96.2: 비정방 화소(SAR 10:11·8:9 등) 보정 — 늘어남 방지
     vf.append(f"scale={scale}:-1")
     if eq:
         vf.append(f"eq=contrast={eq}")
@@ -263,6 +267,99 @@ def cmd_scenes(a):
     return marks
 
 
+
+# ── ⑥ 주요 장면(keyscenes) — 장면 전환 → 장면별 대표 프레임(고해상) → 장면 해설 카드 원천 ──
+
+def detect_cuts(video, thr=0.30):
+    """ffmpeg scene 필터 1회 통과로 전환 시각(초) 목록 — 샘플링 방식(scenes)보다 정확·빠름. URL 입력도 가능."""
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", video, "-vf",
+                        f"select='gt(scene,{thr})',showinfo", "-an", "-f", "null", "-"],
+                       capture_output=True, text=True)
+    return sorted({round(float(m), 2) for m in re.findall(r"pts_time:([0-9.]+)", r.stderr)})
+
+
+def sharpness(path):
+    from PIL import Image
+    import numpy as np
+    g = np.asarray(Image.open(path).convert("L"), dtype=float)
+    lap = g[1:-1, 1:-1] * 4 - g[:-2, 1:-1] - g[2:, 1:-1] - g[1:-1, :-2] - g[1:-1, 2:]
+    return float(lap.var())
+
+
+def is_blank(path, thr=16.0):
+    """필름 리더·암전·백화 판정 — 밝기 표준편차가 낮거나 대부분이 검정/흰색이면 장면 대표로 쓰지 않는다."""
+    from PIL import Image
+    import numpy as np
+    g = np.asarray(Image.open(path).convert("L"), dtype=float)
+    dark = (g < 25).mean()
+    return g.std() < thr or dark > 0.8 or (g < 50).mean() > 0.9 or (g < 40).mean() > 0.65 or (g > 235).mean() > 0.8
+
+
+def cmd_keyscenes(a):
+    """장면 전환으로 영상을 장면 단위로 나누고, 장면마다 가장 선명한 프레임을 원본 해상도로 뽑는다.
+    산출: keyframes/scene_NN_mmss.jpg · scenes.json(start·end·dur·frame) · _keyscenes.jpg(시각 코드 밀착 인화)
+    해설은 사람이(또는 VLM이) 프레임을 직접 보고 '보이는 것만' 쓴다 — 추정 금지(report_template kind=video)."""
+    info = probe(a.video)
+    d = info["duration"]
+    try:  # 원본보다 크게 뽑지 않는다(업스케일 = 정보 없는 확대)
+        a.scale = min(a.scale, int(str(info["size"]).split(",")[0]) + 80)  # SAR 보정 후 폭이 늘 수 있어 여유
+    except ValueError:
+        pass
+    os.makedirs(os.path.join(a.out, "keyframes"), exist_ok=True)
+    cuts = [c for c in detect_cuts(a.video, a.thr) if 0.5 < c < d - 0.5]
+    bounds = [0.0] + cuts + [float(d)]
+    segs = [(bounds[i], bounds[i + 1]) for i in range(len(bounds) - 1)]
+    merged = []  # 너무 짧은 장면(플래시·편집 잡음)은 앞 장면에 합친다
+    for s0, s1 in segs:
+        if merged and (s1 - s0) < a.min_len:
+            merged[-1] = (merged[-1][0], s1)
+        else:
+            merged.append((s0, s1))
+    if len(merged) > a.max:  # 긴 장면 우선으로 a.max개 — 시간순 유지
+        keep = sorted(sorted(merged, key=lambda x: x[1] - x[0], reverse=True)[:a.max])
+        merged = keep
+    scenes = []
+    for i, (s0, s1) in enumerate(merged, 1):
+        best = None
+        for frac in (0.3, 0.5, 0.7):
+            t = s0 + (s1 - s0) * frac
+            p = os.path.join(a.out, "keyframes", f"_cand_{i}_{int(frac*10)}.jpg")
+            if grab(a.video, t, p, scale=a.scale):
+                sc = sharpness(p)
+                if is_blank(p):  # 리더·암전·플래시 프레임 제외
+                    continue
+                if not best or sc > best[0]:
+                    best = (sc, t, p)
+        if not best:
+            continue
+        fn = os.path.join(a.out, "keyframes", f"scene_{i:02d}_{sec_label(best[1]).replace(':', '')}.jpg")
+        os.replace(best[2], fn)
+        scenes.append(dict(i=i, start=round(s0, 2), end=round(s1, 2), dur=round(s1 - s0, 2),
+                           t=round(best[1], 2), label=sec_label(best[1]), frame=os.path.relpath(fn, a.out)))
+    for f in glob.glob(os.path.join(a.out, "keyframes", "_cand_*")):
+        os.remove(f)
+    json.dump(dict(video=a.video, duration=d, size=info["size"], sound="유성" if info["has_audio"] else "무성",
+                   cuts=len(cuts), scenes=scenes),
+              open(os.path.join(a.out, "scenes.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    if scenes:  # 의존 최소화 — Pillow만으로 시각 코드 밀착 인화
+        from PIL import Image, ImageDraw
+        cols, tw = 4, 400
+        ims = [Image.open(os.path.join(a.out, sc["frame"])).convert("RGB") for sc in scenes]
+        th = int(tw * ims[0].height / ims[0].width)
+        rows = (len(ims) + cols - 1) // cols
+        sheet = Image.new("RGB", (cols * tw, rows * (th + 26)), "black")
+        dr = ImageDraw.Draw(sheet)
+        for k, (im, sc) in enumerate(zip(ims, scenes)):
+            x, y = (k % cols) * tw, (k // cols) * (th + 26)
+            sheet.paste(im.resize((tw, th)), (x, y))
+            dr.text((x + 6, y + th + 6), f"#{sc['i']:02d}  {sc['label']}  ({sc['dur']:.0f}s)", fill="white")
+        g = os.path.join(a.out, "_keyscenes.jpg"); sheet.save(g, quality=85)
+        print(f"장면 {len(scenes)}개(전환 {len(cuts)}곳) → {g}")
+    for s in scenes:
+        print(f"  #{s['i']:02d} {sec_label(s['start'])}–{sec_label(s['end'])} ({s['dur']:.0f}s) 대표 {s['label']}  {s['frame']}")
+    print("\n다음: 프레임을 하나씩 직접 보고 장면 해설(보이는 것만)을 scenes.json의 각 장면에 'caption'으로 기입")
+    return scenes
+
 # ── ⑤ 자동 ───────────────────────────────────────────────
 
 def cmd_auto(a):
@@ -294,7 +391,7 @@ def cmd_auto(a):
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("survey", "textscan", "zoom", "scenes", "auto"):
+    for name in ("survey", "textscan", "zoom", "scenes", "auto", "keyscenes"):
         p = sub.add_parser(name)
         p.add_argument("video")
         p.add_argument("--out", required=True)
@@ -305,9 +402,12 @@ def main():
         p.add_argument("--at", type=float, default=0)
         p.add_argument("--crop")
         p.add_argument("--scale", type=int, default=1050)
+        p.add_argument("--thr", type=float, default=0.30, help="keyscenes 장면 전환 민감도(0~1, 낮을수록 많이)")
+        p.add_argument("--min-len", dest="min_len", type=float, default=2.5, help="keyscenes 최소 장면 길이(초)")
+        p.add_argument("--max", type=int, default=16, help="keyscenes 최대 장면 수")
     a = ap.parse_args()
     dict(survey=cmd_survey, textscan=cmd_textscan, zoom=cmd_zoom,
-         scenes=cmd_scenes, auto=cmd_auto)[a.cmd](a)
+         scenes=cmd_scenes, auto=cmd_auto, keyscenes=cmd_keyscenes)[a.cmd](a)
 
 
 if __name__ == "__main__":

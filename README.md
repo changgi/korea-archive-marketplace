@@ -1,150 +1,157 @@
-# 🇰🇷 Korea Archive — Claude Plugin Marketplace
+<div align="center">
 
-**국내외 15곳의 아카이브에 흩어진 한국 관련 기록(1860–1960)을 클로드에서 한 대화로 발굴합니다.**
-**Discover Korea-related records scattered across 15 archives — worldwide and in Korea — from a single Claude conversation.**
+# 🇰🇷 Korea Archive — Claude 플러그인
 
-[English](#english) · [한국어](#한국어) · [Gallery / 카드뉴스](#gallery--카드뉴스)
+**전 세계 문서고에 흩어진 한국 기록을 찾고, 읽고, 결과물까지 만들어 주는 Claude 플러그인**
+
+[![30개 문서고](https://img.shields.io/badge/문서고-30곳_·_9개국-1f6feb?style=for-the-badge)](#-어디서-찾아-주나요)
+[![스킬 11종](https://img.shields.io/badge/전문_스킬-11종-8250df?style=for-the-badge)](#-플러그인에-들어-있는-전문-스킬-11종)
+[![무료](https://img.shields.io/badge/이용-무료-d4a72c?style=for-the-badge)](#-설치하기)
+
+[**소개 페이지**](https://changgi.github.io/korea-archive-marketplace/) · [**예제 15선**](https://changgi.github.io/korea-archive-mcp/examples.html) · [**30곳 탐방 시리즈**](https://changgi.github.io/korea-archive-mcp/series.html) · [**사용 안내**](https://korea-archive-mcp.vercel.app/help.html) · [English](#english) · [원격 서버 버전](https://github.com/changgi/korea-archive-mcp) · [변경 이력](CHANGELOG.md)
+
+</div>
+
+---
+
+## 💡 한 줄 요약
+
+> 미국·영국·프랑스·일본·호주·뉴질랜드·네덜란드·UN과 국내 기관의 문서고 **30곳**을 한 번에 검색하고,
+> 찾은 기록의 **원문·출처·이용 권리**를 정리한 뒤, 원하면 **보고서·카드뉴스·논문 각주**까지 만들어 주는 Claude 플러그인입니다.
+
+**두 가지 방법으로 쓸 수 있습니다.**
+
+| | 이런 분께 | 받는 것 |
+|---|---|---|
+| 🧩 **플러그인** (이 저장소) | Claude 데스크톱·Claude Code를 쓰는 분 | 검색 도구 20종 **+ 전문 스킬 11종**(카드뉴스 렌더링·영상 판독 등 컴퓨터에서 실행하는 작업 포함) |
+| 🔗 **커넥터** | Claude 웹·스마트폰 앱을 쓰는 분 | 검색 도구 20종 (주소 하나만 등록, 설치 없음) |
+
+---
+
+## 🚀 설치하기
+
+### 🧩 플러그인 (Claude 데스크톱 · Claude Code)
+
+Claude 대화창에 아래 두 줄을 차례로 입력합니다.
 
 ```
 /plugin marketplace add changgi/korea-archive-marketplace
 /plugin install korea-archive@korea-archive-marketplace
 ```
 
-웹·모바일(클로드 웹앱)은 MCP 커넥터로 연결: 설정 → 커넥터 → 커스텀 커넥터 추가 →
-`https://korea-archive-mcp.vercel.app/api/mcp`
+### 🔗 커넥터 (Claude 웹 · 스마트폰 앱)
 
-> **v1.15** — **조선 사료 심층 판독**: `nedb_search` 9모드(법전·座目 필터·★형제 조 전수·법전 대조·어휘 연원·승정원일기·규장각) + 도메인 스킬 7종 · **매직 키워드 웹 네이티브화**(MCP prompts `full-package`·`changgi-help`) · `query_bank` 조사 전략 8토픽(11벽·식별자·인명·대조·6개국 서고·도시명 계보·895 지도·성씨 색인) · 전쟁기념관 **OpenAPI 채널**(Referer 바인딩 실측).
-> **v1.14** — 매직 키워드 **"풀패키지"**: 한 문장으로 **산출물 12종**(매거진 보고서·카드뉴스·포스터·홍보/입문/메시지 카드·발표 PPTX·기록 해설·Canva·KARDA·시연 영상·ZIP) 자동 제작 + 품질 게이트. 실전 3편: 글로스터(1호)·장진호(2호)·한강 강배(1485~1986).
-> **웹 서비스** — 사용 안내 [help](https://korea-archive-mcp.vercel.app/help.html)([EN](https://korea-archive-mcp.vercel.app/help-en.html)) · 즉석 검색 [기록잇다](https://korea-archive-mcp.vercel.app/ingitda.html)(6문서고 연합) · 실물 예제 [한강 보고서](https://korea-archive-mcp.vercel.app/examples/hanriver.html)·[강연 풀덱 403장](https://korea-archive-mcp.vercel.app/examples/joseon-deck.html)
-> **v1.12** — **KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터**(koreanwar.or.kr, 전쟁기념관재단 — **협약기관**) TNA식 구조화 도구: `koreanwar_search`(통합검색+생산연도·수집구분 필터+전투정보 scope+OpenAPI 이중채널) · `koreanwar_item`(건별 메타 — NARA NAID 원본 직결 + radius 인접 채굴). **PlayMCP 개발가이드 준수: 도구 통합으로 총 20개**(ia_metadata→ia_search, local_gov→foia 흡수) + 전 도구 annotations.
-> **v1.11** — `cross_search`(여러 아카이브 동시 교차수집·병합) · `source_profile`(기관 자료·이용·활용구조 프로파일) · 국내 3대 부정합 검증 키워드셋 252종 · nlk 이중채널 · nedb 공식 개방파일(KOGL) 수집.
+설정 → **커넥터** → **커스텀 커넥터 추가** → 아래 주소 붙여 넣기
 
----
+```
+https://korea-archive-mcp.vercel.app/api/mcp
+```
 
-## English
-
-### Why this exists
-
-Millions of records about Korea sit in foreign archives (NARA, TNA, archive.org, Gallica, Europeana) **and** in Korean institutions — but a large share is effectively *undiscoverable* with ordinary search. The reason is a **structural mismatch**: records were cataloged in the vocabulary of their era.
-
-Searching **"Seoul"** misses most colonial-period material, because in 1910–1945 the city was indexed as **"Keijo"**. Busan was *Fusan*, Incheon *Jinsen*/*Chemulpo*, and Korea itself often *Chosen*, *Tyosen*, or *Corea*. Korean sites add a second wall — JavaScript, logins, and API keys — that blocks automated collection.
-
-This plugin packages a **peer-validated discovery methodology** — Song (2026): Recall 93.0%, Precision 93.3%, F1 = 0.931 — into 20 tools Claude uses automatically, now spanning both overseas and domestic archives.
-
-### The 15 archives / 20 tools
-
-**Overseas (6)**
-
-| Tool | Source |
-|---|---|
-| `tna_search` | U.K. National Archives (Discovery) — no key. Reference codes auto-quoted. |
-| `tna_adjacent_mine` | *Adaptive Mining* — crawl piece numbers around a verified reference to surface uncatalogued files. |
-| `nara_search` | U.S. NARA catalog, Record Group cross-filter (free `NARA_API_KEY`). |
-| `ia_search` | archive.org search; pass `identifier` for file/size inspection before download. |
-| `gallica_search` | Bibliothèque nationale de France — no key. Late-Joseon French missionary & diplomatic sources. |
-| `europeana_search` | 4,000+ institutions in 58 countries. Works out of the box (shared demo key); `EUROPEANA_API_KEY` for heavy use. |
-
-**Domestic / 국내 (9)** — server-side auto-browse; keyless institutions hand off to the agent's web search.
-
-| Tool | Source |
-|---|---|
-| `nedb_search` | 국사편찬위 한국사데이터베이스 — 11M+ primary sources (Sillok, Seungjeongwon, POW reports…). |
-| `archives_search` | 국가기록원 (OpenAPI, RSS) — free `ARCHIVES_API_KEY` from data.go.kr (15000153). |
-| `nlk_search` | 국립중앙도서관 — 6 collections incl. 대한민국신문아카이브 (1883–1960 old newspapers, PD). `NLK_API_KEY` optional. |
-| `seoul_archives_search` | 서울기록원 — Seoul municipal records / photos / oral histories. |
-| `foia_search` | FOIA hub — 정보공개포털 (open.go.kr) + 서울정보소통광장 (city decision documents) · 서울시교육청 · 경상남도기록원 via `source`. |
-| `warmemo_search` | 전쟁기념관 아카이브 — Korean War / military-history records, photos, oral histories. |
-| `koreanwar_search` | **KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 (MOU 협약기관)** — 55,000+ items; NARA RG extraction from provenance breadcrumbs, 생산연도·수집구분 server-side filters, `scope=battle` for the battle-info DB (TNA WO 281 / NARA RG 407 anchor), OpenAPI official-metadata channel (`KOREANWAR_API_TOKEN`). |
-| `koreanwar_item` | Per-item metadata — producer, dates, acquisition source (**direct NARA catalog NAID link** for re-collected US items), 열람/이용조건 for rights triage; `radius=1-8` runs *Adaptive Mining* on archRfcd serials (±N, polite parallel batches). |
-
-**Utility (across all)**
-
-| Tool | Purpose |
-|---|---|
-| `query_bank` | 1,943 validated keywords + **국내 3대 부정합 키워드셋 252종** (`domestic`, per-institution). |
-| `judge_rights` | First-pass rights triage A/B/C/D with legal basis. |
-| `scrape_plan` | robots check + browser-tool guidance for JS/blocked sites. |
-| `report_template` | Turn finished findings into a styled HTML discovery report (tables · reproducible queries · rights). |
-| `cross_search` | **여러 아카이브를 한 쿼리로 동시 교차수집·병합** (상호보완). 출처 태그 — 복수 출처 = 교차확인. |
-| `source_profile` | **기관 자료구조·이용구조·활용구조** 프로파일 (해외 5 + 국내 6). 발굴 전략 수립용. |
-
-Plus the **skill** `korea-archive-discovery`: search strategy Claude applies automatically (spelling variants, broad→narrow phasing, TNA codes, adjacent mining, domestic cross-check, rights triage, HTML report).
-
-And the **skill** `archival-discovery-pipeline` (v1.14): once discovery secures an identifier·URL, this pipeline **opens the item** — frame-level video/image analysis, text-region detection + OCR + VLM cross-checked reading (slates·signs·banners), period place-name/unit identification, redescription, 4-step publication-ethics triage, RiC-O/CIDOC-CRM ontology + KARDA node/edge export, paper figures, and consistency checks. Discovery finds; the pipeline reads.
-
-### Auto-browsing (v1.9–v1.10)
-
-Korean sites are JS-rendered or login-gated. The domestic tools now **fetch and parse each site server-side**, returning real results:
-- 서울정보소통광장 → the actual decision-document list (title + link)
-- 전쟁기념관 → hit counts by category
-- 한국사DB → which DBs contain the term · 서울기록원 → matching collections
-- 국가기록원 / 국립중앙도서관 → OpenAPI results when a key is set
-
-When a source needs a key that isn't set, the tool **instructs Claude to gather the results via web search** instead of dead-ending.
-
-### Optional server keys (env vars)
-
-`NARA_API_KEY` · `EUROPEANA_API_KEY` · `ARCHIVES_API_KEY` (data.go.kr 15000153) · `NLK_API_KEY` (www.nl.go.kr Open API). All optional — most tools work without any key.
+설치 후 **"창기창기 도와줘"** 라고 말하면 사용법을 안내해 줍니다.
 
 ---
 
-## 한국어
+## 🤔 왜 필요한가요?
 
-### 왜 필요한가
+한국 관련 기록은 전 세계 문서고에 수백만 건이 있지만, **일반 검색으로는 대부분 찾을 수 없습니다.**
 
-미국 NARA, 영국 TNA, archive.org, 프랑스 Gallica, 유럽 Europeana — 그리고 국내 기관에 우리 근현대사 기록이 수백만 건 잠들어 있지만, 상당수는 일반 검색으로는 **찾을 수 없습니다**. 기록이 당대의 언어로 색인됐기 때문입니다(구조적 부정합).
+- **기록은 그 시대의 말로 적혀 있습니다.** 1910~45년 기록에서 서울은 **Keijo**, 부산은 **Fusan**, 한국은 **Chosen·Corea** 입니다. 오늘의 단어로 검색하면 대부분을 놓칩니다.
+- **나라마다 언어와 검색법이 다릅니다.** "장진호"는 미국에선 `Chosin Reservoir`, 일본에선 `長津湖`로 검색해야 합니다.
 
-**"Seoul"**로 검색하면 식민기 자료 대부분을 놓칩니다 — 1910~45년 서울은 **"Keijo"**로 색인됐으니까요. 부산은 *Fusan*, 인천은 *Jinsen·Chemulpo*, 한국은 *Chosen·Corea*. 국내 사이트는 자바스크립트·로그인·API 키라는 두 번째 벽까지 있습니다.
-
-이 플러그인은 검증된 발굴 방법론(송창기 2026, F1 = 0.931)을 클로드가 자동으로 쓰는 **20개 도구**로 담았고, 이제 해외와 국내 아카이브를 모두 아우릅니다(여러 아카이브 동시 교차수집·기관 프로파일·KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 협약 연계 포함).
-
-**archival-discovery-pipeline 스킬(v1.14)** 이 발굴 다음을 잇습니다. 발굴이 식별자·URL을 확보하면, 이 파이프라인이 **실물을 엽니다** — 프레임 단위 분석, 문자 영역 탐지·OCR·VLM 교차검증 판독(슬레이트·표지판·현수막), 당대 지명·부대 식별, 재기술, 게재 윤리 4단계 판정, RiC-O/CIDOC-CRM 온톨로지·KARDA 노드엣지 변환, 논문 도판, 정합 검사. "영상 분석해줘", "슬레이트 판독해줘", "재기술해줘" 한 문장으로 시작합니다.
-
-### 자동 브라우징 (v1.9–v1.10)
-
-국내 사이트는 JS·로그인 기반이라, 국내 도구가 **서버에서 각 사이트를 직접 조회·파싱해 실제 결과**를 돌려줍니다(서울정보소통광장=결재문서 목록, 전쟁기념관=카테고리별 건수, 한국사DB=매칭 DB, 서울기록원=매칭 컬렉션, 국가기록원·국립중앙도서관=키 설정 시 OpenAPI). 키가 없는 기관은 **클로드가 웹검색으로 결과를 가져오도록 지시**합니다.
-
-### 설치
-
-- **플러그인**(데스크탑·Claude Code):
-  ```
-  /plugin marketplace add changgi/korea-archive-marketplace
-  /plugin install korea-archive@korea-archive-marketplace
-  ```
-- **MCP 커넥터**(웹·모바일): 설정 → 커넥터 → 커스텀 커넥터 추가 → `https://korea-archive-mcp.vercel.app/api/mcp`
-
-### 사용 예
-
-- "서울정보소통광장에서 위안부 결재문서 찾아줘" → 서울시 결재문서 원문 목록
-- "전쟁기념관에서 인천상륙작전 자료 찾아줘" → 카테고리별 건수
-- "Gallica에서 한국은행 찾아줘" → 표기 6종 총 273건
-- "찾은 결과 HTML 보고서로 만들어줘" → 표·재현쿼리·권리등급 보고서
-
-라이선스: MIT · 방법론: 공업연구사 송창기.
+이 플러그인은 한국어 질문을 각 문서고의 언어와 그 시대 표기로 바꿔 30곳을 동시에 찾습니다.
+바탕이 된 방법론은 검증을 거쳤습니다(송창기 2026 — 재현율 93.0%, 정밀도 93.3%).
 
 ---
 
-## insta-carousel 스킬 쇼케이스 / Skill Showcase (v1.13)
+## 💬 이렇게 말해 보세요
 
-발굴한 기록을 그대로 **인스타그램 캐러셀 카드뉴스(1080×1080 PNG)** 로 만드는 스킬.
-"○○ 기록 찾아서 캐러셀 만들어줘" 한 문장이면 조사→이미지 소싱(라이선스 판정)→디자인→렌더링→캡션까지.
-아래는 실전 제작 사례(8·15 광복 81주년 시리즈) 중 6장 — 전부 퍼블릭 도메인 실물 기록으로 제작.
+평소 말투로 부탁하면 됩니다. 아래는 **실제로 돌려 본 결과**입니다.
 
-*One sentence — "find records about X and make a carousel" — runs discovery → licensed image
-sourcing → design → headless-Chrome PNG render → hooking caption. Six real cards below,
-all built from public-domain records.*
+| 이렇게 말하면 | 이런 결과를 받습니다 |
+|---|---|
+| 🗣️ "장진호 전투 기록 찾아줘" | `Chosin Reservoir`로 자동 변환해 미국 국립기록관리청에서만 **512건**을 찾고, 다른 문서고 결과와 합쳐 줍니다 |
+| 🗣️ "안중근 의거 당시 신문 기사 찾아줘" | `안중근소식 — 대한매일신보 [3면 3단] (1909.11.9)`처럼 **면·단까지** 적힌 기사 목록 |
+| 🗣️ "유관순 공훈록 보여줘" | 공적조서·공훈록 전문·수형 기록·묘소·현충시설을 한 번에 |
+| 🗣️ "이 미국 기록 사진 써도 돼?" | 권리 **A등급**(이용 제한 없음) 확인, 촬영일, 실물 소장 위치, 원본 파일 주소 |
+| 🗣️ "인천상륙작전 영상, 같은 묶음 더 찾아줘" | 기록 번호 앞뒤를 훑어 **D-DAY 연속 필름 5편**을 한 번에 |
+| 🗣️ "찾은 거 표로 정리해줘" | 제목·날짜·소장 기관·소속 분류·원본 이미지 주소가 담긴 표(엑셀용 CSV) |
+| 🗣️ "장진호 기록, 같은 것끼리 묶어서 보여줘" | 한국 기관 재수집본과 미국 원본을 **같은 기록으로 묶어** 줍니다 — 9건 중 5건이 두 기관에서 확인됨 (예: "장진호 전투에서 퇴각하는 미 제1해병사단 기록영상" = 미국 NAID 24033) |
+| 🗣️ "장진호 풀패키지로 만들어줘" | 조사부터 **보고서·카드뉴스 8장·포스터·발표 자료**까지 이어서 제작 |
+
+---
+
+## 🌏 어디서 찾아 주나요?
+
+| 지역 | 기관 |
+|---|---|
+| 🇺🇸 미국 | 국립기록관리청(NARA) · 인터넷 아카이브 |
+| 🇬🇧 🇫🇷 🇳🇱 영국·프랑스·네덜란드 | 영국 국립기록관 · 프랑스 국립도서관(Gallica) · 네덜란드 국립문서보관소 |
+| 🇪🇺 유럽 | 유로피아나(유럽 4,000여 기관 통합) |
+| 🇯🇵 일본 | 아시아역사자료센터 · 국립국회도서관 |
+| 🇦🇺 🇳🇿 호주·뉴질랜드 | 호주 전쟁기념관 · 뉴질랜드 국립기록원 · 디지털NZ |
+| 🌐 국제 | UN 디지털도서관 · 위키미디어 공용 |
+| 🇰🇷 한국 | **6·25전쟁 아카이브센터(협약기관)** · 국가기록원 · 국립중앙도서관 · 대한민국신문아카이브 · 서울기록원 · 국사편찬위원회 · 공훈전자사료관 · 독립기념관 · 독립운동판결문 · 국가유산포털 · 대한민국역사박물관 · KTV · 장서각 · 규장각 · 한국고문서자료관 · 정보공개포털 |
+
+---
+
+## 🧰 플러그인에 들어 있는 전문 스킬 11종
+
+스킬은 Claude가 특정 작업을 할 때 꺼내 쓰는 **전문 작업 설명서**입니다. 해당하는 부탁을 받으면 Claude가 알아서 불러옵니다.
+
+### 🔎 찾기
+| 스킬 | 이럴 때 | 예시 말하기 |
+|---|---|---|
+| **korea-archive-discovery** | 국내외 문서고에서 한국 기록을 찾을 때. 표기 변형·교차검증 전략을 자동 적용 | "NARA에서 해방 직후 영상 찾아줘" |
+| **joseon-source-excavation** | 한국사DB·규장각·승정원일기 등 조선 사료를 찾을 때 | "비변사등록에서 조운 관련 기사 찾아줘" |
+| **kyujanggak-images** | 규장각 고문헌 원문 이미지를 찾아 내려받을 때 | "奎 도판 고해상으로 받아줘" |
+
+### 📖 읽기
+| 스킬 | 이럴 때 | 예시 말하기 |
+|---|---|---|
+| **joseon-source-mining** | 법전·등록·일기를 깊이 읽고 제도의 역사를 정리할 때 | "이 제도가 언제부터 있었는지 경국대전에서 확인해줘" |
+| **archival-discovery-pipeline** | 영상·사진을 장면별로 분석하고 화면 속 글자(슬레이트·간판)를 읽을 때 | "이 필름 프레임별로 분석해줘" |
+| **record-annotation** | 사진·문서에 번호 표시와 설명을 붙인 해설 이미지를 만들 때 | "이 사진에 뭐가 보이는지 표시해줘" |
+
+### ✍️ 만들기
+| 스킬 | 이럴 때 | 예시 말하기 |
+|---|---|---|
+| **korea-full-package** | 조사부터 모든 결과물까지 한 번에 | "○○ 풀패키지로 만들어줘" |
+| **insta-carousel** | 인스타그램 카드뉴스(1080×1080 이미지)를 만들 때 | "이 기록으로 카드뉴스 만들어줘" |
+| **khdb-citation** | 한국사DB 자료를 논문 각주·참고문헌으로 쓸 때 | "이 실록 기사 각주 형식으로 써줘" |
+| **nanet-citation** | 국회도서관 자료를 논문 참고문헌으로 쓸 때 | "이 학위논문 APA로 써줘" |
+
+### 🙋 안내
+| 스킬 | 이럴 때 | 예시 말하기 |
+|---|---|---|
+| **changgi-help** | 처음 써 보거나 사용법이 궁금할 때 | "창기창기 도와줘" |
+
+---
+
+## 🛡️ 믿을 수 있게 만들었습니다
+
+- **실제 기록만** — AI가 그린 인물이나 장면은 쓰지 않습니다.
+- **직접 확인한 정보만** — 모든 주소와 수치는 각 기관 시스템을 실제로 조회한 결과입니다.
+- **써도 되는지 표시** — 기록마다 이용 권리를 A~D 등급으로 알려 줍니다. 찾는 것은 막지 않고 표시만 하며, 최종 판단은 사람이 합니다.
+- **원문이 바뀌면 알아챕니다** — 주요 기록 8건의 확인값을 [공개 장부](https://korea-archive-mcp.vercel.app/fixity-ledger.json)에 올려 두고 매주 대조합니다.
+- **출처를 밝힙니다** — 협약기관 6·25전쟁 아카이브센터 기록에는 출처를 반드시 함께 적습니다.
+
+---
+
+## 🖼️ 실제로 만든 결과물
+
+### 카드뉴스 — 8·15 광복 81주년 시리즈 (전부 저작권 만료 실물 기록으로 제작)
 
 | | | |
 |---|---|---|
-| ![실사 커버](docs/carousel/showcase_01_cover.png) | ![파노라마](docs/carousel/showcase_02_pano.png) | ![지도 여정](docs/carousel/showcase_03_map.png) |
-| ![부채꼴 스택](docs/carousel/showcase_04_stack.png) | ![인물 카드](docs/carousel/showcase_05_person.png) | ![문서 판독](docs/carousel/showcase_06_document.png) |
+| ![1945 개성, 미국 국립기록관리청 필름의 한 장면을 쓴 표지](docs/carousel/showcase_01_cover.png) | ![필름 장면을 이어 붙인 파노라마](docs/carousel/showcase_02_pano.png) | ![개성·경성·제주 세 도시의 1945년 촬영지 지도](docs/carousel/showcase_03_map.png) |
+| **표지** — 1945 개성, 미국 필름 장면 | **파노라마** — 개성 필름 세 컷 | **지도** — 세 도시의 1945년 |
+| ![서울을 찍은 필름 네 롤의 기록 목록](docs/carousel/showcase_04_stack.png) | ![유관순 인물 카드](docs/carousel/showcase_05_person.png) | ![관보 제1호 문서 판독](docs/carousel/showcase_06_document.png) |
+| **기록 목록** — 수장고의 서울 필름 네 롤 | **인물** — 유관순 | **문서 읽기** — 관보 제1호 |
 
-01 실사 풀블리드 커버(1945 개성, NARA 필름 프레임) · 02 파노라마 필름스트립 · 03 지도 여정(SVG)
-· 04 부채꼴 스택(미공개 기록 목록) · 05 인물 카드(유관순) · 06 문서 판독(관보 제1호 '대한민국 30년').
+### 소개 카드 18장
 
-## Gallery / 카드뉴스
-
-능력·국내 소스·자동 브라우징·실전(라이브)·설치를 담은 카드 18장 (`docs/cards/`).
+<details>
+<summary><b>펼쳐 보기</b></summary>
 
 | | | |
 |---|---|---|
@@ -155,4 +162,72 @@ all built from public-domain records.*
 | ![13](docs/cards/card_13.png) | ![14](docs/cards/card_14.png) | ![15](docs/cards/card_15.png) |
 | ![16](docs/cards/card_16.png) | ![17](docs/cards/card_17.png) | ![18](docs/cards/card_18.png) |
 
-01 표지 · 02 문제 · 03 능력 4층 · 04 해외 5곳 · 05 국내 9곳(NEW) · 06 자동 브라우징(NEW) · 07~11 실전 LIVE · 12 옛 표기 · 13 권리판정 · 14 플러그인 설치 · 15 MCP 커넥터 · 16 당신 차례 · 17 소개 · 18 GitHub.
+01 표지 · 02 문제 · 03 능력 · 04 해외 문서고 · 05 국내 문서고 · 06 자동 조회 · 07~11 실전 사례 · 12 옛 표기 · 13 권리 판정 · 14 플러그인 설치 · 15 커넥터 연결 · 16 당신 차례 · 17 소개 · 18 GitHub
+</details>
+
+더 많은 실물 예시: [한강의 배 보고서](https://korea-archive-mcp.vercel.app/examples/hanriver.html) · [강연 자료 403장](https://korea-archive-mcp.vercel.app/examples/joseon-deck.html) · [기록잇다 — 브라우저 즉석 검색](https://korea-archive-mcp.vercel.app/ingitda.html)
+
+---
+
+## 📖 용어 풀이
+
+| 용어 | 쉬운 설명 |
+|---|---|
+| **플러그인** | Claude에 도구와 스킬을 한꺼번에 설치하는 묶음 |
+| **커넥터(MCP)** | AI 비서에 새 능력을 붙이는 연결 주소 |
+| **스킬** | Claude가 특정 작업을 할 때 꺼내 쓰는 전문 작업 설명서 |
+| **교차확인** | 같은 기록이 두 곳 이상의 문서고에서 나온 경우 |
+| **원본확인** | 사본에 적힌 원본 번호로 미국 국립기록관리청 목록을 직접 조회해 원본이 실제로 있는지 확인한 것 |
+| **판독** | 목록이 아니라 기록 본문·상세 정보를 가져와 읽는 것 |
+| **옆 번호 훑기(인접 채굴)** | 찾은 기록의 앞뒤 번호를 확인해 같은 묶음을 찾는 방법 |
+
+---
+
+## 👩‍💻 개발자를 위한 정보
+
+<details>
+<summary><b>저장소 구조</b></summary>
+
+- `plugins/korea-archive/servers/server.py` — 파이썬 MCP 서버(도구 20종)
+- `mcp/server.py` — 단독 실행용 서버(위 파일에서 자동 생성)
+- `plugins/korea-archive/skills/` — 전문 스킬 11종
+- 원격 서버 버전([korea-archive-mcp](https://github.com/changgi/korea-archive-mcp), Node)과 기능이 같은지 코드를 올릴 때마다 자동으로 검사합니다.
+</details>
+
+<details>
+<summary><b>선택 환경변수</b></summary>
+
+모두 없어도 대부분 작동합니다.
+`NARA_API_KEY`(미국 국립기록관리청) · `EUROPEANA_API_KEY` · `ARCHIVES_API_KEY`(국가기록원, data.go.kr 15000153) · `NLK_API_KEY`(국립중앙도서관)
+</details>
+
+---
+
+## English
+
+**Korea Archive** is a Claude plugin that searches **30 archives in 9 countries** (US NARA, UK TNA, Gallica, Europeana, JACAR, NDL, AWM, Archives NZ, UN, Wikimedia Commons and 16+ Korean institutions) with a single Korean or English question.
+
+**Why:** records about Korea were indexed in the vocabulary of their era. Seoul was *Keijo*, Busan *Fusan*, Korea *Chosen* or *Corea*. Search with today's words and most of it stays hidden. The plugin translates each question into each archive's language and period spellings, then searches all 30 sources at once.
+
+**What you get:**
+- Merged results, with records found in two or more archives marked as **cross-checked**
+- **Full-text reading** at 14 sources: merit records, court rulings, manuscript notes, heritage descriptions, old newspapers, UN documents and NARA catalog details
+- **Rights grading (A–D)** for every record, including live NARA use-restriction lookups
+- Export as **CSV**, a **knowledge graph**, or a **JSON-LD collection manifest** that records how each item was found
+- **11 skills** for reports, card news, video-frame reading, annotation and academic citation
+
+**Install:**
+```
+/plugin marketplace add changgi/korea-archive-marketplace
+/plugin install korea-archive@korea-archive-marketplace
+```
+Web and mobile: add the custom connector `https://korea-archive-mcp.vercel.app/api/mcp`. Full guide: [help-en.html](https://korea-archive-mcp.vercel.app/help-en.html)
+
+---
+
+<div align="center">
+
+MIT License · 방법론: 송창기 (2026), 국가기록원
+협약: KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터
+
+</div>

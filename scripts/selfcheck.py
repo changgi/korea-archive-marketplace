@@ -34,7 +34,7 @@ CTX = ssl.create_default_context()
 CTX.check_hostname = False
 CTX.verify_mode = ssl.CERT_NONE
 
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+UA = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)"  # v2.36 정직 UA(브라우저 위장 제거 — 거부 기관은 우회 없이 표시)
 DELAY = 0.5
 
 

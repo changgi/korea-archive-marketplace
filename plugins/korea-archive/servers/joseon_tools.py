@@ -23,6 +23,7 @@ import urllib.request
 import urllib.parse
 import ssl
 import gzip
+import http.client
 import re
 import html
 import time
@@ -37,8 +38,7 @@ _CTX.check_hostname = False
 _CTX.verify_mode = ssl.CERT_NONE
 
 _HDR = {
-    "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                   "AppleWebKit/537.36 Chrome/124"),
+    "User-Agent": "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)",  # v2.36 정직 UA(브라우저 위장 제거)
     "Referer": "https://db.history.go.kr/",
     "Content-Type": "application/x-www-form-urlencoded",
 }
@@ -47,13 +47,22 @@ DB = "https://db.history.go.kr"
 SJW = "https://sjw.history.go.kr"
 SILLOK = "https://sillok.history.go.kr"
 KYU = "https://kyudb.snu.ac.kr"
+from html import unescape as _html_unescape
 
 POLITE_DELAY = 0.4          # 요청 간격
 RETRY_WAIT = 20             # 실패 시 대기
 
 
+_COUNT = re.compile(r"총[\s\S]{0,40}?[\d,]+[\s\S]{0,20}?건")
+
+
 def _decode(resp) -> str:
-    b = resp.read()
+    try:
+        b = resp.read()
+    except http.client.IncompleteRead as e:  # v2.39.1 본문이 선언 길이보다 일찍 끊김(기관 측) — 받은 만큼 판독(Node 패리티)
+        if not e.partial or not _COUNT.search(e.partial.decode("utf-8", "replace")):  # v2.46.1 결과 건수 없는 조각은 채택 안 함(거짓 0건 방지)
+            raise
+        b = e.partial
     if resp.headers.get("Content-Encoding") == "gzip":
         b = gzip.decompress(b)
     return b.decode("utf-8", "replace")
@@ -68,6 +77,14 @@ def _post(url: str, params: dict, timeout: int = 90, retries: int = 2) -> str:
         except Exception:
             if attempt < retries - 1:
                 time.sleep(RETRY_WAIT)
+    # v2.46.1 POST가 끝내 실패하면 같은 인자의 GET(한국사DB 검색 결과 동일 실측 — Node jdbPost 패리티)
+    try:
+        gh = {k: v for k, v in _HDR.items() if k.lower() != "content-type"}
+        t = _decode(urllib.request.urlopen(urllib.request.Request(url + ("&" if "?" in url else "?") + data.decode(), headers=gh), timeout=timeout, context=_CTX))
+        if _COUNT.search(t):
+            return t
+    except Exception:
+        pass
     return ""
 
 
@@ -95,10 +112,20 @@ def _lines(s: str) -> list:
             html.unescape(re.sub(r"(?s)<[^>]+>", "\n", s)).split("\n") if l.strip()]
 
 
+# v2.61 시대별 상세 경로 — 근대·현대·고대 DB를 조선 경로로 요청해 404가 나던 결함(실측 dh_·sg_). Node 패리티
+_J_ERA = {"kd": "modern", "ij": "modern", "npda": "modern", "dh": "contemp", "pn": "contemp", "sg": "ancient"}
+_J_LABELS = ["제목", "연월일", "출전", "발신자", "수신자", "발신일", "문서분류", "작성자", "날짜", "작성일", "신문명", "기사제목", "발행년월일", "발행구분", "면수", "단수", "표제어"]
+_J_UI = re.compile(r"^(원문이미지|판본 전체|비교보기|.+본\(\d{4}년\))$")  # v2.61.1 본문 사이 화면 단추·판본 목록
+
+
+def _era(level_id: str) -> str:
+    return _J_ERA.get(str(level_id).split("_")[0], "joseon")
+
+
 def _url_for(level_id: str) -> str:
     """법령과 등록류는 상세 경로가 다르다. 혼동하면 빈 페이지가 온다."""
     path = "/joseon/item/level.do?levelId=" if level_id.startswith("jlaw") \
-           else "/joseon/level.do?levelId="
+           else f"/{_era(level_id)}/level.do?levelId="
     return DB + path + level_id
 
 
@@ -129,8 +156,8 @@ def joseon_law_search(query: str, max_results: int = 50) -> dict:
     if not s:
         return {"error": "요청 실패", "query": query}
 
-    m = re.search(r"총\s*([\d,]+)건", _strip(s))
-    total = int(m.group(1).replace(",", "")) if m else 0
+    m = re.search(r"총\s*([\d,]+)\s*건", _strip(s))
+    total = int(m.group(1).replace(",", "")) if m else -1  # v2.47 표기 없음 = 확인 불가(-1) — 부재 단정 금지(Node 패리티)
 
     results = []
     for lid, tt, tx in re.findall(
@@ -154,8 +181,10 @@ def joseon_law_search(query: str, max_results: int = 50) -> dict:
         "note": ("법전·편람은 한문 원문이 제공되므로 인용 가능합니다. "
                  "단 표점은 DB 제공 형태이며 교감본과 대조되지 않았습니다."),
     }
+    if total < 0:
+        out["finding"] = "결과 건수를 확인하지 못했습니다(응답 구조 변경 또는 끊김) — 부재로 단정하지 마십시오."
     if total == 0:
-        out["finding"] = (f"'{query}'는 법전에 수록되어 있지 않습니다. "
+        out["finding"] = (f"'{query}'는 법전에 수록되어 있지 않습니다(한국사DB '총 0건' 응답 — 확정 0). "
                           "법전 밖 관행일 가능성을 검토하고, 등록류·일기류를 조회하십시오.")
     return out
 
@@ -185,8 +214,8 @@ def joseon_record_search(query: str, include_jwamok: bool = False,
     if not s:
         return {"error": "요청 실패", "query": query}
 
-    mt = re.search(r"총\s*([\d,]+)건", _strip(s))
-    reported_total = int(mt.group(1).replace(",", "")) if mt else 0
+    mt = re.search(r"총\s*([\d,]+)\s*건", _strip(s))
+    reported_total = int(mt.group(1).replace(",", "")) if mt else -1  # v2.47
 
     seen, rows = set(), []
     # 결과 항목은 fnGoItemLevel('bb', '<levelId>', '0') 형태로 링크된다
@@ -258,10 +287,61 @@ def joseon_item_read(level_id: str, max_chars: int = 20000) -> dict:
     # 본문 시작점
     if level_id.startswith("jlaw"):
         k = lines.index("다음글") + 1 if "다음글" in lines else None
+        if k is None and "자료인용방법" in lines:  # v2.69.1 현 조문 페이지 — '자료인용방법' 다음이 조문 제목, '상위목록' 다음부터 본문(Node 패리티)
+            c0 = lines.index("자료인용방법")
+            c1 = lines.index("전체목록", c0) if "전체목록" in lines[c0:] else -1
+            if c1 > c0: title = " ".join(lines[c0 + 1:c1])
+            if "상위목록" in lines[c0:]: k = lines.index("상위목록", c0) + 1
     else:
         k = next((i for i, l in enumerate(lines)
                   if l.startswith("◯") or l.startswith("○")), None)
 
+    if k is None and not level_id.startswith("jlaw"):  # v2.61 '◯' 표시가 없는 기록 — 기술 항목(제목·연월일·출전·발신자…) 뒤가 본문
+        hoi = lines.index("HOI") if "HOI" in lines else -1
+        t2 = lines[hoi - 1] if hoi > 0 else ""
+        stop = next((i for i, l in enumerate(lines) if "개인정보취급방침" in l or "경기도 과천시" in l), len(lines))
+        meta = []
+        for l in lines[max(0, hoi):stop]:
+            if l in _J_LABELS: meta.append([l, []])
+            elif meta: meta[-1][1].append(l)
+        if meta:
+            rest = meta[-1][1][1:]; meta[-1][1] = meta[-1][1][:1]; ttl = t2 or title
+            while rest and rest[0] in (ttl, t2): rest = rest[1:]
+            mv = [[kk, re.sub(r"\s+", " ", " ".join(v))[:200]] for kk, v in meta if v]  # Node jClean과 같은 공백 정규화(&nbsp; 포함)
+            body = re.sub(r"\s+", " ", " ".join(rest))[:max_chars]
+            if body:
+                era = _era(level_id)
+                return {"level_id": level_id, "title": ttl, "body": body, "chars": len(body), "body_status": "ok", "url": _cite(level_id), "meta": mv, "era": era,
+                        "citation_note": (f"원문 수록({ {'contemp': '현대', 'modern': '근대', 'ancient': '고대'}[era]} 자료) — 출전을 병기해 인용." if era != "joseon"
+                                          else "원문 수록(등록류 장계 등) — 출전·발신일 병기 인용.")}
+            if "원문이미지" in lines:  # v2.61.1 신문 지면 등 — 텍스트 없이 원문 이미지만(미공개 아님)
+                return {"level_id": level_id, "title": ttl, "body": None, "body_status": "image_only", "url": _cite(level_id), "meta": mv,
+                        "note": "본문 텍스트 없음 — 원문 이미지(지면)로만 제공됩니다(미공개 아님)."}
+            title = ttl
+        else:  # v2.61.1 기술 항목 표도 '◯'도 없는 기록(삼국사기 등) — 제목 반복 줄 뒤 '(날짜)'·본문·주제분류
+            j0 = next((i for i in range(hoi + 2, len(lines)) if t2 and lines[i] == t2), -1)
+            if j0 > 0:
+                i = j0 + 1; mv = []; dt_ = ""
+                if i < len(lines) and lines[i] == "(":
+                    k2 = lines.index(")", i) if ")" in lines[i:] else -1
+                    if i < k2 < i + 8: dt_ = " ".join(lines[i + 1:k2]); i = k2 + 1
+                if dt_: mv.append(["연월일", dt_])
+                if "주제분류" in lines[i:]:
+                    ci = lines.index("주제분류", i); cls = [l for l in lines[ci + 1:stop] if "＞" in l][:6]
+                    if cls: mv.append(["주제분류", "; ".join(cls)])
+                sr = re.search(r'<section class="section-read"[^>]*>([\s\S]*?)</section>', s)  # 본문은 section-read — 각주 팝업(註 NNN)은 걷어 낸다
+                if sr:
+                    sr_t = re.sub(r'<div class="popup-nd[\s\S]*?<div class="cont">[\s\S]*?</div></div>', " ", sr.group(1))
+                    sr_t = re.sub(r"<sup>[^<]*</sup>", "", sr_t)
+                    body = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", sr_t))).strip()
+                else:
+                    cut = next((x for x in range(i, len(lines)) if lines[x].startswith("註)") or lines[x] == "주제분류" or "개인정보취급방침" in lines[x]), stop)
+                    body = re.sub(r"\s+", " ", " ".join(l for l in lines[i:cut] if not _J_UI.match(l) and not re.match(r"^註\s*\d+\)?$", l))).strip()
+                body = body[:max_chars]
+                if len(body) > 20:
+                    era = _era(level_id)
+                    return {"level_id": level_id, "title": t2, "body": body, "chars": len(body), "body_status": "ok", "url": _cite(level_id), "meta": mv, "era": era,
+                            "citation_note": f"원문 수록({ {'contemp': '현대', 'modern': '근대', 'ancient': '고대'}.get(era, '조선')} 자료) — 출전을 병기해 인용."}
     if k is None:
         status = "not_published" if title else "parse_failed"
         return {
@@ -275,7 +355,7 @@ def joseon_item_read(level_id: str, max_chars: int = 20000) -> dict:
         }
 
     end = next((i for i, l in enumerate(lines[k:], k)
-                if "경기도 과천시" in l or "개인정보" in l), k + 250)
+                if "경기도 과천시" in l or "개인정보" in l or l == "디지털역사자료 인용방법"), k + 250)
     body = " ".join(lines[k:end])[:max_chars]
 
     is_law = level_id.startswith("jlaw")
@@ -379,7 +459,7 @@ def law_presence_matrix(terms: list) -> dict:
     matrix, absent = [], []
     for t in terms[:30]:
         r = joseon_law_search(t, max_results=10)
-        total = r.get("total", 0)
+        total = r.get("total", -1)  # v2.47 조회 실패는 -1(확인 불가) — 부재 아님
         earliest, in_code = "", False
         if r.get("results"):
             sources = [x["source"] for x in r["results"] if x.get("source")]
@@ -394,6 +474,8 @@ def law_presence_matrix(terms: list) -> dict:
         if total == 0:
             row["note"] = "법전 미수록"
             absent.append(t)
+        elif total < 0:
+            row["note"] = "확인 불가(조회 실패)"
         elif not in_code:
             row["note"] = f"법전이 아닌 {earliest}에만 수록 — 조문 아닐 수 있음"
             absent.append(t)
@@ -498,7 +580,7 @@ def sjw_search(query: str, max_results: int = 50) -> dict:
 
     t = _strip(s)
     m = re.search(r"검색결과\s*([\d,]+)\s*건", t) or re.search(r"총\s*([\d,]+)\s*건", t)
-    total = int(m.group(1).replace(",", "")) if m else 0
+    total = int(m.group(1).replace(",", "")) if m else -1  # v2.47
 
     dist = {}
     for reign in _REIGNS:
@@ -540,21 +622,37 @@ def kyujanggak_search(query: str, area: str = "both") -> dict:
     out = {"query": query, "sections": {}}
 
     for code, label in areas:
-        data = urllib.parse.urlencode({
-            "totalSearchString": query, "searchArea": code}).encode()
+        # v2.37 사이트 개편(2026-11-24): POST는 CSRF 토큰 필수(403) — 공개 GET 검색으로(Node 패리티)
+        qs = urllib.parse.urlencode({"totalSearchString": query, "searchArea": code})
         try:
-            req = urllib.request.Request(KYU + "/search/search.do",
-                                         data=data, headers=khdr)
+            gh = {k: v for k, v in khdr.items() if k.lower() != "content-type"}
+            req = urllib.request.Request(KYU + "/search/search.do?" + qs, headers=gh)
             page = _decode(urllib.request.urlopen(req, timeout=90, context=_CTX))
         except Exception as e:
-            out["sections"][label] = {"error": type(e).__name__}
+            out["sections"][label] = {"error": f"{type(e).__name__} {getattr(e, 'code', '')}".strip()}  # v2.36 HTTP 코드 보존(403 = 정직 UA 거부 표시)
             time.sleep(POLITE_DELAY)
             continue
 
         items = []
+        # v1.96.7: 결과 행 'N. 서명 청구기호 : 奎… 편저자 : … 간행년대 : … 사부분류 : … [본문 : …] 상세정보' 구조 판독(Node kyuRows 패리티)
+        flat = re.sub(r"\s+", " ", _html_unescape(re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)[\s\S]*?</\1>", " ", page, flags=re.I))))
+        for m in re.finditer(r"(?:^|\s)\d{1,3}\.\s+(.{2,140}?)\s+청구기호\s*:\s*(\S{2,40})\s+편저자\s*:\s*(.{1,90}?)\s+간행년대\s*:\s*(.{1,50}?)\s+사부분류\s*:\s*(.{1,80}?)\s+(?:본문\s*:\s*(.{0,400}?)\s+)?상세정보", flat):
+            if any(i["call_number"] == m.group(2) for i in items):
+                continue
+            items.append({"call_number": m.group(2), "title": re.split(r"\s\d{1,3}\.\s+", m.group(1))[-1].strip(),
+                          "author": m.group(3).strip(), "date": m.group(4).strip(), "cls": m.group(5).strip(),
+                          "body": re.sub(r"\.\.\.$", "", (m.group(6) or "")).strip()[:160]})
+        # v2.35 행별 book_cd ↔ 청구기호(앞 행=원본 GK… 우선, 뒤 마이크로필름 TM… 무시) — /book/view.do?book_cd= GET 고정 상세(Node 패리티)
+        codes = {}
+        for seg in re.split(r'class="schli[ "]', page)[1:]:  # v2.37 개편 마크업 class="schli search-view-anchor"
+            cm = re.search(r"청구기호\s*:\s*([^\n\t]{2,30})", re.sub(r"<[^>]+>", "", seg));  # 태그 제거 — 검색어 강조가 청구기호를 끊던 것 bm = re.search(r'data-book_cd="([A-Z]{1,4}\d[\w-]*_\d\d)"', seg) or re.search(r"fn_totalSearchResultView\([^)]*?'([A-Z]{1,4}\d[\w-]*_\d\d)'", seg)
+            if cm and bm: codes.setdefault(re.sub(r"\s+", " ", cm.group(1)).strip(), bm.group(1))
+        for i in items:
+            if codes.get(i["call_number"]): i["book_cd"] = codes[i["call_number"]]
+        known = {i["call_number"].split("-")[0] for i in items}
         for m in re.finditer(r"(奎[\d軸]+)", page):
             code_no = m.group(1)
-            if code_no not in [i["call_number"] for i in items]:
+            if code_no not in known and code_no not in [i["call_number"] for i in items]:
                 items.append({"call_number": code_no})
         out["sections"][label] = {"count": len(items), "items": items[:30]}
         time.sleep(POLITE_DELAY)

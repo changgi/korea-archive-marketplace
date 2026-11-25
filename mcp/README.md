@@ -8,36 +8,37 @@ Claude Desktop / Claude Code / Cowork 등 MCP 지원 에이전트에 한국 기�
 
 ## 도구 (20종)
 
-**해외 (7)**
+**해외 (6)**
 | 도구 | 기능 | 키 |
 |---|---|---|
 | `tna_search` | 영국 TNA Discovery 검색 (참조코드 자동 정확구) | 불요 |
 | `tna_adjacent_mine` | 인접 확장(Adaptive Mining) — 승격 후보 발굴 | 불요 |
 | `nara_search` | NARA 카탈로그 검색 (RG 교차·영상 한정) | `NARA_API_KEY` |
-| `ia_search` / `ia_metadata` | archive.org 검색·아이템 파일 확인 | 불요 |
+| `ia_search` | archive.org 검색 + identifier 메타·파일 확인 통합 | 불요 |
 | `gallica_search` | 프랑스 BnF Gallica (구한말 선교사·외교 문헌) | 불요 |
 | `europeana_search` | 유럽 58개국 4,000+ 기관 통합검색 | 데모 키 기본(선택 `EUROPEANA_API_KEY`) |
 
-**국내 (8)** — 서버 사이드 자동 브라우징
+**국내 (9)** — 서버 사이드 자동 브라우징
 | 도구 | 기능 | 키 |
 |---|---|---|
-| `nedb_search` | 국사편찬위 한국사DB (1차 사료 1,100만+) | 불요 |
+| `nedb_search` | 국사편찬위 한국사DB (1차 사료 1,100만+) + 10모드(조선 심층 판독·`aks` 한국고문서자료관 172곳) | 불요 |
 | `archives_search` | 국가기록원 OpenAPI | `ARCHIVES_API_KEY`(data.go.kr 15000153) |
 | `nlk_search` | 국립중앙도서관 6개 컬렉션 | 선택 `NLK_API_KEY` |
 | `seoul_archives_search` | 서울기록원 카탈로그 | 불요 |
-| `foia_search` | 정보공개포털(원문정보공개) | 불요 |
-| `local_gov_search` | 서울정보소통광장·서울시교육청·경남기록원 | 불요 |
+| `foia_search` | 정보공개포털(원문정보공개) + 지방 정보공개·기록원 통합(서울정보소통광장·서울시교육청·경남기록원) | 불요 |
 | `warmemo_search` | 전쟁기념관 아카이브 | 불요 |
+| `koreanwar_search` | KOREAN WAR ARCHIVES(6·25전쟁 아카이브센터 — 협약기관) 통합검색 + 전투정보 DB(`scope=battle`) | 불요 |
+| `koreanwar_item` | 6·25전쟁 아카이브센터 건별 메타 + NARA 역추적 + 인접 채굴(`radius`) | 불요 |
 | `scrape_plan` | robots 확인 + 브라우저 도구 폴백 안내 | 불요 |
 
 **유틸 (5)**
 | 도구 | 기능 | 키 |
 |---|---|---|
 | `query_bank` | 검증된 쿼리 세트 (44그룹·RG·TNA) + 국내 3대 부정합 키워드셋 252종 (`domestic`) | 불요 |
-| `judge_rights` | 권리 등급 자동 초기판정 (§30) | 불요 |
+| `judge_rights` | 권리 등급 자동 초기판정 (§30) + 공공누리 KOGL 1~4유형 | 불요 |
 | `report_template` | 조사 결과를 HTML 발굴 보고서로 생성 | 불요 |
-| `cross_search` | 여러 아카이브 한 쿼리로 동시 교차수집·병합 (상호보완) | 해외 불요 |
-| `source_profile` | 기관 자료·이용·활용구조 3층 프로파일 (해외 5+국내 6) | 불요 |
+| `cross_search` | 13소스 동시 교차수집·병합 + variants(당대 표기 팬아웃)·format=csv | 해외 불요 |
+| `source_profile` | 기관 3층 프로파일 + `health` 13채널 헬스체크 | 불요 |
 
 ## 설치 (로컬 직접 실행)
 
@@ -72,8 +73,9 @@ claude mcp add korea-archive -- python <설치경로>/korea-archive-project/mcp/
 - "TNA에서 `FO 371 FK1015` 검색해줘" → tna_search
 - "`WO 281/1206` 주변 ±10을 마이닝해서 승격 후보 찾아줘" → tna_adjacent_mine
 - "Gallica에서 `Corée missionnaires` 찾아줘" → gallica_search
-- "서울정보소통광장에서 위안부 결재문서 찾아줘" → local_gov_search
+- "서울정보소통광장에서 위안부 결재문서 찾아줘" → foia_search
 - "전쟁기념관에서 인천상륙작전 자료 찾아줘" → warmemo_search
+- "6·25전쟁 아카이브센터에서 장진호 기록 찾아줘" → koreanwar_search
 - "구한말 쿼리 세트 보여줘" → query_bank("G-07")
 - "RG 242 노획필름의 권리 등급은?" → judge_rights
 

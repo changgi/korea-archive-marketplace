@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Korea Archive 플러그인 — 한국 기록을 찾고, 읽고, 결과물까지</title>
+<meta name="description" content="9개국 30개 문서고에서 한국 기록을 찾아 원문·출처·권리를 정리하고 보고서·카드뉴스·논문 각주까지 만드는 무료 Claude 플러그인.">
+<style>
+:root{
+  --paper:#fbfaf7; --card:#ffffff; --ink:#1c1f24; --body:#3a3f47; --muted:#6a707a; --line:#e6e2d9;
+  --accent:#8a5a14; --accent-bg:#f6ecd9; --blue:#1d5fbf; --blue-bg:#e8f0fc; --green:#1f7a3d; --green-bg:#e5f4ea;
+  --serif:'Noto Serif KR','Nanum Myeongjo','AppleMyungjo',serif;
+  --sans:'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+  --mono:'D2Coding','SFMono-Regular',Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{background:var(--paper);color:var(--body);font-family:var(--sans);font-size:18px;line-height:1.75;word-break:keep-all}
+a{color:var(--blue)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+.narrow{max-width:760px}
+
+/* 상단 메뉴 */
+nav{position:sticky;top:0;z-index:10;background:rgba(251,250,247,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
+nav .logo{font-weight:800;color:var(--ink);text-decoration:none;font-size:1rem;white-space:nowrap}
+nav .links{display:flex;gap:22px;font-size:.92rem;overflow-x:auto}
+nav .links a{color:var(--body);text-decoration:none;white-space:nowrap}
+nav .links a:hover{color:var(--accent)}
+
+/* 첫 화면 */
+.hero{padding:88px 0 72px;text-align:center}
+.pill{display:inline-block;background:var(--accent-bg);color:var(--accent);font-weight:700;font-size:.85rem;padding:6px 16px;border-radius:999px}
+.hero h1{font-family:var(--serif);color:var(--ink);font-size:clamp(2rem,5.4vw,3.4rem);line-height:1.3;margin:22px 0 18px;font-weight:900}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p.sub{font-size:1.15rem;max-width:640px;margin:0 auto;color:var(--body)}
+.buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+.btn{display:inline-block;padding:14px 26px;border-radius:10px;font-weight:700;font-size:1rem;text-decoration:none;border:2px solid var(--ink)}
+.btn.main{background:var(--ink);color:#fff}
+.btn.sub{background:transparent;color:var(--ink)}
+.btn:hover{transform:translateY(-1px)}
+.facts{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:40px}
+.facts span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-size:.92rem;color:var(--ink)}
+.facts b{color:var(--accent)}
+
+/* 공통 섹션 */
+section{padding:80px 0;border-top:1px solid var(--line)}
+section.tint{background:#f4f1ea}
+.kicker{color:var(--accent);font-weight:800;font-size:.85rem;letter-spacing:.12em}
+h2{font-family:var(--serif);color:var(--ink);font-size:clamp(1.6rem,3.6vw,2.2rem);line-height:1.35;margin:8px 0 16px;font-weight:800}
+.intro{font-size:1.08rem;max-width:720px;margin-bottom:40px}
+
+/* 문제 제시 */
+.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:20px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px}
+.box h3{color:var(--ink);font-size:1.15rem;margin-bottom:10px}
+.terms{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.term{font-family:var(--mono);font-size:.9rem;padding:4px 12px;border-radius:8px}
+.term.no{background:#fbe9e7;color:#a1291b;text-decoration:line-through}
+.term.yes{background:var(--green-bg);color:var(--green);font-weight:700}
+
+/* 대화 예시 */
+.chats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:24px}
+.chat{min-width:0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:14px}
+.chat .label{font-size:.8rem;font-weight:800;color:var(--muted);letter-spacing:.08em}
+.say{align-self:flex-start;background:var(--blue-bg);color:#123b78;font-weight:700;padding:12px 18px;border-radius:16px 16px 16px 4px;font-size:1.02rem}
+.get{font-size:.98rem}
+.get b{color:var(--ink)}
+.out{background:#1c1f24;color:#e9e4d8;font-family:var(--mono);font-size:.84rem;line-height:1.65;padding:14px 16px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.out .hl{color:#f0c674}
+
+/* 시작하기 */
+.steps{display:grid;gap:18px;max-width:760px}
+.step{display:grid;grid-template-columns:56px 1fr;gap:18px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.num{width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem}
+.step h3{color:var(--ink);font-size:1.1rem;margin-bottom:4px}
+.copy{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.copy code{font-family:var(--mono);font-size:.92rem;background:#f1eee6;border:1px solid var(--line);padding:8px 12px;border-radius:8px;color:var(--ink);word-break:break-all}
+.copy button{font:inherit;font-size:.88rem;font-weight:700;padding:8px 14px;border-radius:8px;border:1px solid var(--ink);background:var(--card);cursor:pointer}
+.alt{font-size:.92rem;color:var(--muted);margin-top:18px}
+
+/* 기관 */
+.regions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:16px}
+.region{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.region .flag{font-size:1.7rem;line-height:1}
+.region h3{color:var(--ink);font-size:1.02rem;margin:8px 0 4px}
+.region p{font-size:.92rem;color:var(--body);line-height:1.6}
+.region.home{grid-column:1/-1;background:var(--accent-bg);border-color:#ead7b4}
+
+/* 기능 */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:20px}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px}
+.feat .ic{font-size:2rem;line-height:1}
+.feat h3{color:var(--ink);font-size:1.15rem;margin:12px 0 8px}
+.feat p{font-size:.98rem}
+.feat .ex{margin-top:12px;font-size:.9rem;background:#f6f4ee;border-radius:10px;padding:10px 14px;color:var(--body)}
+.feat .ex b{color:var(--accent)}
+
+/* 받는 형태 */
+.formats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:18px}
+.fmt{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;text-align:center}
+.fmt .ic{font-size:2.4rem}
+.fmt h3{color:var(--ink);margin:10px 0 6px;font-size:1.1rem}
+.fmt p{font-size:.95rem}
+
+/* 신뢰 */
+.trust{display:grid;gap:14px;max-width:780px}
+.trust li{list-style:none;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--green);border-radius:10px;padding:16px 20px}
+.trust b{color:var(--ink)}
+
+/* 용어·질문 */
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0;margin-bottom:12px;max-width:820px}
+summary{cursor:pointer;padding:18px 22px;font-weight:700;color:var(--ink);list-style:none;position:relative}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'＋';position:absolute;right:22px;color:var(--muted)}
+details[open] summary::after{content:'－'}
+details .ans{padding:0 22px 20px;font-size:.98rem}
+dl{display:grid;grid-template-columns:150px 1fr;gap:0;max-width:820px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+dt,dd{padding:15px 20px;border-bottom:1px solid var(--line)}
+dt{font-weight:800;color:var(--ink);background:#f6f4ee}
+dd{font-size:.97rem}
+dl>*:nth-last-child(-n+2){border-bottom:0}
+
+/* 마지막 안내 */
+.final{text-align:center}
+.final p{font-size:1.1rem;margin:0 auto 30px;max-width:600px}
+footer{padding:44px 0 60px;text-align:center;color:var(--muted);font-size:.9rem;border-top:1px solid var(--line);line-height:1.9}
+
+@media (max-width:560px){
+  body{font-size:17px}
+  .chats{grid-template-columns:1fr}
+  dl{grid-template-columns:1fr}
+  dt{border-bottom:0;padding-bottom:4px}
+  nav .links{display:none}
+  .step{grid-template-columns:1fr}
+}
+
+.ways{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:20px}
+.way{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px;min-width:0}
+.way h3{color:var(--ink);font-size:1.2rem;margin:6px 0 6px}
+.way .who{font-size:.95rem;color:var(--muted)}
+.way pre{background:#1c1f24;color:#e9e4d8;font-family:var(--mono);font-size:.86rem;padding:14px 16px;border-radius:10px;margin:14px 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.way .tagline{display:inline-block;font-size:.8rem;font-weight:800;padding:3px 10px;border-radius:999px;background:var(--blue-bg);color:var(--blue)}
+.way.plug .tagline{background:#efe7fb;color:#6b3fb5}
+.skillgroup{margin-bottom:34px}
+.skillgroup h3{color:var(--ink);font-size:1.15rem;margin-bottom:14px}
+.skills{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px}
+.skill{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;min-width:0}
+.skill b{color:var(--ink);font-size:1.02rem;display:block;margin-bottom:4px}
+.skill p{font-size:.94rem}
+.skill .say{margin-top:12px;font-size:.92rem;padding:8px 14px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:18px}
+.gal figure{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.gal img{width:100%;display:block;aspect-ratio:1/1;object-fit:cover;background:#eee}
+.gal figcaption{padding:12px 16px;font-size:.92rem;color:var(--body)}
+.gal figcaption b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:.97rem}
+.table td{padding:15px 18px;border-bottom:1px solid var(--line);vertical-align:top}
+.table tr:last-child td{border-bottom:0}
+.table td:first-child{width:42%;font-weight:700;color:#123b78;background:var(--blue-bg)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top">🇰🇷 Korea Archive 플러그인</a>
+    <div class="links">
+      <a href="#install">설치</a>
+      <a href="#examples">이렇게 써요</a>
+      <a href="#skills">전문 스킬</a>
+      <a href="#gallery">결과물</a>
+      <a href="#faq">자주 묻는 질문</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="pill">Claude 플러그인 · 무료 · 한국어로 묻기만 하면 됩니다</span>
+    <h1>찾고, 읽고,<br><em>결과물까지</em> 만듭니다</h1>
+    <p class="sub">9개국 30곳의 문서고에서 한국 기록을 찾아 <b>원문·출처·이용 권리</b>를 정리하고,
+    원하면 <b>보고서·카드뉴스·논문 각주</b>까지 만들어 주는 Claude 플러그인입니다.</p>
+    <div class="buttons">
+      <a class="btn main" href="#install">설치하기</a>
+      <a class="btn sub" href="https://changgi.github.io/korea-archive-mcp/examples.html">예제 15선 보기</a>
+      <a class="btn sub" href="https://changgi.github.io/korea-archive-mcp/series.html">30곳 탐방 시리즈</a>
+    </div>
+    <div class="facts">
+      <span>🌏 문서고 <b>30곳</b></span>
+      <span>🧰 전문 스킬 <b>11종</b></span>
+      <span>🤝 6·25전쟁 아카이브센터 <b>협약</b></span>
+    </div>
+  </div>
+</header>
+
+<section class="tint" id="install">
+  <div class="wrap">
+    <div class="kicker">설치</div>
+    <h2>쓰는 환경에 맞게 고르세요</h2>
+    <p class="intro">두 방법 모두 같은 검색 도구 20종을 씁니다. 플러그인에는 컴퓨터에서 실행하는 <b>전문 스킬 11종</b>이 더 들어 있습니다.</p>
+    <div class="ways">
+      <div class="way plug">
+        <span class="tagline">추천 · 데스크톱</span>
+        <h3>🧩 플러그인으로 설치</h3>
+        <p class="who">Claude 데스크톱 앱이나 Claude Code를 쓰는 분</p>
+        <p>대화창에 아래 두 줄을 차례로 입력합니다.</p>
+        <pre>/plugin marketplace add changgi/korea-archive-marketplace
+/plugin install korea-archive@korea-archive-marketplace</pre>
+      </div>
+      <div class="way">
+        <span class="tagline">웹 · 스마트폰</span>
+        <h3>🔗 커넥터로 연결</h3>
+        <p class="who">Claude 웹사이트나 스마트폰 앱을 쓰는 분</p>
+        <p>설정 → 커넥터 → 커스텀 커넥터 추가 → 아래 주소 붙여 넣기</p>
+        <pre id="url">https://korea-archive-mcp.vercel.app/api/mcp</pre>
+        <div class="copy"><button type="button" onclick="navigator.clipboard.writeText(document.getElementById('url').textContent);this.textContent='복사됨 ✓'">주소 복사</button></div>
+      </div>
+    </div>
+    <p class="alt">설치 후 <b>"창기창기 도와줘"</b>라고 말하면 사용법을 안내해 줍니다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">왜 필요한가요</div>
+    <h2>오늘의 단어로는<br>그 시대 기록을 찾을 수 없습니다</h2>
+    <div class="compare">
+      <div class="box">
+        <h3>① 기록은 그 시대의 말로 적혀 있습니다</h3>
+        <p>1910~45년 기록에서 서울은 "Seoul"이 아니었습니다.</p>
+        <div class="terms">
+          <span class="term no">Seoul</span><span class="term yes">Keijo</span>
+          <span class="term no">Busan</span><span class="term yes">Fusan</span>
+          <span class="term no">Korea</span><span class="term yes">Chosen · Corea</span>
+        </div>
+      </div>
+      <div class="box">
+        <h3>② 나라마다 언어와 검색법이 다릅니다</h3>
+        <p>같은 "장진호"도 문서고마다 다르게 적혀 있어, 이 플러그인이 알아서 바꿔 찾습니다.</p>
+        <div class="terms">
+          <span class="term yes">🇺🇸 Chosin Reservoir</span>
+          <span class="term yes">🇯🇵 長津湖</span>
+          <span class="term yes">🇰🇷 장진호</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tint" id="examples">
+  <div class="wrap">
+    <div class="kicker">이렇게 써요</div>
+    <h2>평소 말투로 부탁하면 됩니다</h2>
+    <p class="intro">아래는 모두 <b>실제로 돌려 본 결과</b>입니다.</p>
+    <table class="table">
+      <tr><td>🗣️ "장진호 전투 기록 찾아줘"</td><td><b>Chosin Reservoir</b>로 자동 변환해 미국 국립기록관리청에서만 <b>512건</b>을 찾고, 다른 문서고 결과와 합쳐 줍니다.</td></tr>
+      <tr><td>🗣️ "안중근 의거 당시 신문 기사 찾아줘"</td><td><b>대한매일신보 [3면 3단] (1909.11.9)</b>처럼 면·단까지 적힌 목록. 논문 각주에 바로 옮길 수 있습니다.</td></tr>
+      <tr><td>🗣️ "유관순 공훈록 보여줘"</td><td>공적조서·공훈록 전문·수형 기록·묘소·현충시설을 한 번에 가져옵니다.</td></tr>
+      <tr><td>🗣️ "이 미국 기록 사진 써도 돼?"</td><td>권리 <b>A등급</b>(이용 제한 없음) 확인과 촬영일·실물 소장 위치·원본 파일 주소.</td></tr>
+      <tr><td>🗣️ "인천상륙작전 영상, 같은 묶음 더 찾아줘"</td><td>기록 번호 앞뒤를 훑어 <b>D-DAY 연속 필름 5편</b>을 한 번에 찾습니다.</td></tr>
+      <tr><td>🗣️ "찾은 거 표로 정리해줘"</td><td>제목·날짜·소장 기관·소속 분류·원본 이미지 주소가 담긴 엑셀용 표(CSV).</td></tr>
+      <tr><td>🗣️ "장진호 기록, 같은 것끼리 묶어줘"</td><td>한국 기관 재수집본과 미국 원본을 <b>같은 기록으로 묶습니다</b>. 이 검색에서 9건 중 <b>5건</b>이 두 기관에서 확인됐습니다.</td></tr>
+      <tr><td>🗣️ "장진호 풀패키지로 만들어줘"</td><td>조사부터 <b>보고서·카드뉴스 8장·포스터·발표 자료</b>까지 이어서 만듭니다.</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="skills">
+  <div class="wrap">
+    <div class="kicker">전문 스킬 11종</div>
+    <h2>부탁에 맞는 전문 설명서를<br>Claude가 알아서 꺼내 씁니다</h2>
+    <p class="intro">스킬은 특정 작업을 잘 해내기 위한 <b>작업 설명서</b>입니다. 따로 고를 필요 없이, 해당하는 부탁을 하면 자동으로 쓰입니다.</p>
+
+    <div class="skillgroup"><h3>🔎 찾기</h3><div class="skills">
+      <div class="skill"><b>국내외 문서고 발굴</b><p>표기 변형·교차검증 전략을 자동으로 적용해 한국 기록을 찾습니다.</p><div class="say">"NARA에서 해방 직후 영상 찾아줘"</div></div>
+      <div class="skill"><b>조선 사료 발굴</b><p>한국사DB·규장각·승정원일기·실록처럼 일반 검색이 안 되는 사이트를 찾습니다.</p><div class="say">"비변사등록에서 조운 기사 찾아줘"</div></div>
+      <div class="skill"><b>규장각 원문 이미지</b><p>규장각 고문헌의 원문 이미지를 찾아 내려받고 인용 형식까지 정리합니다.</p><div class="say">"이 고문헌 도판 고해상으로 받아줘"</div></div>
+    </div></div>
+
+    <div class="skillgroup"><h3>📖 읽기</h3><div class="skills">
+      <div class="skill"><b>조선 제도 깊이 읽기</b><p>법전·등록·일기를 맞대어 읽고, 제도가 언제 어떻게 바뀌었는지 정리합니다.</p><div class="say">"이 제도가 언제부터 있었는지 확인해줘"</div></div>
+      <div class="skill"><b>영상·사진 장면 분석</b><p>필름을 장면별로 나눠 보고, 화면 속 글자(슬레이트·간판·현수막)를 읽어 촬영 날짜·장소를 밝힙니다.</p><div class="say">"이 필름 프레임별로 분석해줘"</div></div>
+      <div class="skill"><b>기록 해설 이미지</b><p>사진·문서 위에 번호 표시와 설명을 얹은 해설 카드를 만듭니다. 추측은 걸러냅니다.</p><div class="say">"이 사진에 뭐가 보이는지 표시해줘"</div></div>
+    </div></div>
+
+    <div class="skillgroup"><h3>✍️ 만들기</h3><div class="skills">
+      <div class="skill"><b>풀패키지</b><p>조사·검증·보고서·카드뉴스·포스터·발표 자료까지 한 문장으로 이어서 만듭니다.</p><div class="say">"○○ 풀패키지로 만들어줘"</div></div>
+      <div class="skill"><b>인스타그램 카드뉴스</b><p>실물 기록 이미지로 1080×1080 카드를 디자인하고 이미지 파일로 뽑아 캡션까지 씁니다.</p><div class="say">"이 기록으로 카드뉴스 만들어줘"</div></div>
+      <div class="skill"><b>논문 인용 (한국사DB)</b><p>실록·승정원일기 등 한국사DB 자료를 각주·참고문헌 형식으로 씁니다.</p><div class="say">"이 실록 기사 각주로 써줘"</div></div>
+      <div class="skill"><b>논문 인용 (국회도서관)</b><p>학위논문·단행본 등 국회도서관 자료를 APA·Chicago 등 형식으로 씁니다.</p><div class="say">"이 학위논문 APA로 써줘"</div></div>
+    </div></div>
+
+    <div class="skillgroup"><h3>🙋 안내</h3><div class="skills">
+      <div class="skill"><b>처음 사용자 안내</b><p>연결 방법·예시 문장·만들 수 있는 결과물을 친절하게 알려 줍니다.</p><div class="say">"창기창기 도와줘"</div></div>
+    </div></div>
+  </div>
+</section>
+
+<section class="tint" id="gallery">
+  <div class="wrap">
+    <div class="kicker">실제로 만든 결과물</div>
+    <h2>카드뉴스 — 8·15 광복 81주년 시리즈</h2>
+    <p class="intro">전부 <b>저작권이 만료된 실물 기록</b>으로 만들었습니다. AI로 그린 장면은 없습니다.</p>
+    <div class="gal">
+      <figure><img src="carousel/showcase_01_cover.png" alt="1945 개성, 미국 국립기록관리청 필름 장면을 쓴 표지" loading="lazy"><figcaption><b>표지</b> — 1945 개성, 미국 필름의 한 장면</figcaption></figure>
+      <figure><img src="carousel/showcase_02_pano.png" alt="필름 장면을 이어 붙인 파노라마" loading="lazy"><figcaption><b>파노라마</b> — 개성, 1945년 가을 필름 세 컷</figcaption></figure>
+      <figure><img src="carousel/showcase_03_map.png" alt="개성·경성·제주 세 도시의 1945년 촬영지 지도" loading="lazy"><figcaption><b>지도</b> — 세 도시(개성·경성·제주)의 1945년</figcaption></figure>
+      <figure><img src="carousel/showcase_04_stack.png" alt="서울을 찍은 필름 네 롤의 기록 목록" loading="lazy"><figcaption><b>기록 목록</b> — 아직 수장고에 있는 서울 필름 네 롤</figcaption></figure>
+      <figure><img src="carousel/showcase_05_person.png" alt="유관순 인물 카드" loading="lazy"><figcaption><b>인물</b> — 유관순</figcaption></figure>
+      <figure><img src="carousel/showcase_06_document.png" alt="관보 제1호 문서 판독" loading="lazy"><figcaption><b>문서 읽기</b> — 관보 제1호</figcaption></figure>
+    </div>
+    <p class="alt" style="margin-top:28px">더 보기: <a href="https://korea-archive-mcp.vercel.app/examples/hanriver.html">한강의 배 보고서</a> ·
+    <a href="https://korea-archive-mcp.vercel.app/examples/joseon-deck.html">강연 자료 403장</a> ·
+    <a href="https://korea-archive-mcp.vercel.app/ingitda.html">기록잇다 — 브라우저 즉석 검색</a></p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">믿을 수 있게</div>
+    <h2>지켜 온 원칙</h2>
+    <ul class="trust">
+      <li><b>실제 기록만 씁니다.</b> AI가 그린 인물이나 장면은 쓰지 않습니다.</li>
+      <li><b>직접 확인한 정보만 씁니다.</b> 모든 주소와 수치는 각 기관 시스템을 실제로 조회한 결과입니다.</li>
+      <li><b>써도 되는지 표시합니다.</b> 기록마다 A~D 등급을 알려 주고, 최종 판단은 사람이 합니다.</li>
+      <li><b>원문이 바뀌면 알아챕니다.</b> 주요 기록 8건의 확인값을 <a href="https://korea-archive-mcp.vercel.app/fixity-ledger.json">공개 장부</a>에 올려 두고 매주 대조합니다.</li>
+      <li><b>출처를 밝힙니다.</b> 협약기관 6·25전쟁 아카이브센터 기록에는 출처를 반드시 함께 적습니다.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="tint" id="faq">
+  <div class="wrap">
+    <div class="kicker">자주 묻는 질문</div>
+    <h2>궁금한 점</h2>
+    <details><summary>플러그인과 커넥터는 뭐가 다른가요?</summary>
+      <div class="ans">둘 다 같은 검색 도구를 씁니다. 플러그인은 컴퓨터에 설치하는 방식이라 카드뉴스 이미지 렌더링·영상 분석처럼 <b>컴퓨터에서 실행하는 전문 스킬</b>까지 쓸 수 있습니다. 커넥터는 주소만 등록하면 되고, 웹·스마트폰에서 바로 씁니다.</div></details>
+    <details><summary>정말 무료인가요?</summary>
+      <div class="ans">네. 플러그인과 연결 주소는 무료입니다. Claude 이용 요금은 Claude 서비스 정책을 따릅니다.</div></details>
+    <details><summary>찾은 사진을 바로 책이나 SNS에 써도 되나요?</summary>
+      <div class="ans">도구가 알려 주는 권리 등급은 <b>1차 판정</b>입니다. A·B 등급이라도 게재 전에 소장 기관의 이용 조건을 사람이 최종 확인해 주세요. D 등급은 쓰지 않아야 합니다.</div></details>
+    <details><summary>영어나 일본어를 몰라도 되나요?</summary>
+      <div class="ans">네. 한국어로 물으면 각 문서고의 언어로 바꿔 찾습니다. 원문 제목은 출처를 정확히 남기기 위해 원래 언어 그대로 보여 드립니다.</div></details>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2>지금 바로 설치해 보세요</h2>
+    <p>두 줄이면 설치가 끝나고, "창기창기 도와줘"라고 말하면 시작입니다.</p>
+    <div class="buttons">
+      <a class="btn main" href="#install">설치하기</a>
+      <a class="btn sub" href="https://korea-archive-mcp.vercel.app/help.html">자세한 사용 안내</a>
+      <a class="btn sub" href="https://github.com/changgi/korea-archive-marketplace">GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  MIT License · 방법론: 송창기 (2026), 국가기록원<br>
+  협약: KOREAN WAR ARCHIVES 6·25전쟁 아카이브센터 ·
+  <a href="https://github.com/changgi/korea-archive-marketplace">플러그인</a> ·
+  <a href="https://changgi.github.io/korea-archive-mcp/">원격 서버 소개</a> ·
+  <a href="https://korea-archive-mcp.vercel.app/help-en.html">English</a>
+</footer>
+
+</body>
+</html>

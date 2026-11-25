@@ -56,12 +56,16 @@ def _extract(r: dict, layer: str, query: str) -> dict:
                if (r.get("id") or r.get("Id")) else None,
     }
 
-def _search(query: str, page_size: int = 100, max_pages: int = 2, sleep: float = 1.0):
-    page = 1
-    while page <= max_pages:
-        data = http_json(API + "?" + qs({"sps.searchQuery": query,
-                                          "sps.resultsPageSize": page_size,
-                                          "sps.page": page}))
+def _search(query: str, page_size: int = 100, max_pages: int = 2, sleep: float = 1.0,
+            start_page: int = 1, date_from: str | None = None, date_to: str | None = None):
+    # sps.dateFrom/To 실측 검증: Korea 13,533건 → 1950~51 한정 2,553건 (2026-11-18)
+    page = start_page
+    last = start_page + max_pages - 1
+    while page <= last:
+        p = {"sps.searchQuery": query, "sps.resultsPageSize": page_size, "sps.page": page}
+        if date_from: p["sps.dateFrom"] = date_from
+        if date_to: p["sps.dateTo"] = date_to
+        data = http_json(API + "?" + qs(p))
         recs, total = _records(data), _count(data)
         yield recs, total
         if page * page_size >= (total or 0) or not recs: break

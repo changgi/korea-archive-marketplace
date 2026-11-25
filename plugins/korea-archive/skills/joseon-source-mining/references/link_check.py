@@ -22,8 +22,7 @@ import sys, re, ssl, gzip, time, html, urllib.request, collections
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
-HDR = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                     "AppleWebKit/537.36 Chrome/124"}
+HDR = {"User-Agent": "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)"}  # 정직 UA(브라우저 위장 금지 — 거부 기관은 우회 없이 표시)
 
 ID_PAT  = r'\b(jlaw[ab]_[\w]+|bb_\d+r_[\w]+)\b'
 URL_PAT = r'https?://[^\s"\'<>)]+'
