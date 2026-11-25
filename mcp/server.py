@@ -425,6 +425,9 @@ def _iiif_for(u, id_=None):
         mm = re.search(rx, u)
         if mm:
             return _bridge_url(sname, mm.group(1))
+    _kw = re.search(r"koreanwar\.or\.kr(?::8443)?/searchDetail\.do\?archRfcd=(\d{4}-[A-Z]{2}-\d{2}-[A-Z]{2}-[A-Z]-\d+)", u)
+    if _kw:  # v3.5.2 6·25전쟁 아카이브센터 브리지(Node 패리티)
+        return _bridge_url("kw", _kw.group(1))
     _kt = re.search(r"ehistory\.go\.kr/view/(photo|movie)\?(\S+)", u)
     if _kt:  # v3.5 KTV e영상역사관 브리지(Node ktvId·iiifFor 패리티)
         _q = dict(_up.parse_qsl(_kt.group(2).replace("&amp;", "&"))); _v = [_q.get(k, "") for k in ("mediasrcgbn", "mediaid", "mediadtl")]
@@ -2291,7 +2294,7 @@ def _kw_images(b):
     """v3.5.1 상세 페이지 기록 이미지(사이트 공통 아이콘·로고·버튼 제외) — Node kwImages 패리티."""
     out = []
     for u in re.findall(r'<img\b[^>]*?(?:data-[\w-]+|src)="([^"]+\.(?:jpe?g|png|gif|tiff?))(?:\?[^"]*)?"', str(b), re.I):
-        if re.search(r"/(?:resources|static|common|layout|btn|icon|ico|logo|images?/(?:main|sub|common|btn|icon|layout))\b|loding|loading|no_img|blank", u, re.I): continue
+        if not re.search(r"/upload/", u, re.I) or re.search(r"loding|loading|no_img|blank", u, re.I): continue  # v3.5.2 /upload/ 아래만(Node 패리티)
         u = u if re.match(r"^https?:", u) else _KW_BASE + ("" if u.startswith("/") else "/") + u
         if u not in out: out.append(u)
     return out[:30]
