@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.99.9 — RiC-O 생산자·소장처·공개 상태 속성 교정 (2026-11-25)
+- korea-archive-mcp 원장 RiC-O(discovered.jsonld): 생산자 → rico:hasCreator(305건), 소장처 → rico:hasOrHadHolder(241), 공개 상태 → rico:conditionsOfAccess(249, 문자열). v2.99.8에서 소장처·공개 상태가 rico:hasOrHadSubject로 나가 '소장처가 기록의 주제'가 되던 의미 오류(546건) 교정 — 주제 오류 0, rdflib 21,548 트리플·끊긴 링크 0.
+
 ## v2.99.8 — 주제 색인에 생산자·소장처·분쟁·공개 상태 패싯 (2026-11-25)
 - korea-archive-mcp 원장: 기관이 적은 출처·소장·분쟁·공개 정보를 주제 색인에 축적 — 생산자 145명·기관(미 해군·공보처 홍보국·CIA Reading Room 등), 소장처 28곳(NARA College Park 영상·문서, 국가기록원 성남분원, 트루먼 대통령도서관 등), 분쟁(AWM), 공개 상태 14종(Unrestricted·Public Record(s)·Open·영구·공개 등). 인명·분쟁 값의 쉼표를 보존(세미콜론으로만 분리), 존속기간 괄호 제거.
 
