@@ -230,7 +230,7 @@ _TOPICS = [
     ("명성황후|명성왕후|민비|閔妃", "Queen Min Korea", "reine Min Corée"),
     ("고종\\s?황제|고종|高宗", "Kojong", None),
     ("안중근|安重根", "An Jung-geun Ito Hirobumi", None),
-    ("이토\\s?히로부미|伊藤博文", "Ito Hirobumi Korea", None),
+    ("이토\\s?히로부미|伊藤博文", "Ito Hirobumi", None),
     ("김구|金九", "Kim Koo", None),
     ("안창호|安昌浩", "Ahn Chang-ho", None),
     ("3[·.]1\\s?운동|삼일\\s?운동|三一運動|만세\\s?운동", "Korean independence movement 1919", "mouvement du 1er mars Corée"),  # v2.99.6 실측(Node 패리티)
