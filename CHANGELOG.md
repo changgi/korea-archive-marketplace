@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.8.2 — 변환어 실측 방법 교정(실제 질의로) (2026-11-25)
+- 변환어 실측 방법 교정(v3.8.2): topics_probe.py가 변환어를 그대로 NARA·IA에 던져, 실제 검색 경로(route.js toIndexLang — 변환 결과에 EN_ANCHOR 낱말이 없으면 앞에 'Korea '를 붙임)와 다른 질의를 재고 있었다(169개 중 45개). 이제 `anchored()`가 route.js의 EN_ANCHOR를 읽어 실제로 던져지는 질의로 재고 결과에 `query`를 남긴다. 이 결함 때문에 v3.8.1 '이토 히로부미' 교정은 실측이 실제 경로와 달랐다 — 실제 질의는 'Ito Hirobumi Korea' → 'Korea Ito Hirobumi'(단어 순서만 바뀜, 효과 미미)로 정정 기록.
+
 ## v3.8.1 — 변환어 실측 교정: 이토 히로부미 (2026-11-25)
 - 변환어 실측 교정(v3.8.1): topics-probe 2026-11-25 '약함' 3개 재실측 — '이토 히로부미'만 'Ito Hirobumi Korea' → 'Ito Hirobumi'(IA 상위 3/3 관련·NARA 282→341, Node·Python). 'Catholic Korea martyrs'·'Korean independence movement 1919'는 후보('Korean martyrs'·'Korean independence movement' 등)가 기관마다 엇갈려 유지(3·1운동은 v2.99.6 실측값). golden topics-ito-hirobumi.
 
