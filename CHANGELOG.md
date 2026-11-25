@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.99.6 — 한국사DB 숫자 사건명·3·1운동 변환어 (2026-11-25)
+- 한국사DB 수집기(Node·Python): '3·1운동'·'3.1운동'은 통합검색 0건, '3·1 운동'은 결과(실측) — 숫자 사건명(운동·만세·사건·혁명·선거·수복·후퇴·사태) 앞을 띄워 조회.
+- TOPICS(Node·Python): 3·1운동 → 'Korean independence movement 1919'(TNA FO 608/211/19 1919 파리강화회의 한국 자결 각서·NARA 국무부 895.00 정무 문서철 1911-1928; 옛 'March First Movement Korea 1919'는 TNA 무관 2건). 골든 nedb-numeric-event·topics-march-first.
+
 ## v2.99.5 — 국가기록원 API 오류 사유 표시·골든 정비 (2026-11-25)
 - archives_search(Node·Python): 0건도 결과도 아닌 응답이면 data.go.kr 게이트웨이 사유(returnAuthMsg·returnReasonCode·errMsg·resultMsg)를, 없으면 원문 앞부분(인증키 *** 가림)을 표시 — 운영에서 '한국전쟁'·'흥남철수'가 '결과 없음'으로만 나와 원인 불명이던 장애.
 - 골든 경고 3건 정비: ledger-kept(v2.26 안내 문구), ledger-subject-search(원장에 없던 기록을 기대 → 주제어에만 있는 '한국전쟁'으로 USIS 기록), ledger-derived-hierarchy(Commons 기관 범주 계층으로 개선된 결과 반영).
