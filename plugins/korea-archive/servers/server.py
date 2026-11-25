@@ -4980,7 +4980,10 @@ def archives_search(query: str, max_results: int = 10,
             m = re.search(r"<message>(.*?)</message>", xml, re.S)
             if not m and re.search(r"<total>\s*0\s*</total>", xml):  # v1.96.4: 0건을 API 오류로 표기하던 문제
                 return f"국가기록원 '{query}' — 0건(API 정상 응답). 띄어쓰기·다른 표기로 재검색하거나 포털: {portal}"
-            return _agent_browse("국가기록원", query, portal, f"API 오류: {m.group(1).strip() if m else '결과 없음'}")
+            gw = m or re.search(r"<(?:returnAuthMsg|errMsg|resultMsg)>(.*?)</", xml, re.S)  # v2.99.5 data.go.kr 게이트웨이 사유(Node 패리티)
+            cd = re.search(r"<(?:returnReasonCode|resultCode)>(.*?)</", xml, re.S)
+            why = (gw.group(1).strip() + (f" (코드 {cd.group(1).strip()})" if cd else "")) if gw else "해석 불가 응답 — 앞부분 '" + re.sub(r"\s+", " ", xml.replace(key, "***").replace(sk, "***"))[:120] + "'"
+            return _agent_browse("국가기록원", query, portal, f"API 오류: {why}")
         except Exception as e:
             return _agent_browse("국가기록원", query, portal, f"API 오류({e})")
     return _agent_browse("국가기록원", query, portal,
