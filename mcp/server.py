@@ -4447,6 +4447,7 @@ def _c_ledger(q, n):
         nt = " · ".join(x for x in [f"같은 기록 {len(o['same_keys']) + 1}곳 소장({', '.join(o['same_keys'])})" if o.get("same_keys") else "",
                                     f"날짜 교차 {str((o.get('date_cross') or {}).get('verdict', '')).split('(')[0]}" if o.get("date_cross") else "",
                                     f"실물 이미지: 같은 기록 {(o.get('iiif_same') or {}).get('key', '')}의 매니페스트 {(o.get('iiif_same') or {}).get('manifest', '')}" if o.get("iiif_same") else "",
+                                    f"원 기관 IIIF(브라우저 열람 — 서버 확인 불가) {(o.get('iiif_origin') or {}).get('manifest', '')}" if o.get("iiif_origin") else "",  # v3.9 Node 패리티
                                     (lambda d: f"같은 날 {d.get('date', '')} 다른 기관 기록 {d.get('institutions', '')}곳 {d.get('records', '')}건(IIIF 컬렉션 {d.get('collection', '')})")(o["same_day"]) if o.get("same_day") else ""] if x)  # v3.7.2·v3.7.3 Node 패리티
         if nt:
             it["note"] = nt  # v2.92.1 맥락·증거 — 제목이 잘리지 않게 별도 줄(Node 패리티)
