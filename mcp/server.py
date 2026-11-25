@@ -1867,10 +1867,21 @@ def _ua_refused_note(k, q=""):
 
 
 def _http_text(url, timeout=15):
-    req = _ur.Request(url, headers={"User-Agent": _UA_KO, "Accept": "*/*",
-                                    "X-Requested-With": "XMLHttpRequest"})
-    with _ur.urlopen(req, timeout=timeout) as r:
-        return r.read().decode("utf-8", "replace")
+    """v3.39 본문 전송 중 끊김(IncompleteRead·연결 리셋)은 비압축 요청으로 최대 3회 재시도(Node gtext 패리티). HTTP 오류는 즉시 전달."""
+    e0 = None
+    for k in range(3):
+        req = _ur.Request(url, headers={"User-Agent": _UA_KO, "Accept": "*/*", "X-Requested-With": "XMLHttpRequest",
+                                        **({"Accept-Encoding": "identity"} if k else {})})
+        try:
+            with _ur.urlopen(req, timeout=timeout) as r:
+                return r.read().decode("utf-8", "replace")
+        except _ur.HTTPError:
+            raise
+        except (_hc.IncompleteRead, ConnectionError) as e:  # 본문 끊김·연결 리셋만 — 타임아웃·DNS는 재시도 안 함(지연 폭증 방지)
+            e0 = e
+            import time as _t
+            _t.sleep(0.4 * (k + 1))
+    raise e0
 
 
 def _clean(s):

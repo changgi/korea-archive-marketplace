@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.39 — 본문 전송 중 끊김 재시도 (2026-11-25)
+- gtext(Node)·_http_text(Python): 응답 본문 읽기 중 끊김(undici 'terminated'·IncompleteRead·연결 리셋)을 비압축 재요청으로 최대 3회 재시도. 기존 robustFetch는 헤더 수신까지만 재시도해 운영(icn1)에서 한국사DB 조문 상세가 3/3 'terminated'로 실패. 타임아웃·HTTP 오류는 재시도 안 함. 도구 스키마 변경 없음.
+
 ## v3.38 — 교차 수집 '확정 0' 6차 교정: JSON API (2026-11-25)
 - 공용 판별 countZero/_count_zero — TNA·IA·Europeana·신문아카이브·DigitalNZ·Commons·NL-NA는 결과가 비면 응답의 건수 필드가 명시적 0일 때만 0건, 오류 본문·필드 누락은 조회 실패(Node·Python 패리티). 진짜 0건(무의미 질의)은 0 유지 실측. 도구 스키마 변경 없음.
 
