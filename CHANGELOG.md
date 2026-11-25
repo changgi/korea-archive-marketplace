@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.8.1 — 변환어 실측 교정: 이토 히로부미 (2026-11-25)
+- 변환어 실측 교정(v3.8.1): topics-probe 2026-11-25 '약함' 3개 재실측 — '이토 히로부미'만 'Ito Hirobumi Korea' → 'Ito Hirobumi'(IA 상위 3/3 관련·NARA 282→341, Node·Python). 'Catholic Korea martyrs'·'Korean independence movement 1919'는 후보('Korean martyrs'·'Korean independence movement' 등)가 기관마다 엇갈려 유지(3·1운동은 v2.99.6 실측값). golden topics-ito-hirobumi.
+
 ## v3.8 — query_bank 원장 실측 질의 (2026-11-25)
 - 원장 실측 질의(v3.8): query_bank(topic='ledger'|'원장'|'used'|'실측')가 발견 경로 provenance.json(질의 지문↔기록)을 읽어 **실제로 기록을 발굴한 질의**를 발굴 기록 수순으로 보인다(도구·질의별 합산 — 기록 수·기관 수·호출 수·마지막 사용, 상위 40). 모든 질의·회신 축적이 다음 발굴의 검증된 질의 목록으로 되돌아오는 고리(Node·Python, 1시간 캐시). 2026-11-25 실측: 질의 79개 — '피란민' 68건·6기관, '인천상륙' 42건, '3·1운동' 34건·7기관. golden query-bank-ledger.
 
