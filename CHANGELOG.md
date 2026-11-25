@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.7.1 — 원장: 인용 형식에 파생 날짜 표시 (2026-11-25)
+- 인용 형식 파생 날짜 표시(v3.7.1): CSL-JSON(note)·RIS(N1)·BibTeX(addendum)에 '날짜 X는 파생(원 기관 날짜 칸 아님) — 근거: …'를 붙인다 — 연도 칸(issued·PY·year)에 파생 날짜가 쓰이는데 표시가 없어 인용자가 기관 날짜로 오인할 수 있던 결함(OAI-DC는 v2.53부터 [파생] 표시). 오프라인 시험이 CSL 표시 누락을 검사. 2026-11-25 실측: 250건.
+
 ## v3.7 — 원장: RiC-O 파생 날짜 개체 (2026-11-25)
 - RiC-O 파생 날짜(v3.7): discovered.jsonld가 원 날짜가 없는 기록의 파생 날짜를 `rico:isAssociatedWithDate` → `rico:Date` 개체(rico:expressedDate, 정규형이면 rico:normalizedDateValue, rico:certainty '파생(derived)', rdfs:comment 근거)로 내보낸다 — 원 날짜는 기존처럼 리터럴. 근거 있는 파생 날짜가 연결 데이터에서 빠지던 공백. 2026-11-25 실측: 250건, rdflib 파싱·SPARQL 조회 정상(트리플 23,238 · 끊긴 링크 0).
 
