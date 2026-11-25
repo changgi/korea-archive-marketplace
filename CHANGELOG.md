@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.2.1 — 원장: 갤러리 재게시본 ↔ 원본 연결 (2026-11-25)
+- 갤러리 원본 연결(v3.2.1): KOREA ARCHIVE 갤러리 카드(gallery:)의 메타 '원 기록'에 적힌 NARA NAID·archive.org 식별자를 `same_targets`로 읽어, 원장에 있는 원본과 '같은 기록(다른 소장처)'으로 잇는다(근거 '갤러리 카드 원 기록 표기 — 재게시본의 원본'). 재게시본이 원본 맥락·날짜·실물 이미지와 이어진다. 2026-11-25 실측: 연결 4쌍 추가(같은 기록 간선 60→68, 연결률 6.4%→6.6%).
+
 ## v3.2 — IIIF Change Discovery 활동 스트림 (2026-11-25)
 - IIIF 변경 발견(v3.2): `activity/collection.json` + `page-N.json`(IIIF Change Discovery API 1.0 — Activity Streams OrderedCollection, 500건/페이지, 시간 순). Create = 원장 첫 발견(first_seen)의 매니페스트, Update = 원 기관 응답 지문 변경(fixity 이력, '첫 지문' 제외). 활동마다 원장 기록 JSON(r/<slug>.json)을 seeAlso로. 원장에서 매번 결정적으로 다시 만들며(원장을 지우지 않으므로 활동도 줄지 않음) DCAT 배포·원장 첫 화면·source_profile(ledger)에 노출. 오프라인 시험이 총계·페이지 연결·시간 순·Create 누락을 검사. 2026-11-25 실측: 활동 917건(Create 892·Update 25).
 
