@@ -1,5 +1,9 @@
 # Changelog
 
+## v3.9 — 원장: Gallica 원 기관 IIIF 주소 (2026-11-25)
+- 원장 `iiif_origin` — Node iiifFor의 Gallica 규칙을 원장에도(패리티 결함). 서버 자동 조회 403이라 확인 불가 근거를 함께 두고 수집 경로(iiif)·기록 봉투는 그대로.
+- 원장 회신 note에 '원 기관 IIIF(브라우저 열람 — 서버 확인 불가)' (Node·Python 패리티). 도구 스키마 변경 없음.
+
 ## v3.8.9 — 원장: 날짜 해석기 회귀 사례 (2026-11-25)
 - korea-archive-mcp `scripts/ci-ledger-offline.py`에 `meta_date`·`title_date` 단위 사례 18개 — 옛 결함(보고서 번호·'Nr.'·'YYYY년대'·기원전·세기·'0000' 미상)이 날짜로 되살아나면 CI 실패. golden(도구 응답)이 닿지 않는 원장 내부 해석기의 회귀 감시. 서버 도구 변경 없음.
 
