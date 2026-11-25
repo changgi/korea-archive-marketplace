@@ -2285,6 +2285,16 @@ def _c_nedb(q, n):
 # MOU 협약: 모든 요청에 프로그램 식별 UA를 싣고 정중한 호출량을 유지한다
 # (robots.txt 404 = 지시 부재; OpenAPI 약관상 대량 크롤링 금지 — 페이지 스캔은 소량으로).
 _KW_BASE = "https://www.koreanwar.or.kr:8443"
+
+
+def _kw_images(b):
+    """v3.5.1 상세 페이지 기록 이미지(사이트 공통 아이콘·로고·버튼 제외) — Node kwImages 패리티."""
+    out = []
+    for u in re.findall(r'<img\b[^>]*?(?:data-[\w-]+|src)="([^"]+\.(?:jpe?g|png|gif|tiff?))(?:\?[^"]*)?"', str(b), re.I):
+        if re.search(r"/(?:resources|static|common|layout|btn|icon|ico|logo|images?/(?:main|sub|common|btn|icon|layout))\b|loding|loading|no_img|blank", u, re.I): continue
+        u = u if re.match(r"^https?:", u) else _KW_BASE + ("" if u.startswith("/") else "/") + u
+        if u not in out: out.append(u)
+    return out[:30]
 _KW_UA = "KoreaArchiveMCP/1.11 (+https://github.com/changgi/korea-archive-mcp; MOU partner integration)"
 
 def _kw_text(url, timeout=20):
@@ -5436,6 +5446,8 @@ def koreanwar_item(ref_code: str, radius: int = 0) -> str:
             out += "\n↔ 입수처 NARA 링크 없음 — 제목·생산시기로 nara_search 대조 필요"
         if rg:
             out += f"\n↔ NARA RG {rg} — nara_search(record_group={rg})로 시리즈 확장 검색"
+        im = _kw_images(b)
+        out += (f"\n· 공개 이미지(상세 페이지): {len(im)}개 — {' · '.join(im[:3])}{' …' if len(im) > 3 else ''} (게재 전 '열람 및 이용조건' 확인 · 출처 표기)" if im else "\n· 공개 이미지(상세 페이지): 없음")
         return out + (f"\n{url}\n※ '열람 및 이용조건' 행을 judge_rights에 투입해 권리 초판 판정. "
                       "협약기관 — 출처 표기 필수.")
     except Exception as e:

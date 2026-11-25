@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.5.1 — koreanwar_item 공개 이미지 표시 (2026-11-25)
+- 6·25전쟁 아카이브센터 이미지 표시(v3.5.1): koreanwar_item(radius=0) 응답에 상세 페이지의 기록 이미지 링크(`kwImages` ↔ `_kw_images` — img src·data-* 속성, 사이트 공통 아이콘·로고·버튼·로딩 이미지 제외, 최대 3개 표시)를 '공개 이미지(상세 페이지)' 줄로 낸다. 게재 전 '열람 및 이용조건' 확인 안내. 운영에서 실제 경로를 확인한 뒤 IIIF 브리지로 잇는 첫 단계(이 컨테이너에서는 기관 8443 포트에 닿지 않아 운영 응답으로 실측).
+
 ## v3.5 — KTV e영상역사관 IIIF 브리지 (2026-11-25)
 - KTV e영상역사관 IIIF 브리지(v3.5): `/iiif/ktv/{photo|movie~mediasrcgbn~mediaid~mediadtl[~mediagbn]}/manifest.json`(lib/ka_iiif.js `ktv`). 상세 페이지의 공개 이미지(data-lazy /photo_pds·/movie_pds) 중 **alt가 이 기록 제목과 같은 것만** 캔버스로 — 영상 페이지는 같은 호 다른 꼭지 프레임이 함께 나오므로 제외. 권리는 페이지의 공공누리 표시 원문(영상 무표시는 '나누리 신청 대상'), 촬영·제작일·상영시간·출처·해설 지문. URL→브리지 매핑은 Node iiifFor·Python _iiif_for·원장 iiif_for(`ktv_id`) 세 곳 패리티. 원장은 IIIF_V ktv 2로 재판독, 이 기록 제목의 이미지가 없는 KTV 브리지는 iiif_kind를 기록 봉투로 둔다. 2026-11-25 실측: 사진 PR-2013-0349 6장, 대한뉴스 1873호 '온수수영장 개설' 1장(다른 꼭지 프레임 제외), 사진집 BK 5241은 해당 이미지 없음.
 
