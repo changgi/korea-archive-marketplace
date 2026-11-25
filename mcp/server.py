@@ -2648,7 +2648,8 @@ def _count_zero(out, ok, name):
 def _zero_or(out, body, rx, name, raw=False):
     """v3.36 확정 0 판별(Node zeroOr 패리티) — 결과가 비었으면 기관 0건 표지(실측 정규식)가 있을 때만 0건, 없으면 조회 실패."""
     if not out and not re.search(rx, str(body) if raw else re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", str(body)))):
-        raise RuntimeError(f"{name} 결과 판독 불가(0건 표지 없음 — 차단·개편 가능)")
+        head = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", re.sub(r"(?is)<script.*?</script>", " ", str(body)))).strip()[:70]  # v3.45 본문 앞부분 동봉(Node 패리티)
+        raise RuntimeError(f"{name} 결과 판독 불가(0건 표지 없음 — 차단·개편 가능{' · 본문: ' + head if head else ''})")
     return out
 
 def _c_un(q, n):
@@ -2707,7 +2708,7 @@ def _c_heritage(q, n):
                     "url": (f"https://www.heritage.go.kr/heri/cul/culSelectDetail.do?ccbaCpno={cpno}" if cpno else "https://www.heritage.go.kr")})
         if len(out) >= n:
             break
-    return out
+    return _zero_or(out, b, r"<totalCnt>\s*0\s*</totalCnt>", "국가유산포털", raw=True)  # v3.45 Node 패리티
 
 
 def _c_indy(q, n):
@@ -4150,7 +4151,7 @@ def _c_foia(q, n):
             out.append({"title": t, "date": "", "id": "", "url": "https://opengov.seoul.go.kr" + m.group(1)})
         if len(out) >= n:
             break
-    return out
+    return _zero_or(out, b, r"검색\s*결과가 없습니다|검색된 (결과|문서)가 없습니다|조회된 (결과|자료|문서)가 없습니다|총\s*0\s*건", "서울정보소통광장")  # v3.45 Node 패리티(표지 미실측 — 복구 대비)
 
 
 def _c_gallery(q, n):

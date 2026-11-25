@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.45 — '확정 0' 9차: 국가유산포털·서울정보소통광장 + 실패 본문 동봉 (2026-11-25)
+- 공용 판별(zeroOr/_zero_or) 실패 메시지에 본문 앞부분 동봉. 국가유산포털 0건은 totalCnt 0 명시일 때만, 서울정보소통광장은 복구 대비 0건 표지 후보 — Node·Python 패리티. 도구 스키마 변경 없음.
+
 ## v3.44 — 조회 범위 등록부 다매체(CSV·HTML) (2026-11-25)
 - Pages data/coverage.csv·coverage.html — 질의×기관 관측(결과·확정 0·미확정 0·조회 실패)을 표와 사람이 읽는 페이지로(정본 coverage.json에서 재생성). korea-archive-mcp 원장 측 변경, 서버 동작 변경 없음.
 
