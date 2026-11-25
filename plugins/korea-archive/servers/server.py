@@ -1865,13 +1865,37 @@ _UA_KO = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; a
 _UA_REFUSED = {}  # v2.37 비움 — 규장각 403은 UA가 아니라 사이트 개편(POST CSRF)이었고 GET으로 복구, KTV는 e영상역사관 자체 목록 검색으로 복구(2026-11-24 실측). 새 거부가 확인되면 여기에 추가(위장하지 않음)
 
 
+def _cov_norm(q):
+    return re.sub(r"[\s·.,\-\"'()]+", "", str(q)).lower()
+
+
+def _cov_entry(C, q):
+    """v3.56 등록부 질의 키 묶기(Node covEntry 패리티) — 정확한 키가 없으면 표기만 다른 질의의 관측을 합친다."""
+    Q = C.get("queries") or {}; k = str(q).strip()
+    if k in Q:
+        return Q[k]
+    n = _cov_norm(k); ks = [x for x in Q if _cov_norm(x) == n]
+    if not ks:
+        return None
+    out = {}
+    for x in ks:
+        for src, e in Q[x].items():
+            o = out.setdefault(src, {"hit": 0, "zero": 0, "zero_legacy": 0, "fail": 0, "max": 0, "hit_plain": 0, "max_plain": 0, "last": "", "last_hit": "", "last_hit_plain": ""})
+            for f in ("hit", "zero", "zero_legacy", "fail", "hit_plain"): o[f] += e.get(f, 0)
+            o["max"] = max(o["max"], e.get("max", 0)); o["max_plain"] = max(o["max_plain"], e.get("max_plain", 0))
+            for f in ("last_hit", "last_hit_plain"):
+                if e.get(f, "") > o[f]: o[f] = e[f]
+            if e.get("last", "") > o["last"]: o["last"] = e["last"]; o["last_status"] = e.get("last_status", "")
+    return out
+
+
 def _coverage_hint(q, chans, zeros=(), variants=False):
     """v3.52 조회 범위 등록부 — 실패 채널이 같은 질의로 과거에 결과를 낸 적이 있으면 그 관측(Node coverageHint 패리티)."""
     try:
         C = json.loads(_cached_text("qb:cov", 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/coverage.json", 3), '"by_source"'))
     except Exception:
         return ""
-    S = (C.get("queries") or {}).get(str(q).strip())
+    S = _cov_entry(C, q)
     if not S:
         return ""
     hit = [f"{c} 결과 최대 {S[c]['max']}건(마지막 결과 {str(S[c].get('last_hit', ''))[:10]})" for c in chans if S.get(c) and S[c].get("hit", 0) > 0]
