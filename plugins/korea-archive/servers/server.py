@@ -769,9 +769,31 @@ JB_STRAT = {
 
 @mcp.tool()
 def query_bank(topic: str = "list") -> str:
-    """검증된 한국 기록 발굴 쿼리 세트 조회. topic: 'list'(그룹 목록) 또는 그룹ID
+    """검증된 한국 기록 발굴 쿼리 세트 조회. topic: 'dict'(기준 사전 — 지명·인물·사건·기관 전거), 'list'(그룹 목록) 또는 그룹ID
     (예 'G-07' 구한말, 'G-08' 일제강점기, 'G-17' 간접키워드, 'N-05' NARA 시리즈, 'RG' 교차매핑, 'TNA' 레이어)
     전략 지식: 'walls'(열한 겹의 벽), 'identifiers'(식별자 해독), 'persons'(인명 열쇠), 'crosscheck'(국내외 대조), 'world'(6개국 서고 지도), 'cities'(도시명 계보), 'allies'(한국전 참전·지원 22개국 발굴 지도)."""
+    if re.match(r"^(dict|사전|기준)$", topic.strip(), re.I):  # v3.26 기준 사전(지명·인물·사건·기관 전거) — Node 패리티
+        B = "https://changgi.github.io/korea-archive-mcp/data/"
+        try:
+            def J(f, k):  # 파일별 실패는 그 구역만 표시(Node 패리티)
+                try: return json.loads(_cached_text("qb:" + f, 3600, lambda: _http_text(B + f, 20), k))
+                except Exception: return {"_fail": f}
+            P, PS, EV, AU = J("places.json", '"places"'), J("persons.json", '"persons"'), J("events.json", '"events"'), J("authorities.json", '"authorities"')
+            host = lambda x: re.sub(r"^https?://(www\.)?", "", str(x)).split("/")[0]
+            pl = [f"- {n} ({'·'.join((e.get('labels') or [])[1:5])}) — 기록 {len(e['records'])} · {len(e['sources'])}개 기관" + (f" · IIIF {e['collection']}" if e.get("collection") else "")
+                  for n, e in sorted((P.get("places") or {}).items(), key=lambda x: -len(x[1].get("records") or [])) if e.get("records")]
+            pe = [f"- {n} — 기록 {len(e['records'])} · {', '.join(e['sources'])}" + (f" · 전거 {e['authority']}" if e.get("authority") else "") + (f" · 국제 전거 {', '.join(host(x) for x in e['sameAs'])}" if e.get("sameAs") else "") + (f" · IIIF {e['collection']}" if e.get("collection") else "")
+                  for n, e in (PS.get("persons") or {}).items() if e.get("records")]
+            ev = [f"- {n} {e['period'][0] if e['period'][0] == e['period'][1] else '~'.join(e['period'])} — " + (" · ".join(f"{k} {v}" for k, v in (e.get("verdicts") or {}).items()) or "해당 기록 없음") for n, e in (EV.get("events") or {}).items()]
+            au = [f"- {a.get('label_lod') or a.get('term')} = {i}" + (f" → {' · '.join(a['sameAs'])}" if a.get("sameAs") else "") for i, a in (AU.get("authorities") or {}).items()]
+            return (f"KOREA ARCHIVE 기준 사전 — 원장 실측(2건 이상)으로 쌓은 연결 기준. 기관 표기는 그대로 두고 그 위에 잇는 층(같은 장소·인물은 단서, 단정 아님)\n\n【지명 {len(pl)}】 표제·기관 장소 칸 매칭\n" + "\n".join(pl)
+                    + f"\n\n【인물 {len(pe)}】 표제·기관 인물/주제/색인어 칸 매칭\n" + "\n".join(pe)
+                    + f"\n\n【사건 {len(ev)}】 표제 사건명 ↔ 기록 날짜(원장 판정 — '사건 이전 연도'만 표기 확인 필요)\n" + "\n".join(ev)
+                    + f"\n\n【기관 전거 {len(au)}】 국립중앙도서관 LOD(KSH·KAC) → 국제 전거\n" + "\n".join(au)
+                    + (f"\n\n(조회 실패: {', '.join(x['_fail'] for x in (P, PS, EV, AU) if x.get('_fail'))} — 원장 실행 뒤 다시)" if any(x.get("_fail") for x in (P, PS, EV, AU)) else "")
+                    + f"\n\n※ 보기: {B}dict.html · 정본 places.json·persons.json·events.json·authorities.json · KV 보기 https://changgi.github.io/korea-archive-mcp/kv.html?manifest=<IIIF 주소>")
+        except Exception as e:
+            return f"기준 사전 조회 실패({e}) — https://changgi.github.io/korea-archive-mcp/data/dict.html 직접 열람"
     if re.match(r"^(ledger|원장|used|실측)$", topic.strip(), re.I):  # v3.8 Node 패리티 — 축적된 실제 질의를 발굴 성과순으로
         try:
             pv = json.loads(_cached_text("qb:prov", 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/provenance.json", 20), '"provenance"'))
