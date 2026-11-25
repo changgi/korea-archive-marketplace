@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.8.8 — 원장: 기록 페이지 같은 날 칸 (2026-11-25)
+- 기록 페이지 같은 날 칸(v3.8.8): 기록 페이지(r/<slug>.html)에 '같은 날 다른 기관 기록' 행 — same_day(날짜·기관 수·기록 수)와 day 컬렉션 KV·IIIF 링크(같은 사건 교차 대조 단서, 같은 장면 단정 아님). 2026-11-25 실측: 39쪽.
+
 ## v3.8.7 — 1945년 이전 질의 경로 안내 (2026-11-25)
 - 1945년 이전 질의 경로 안내(v3.8.7): nara_search·ia_search 응답에 변환된 질의(없으면 원 질의)에 1945년 이전 연도가 있으면 '1945년 이전 한국 사건·인물은 NARA·archive.org 제목 색인에 드묾 — tna_search(연대 필터)·nedb_search(한국사DB)·cross_search(sources=oldnews,jacar,ndl) 병행 권장'을 붙인다(Node preWarHint ↔ Python _prewar_hint). v3.8.6 alt_trials 결론(대안 표기 12종도 개선 없음)을 웹·모바일 사용자에게 지식으로 노출. golden nara-prewar-hint·nara-no-prewar-hint-1950.
 
