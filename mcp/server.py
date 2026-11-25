@@ -2633,7 +2633,7 @@ def _c_ndl(q, n):
                     **({"series": cat_arr[0]} if cat_arr else {}), "url": f"https://dl.ndl.go.jp/pid/{pid}" if pid else link})
         if len(out) >= n:
             break
-    return out
+    return _zero_or(out, b, r"<openSearch:totalResults>0<", "NDL", raw=True)  # v3.42 Node 패리티
 
 
 def _count_zero(out, ok, name):
@@ -2862,8 +2862,11 @@ def _c_nzarch(q, n):
         ix = _cached_text("nzIdx", 6 * 3600, lambda: _http_text("https://korea-archive-mcp.vercel.app/nz-index.json", 20), '"records"')
         j = json.loads(ix)
         ql = en.lower()
-        return [_row(str(r.get("id") or ""), str(r.get("title") or "")[:86] + " ·주간인덱스", str(r.get("access") or ""), str(r.get("date") or ""))
+        rows = [_row(str(r.get("id") or ""), str(r.get("title") or "")[:86] + " ·주간인덱스", str(r.get("access") or ""), str(r.get("date") or ""))
                 for r in (j.get("records") or []) if ql in str(r.get("title") or "").lower() or str(r.get("id") or "").lower() == ql][:n]
+        if not rows:  # v3.42 Node 패리티 — 인덱스 0건은 기관의 확정 0이 아님
+            raise RuntimeError("Archives NZ 라이브 차단 — 주간 인덱스(한국 관련 수확분)에도 일치 없음: 기관의 확정 0이 아님(브라우저로 collections.archives.govt.nz 확인)")
+        return rows
 
 
 def _nzarch_mode(query: str) -> str:
