@@ -3255,6 +3255,8 @@ def _oldnews_mode(query: str, max_results: int) -> str:
                     + f" · {f1(d.get('issued'))} · 발행 {f1(d.get('publisher'))}\n"
                     + (f"색인어(기사 내용 재구성): {kws}\n" if kws else "")
                     + (f"주제: {subj}\n" if subj else "")
+                    + "".join(f"{k}: {' · '.join('='.join(p for p in str(x).split('|') if p) for x in v[:6])}\n"  # v3.22 국립중앙도서관 전거(KSH·KAC) — Node 패리티
+                              for k, v in (("장소(기관 전거)", d.get("subjectPlace") or []), ("인물(기관 전거)", d.get("subjectPeople") or []), ("단체(기관 전거)", d.get("subjectOrganization") or [])) if v)
                     + (f"관련기사 연쇄(→ CNTS를 mode=oldnews로 재투입):\n{rel}\n" if rel else "")
                     + (("원소장처: " + " / ".join(d.get("description") or [])[:200] + "\n") if d.get("description") else "")
                     + f"원문 이미지(뷰어): https://nl.go.kr/newspaper/detail.do?content_id={cid}\n"
