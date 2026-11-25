@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.0 — NARA 포괄 기간(날짜 없는 기록의 기관 기간) (2026-11-25)
+- NARA 포괄 기간(v3.0): productionDates가 없는 NARA 기록(파일단위·영상 아이템 등)은 기관이 기술한 coverage/inclusive 범위를 IIIF 브리지 메타 `포괄 기간(이 기록)`으로, 그것도 없으면 가장 가까운 상위 계층(series·fileUnit — RG·collection 제외) 범위를 `포괄 기간(상위 계층)`(NAID·'이 기록 자체 날짜 아님' 명시)으로 낸다(lib/nara_iiif.js `naraSpans` ↔ server.py `_nara_spans`). 원장은 이 기록 범위를 `date_derived`(근거 '기관 메타 — 포괄 기간')로, 상위 계층 범위는 10년 이하일 때만 파생한다(RG 1860~1985 같은 넓은 범위는 날짜로 쓰지 않음). `IIIF_V` nara 3 — 날짜 없는 NARA 기록 재판독(하루 상한 안에서 차례로). 2026-11-25 실측: 날짜 없는 기록 315건 중 NARA 99건.
+
 ## v2.99.9 — RiC-O 생산자·소장처·공개 상태 속성 교정 (2026-11-25)
 - korea-archive-mcp 원장 RiC-O(discovered.jsonld): 생산자 → rico:hasCreator(305건), 소장처 → rico:hasOrHadHolder(241), 공개 상태 → rico:conditionsOfAccess(249, 문자열). v2.99.8에서 소장처·공개 상태가 rico:hasOrHadSubject로 나가 '소장처가 기록의 주제'가 되던 의미 오류(546건) 교정 — 주제 오류 0, rdflib 21,548 트리플·끊긴 링크 0.
 

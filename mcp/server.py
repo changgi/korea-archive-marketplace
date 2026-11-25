@@ -471,6 +471,29 @@ def _img_size(url):
     return None
 
 
+
+def _nara_yr(d):
+    d = d or {}; y = d.get("year") or str(d.get("logicalDate") or "")[:4]
+    return f"{d['dateQualifier'] + ' ' if d.get('dateQualifier') else ''}{y}" if y else ""
+
+
+def _nara_span(r):
+    s = _nara_yr(r.get("coverageStartDate") or r.get("inclusiveStartDate")); e = _nara_yr(r.get("coverageEndDate") or r.get("inclusiveEndDate"))
+    return (s if s == e or not e else e if not s else f"{s}~{e}") if (s or e) else ""
+
+
+def _nara_spans(rec):
+    """v3.0 포괄 기간 — productionDates가 없으면 이 기록 자체 coverage/inclusive 범위, 그도 없으면 가장 가까운 상위 계층(RG·collection 제외) 범위(Node naraSpans 패리티)."""
+    pd = (rec.get("productionDates") or [{}])[0]
+    if pd.get("logicalDate") or pd.get("year") or pd.get("proximatePhrase"): return []
+    own = _nara_span(rec)
+    if own: return [("포괄 기간(이 기록)", own)]
+    for a in reversed(rec.get("ancestors") or []):
+        if not re.search(r"recordGroup|collection", str(a.get("levelOfDescription") or ""), re.I) and _nara_span(a):
+            return [("포괄 기간(상위 계층)", f"{_nara_span(a)} — {a.get('levelOfDescription')} NAID {a.get('naId')}(이 기록 자체 날짜 아님)")]
+    return []
+
+
 def _nara_iiif_manifest(naid, key, max_canvas=40):
     """v1.98 NARA→IIIF 브리지(Node lib/nara_iiif.js buildNaraManifest 패리티): 계보 partOf·생산일 navDate·권리 원문·판독 지문·
     디지털 객체(표시 이미지=캔버스, TIFF·PDF·영상=rendering)."""
@@ -493,7 +516,7 @@ def _nara_iiif_manifest(naid, key, max_canvas=40):
     ru = (((rec.get("physicalOccurrences") or [{}])[0].get("referenceUnits") or [{}])[0]).get("name", "")
     dob = rec.get("digitalObjects") or []
     md = [x for x in [MV("NAID", str(naid)), rec.get("localIdentifier") and MV("로컬 식별자", rec["localIdentifier"]), MV("기술 수준", rec.get("levelOfDescription") or ""),
-                      ch and MV("계보(상위 계층)", ct), cre and MV("생산자", cre), dt and MV("생산일", dt), ru and MV("소장단위(열람·복제 청구)", ru),
+                      ch and MV("계보(상위 계층)", ct), cre and MV("생산자", cre), dt and MV("생산일", dt), *[MV(k, v) for k, v in _nara_spans(rec)], ru and MV("소장단위(열람·복제 청구)", ru),
                       ur and MV("이용 제한(원문)", ur), ar and MV("접근 제한(원문)", ar), MV("디지털 객체", f"{len(dob)}점"),
                       scope and MV("기술 지문(sha256-16)", fp + " — 범위·내용 기술 판독 시점 지문, 불일치=카탈로그 개정"),
                       MV("판독 시각", _d.datetime.now(_d.timezone.utc).isoformat()), MV("변환", "KOREA ARCHIVE 통합검색 NARA→IIIF 브리지 v1.98 (원 데이터: NARA Catalog API v2)")] if x]
