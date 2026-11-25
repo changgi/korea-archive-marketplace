@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.8.7 — 1945년 이전 질의 경로 안내 (2026-11-25)
+- 1945년 이전 질의 경로 안내(v3.8.7): nara_search·ia_search 응답에 변환된 질의(없으면 원 질의)에 1945년 이전 연도가 있으면 '1945년 이전 한국 사건·인물은 NARA·archive.org 제목 색인에 드묾 — tna_search(연대 필터)·nedb_search(한국사DB)·cross_search(sources=oldnews,jacar,ndl) 병행 권장'을 붙인다(Node preWarHint ↔ Python _prewar_hint). v3.8.6 alt_trials 결론(대안 표기 12종도 개선 없음)을 웹·모바일 사용자에게 지식으로 노출. golden nara-prewar-hint·nara-no-prewar-hint-1950.
+
 ## v3.8.6 — 변환어 대안 실측 축적 (2026-11-25)
 - 변환어 대안 실측 축적(v3.8.6): topics_probe.json `alt_trials`에 약함 변환어의 대안 후보 실측(현 변환어·후보·NARA/IA 관련 상위 수·총계·판정·방법)을 쌓는다 — 채택하지 않은 후보도 기준 정보로 남겨 같은 후보를 다시 재지 않게. 2026-11-25: 12개 후보(보도연맹·동학·유관순·사진신부·의병·명성황후·강화도조약·을사조약·갑오개혁) 모두 채택 안 함 — 1945년 이전 한국사 사건명은 NARA·IA 제목 색인에 드물어 변환어 교체로 풀리지 않음(TNA·국내 기관 경로가 맞음).
 
