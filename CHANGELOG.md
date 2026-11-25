@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.28 — 원장: 기준 사전 후보 자동 발굴 (2026-11-25)
+- dict_candidates.json(누적) — 지명 사전 밖 후보를 기관 장소 칸·NARA식 표제에서 원장 2건 이상만, 자동 추가 아님(사람 검토 후 사전에). dict.html 후보 구역. 서버 도구 변경 없음.
+
 ## v3.27 — 운영 Pages 산출물 건강 검사 (2026-11-25)
 - korea-archive-mcp scripts/pages_health.py + ledger-watch 단계 — 기준·연결 산출물 11종 생존·핵심 수치 검사, 실패 시 auto-health 이슈. 서버 도구 변경 없음.
 
