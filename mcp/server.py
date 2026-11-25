@@ -425,6 +425,9 @@ def _iiif_for(u, id_=None):
         mm = re.search(rx, u)
         if mm:
             return _bridge_url(sname, mm.group(1))
+    _se = re.search(r"archives\.seoul\.go\.kr/item/(\d{1,9})(?:[?#]|$)", u)
+    if _se:  # v3.10 서울기록원 브리지(Node 패리티)
+        return _bridge_url("seoul", _se.group(1))
     _kw = re.search(r"koreanwar\.or\.kr(?::8443)?/searchDetail\.do\?archRfcd=(\d{4}-[A-Z]{2}-\d{2}-[A-Z]{2}-[A-Z]-\d+)", u)
     if _kw:  # v3.5.2 6·25전쟁 아카이브센터 브리지(Node 패리티)
         return _bridge_url("kw", _kw.group(1))
