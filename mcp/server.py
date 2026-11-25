@@ -2595,6 +2595,12 @@ def _c_ndl(q, n):
     return out
 
 
+def _zero_or(out, body, rx, name, raw=False):
+    """v3.36 확정 0 판별(Node zeroOr 패리티) — 결과가 비었으면 기관 0건 표지(실측 정규식)가 있을 때만 0건, 없으면 조회 실패."""
+    if not out and not re.search(rx, str(body) if raw else re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", str(body)))):
+        raise RuntimeError(f"{name} 결과 판독 불가(0건 표지 없음 — 차단·개편 가능)")
+    return out
+
 def _c_un(q, n):
     """UN 디지털도서관 — Invenio of=xm(MARCXML) 무키 실측(2026-11-21). 안보리 결의·공식문서. UN Archives(AtoM)와 별개."""
     qsym = q.strip().upper() if re.match(r"^[A-Z]{1,4}(/[A-Z0-9.()-]+)+$", q.strip(), re.I) else ""  # v1.96.5 문서기호
@@ -2623,6 +2629,7 @@ def _c_un(q, n):
                     "url": "https://digitallibrary.un.org/record/" + rm.group(1)})
         if len(out) >= (50 if qsym else n):
             break
+    _zero_or(out, b, r"<collection[\s>](?![\s\S]*<record)", "UN 디지털도서관", raw=True)  # v3.36 레코드 없는 빈 collection만 0건
     if qsym:  # 기호 정확 일치 우선(191 필드는 접두 일치 — 실측)
         out.sort(key=lambda it: 0 if it["title"].startswith(f"[{qsym}]") else 1)
         return out[:n]
@@ -2665,7 +2672,7 @@ def _c_indy(q, n):
                     "url": "https://theme.archives.go.kr" + m.group(1).replace("&amp;", "&")})
         if len(out) >= n:
             break
-    return out
+    return _zero_or(out, b, r"총\s*0\s*건|검색결과가 없습니다", "독립운동 판결문")  # v3.36
 
 
 def _c_much(q, n):
@@ -2955,7 +2962,7 @@ def _c_jsg(q, n):
                     "url": "https://jsg.aks.ac.kr/dir/view?dataId=" + _up.quote(did)})
         if len(out) >= n:
             break
-    return out
+    return _zero_or(out, b, r"총\s*0\s*건", "장서각")  # v3.36
 
 
 def _c_kyudb(q, n):
@@ -3061,7 +3068,7 @@ def _c_gonghun(q, n):
                     "url": f"https://e-gonghun.mpva.go.kr/user/ContribuReportDetail.do?goTocode=20001&mngNo={mn.group(1)}&pageTitle=Report"})
         if len(out) >= n:
             break
-    return out
+    return _zero_or(out, b, r"TOTAL\s*0\s*건|조회된 정보가 없습니다", "공훈전자사료관")  # v3.36
 
 
 
@@ -3995,7 +4002,7 @@ def _c_jacar(q, n):
                         "url": "https://www.jacar.archives.go.jp/das/meta" + ("" if use_ja else "-en") + "/" + c.group(1)})
         if len(out) >= n:
             break
-    return out
+    return _zero_or(out, b, r"There are no documents matching|該当する文書が見つかりませんでした", "JACAR")  # v3.36
 
 
 def _c_seoul(q, n):
@@ -4044,7 +4051,7 @@ def _c_seoul(q, n):
     if need:
         with _cf.ThreadPoolExecutor(max_workers=6) as ex:
             list(ex.map(_ttl, need))
-    return out
+    return _zero_or(out, b, r"검색 결과가 없습니다", "서울기록원")  # v3.36
 
 
 
