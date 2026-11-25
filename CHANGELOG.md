@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.6.3 — 공개 상태 패싯·NARA 접근 제한 객체 교정 (2026-11-25)
+- 공개 상태 패싯·NARA 접근 제한 교정(v3.6.3): (1) '공개 상태' 패싯에 6·25전쟁 아카이브센터 '열람 및 이용조건'(전체열람/제2유형 등), '형태' 패싯에 KTV '자료 구분'(사진·영상)을 더한다. (2) 공개 상태 값은 세미콜론·가운뎃점으로만 가른다 — NARA 접근 조건 산문의 쉼표에서 잘린 옛 조각('but others' 등)은 subjects.json에서 지우지 않고 `superseded`로 표시하고 SKOS·subjects.html에서만 뺀다. (3) NARA `specificAccessRestrictions`·`specificUseRestrictions` 항목은 객체({restriction, securityClassification})라 이어 붙이면 '[object Object]'가 되어 'Donated - Security Classified · 보안 분류 Confidential' 같은 접근 제한 사유가 사라졌다(Python은 join TypeError) — `restrItem` ↔ `_restr_item`으로 '사유 — 보안 분류 X'. 원장은 '[object Object]' 메타를 가진 기록을 다시 판독(iiif_v 0). golden nara-restriction-object.
+
 ## v3.6.2 — 원장: 캡션 날짜 칸 쉼표형 (2026-11-25)
 - 캡션 날짜 칸 쉼표형(v3.6.2): 표제 날짜의 AWM 캡션 칸 규칙이 마침표 뒤('…. June 1952.')뿐 아니라 쉼표 뒤('INCHON, KOREA, 1950-09. …'·'KOREA, 1951-04. …'·'Seoul, Korea, May 1951. …')도 받는다. 번호 앞('no.'·'Nr.'·'Vol.')은 여전히 제외. 날짜 있는 기록 대조 일치 48·불일치 3(기존과 같음 — 생산일≠내용 시점, 날짜 없는 기록에만 적용).
 
