@@ -2215,6 +2215,11 @@ def _c_archives(q, n):
     sk = key if ("%" in key) else _up.quote(key)
     xml = _http_text("https://apis.data.go.kr/1741050/openapi/searcharc?serviceKey=" + sk +
                      "&query=" + _up.quote(q) + f"&start=1&limit={n}", 20)
+    if "<item>" not in xml:  # v3.32 부재는 '확정 0'일 때만(Node 패리티) — 오류·장애 응답을 0건으로 보고하던 결함
+        if "searchError" not in xml and re.search(r"<total>\s*0\s*</total>", xml):
+            return []
+        why = _xtag(xml, "returnAuthMsg") or _xtag(xml, "errMsg") or _xtag(xml, "resultMsg") or _xtag(xml, "message") or re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", xml)).strip()[:60]
+        raise RuntimeError(f"국가기록원 API 응답에 항목·0건 표기 없음 — {why}")
     return [{"title": _xtag(i, "title"), "date": _xtag(i, "prod_year"), "id": (lambda lk: ((re.search(r"rc_rfile_no=(\\d+)", lk).group(1) if re.search(r"rc_rfile_no=(\\d+)", lk) else "")
                                + ("-" + re.search(r"rc_ritem_no=0*(\\d+)", lk).group(1) if re.search(r"rc_ritem_no=0*(\\d+)", lk) else "")) or _xtag(i, "prod_name"))(_arch_link(_xtag(i, "link"))),
              **(lambda ser: {"series": ser} if ser else {})(_xtag(i, "prod_name") or (lambda lk: ("[유형] 기록건" if "rc_ritem_no=" in lk else "[유형] 기록물철" if "rc_rfile_no=" in lk else "[유형] 기록정보콘텐츠" if "rc_code=" in lk else ""))(_arch_link(_xtag(i, "link")))),  # v2.3 계열 구축(Node 패리티)
