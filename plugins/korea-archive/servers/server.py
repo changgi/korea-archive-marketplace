@@ -1907,11 +1907,11 @@ def _collect_merged(collectors):
         drop.add(id(it))
     return [it for it in items if id(it) not in drop], stats
 
-def _c_tna(q, n):
+def _c_tna(q, n, yr=None):  # v2.99.1 yr = 생산연도 필터(Node 패리티)
     q = _ko_en(q) or q
     query = f'"{q.strip()}"' if re.match(r"^[A-Z]+ \d+/\d+$", q.strip()) else q
     out = []
-    for batch, _t in T._search(query, page_size=min(n, 50), max_pages=1, sleep=0):
+    for batch, _t in T._search(query, page_size=min(n, 50), max_pages=1, sleep=0, **({"date_from": f"{yr}-01-01", "date_to": f"{yr}-12-31"} if yr else {})):
         for r in batch:
             rec = T._extract(r, "x", q)
             ref = str(rec.get("local_id", "") or "")
@@ -5508,7 +5508,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
     if not variants and "tna" in want:  # v2.99 기본 검색에도 — 1850~1909 연도 변환어면 TNA에 당대 국호+연도 1건(Node 패리티)
         ym0 = re.search(r"\b(18[5-9]\d|190\d)\b", _ko_en(query) or "")
         if ym0:
-            jobs.append((f"tna·Corea {ym0[1]}", (lambda y=ym0[1]: _COLLECT["tna"](f"Corea {y}", n))))
+            jobs.append((f"tna·Corea {ym0[1]}", (lambda y=ym0[1]: _COLLECT["tna"]("Corea", n, y))))  # v2.99.1 연도 필터
     if variants:  # 당대 표기 자동 팬아웃 — query_bank '열한 겹의 벽' 지식의 도구화
         eff = _ko_en(query) or query
         SUBS = [("Korean", "Corean"), ("Korea", "Corea"), ("Korea", "Chosen"), ("Seoul", "Keijo"), ("Pusan", "Fusan"),
@@ -5529,7 +5529,8 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
             for label, vq in vs:
                 if src == "nara" and re.match(r"^Corea \d{4}$", vq):
                     continue  # v2.98.1 NARA는 성씨 Corea·날짜 문서철로 흐려져 제외(Node 패리티)
-                jobs.append((f"{src}·{label}", (lambda src=src, vq=vq: _COLLECT[src](vq, n))))
+                ey = re.match(r"^Corea (\d{4})$", vq) if src == "tna" else None
+                jobs.append((f"{src}·{label}", (lambda src=src, vq=vq, ey=ey: _COLLECT["tna"]("Corea", n, ey[1]) if ey else _COLLECT[src](vq, n))))
     items, stats = _collect_merged(jobs)
     _resolve_origins(items, stats)
     linked = _link_overseas(items)

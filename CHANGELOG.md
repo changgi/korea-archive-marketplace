@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.99.1 — TNA 당대 국호 질의를 연도 필터로 (2026-11-25)
+- cross_search(Node·Python): TNA 'Corea <연도>'를 문자열 대신 'Corea' + 생산연도 필터(sps.dateFrom/To)로 — 문자열 방식은 연도만 맞는 기록(선원 명부 1915·Digest of Journal)이 섞임. 실측 1876 필터: 상위 4건 모두 강화도조약 외무부 문서(FO 881/2892·2824, FO 410/15, FO 483/11). COLLECT.tna·_c_tna에 연도 인자.
+
 ## v2.99.0 — 기본 검색의 당대 국호+연도(TNA) (2026-11-25)
 - cross_search(Node·Python): variants 없이도 변환어에 1850~1909 연도가 있으면 TNA에 'Corea <연도>' 1건 추가 — 기본 검색에서 강화도조약·갑오개혁 등 TNA 0건이던 한계(v2.98 보고). 골든 default-era-year-tna.
 
