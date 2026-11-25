@@ -233,7 +233,7 @@ _TOPICS = [
     ("이토\\s?히로부미|伊藤博文", "Ito Hirobumi Korea", None),
     ("김구|金九", "Kim Koo", None),
     ("안창호|安昌浩", "Ahn Chang-ho", None),
-    ("3[·.]1\\s?운동|삼일\\s?운동|三一運動|만세\\s?운동", "March First Movement Korea 1919", "mouvement du 1er mars Corée"),
+    ("3[·.]1\\s?운동|삼일\\s?운동|三一運動|만세\\s?운동", "Korean independence movement 1919", "mouvement du 1er mars Corée"),  # v2.99.6 실측(Node 패리티)
     ("위안부|慰安婦|慰安妇", "comfort women", "femmes de réconfort"),
     ("강제\\s?동원|강제\\s?징용|징용|徵用|征用", "Korean forced labor conscription", None),
     ("광복군|光復軍|光复军", "Korean Liberation Army", None),
@@ -2242,6 +2242,7 @@ def _c_nedb(q, n):
     recs = _load_nedb_index()
     if recs:
         return _nedb_file_search(recs, q, n)
+    q = re.sub(r"(\d)[·.](\d{1,2})\s*(운동|만세|사건|혁명|선거|수복|후퇴|사태)", r"\1·\2 \3", str(q))  # v2.99.6 숫자 사건명 뒤 띄움(Node 패리티)
     dbs = sorted([d for d in _nedb_live(q, 2) if d["total"] > 0], key=lambda d: -d["total"])
     out = []
     for k in range(2):
