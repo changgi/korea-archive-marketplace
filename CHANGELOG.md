@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.40 — 남은 브라우저 위장 UA 제거 + CI 정직 UA 검사 (2026-11-25)
+- `harvester/harvester/util.py`·`collector/kla/ia.py`의 브라우저 위장 UA를 정직 UA(플러그인 서버 v2.36과 동일)로 교체 — TNA·IA 정직 UA 정상 응답 실측. verify에 위장 UA 검사 단계 추가(korea-archive-mcp retry-blocked.yml도 교체). 서버 동작·도구 스키마 변경 없음.
+
 ## v3.39 — 본문 전송 중 끊김 재시도 (2026-11-25)
 - gtext(Node)·_http_text(Python): 응답 본문 읽기 중 끊김(undici 'terminated'·IncompleteRead·연결 리셋)을 비압축 재요청으로 최대 3회 재시도. 기존 robustFetch는 헤더 수신까지만 재시도해 운영(icn1)에서 한국사DB 조문 상세가 3/3 'terminated'로 실패. 타임아웃·HTTP 오류는 재시도 안 함. 도구 스키마 변경 없음.
 

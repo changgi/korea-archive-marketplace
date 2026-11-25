@@ -3,7 +3,7 @@
 from __future__ import annotations
 import csv, json, os, time, urllib.parse, urllib.request, urllib.error
 
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"  # TNA Discovery가 bot형 UA를 403 처리하므로 브라우저형 UA 사용. sleep으로 요청 간격 준수.
+UA = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; archival discovery; non-commercial research)"  # v3.40 정직 UA(플러그인 서버 v2.36과 통일 — 브라우저 위장 금지, 거부 기관은 우회 없이 표시. TNA는 정직 UA로 200 실측 2026-11-25)
 DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 
 def http_json(url: str, headers: dict | None = None, retries: int = 3, backoff: float = 2.0):

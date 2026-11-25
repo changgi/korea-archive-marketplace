@@ -17,6 +17,9 @@ jobs:
           python -m py_compile plugins/korea-archive/servers/server.py mcp/server.py \
             plugins/korea-archive/servers/kla/ledger.py collector/kla/ledger.py \
             plugins/korea-archive/servers/harvester/tna.py
+      - name: 정직 UA 검사(브라우저 위장 UA 금지 — CLAUDE.md 접근 원칙)
+        run: |
+          if git grep -nE "Mozilla/5[.]0|Apple[W]ebKit/|Gecko/2[0]" -- ':!*.md' ':!*.html'; then echo "::error::브라우저 위장 UA 발견 — 정직 UA(KoreaArchiveMCP/…)를 쓰고 거부는 우회 없이 표시"; exit 1; fi
       - name: 런타임 등록 (mcp<2 · 도구 20종 · 24KB 가드)
         run: |
           pip install -q 'mcp<2'
