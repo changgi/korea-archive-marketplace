@@ -2181,8 +2181,8 @@ def _nara_date(rec):
 
 def _c_nara(q, n):
     key = os.environ.get("NARA_API_KEY")
-    if not key:
-        return []
+    if not key:  # v3.33 키 없음을 확정 0으로 보고하던 결함(Node 패리티)
+        raise RuntimeError("NARA_API_KEY 미설정 — 0건이 아니라 조회 불가")
     q = _ko_en(q) or q
     data = http_json("https://catalog.archives.gov/api/v2/records/search?" + qs({"q": q, "limit": n, "page": 1}),
                      headers={"x-api-key": key})
@@ -2210,8 +2210,8 @@ def _xtag(bl, x):
 
 def _c_archives(q, n):
     key = os.environ.get("ARCHIVES_API_KEY")
-    if not key:
-        return []
+    if not key:  # v3.33 키 없음을 확정 0으로 보고하던 결함(Node 패리티)
+        raise RuntimeError("ARCHIVES_API_KEY 미설정 — 0건이 아니라 조회 불가")
     sk = key if ("%" in key) else _up.quote(key)
     xml = _http_text("https://apis.data.go.kr/1741050/openapi/searcharc?serviceKey=" + sk +
                      "&query=" + _up.quote(q) + f"&start=1&limit={n}", 20)
@@ -2227,13 +2227,15 @@ def _c_archives(q, n):
 
 def _c_nlk(q, n):
     key = os.environ.get("NLK_API_KEY")
-    if not key:
-        return []
+    if not key:  # v3.33 키 없음을 확정 0으로 보고하던 결함(Node 패리티)
+        raise RuntimeError("NLK_API_KEY 미설정 — 0건이 아니라 조회 불가")
     # 실측 7.7s(최저속 축) — 6h TTL 캐시(마커 <item> — 정상 결과만)
     xml = _cached_text(f"nlk:{q}:{n}", 6 * 3600,
                        lambda: _http_text("https://www.nl.go.kr/NL/search/openApi/search.do?key=" + _up.quote(key) +
                                           "&apiType=xml&srchTarget=total&kwd=" + _up.quote(q) + f"&pageSize={n}&pageNum=1", 20),
                        "<item>")
+    if "<item>" not in xml and not re.search(r"<total>\s*0\s*</total>", xml):  # v3.33 확정 0만 0건(Node 패리티)
+        raise RuntimeError("국립중앙도서관 API 응답에 항목·0건 표기 없음 — " + (_xtag(xml, "error") or _xtag(xml, "message") or re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", xml)).strip()[:60]))
     out = []
     for it in re.findall(r"<item>(.*?)</item>", xml, re.S):
         lk = _xtag(it, "detail_link") or _xtag(it, "org_link")
@@ -2324,7 +2326,10 @@ def _c_nedb(q, n):
     if recs:
         return _nedb_file_search(recs, q, n)
     q = re.sub(r"(\d)[·.](\d{1,2})\s*(운동|만세|사건|혁명|선거|수복|후퇴|사태)", r"\1·\2 \3", str(q))  # v2.99.6 숫자 사건명 뒤 띄움(Node 패리티)
-    dbs = sorted([d for d in _nedb_live(q, 2) if d["total"] > 0], key=lambda d: -d["total"])
+    _all = _nedb_live(q, 2)
+    if _all and all(d["total"] < 0 for d in _all):  # v3.33 모든 DB 응답 이상이면 확정 0이 아니라 조회 실패(Node 패리티)
+        raise RuntimeError("한국사DB 주요 DB 전부 응답 이상(총 건수 표기 없음)")
+    dbs = sorted([d for d in _all if d["total"] > 0], key=lambda d: -d["total"])
     out = []
     for k in range(2):
         for d in dbs:
@@ -2949,8 +2954,10 @@ def _c_kyudb(q, n):
     try:
         r = json.loads(raw)
     except Exception:
-        return []
+        raise RuntimeError("규장각 응답 판독 실패 — 0건이 아니라 조회 불가")  # v3.33(Node 패리티)
     sec = (r.get("sections") or {}) if isinstance(r, dict) else {}
+    if not sec and isinstance(r, dict) and r.get("error"):
+        raise RuntimeError("규장각 조회 실패 — " + str(r.get("error"))[:120])
     lst = sec.get("목록")
     if isinstance(lst, dict):  # v1.96.7: sections 값은 {count, items} — 리스트로 가정해 항상 0건이던 결함
         rows = [x for x in lst.get("items", []) if x.get("title")]
