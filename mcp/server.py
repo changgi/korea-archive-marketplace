@@ -487,6 +487,11 @@ def _restr_item(x):
     return " — ".join(v for v in (x.get("restriction"), f"보안 분류 {x['securityClassification']}" if x.get("securityClassification") else "") if v)
 
 
+def _prewar_hint(q):
+    """v3.8.7 Node preWarHint 패리티 — 1945년 이전 연도가 든 질의에 대체 경로 안내."""
+    return ("\n※ 1945년 이전 한국 사건·인물은 NARA·archive.org 제목 색인에 드뭅니다(변환어 실측 2026-11-25 — 대안 표기 12종도 개선 없음). tna_search(연대 필터)·nedb_search(한국사DB 원문)·cross_search(sources=oldnews,jacar,ndl) 병행을 권장합니다.") if any(int(y) < 1945 for y in re.findall(r"(?<!\d)(1[5-9]\d\d)(?!\d)", str(q or ""))) else ""
+
+
 def _nara_yr(d):
     d = d or {}; y = d.get("year") or str(d.get("logicalDate") or "")[:4]
     return f"{d['dateQualifier'] + ' ' if d.get('dateQualifier') else ''}{y}" if y else ""
@@ -649,7 +654,7 @@ def nara_search(query: str, record_group: int | None = None,
         rc, rb = auto_rights({"rg_series": f"RG {record_group}", "archive": "NARA"})
         rline = (f"\n권리 초판정(RG {record_group}): {rc} — {rb}"
                  f"\n※ 건별 실확인: judge_rights(naid=<NAID>) — 카탈로그 Use Restriction 실조회로 A/C 확정")
-    return f"NARA '{query}'" + (f" (RG {record_group})" if record_group else "") + f" — 총 {total}건:\n" + ("\n".join(rows) or "(0건)") + rline
+    return f"NARA '{query}'" + (f" (RG {record_group})" if record_group else "") + f" — 총 {total}건:\n" + ("\n".join(rows) or "(0건)") + rline + _prewar_hint(query)
 
 @mcp.tool()
 def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
@@ -735,7 +740,7 @@ def ia_search(query: str = "", identifier: str = "", max_results: int = 15,
         + (f" | 권리:{_lshort(d.get('licenseurl'))}" if _lshort(d.get('licenseurl')) else "")
         + f" | https://archive.org/details/{d.get('identifier')}" for d in docs)
     return (f"archive.org '{disp}'{yt}{pt} — 총 {nf}건:\n" + body
-            + "\n※ 권리 미표기 건은 judge_rights 초판정 — 발굴 우선, 권리는 표시.")
+            + "\n※ 권리 미표기 건은 judge_rights 초판정 — 발굴 우선, 권리는 표시." + _prewar_hint(disp))
 
 JB_STRAT = {
     'recipes': """발굴 완주 레시피 — 주제 유형별 발굴→판독→권리 순서 (전 단계 실측 검증, 2026-11-21)
