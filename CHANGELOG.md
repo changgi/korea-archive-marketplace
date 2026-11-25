@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.4.1 — 원장: 국립중앙도서관 계층 보강 (2026-11-25)
+- 국립중앙도서관 계층 보강(v3.4.1): 기관 계층이 빈 국립중앙도서관 기록은 `nlk_hier_pass`가 nlk_search를 제목으로 불러 **같은 식별자(viewKey·cno) 줄**의 기관 자료유형으로 '자료유형 › X'(cross_search nlk 계층과 같은 형식)를 세운다(근거 partOf_src). 다른 줄은 쓰지 않고, 식별자 링크가 없는 줄('이용불가')은 같은 기록으로 확정할 수 없어 채우지 않는다. 하루 10건(NLK_HIER_MAX), 7일 뒤 재시도. 2026-11-25 실측: 6건 중 4건(지도자료).
+
 ## v3.4 — 원장: TNA Discovery 최상위 기록 계층 보강 (2026-11-25)
 - TNA 계층 보강(v3.4): 기관 계층이 없는 TNA Discovery 기록(최상위 컬렉션·시리즈)은 `tna_hier_pass`가 records/v1/details를 읽어 계층을 세운다 — 다른 기록관 소장(heldBy가 Kew 아님)은 'TNA Discovery › 소장 기관'(Discovery가 목록만 실은 외부 컬렉션의 최상위), Kew 소장은 'TNA › 부서'(참조번호 첫 마디 — 다른 TNA 기록과 같은 형식). 근거 `partOf_src`에 heldBy·parentId·기술 수준. 하루 10건(TNA_HIER_MAX), 실패는 7일 뒤 재시도. 2026-11-25 실측: 5건(IWM·버밍엄대·케임브리지대·웨스트서식스 기록관·PCAP) — 기관 계층 98.2%→98.8%.
 
