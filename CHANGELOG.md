@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.14 — 원장: 지명 사전 산출물 (2026-11-25)
+- 기록별 표준 지명(`places_std`), places.json·places.jsonld(SKOS·rico:Place, 표기 변이 altLabel), RiC-O 기록 → rico:isAssociatedWithPlace. 22곳 중 20곳에 기록. 서버 도구 변경 없음.
+
 ## v3.13 — 원장: 같은 날·같은 지명 (2026-11-25)
 - 지명 사전(다국어 변환표 지명 대응 + 로마자 변형 22곳)으로 '같은 날(다른 기관)' 간선 근거에 같은 지명 표시 — 110 중 68(흥남 52 등). 날짜만 같은 쌍과 구분. quality 지표 추가. 서버 도구 변경 없음.
 
