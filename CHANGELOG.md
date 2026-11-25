@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.11 — 원장: 사본의 원 소장처 계층 (2026-11-25)
+- 원장 `origin_holder` — 전자사료관 해외 수집 사본(소장자 NARA)에 원 소장처·Record Group·111-SC 로컬 식별자·번호대 shelflist(목록 단위) 검색 링크. 원본 개별 디지털 사본 존재는 단정하지 않음. earchive 봉투 사유 '기술'. 서버 도구 변경 없음.
+
 ## v3.10 — 서울기록원 IIIF 브리지 (2026-11-25)
 - /iiif/seoul/{기록건 번호}/manifest.json — 상세 이미지 뷰어의 이 기록건 이미지(원본 우선)·기술 항목·권리 원문(접근·이용유형·이용주기)·상위 시리즈 계층(partOf). Node iiifFor ↔ Python `_iiif_for` 패리티: archives.seoul.go.kr/item/N → seoul 브리지.
 - 공용 이미지 크기 판독: 416(범위 초과) 응답 서버는 범위 없이 재요청. 도구 스키마 변경 없음.
