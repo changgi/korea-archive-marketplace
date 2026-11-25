@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.99.2 — IA 당대 국호+연도 필드 필터 (2026-11-25)
+- cross_search(Node·Python, 기본·variants): 1850~1909 연도 변환어면 IA에도 'Corea AND year:<연도>' — 실측 1876: 1876년 홍콩 신문·'Correspondence respecting the treaty between Japan and Corea', 1894: 'Corea, the hermit nation'·China Mail(문자열 'Corea 1876'은 2006·2018 자료 혼입). 골든 default-era-year-ia.
+
 ## v2.99.1 — TNA 당대 국호 질의를 연도 필터로 (2026-11-25)
 - cross_search(Node·Python): TNA 'Corea <연도>'를 문자열 대신 'Corea' + 생산연도 필터(sps.dateFrom/To)로 — 문자열 방식은 연도만 맞는 기록(선원 명부 1915·Digest of Journal)이 섞임. 실측 1876 필터: 상위 4건 모두 강화도조약 외무부 문서(FO 881/2892·2824, FO 410/15, FO 483/11). COLLECT.tna·_c_tna에 연도 인자.
 
