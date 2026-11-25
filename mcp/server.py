@@ -2440,7 +2440,9 @@ def _kw_detail(ref):
     return {"naid": naid, "date": re.sub(r"(-00)+$", "", pm.group(0)) if pm else ""}  # '1950-12-00'(일 미상) → '1950-12'
 
 def _c_koreanwar(q, n):
-    _, cards = _kw_search({"keyword": q, "viewType": "archive"})
+    _tot, cards = _kw_search({"keyword": q, "viewType": "archive"})
+    if not cards and str(_tot).replace(",", "") != "0":  # v3.34 기관 totalCount가 0일 때만 0건(Node 패리티)
+        raise RuntimeError(f"6·25전쟁 아카이브센터 결과 판독 불가(totalCount {_tot})")
     cards = cards[:n]
     # v1.86: 상위 5건 상세 병렬 조회(24h 캐시·6s 상한) — 원본 NAID(sameAs)·생산시기 확보 → NARA 원본과 동일 기록 병합
     det = [None] * len(cards)
@@ -2915,6 +2917,8 @@ def _c_awm(q, n):
                         "url": "https://www.awm.gov.au/collection/" + cid})
         except Exception:
             continue
+    if ids and not out:  # v3.34 상세 전부 실패를 0건으로 보고하던 결함(Node 패리티)
+        raise RuntimeError(f"AWM 상세 {len(ids)}건 모두 조회 실패")
     return out
 
 
@@ -4140,11 +4144,13 @@ def _ok_lim(n):
 
 def _c_okchf(q, n):
     """v2.11 국외소재문화유산재단 대국민 아카이브 — 통합검색(국외문화유산·사진아카이브). 계층=유형 › 소장국가 › 소장처. Node 패리티."""
-    out, _ = _ok_list(_cached_text(f"okL:{n}:{q}", 6 * 3600, lambda: _ok_get(f"{_OK_B}/archive/total-search.do?srSearchVal={_up.quote(q)}&pagerLimit={_ok_lim(n)}"), "data-result"))
+    out, _tot = _ok_list(_cached_text(f"okL:{n}:{q}", 6 * 3600, lambda: _ok_get(f"{_OK_B}/archive/total-search.do?srSearchVal={_up.quote(q)}&pagerLimit={_ok_lim(n)}"), "data-result"))
     try:
         pubs, _ = _ok_pub_search(q)  # 조사보고서(목차) — 소장처 단위 맥락
     except Exception:
         pubs = []
+    if not out and not pubs and str(_tot) != "0":  # v3.34 기관 '전체 N'이 0일 때만 0건(Node 패리티)
+        raise RuntimeError(f"국외소재문화유산재단 결과 판독 불가(전체 {_tot or '표기 없음'})")
     res = []
     for r in pubs[:min(3, max(1, n // 3))]:
         it = {"title": f"[조사보고서] {r['title']}"[:160], "date": "", "id": f"pub:{r['no']}", "series": "발간자료 › 조사보고서", "url": r["url"]}
@@ -4310,16 +4316,19 @@ def _nr_field(f):
 
 def _c_nrich(q, n):
     """v2.13 국립문화유산연구원 — 국외문화유산 DB(명칭) + 발간자료(보고서). Node 패리티."""
+    nfail = 0  # v3.34 원격 2곳 모두 실패면 조회 실패(Node 패리티)
     try:
         ov = _nr_ov_list(q)
     except Exception:
-        ov = []
+        ov = []; nfail += 1
     k = max(2, -(-n // 2))
     try:
         rp = _nr_rep_api(q, k)
     except Exception:
-        rp = []
+        rp = []; nfail += 1
     db = _safe(lambda: _nr_db_search(q, n), [])
+    if nfail == 2 and not db:
+        raise RuntimeError("국립문화유산연구원 국외문화유산·발간자료 조회 모두 실패")
     b = []
     for r in rp[:k]:
         it = {"title": f"[발간자료] {r['title']}"[:160], "date": r["year"], "id": f"rep:{r['idx']}", "series": " › ".join(x for x in ("발간자료", _nr_field(r["field"])) if x), "url": r["url"]}
