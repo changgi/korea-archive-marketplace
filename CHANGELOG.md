@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.33 — 교차 수집 '확정 0' 감사 1차 교정 (2026-11-25)
+- 수집기 33개 감사 — 이번 교정: 키 미설정(nara·archives·nlk) 조회 불가로, nlk <total>0</total>만 0건, 한국사DB 실시간 전 DB 응답 이상 시 실패, 규장각 목록·해제 둘 다 실패 시 실패, 전자사료관 HTTP 오류(Node·Python 패리티). 나머지 HIGH 위험은 다음 라운드. 도구 스키마 변경 없음.
+
 ## v3.32 — 국가기록원 교차 수집 '확정 0' 교정 (2026-11-25)
 - cross_search의 국가기록원 채널이 API 오류·장애 응답을 '0건'으로 보고하던 결함 — <total>0</total>일 때만 0건, 그 밖은 조회 실패(—)로(Node·Python 패리티, archives_search v2.47과 같은 판별). golden archives-no-false-zero. 도구 스키마 변경 없음.
 
