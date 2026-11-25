@@ -2691,6 +2691,8 @@ def _c_much(q, n):
                         "date": "", "id": "", "url": "https://archive.much.go.kr/index.do"})
             if len(out) >= n:
                 break
+    if not out and not re.search(r"통합검색\s*\(0\)|총\s*\[0\]\s*건", re.sub(r"<[^>]+>", " ", b)):  # v3.35 0건은 기관 명시일 때만(Node 패리티)
+        raise RuntimeError("역사박물관 결과 판독 불가(0건 표지 없음)")
     return out
 
 
@@ -3028,6 +3030,8 @@ def _c_i815(q, n):
         if len(out) >= n:
             break
         out.append({"title": f"독립기념관 {c['name']} {c['disp']}건", "date": "", "id": "", "series": c['name'], "url": base + c["u"]})  # v2.3: 집계 신호도 계열(카테고리) 부여
+    if not out and not re.search(r"콘텐츠\s*\(0\)", re.sub(r"<[^>]+>", " ", b)):  # v3.35 0건은 기관 명시일 때만(Node 패리티)
+        raise RuntimeError("독립기념관 결과 판독 불가(0건 표지 없음)")
     return out
 
 
