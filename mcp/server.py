@@ -480,6 +480,13 @@ def _img_size(url):
 
 
 
+def _restr_item(x):
+    """v3.6.3 NARA specific*Restrictions 항목은 객체({restriction, securityClassification}) — Node restrItem 패리티(이전: join TypeError·'[object Object]')."""
+    if isinstance(x, str): return x
+    x = x or {}
+    return " — ".join(v for v in (x.get("restriction"), f"보안 분류 {x['securityClassification']}" if x.get("securityClassification") else "") if v)
+
+
 def _nara_yr(d):
     d = d or {}; y = d.get("year") or str(d.get("logicalDate") or "")[:4]
     return f"{d['dateQualifier'] + ' ' if d.get('dateQualifier') else ''}{y}" if y else ""
@@ -514,8 +521,8 @@ def _nara_iiif_manifest(naid, key, max_canvas=40):
     U = _nara_urls(naid); L = lambda t, lang="en": {lang: [str(t or "")[:1000]]}; MV = lambda k, v: {"label": L(k, "ko"), "value": L(v, "none")}
     ch = [{"naId": a.get("naId"), "level": str(a.get("levelOfDescription") or ""), "rg": a.get("recordGroupNumber") or "", "title": str(a.get("title") or "")[:160]} for a in rec.get("ancestors") or []]
     ct = " › ".join(re.sub(r"\s+", " ", f"{re.sub('recordGroup', 'RG', a['level'], flags=re.I)}{' ' + str(a['rg']) if a['rg'] else ''} {a['title']} [NAID {a['naId']}]").strip() for a in ch)
-    u0 = rec.get("useRestriction") or {}; ur = u0 if isinstance(u0, str) else " · ".join(x for x in [u0.get("status"), u0.get("note"), "/".join(u0.get("specificUseRestrictions") or [])] if x)
-    a0 = rec.get("accessRestriction") or {}; ar = a0 if isinstance(a0, str) else " · ".join(x for x in [a0.get("status"), a0.get("note"), "/".join(a0.get("specificAccessRestrictions") or [])] if x)
+    u0 = rec.get("useRestriction") or {}; ur = u0 if isinstance(u0, str) else " · ".join(x for x in [u0.get("status"), u0.get("note"), "/".join(map(_restr_item, u0.get("specificUseRestrictions") or []))] if x)
+    a0 = rec.get("accessRestriction") or {}; ar = a0 if isinstance(a0, str) else " · ".join(x for x in [a0.get("status"), a0.get("note"), "/".join(map(_restr_item, a0.get("specificAccessRestrictions") or []))] if x)
     pd = (rec.get("productionDates") or [{}])[0]; ld = str(pd.get("logicalDate") or "")
     nav = ld[:10] + "T00:00:00Z" if re.match(r"^\d{4}-\d{2}-\d{2}", ld) else (f"{pd.get('year')}-01-01T00:00:00Z" if re.match(r"^\d{4}$", str(pd.get("year") or "")) else "")
     dt = str(pd.get("logicalDate") or pd.get("year") or pd.get("proximatePhrase") or "")[:10]
@@ -822,7 +829,7 @@ def judge_rights(rg_series: str = "", title: str = "", archive: str = "", naid: 
                 return f"[NAID {naid}] 카탈로그에 없음 — NAID를 확인하거나 rg_series 초판정을 사용하십시오."
             ur = rec.get("useRestriction") or {}
             urs = ur if isinstance(ur, str) else " · ".join(
-                x for x in [ur.get("status"), ur.get("note"), "/".join(ur.get("specificUseRestrictions") or [])] if x)
+                x for x in [ur.get("status"), ur.get("note"), "/".join(map(_restr_item, ur.get("specificUseRestrictions") or []))] if x)
             rgnum = rec.get("recordGroupNumber") or next(
                 (a.get("recordGroupNumber") for a in (rec.get("ancestors") or []) if a.get("recordGroupNumber")), "")
             cls, basis = auto_rights({"rg_series": f"RG {rgnum}" if rgnum else rg_series,
@@ -3448,7 +3455,7 @@ def _commons_mode(query: str, max_results: int) -> str:
                             nline = f"【NARA 원본 대조】 NAID {naid} — 카탈로그에 없음(파일명 번호 오기 가능) → 업로더 라이선스만으로 게재 판단 금지\n"
                         else:
                             ur = rec.get("useRestriction") or {}
-                            urs = ur if isinstance(ur, str) else " · ".join(x for x in (ur.get("status"), ur.get("note"), "/".join(ur.get("specificUseRestrictions") or [])) if x)
+                            urs = ur if isinstance(ur, str) else " · ".join(x for x in (ur.get("status"), ur.get("note"), "/".join(map(_restr_item, ur.get("specificUseRestrictions") or []))) if x)
                             cls = ("A(제한 없음 실확인)" if re.search(r"unrestricted", urs, re.I) and not re.search(r"restricted\s*[-–]|possibly|fully restricted", urs, re.I)
                                    else "C(제한 표기 — 기관 확인 필요)" if re.search(r"restricted", urs, re.I) else "판정 보류(Use Restriction 미기재)")
                             nline = (f"【NARA 원본 대조】 NAID {naid} 원본 실재 확인 — {_norm(rec.get('title') or '')[:110]}\n"
