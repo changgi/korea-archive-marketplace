@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.23 — 원장: 국립중앙도서관 LOD 전거·외부 전거 연결 (2026-11-25)
+- authorities.json(누적) — 기관 전거 번호 → LOD 리소스·표제·owl:sameAs(LOC·VIAF·Wikidata·GND·NDL). RiC-O 기록이 LOD 전거를 가리킴, 기록 페이지 '기관 전거' 행. 서버 도구 변경 없음.
+
 ## v3.22 — 신문 기사 기관 전거(KSH·KAC) (2026-11-25)
 - nedb_search(mode=oldnews) 상세에 장소·인물·단체 기관 전거 줄(이름=KSH/KAC 번호) — Node·Python 패리티. 원장 패싯·지명 사전·authority_ids 연동, 기존 신문 기록 재판독. 도구 스키마 변경 없음(응답 내용만).
 
