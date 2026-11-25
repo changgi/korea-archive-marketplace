@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.27 — 운영 Pages 산출물 건강 검사 (2026-11-25)
+- korea-archive-mcp scripts/pages_health.py + ledger-watch 단계 — 기준·연결 산출물 11종 생존·핵심 수치 검사, 실패 시 auto-health 이슈. 서버 도구 변경 없음.
+
 ## v3.26 — query_bank 기준 사전 모드 (2026-11-25)
 - query_bank(topic='dict'|'사전'|'기준') — 지명·인물·사건·기관 전거 기준 사전을 도구 응답으로(Node·Python 패리티). 원장 events.json 추가. 도구 설명 변경 — PlayMCP '정보 불러오기' 필요.
 
