@@ -764,10 +764,26 @@ def query_bank(topic: str = "list") -> str:
     """검증된 한국 기록 발굴 쿼리 세트 조회. topic: 'list'(그룹 목록) 또는 그룹ID
     (예 'G-07' 구한말, 'G-08' 일제강점기, 'G-17' 간접키워드, 'N-05' NARA 시리즈, 'RG' 교차매핑, 'TNA' 레이어)
     전략 지식: 'walls'(열한 겹의 벽), 'identifiers'(식별자 해독), 'persons'(인명 열쇠), 'crosscheck'(국내외 대조), 'world'(6개국 서고 지도), 'cities'(도시명 계보), 'allies'(한국전 참전·지원 22개국 발굴 지도)."""
+    if re.match(r"^(ledger|원장|used|실측)$", topic.strip(), re.I):  # v3.8 Node 패리티 — 축적된 실제 질의를 발굴 성과순으로
+        try:
+            pv = json.loads(_cached_text("qb:prov", 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/provenance.json", 20), '"provenance"'))
+            agg = {}
+            for p in pv.get("provenance") or []:
+                q = str((p.get("args") or {}).get("query") or "").strip()
+                if not q: continue
+                e = agg.setdefault(f"{p.get('tool')}|{q}", {"tool": p.get("tool"), "q": q, "recs": set(), "calls": 0, "last": ""})
+                e["recs"].update(p.get("records") or []); e["calls"] += p.get("calls") or 1; e["last"] = max(e["last"], p.get("last") or "")
+            rows = sorted(agg.values(), key=lambda e: (-len(e["recs"]), -e["calls"]))[:40]
+            return (f"원장 실측 질의 — 실제로 기록을 발굴한 질의 {len(agg)}개(상위 {len(rows)}, 발굴 기록 수순) · 원장 {pv.get('linked_records', '?')}건과 연결\n"
+                    + "\n".join(f"- '{e['q']}' ({e['tool']}) → 기록 {len(e['recs'])}건 · 기관 {len({r.split(':')[0] for r in e['recs']})}곳 · 호출 {e['calls']} · 마지막 {e['last'][:10]}" for e in rows)
+                    + "\n※ 근거: https://changgi.github.io/korea-archive-mcp/data/provenance.json(질의 지문↔기록) · 회신 원문은 data/queries/. 같은 질의를 다시 던지면 새로 생긴 기록까지 이어 발굴.")
+        except Exception as e:
+            return f"원장 실측 질의 조회 실패({e}) — https://changgi.github.io/korea-archive-mcp/data/provenance.json 직접 열람"
     if topic == "list":
         lines = [f"{gid}: {ko} ({len(kws)}개)" for gid, ko, _en, _d, kws in KC.COMMON_GROUPS]
         lines += [f"{gid}: {ko} ({len(kws)}개)" for gid, ko, _en, kws in KN.NARA_GROUPS]
         lines += ["RG: NARA 28개 Record Group 교차 매핑", "TNA: 14 전략 레이어 (1,222 쿼리)"]
+        lines += ["ledger: 원장 실측 질의 — 실제로 기록을 발굴한 질의를 성과순으로(v3.8)"]
         return "쿼리 뱅크 그룹:\n" + "\n".join(lines)
     for gid, ko, _en, _d, kws in KC.COMMON_GROUPS:
         if gid == topic: return f"{gid} {ko}:\n" + "\n".join(f"- {k}" for k in kws)
