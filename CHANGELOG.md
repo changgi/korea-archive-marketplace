@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.41 — 조회 범위 등록부(coverage) (2026-11-25)
+- query_bank(topic='coverage' 또는 'coverage:질의') — 축적된 cross_search 회신에서 질의×기관 관측(결과·확정 0·미확정 0·조회 실패)을 보여 줌(Node·Python 패리티). 정본 Pages data/coverage.json(원장 실행마다 회신 원문에서 재계산). 기관별 확정 0 시행 이전·미감사 기관의 0은 '미확정 0'. **query_bank description 변경 — PlayMCP '정보 불러오기' 재실행 필요.**
+
 ## v3.40 — 남은 브라우저 위장 UA 제거 + CI 정직 UA 검사 (2026-11-25)
 - `harvester/harvester/util.py`·`collector/kla/ia.py`의 브라우저 위장 UA를 정직 UA(플러그인 서버 v2.36과 동일)로 교체 — TNA·IA 정직 UA 정상 응답 실측. verify에 위장 UA 검사 단계 추가(korea-archive-mcp retry-blocked.yml도 교체). 서버 동작·도구 스키마 변경 없음.
 

@@ -769,7 +769,7 @@ JB_STRAT = {
 
 @mcp.tool()
 def query_bank(topic: str = "list") -> str:
-    """검증된 한국 기록 발굴 쿼리 세트 조회. topic: 'dict'(기준 사전 — 지명·인물·사건·기관 전거), 'list'(그룹 목록) 또는 그룹ID
+    """검증된 한국 기록 발굴 쿼리 세트 조회. topic: 'dict'(기준 사전 — 지명·인물·사건·기관 전거), 'coverage:질의'(조회 범위 — 확정 0·조회 실패), 'list'(그룹 목록) 또는 그룹ID
     (예 'G-07' 구한말, 'G-08' 일제강점기, 'G-17' 간접키워드, 'N-05' NARA 시리즈, 'RG' 교차매핑, 'TNA' 레이어)
     전략 지식: 'walls'(열한 겹의 벽), 'identifiers'(식별자 해독), 'persons'(인명 열쇠), 'crosscheck'(국내외 대조), 'world'(6개국 서고 지도), 'cities'(도시명 계보), 'allies'(한국전 참전·지원 22개국 발굴 지도)."""
     if re.match(r"^(dict|사전|기준)$", topic.strip(), re.I):  # v3.26 기준 사전(지명·인물·사건·기관 전거) — Node 패리티
@@ -794,6 +794,30 @@ def query_bank(topic: str = "list") -> str:
                     + f"\n\n※ 보기: {B}dict.html · 정본 places.json·persons.json·events.json·authorities.json · KV 보기 https://changgi.github.io/korea-archive-mcp/kv.html?manifest=<IIIF 주소>")
         except Exception as e:
             return f"기준 사전 조회 실패({e}) — https://changgi.github.io/korea-archive-mcp/data/dict.html 직접 열람"
+    _cm = re.match(r"^(coverage|범위|조회범위)(?:\s*[:：]\s*(.+))?$", topic.strip(), re.I)
+    if _cm:  # v3.41 조회 범위 등록부(Node 패리티) — 질의×기관 관측: 결과·확정 0·미확정 0·조회 실패
+        try:
+            C = json.loads(_cached_text("qb:cov", 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/coverage.json", 20), '"by_source"'))
+            def row(src, e):
+                ls = e.get("last_status", "")
+                st = "조회 실패" if ls == "fail" else "0건" if ls == "zero" else "결과 " + str(ls).replace("hit:", "") + "건"
+                return (f"- {src}: 결과 {e['hit']}회(최대 {e['max']}건) · 확정 0 {e['zero']}회 · 미확정 0 {e['zero_legacy']}회 · 조회 실패 {e['fail']}회"
+                        f" · 마지막 {str(e['last'])[:16]} {st}")
+            foot = ("\n\n읽는 법: '확정 0'은 기관 응답이 0건을 명시한 관측, '미확정 0'은 확정 0 판별 이전·미감사 기관의 0(오류 포함 가능), '조회 실패'는 기록이 없다는 뜻이 아님. "
+                    "부재를 말하려면 확정 0이 있고 그 뒤 결과가 없어야 함.\n※ 정본: https://changgi.github.io/korea-archive-mcp/data/coverage.json · 회신 원문 data/queries/ (질의·회신은 지우지 않음)")
+            want = (_cm.group(2) or "").strip()
+            if want:
+                keys = list((C.get("queries") or {}).keys()); lw = want.lower()
+                hit = ([k for k in keys if k == want] + [k for k in keys if k != want and lw in k.lower()])[:5]
+                if not hit:
+                    return f"조회 범위 등록부에 '{want}' 질의 관측이 아직 없습니다(축적 질의 {C.get('total_queries')}개). cross_search로 조회하면 다음 원장 실행 때 관측이 쌓입니다." + foot
+                return "\n\n".join(f"【'{k}' — 기관 {len(C['queries'][k])}곳 관측】\n" + "\n".join(row(s2, e) for s2, e in sorted(C["queries"][k].items(), key=lambda x: (-x[1]["hit"], x[0]))) for k in hit) + foot
+            bs = sorted((C.get("by_source") or {}).items(), key=lambda x: -x[1]["queries"])
+            return (f"KOREA ARCHIVE 조회 범위 등록부 — cross_search 회신 {C.get('replies')}건 · 질의 {C.get('total_queries')}개 · 기관 {len(bs)}곳 (갱신 {str(C.get('updated'))[:16]})\n"
+                    + "\n".join(f"- {s2}: 질의 {b['queries']}개 · 결과 {b['hit']} · 확정 0 {b['zero']} · 미확정 0 {b['zero_legacy']} · 조회 실패 {b['fail']}" for s2, b in bs)
+                    + '\n\n특정 질의: query_bank(topic="coverage:<질의>")' + foot)
+        except Exception as e:
+            return f"조회 범위 등록부 조회 실패({e}) — https://changgi.github.io/korea-archive-mcp/data/coverage.json 직접 열람"
     if re.match(r"^(ledger|원장|used|실측)$", topic.strip(), re.I):  # v3.8 Node 패리티 — 축적된 실제 질의를 발굴 성과순으로
         try:
             pv = json.loads(_cached_text("qb:prov", 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/provenance.json", 20), '"provenance"'))
