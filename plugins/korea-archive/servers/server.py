@@ -417,6 +417,11 @@ def _iiif_for(u, id_=None):
         mm = re.search(rx, u)
         if mm:
             return _bridge_url(sname, mm.group(1))
+    _kt = re.search(r"ehistory\.go\.kr/view/(photo|movie)\?(\S+)", u)
+    if _kt:  # v3.5 KTV e영상역사관 브리지(Node ktvId·iiifFor 패리티)
+        _q = dict(_up.parse_qsl(_kt.group(2).replace("&amp;", "&"))); _v = [_q.get(k, "") for k in ("mediasrcgbn", "mediaid", "mediadtl")]
+        if all(_v):
+            return _bridge_url("ktv", "~".join([_kt.group(1), *_v] + ([_q["mediagbn"]] if _q.get("mediagbn") else [])))
     mm = re.search(r"commons\.wikimedia\.org/wiki/(File(?:%3A|:)[^?#]+)", u, re.I)
     if mm:
         return _bridge_url("commons", _up.unquote(mm.group(1)).replace("_", " "))
