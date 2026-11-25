@@ -1,5 +1,8 @@
 # Changelog
 
+## v2.99.3 — TNA 프로파일에 시대별 검색 실측 규칙 (2026-11-25)
+- source_profile('tna') 쿼리문법(Node lib/profile_tna.js · Python keywords/profile_tna.py 두 사본 동일): 개항기~대한제국기는 사건명 0건 → 'Corea' + 생산연도 필터(1876 강화도조약 FO 881/2892 등, 1894 Affairs of Corea, 1905 Corea and Manchuria), 연도 문자열 방식의 혼입, 일제강점기엔 통하지 않음('Korea'+연도=선교 상자, 'Chosen'=영어 단어) — 사건 변환어 사용. 응답 10.3→11.2KB. 골든 profile-tna-era-rule.
+
 ## v2.99.2 — IA 당대 국호+연도 필드 필터 (2026-11-25)
 - cross_search(Node·Python, 기본·variants): 1850~1909 연도 변환어면 IA에도 'Corea AND year:<연도>' — 실측 1876: 1876년 홍콩 신문·'Correspondence respecting the treaty between Japan and Corea', 1894: 'Corea, the hermit nation'·China Mail(문자열 'Corea 1876'은 2006·2018 자료 혼입). 골든 default-era-year-ia.
 
