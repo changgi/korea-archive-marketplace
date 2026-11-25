@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.7 — 원장: RiC-O 파생 날짜 개체 (2026-11-25)
+- RiC-O 파생 날짜(v3.7): discovered.jsonld가 원 날짜가 없는 기록의 파생 날짜를 `rico:isAssociatedWithDate` → `rico:Date` 개체(rico:expressedDate, 정규형이면 rico:normalizedDateValue, rico:certainty '파생(derived)', rdfs:comment 근거)로 내보낸다 — 원 날짜는 기존처럼 리터럴. 근거 있는 파생 날짜가 연결 데이터에서 빠지던 공백. 2026-11-25 실측: 250건, rdflib 파싱·SPARQL 조회 정상(트리플 23,238 · 끊긴 링크 0).
+
 ## v3.6.3 — 공개 상태 패싯·NARA 접근 제한 객체 교정 (2026-11-25)
 - 공개 상태 패싯·NARA 접근 제한 교정(v3.6.3): (1) '공개 상태' 패싯에 6·25전쟁 아카이브센터 '열람 및 이용조건'(전체열람/제2유형 등), '형태' 패싯에 KTV '자료 구분'(사진·영상)을 더한다. (2) 공개 상태 값은 세미콜론·가운뎃점으로만 가른다 — NARA 접근 조건 산문의 쉼표에서 잘린 옛 조각('but others' 등)은 subjects.json에서 지우지 않고 `superseded`로 표시하고 SKOS·subjects.html에서만 뺀다. (3) NARA `specificAccessRestrictions`·`specificUseRestrictions` 항목은 객체({restriction, securityClassification})라 이어 붙이면 '[object Object]'가 되어 'Donated - Security Classified · 보안 분류 Confidential' 같은 접근 제한 사유가 사라졌다(Python은 join TypeError) — `restrItem` ↔ `_restr_item`으로 '사유 — 보안 분류 X'. 원장은 '[object Object]' 메타를 가진 기록을 다시 판독(iiif_v 0). golden nara-restriction-object.
 
