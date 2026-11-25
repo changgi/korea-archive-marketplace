@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.7.3 — 원장 검색 응답에 같은 날 다른 기관 기록 묶음 (2026-11-25)
+- 같은 날 묶음 원장 필드(v3.7.3): relations_page가 같은 날 묶음의 기록마다 `same_day`(날짜·기록 수·기관 수·day 컬렉션 주소)를 원장 본체에 둔다(매 실행 재계산 — 원장 값에서 파생). cross_search(sources=ledger) 메모 줄에 '같은 날 YYYY-MM-DD 다른 기관 기록 N곳 M건(IIIF 컬렉션 …)'(Node·Python). 2026-11-25 실측: 39건. golden ledger-same-day-note.
+
 ## v3.7.2 — 원장 검색 응답에 같은 기록 실물 이미지 (2026-11-25)
 - 원장 검색 응답의 실물 이미지 연결(v3.7.2): cross_search(sources=ledger) 응답 메모 줄에 v3.1 `iiif_same`('실물 이미지: 같은 기록 {key}의 매니페스트 {url}')을 낸다(Node·Python) — 웹·모바일 사용자도 기록 봉투에서 같은 기록의 실물 이미지로 건너가게. golden ledger-iiif-same-note.
 
