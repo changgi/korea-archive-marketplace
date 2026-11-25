@@ -2825,7 +2825,7 @@ def _c_awm(q, n):
             h1 = re.search(r"<h1[^>]*>\s*(?:<[^>]+>\s*)*([^<]{3,120})", d)
             acc = re.search(r"(?:Accession Number|ID number)[^A-Z0-9]{0,40}([A-Z0-9/.\-]{3,20})", d)
             pd = bool(re.search(r"Copyright expired - public domain|publicdomain/mark", d))
-            conf = re.search(r"Conflict[^<]*</[a-z0-9]+>\s*<[^>]*>\s*(?:<[^>]+>\s*)*([^<]{4,40})", d)
+            conf = re.search(r"Date made</th>\s*<td[^>]*>\s*([^<]{2,40})", d)  # v3.0.1 날짜 = 'Date made'(제작일 — c 1919 등). 'Conflict'(Korea, 1950-1953)는 분쟁명이라 날짜로 쓰지 않는다
             ot = re.search(r"Object type</th>\s*<td>\s*([^<]{2,40})", d)  # v1.81: 소장품 유형(Photograph·Film·Firearm 등 — C285584 실측)
             out.append({"title": (_clean(h1.group(1)) if h1 else cid) + (" · 권리:PD(저작권 만료)" if pd else ""),
                         "date": _clean(conf.group(1)) if conf else "",
