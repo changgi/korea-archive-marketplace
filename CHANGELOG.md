@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.44 — 조회 범위 등록부 다매체(CSV·HTML) (2026-11-25)
+- Pages data/coverage.csv·coverage.html — 질의×기관 관측(결과·확정 0·미확정 0·조회 실패)을 표와 사람이 읽는 페이지로(정본 coverage.json에서 재생성). korea-archive-mcp 원장 측 변경, 서버 동작 변경 없음.
+
 ## v3.43 — 교차 수집 '확정 0' 8차: Gallica(BnF 카탈로그 부분 실패) (2026-11-25)
 - BnF 카탈로그 병행 조회에서 전 유형 조회가 실패하고 사진·도판 한정 결과만 0건이면 조회 실패(확정 0 아님) — Node·Python 패리티. 도구 스키마 변경 없음.
 
