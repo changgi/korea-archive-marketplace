@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.5 — KTV e영상역사관 IIIF 브리지 (2026-11-25)
+- KTV e영상역사관 IIIF 브리지(v3.5): `/iiif/ktv/{photo|movie~mediasrcgbn~mediaid~mediadtl[~mediagbn]}/manifest.json`(lib/ka_iiif.js `ktv`). 상세 페이지의 공개 이미지(data-lazy /photo_pds·/movie_pds) 중 **alt가 이 기록 제목과 같은 것만** 캔버스로 — 영상 페이지는 같은 호 다른 꼭지 프레임이 함께 나오므로 제외. 권리는 페이지의 공공누리 표시 원문(영상 무표시는 '나누리 신청 대상'), 촬영·제작일·상영시간·출처·해설 지문. URL→브리지 매핑은 Node iiifFor·Python _iiif_for·원장 iiif_for(`ktv_id`) 세 곳 패리티. 원장은 IIIF_V ktv 2로 재판독, 이 기록 제목의 이미지가 없는 KTV 브리지는 iiif_kind를 기록 봉투로 둔다. 2026-11-25 실측: 사진 PR-2013-0349 6장, 대한뉴스 1873호 '온수수영장 개설' 1장(다른 꼭지 프레임 제외), 사진집 BK 5241은 해당 이미지 없음.
+
 ## v3.4.1 — 원장: 국립중앙도서관 계층 보강 (2026-11-25)
 - 국립중앙도서관 계층 보강(v3.4.1): 기관 계층이 빈 국립중앙도서관 기록은 `nlk_hier_pass`가 nlk_search를 제목으로 불러 **같은 식별자(viewKey·cno) 줄**의 기관 자료유형으로 '자료유형 › X'(cross_search nlk 계층과 같은 형식)를 세운다(근거 partOf_src). 다른 줄은 쓰지 않고, 식별자 링크가 없는 줄('이용불가')은 같은 기록으로 확정할 수 없어 채우지 않는다. 하루 10건(NLK_HIER_MAX), 7일 뒤 재시도. 2026-11-25 실측: 6건 중 4건(지도자료).
 
