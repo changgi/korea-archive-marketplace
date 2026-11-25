@@ -815,6 +815,8 @@ def query_bank(topic: str = "list") -> str:
             bs = sorted((C.get("by_source") or {}).items(), key=lambda x: -x[1]["queries"])
             return (f"KOREA ARCHIVE 조회 범위 등록부 — cross_search 회신 {C.get('replies')}건 · 질의 {C.get('total_queries')}개 · 기관 {len(bs)}곳 (갱신 {str(C.get('updated'))[:16]})\n"
                     + "\n".join(f"- {s2}: 질의 {b['queries']}개 · 결과 {b['hit']} · 확정 0 {b['zero']} · 미확정 0 {b['zero_legacy']} · 조회 실패 {b['fail']}" for s2, b in bs)
+                    + f"\n\n변화 감시(과거 결과 → 확정 0) {len(C.get('changes') or [])}건"  # v3.57 Node 패리티
+                    + "".join(f"\n- '{c['query']}' {c['source']}: 과거 최대 {c['max_plain']}건({str(c['last_hit_plain'])[:10]}) → 확정 0({str(c['last_zero'])[:10]}) — 기관 기록 이동·비공개 전환·검색 개편 의심" for c in (C.get('changes') or [])[:8])
                     + '\n\n특정 질의: query_bank(topic="coverage:<질의>")' + foot)
         except Exception as e:
             return f"조회 범위 등록부 조회 실패({e}) — https://changgi.github.io/korea-archive-mcp/data/coverage.json 직접 열람"
