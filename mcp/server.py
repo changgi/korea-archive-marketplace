@@ -2910,6 +2910,8 @@ def _c_awm(q, n):
             ids.append(m.group(1))
         if len(ids) >= min(n, 10):  # v1.96.3: 5→10
             break
+    if not ids:
+        return _zero_or([], b, r"Sorry no results found", "AWM")  # v3.37 0건 명시일 때만(Node 패리티)
     out = []
     for cid in ids:
         try:
@@ -3872,15 +3874,17 @@ def _ehistory_search(q, n):
             md = re.search(r"mediadtl=(\d+)", m.group(1))
             out.append({"title": f"{title}{f' ({no.group(1)}호)' if no else ''}"[:120], "date": dt, "id": f"{label}:{md.group(1)}" if md else "",
                         "series": label, "url": _EH + m.group(1).replace("&amp;", "&"), **({"media": ("" if img.group(1).startswith("http") else _EH) + img.group(1)} if img else {})})
-        return out
+        return _zero_or(out, b, r"검색된 영상이 없습니다|검색결과가 없습니다", f"e영상역사관 {label}")  # v3.37 Node 패리티
     def search_in(L, kw):
         nonlocal q
         q = kw
-        lists = []
+        lists = []; errs = []
         with _cf.ThreadPoolExecutor(max_workers=7) as ex:
             for f in [ex.submit(one, pl) for pl in L]:
                 try: lists.append(f.result(timeout=25))
-                except Exception: lists.append([])
+                except Exception as e: lists.append([]); errs.append(e)
+        if L and len(errs) == len(L):  # v3.37 목록 전부 실패 = 확정 0이 아님(Node 패리티)
+            raise errs[0]
         seen, out = set(), []
         for k in range(20):
             for l in lists:
@@ -3898,13 +3902,21 @@ def _ehistory_search(q, n):
 
 def _c_ktv(q, n):
     """v2.37 e영상역사관 자체 목록 검색 우선(ktv.go.kr 통합검색은 쿠키 확인 리다이렉트로 자동 요청 불가) → 없으면 아래 옛 경로."""
+    eh_err = None
     try:
         eh = _ehistory_search(q, n)
-    except Exception:
-        eh = []
+    except Exception as e:
+        eh = []; eh_err = e
     if eh:
         return eh
-    return _c_ktv_legacy(q, n)
+    try:
+        lg = _c_ktv_legacy(q, n)
+    except Exception:
+        if eh_err: raise eh_err
+        raise
+    if not lg and eh_err:  # v3.37 e영상역사관 실패 + 옛 경로도 빔 = 조회 실패(Node 패리티)
+        raise eh_err
+    return lg
 
 
 def _c_ktv_legacy(q, n):

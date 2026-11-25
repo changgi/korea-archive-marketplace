@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.37 — 교차 수집 '확정 0' 5차 교정 (2026-11-25)
+- KTV(e영상역사관 목록별 0건 표지·목록 전부 실패·옛 경로도 빔 → 조회 실패), AWM('Sorry no results found' 명시일 때만 0건) — Node·Python 패리티. 남은 heritage·foia는 국내 리전 전용이라 미실측. 도구 스키마 변경 없음.
+
 ## v3.36 — 교차 수집 '확정 0' 4차 교정 (2026-11-25)
 - 공용 판별(zeroOr/_zero_or) + 실측 0건 표지 6곳: UN(빈 collection)·독립운동 판결문·장서각·공훈·JACAR(영·일)·서울기록원 — 표지 없으면 조회 실패(Node·Python 패리티). heritage·foia는 국내 리전 전용이라 미실측. 도구 스키마 변경 없음.
 
