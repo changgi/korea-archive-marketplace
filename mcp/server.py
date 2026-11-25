@@ -2135,6 +2135,8 @@ def _bnf_catalog(q, n, doctype=""):
         ok = [r for r in res if not isinstance(r, Exception)]
         if not ok:
             raise res[-1]
+        if isinstance(res[-1], Exception) and not res[0][1]:  # v3.43 Node 패리티 — 전 유형 실패 + 사진·도판 0건은 확정 0 아님
+            raise RuntimeError(f"BnF 카탈로그 전 유형 조회 실패({str(res[-1])[:60]}) — 사진·도판 한정 0건만으로는 확정 0이 아님")
         seen, allv = set(), []
         for _, its in ok:
             for it in its:

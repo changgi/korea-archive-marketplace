@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.43 — 교차 수집 '확정 0' 8차: Gallica(BnF 카탈로그 부분 실패) (2026-11-25)
+- BnF 카탈로그 병행 조회에서 전 유형 조회가 실패하고 사진·도판 한정 결과만 0건이면 조회 실패(확정 0 아님) — Node·Python 패리티. 도구 스키마 변경 없음.
+
 ## v3.42 — 교차 수집 '확정 0' 7차: NDL·Archives NZ (2026-11-25)
 - NDL: 0건은 OpenSearch totalResults 0 명시일 때만, Archives NZ: 라이브 차단 중 주간 인덱스 0건은 조회 실패(기관의 확정 0 아님) — Node·Python 패리티. 도구 스키마 변경 없음.
 
