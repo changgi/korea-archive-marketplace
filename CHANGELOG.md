@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.24 — 원장: 인물 사전·인물별 IIIF 컬렉션 (2026-11-25)
+- 맥아더(4개 기관 12건)·이승만·리지웨이 — persons.json·persons.jsonld(SKOS·rico:Person, owl:sameAs = 국립중앙도서관 LOD·Wikidata·VIAF 등)·person/<슬러그>.json 연대순 컬렉션. 서버 도구 변경 없음.
+
 ## v3.23 — 원장: 국립중앙도서관 LOD 전거·외부 전거 연결 (2026-11-25)
 - authorities.json(누적) — 기관 전거 번호 → LOD 리소스·표제·owl:sameAs(LOC·VIAF·Wikidata·GND·NDL). RiC-O 기록이 LOD 전거를 가리킴, 기록 페이지 '기관 전거' 행. 서버 도구 변경 없음.
 
