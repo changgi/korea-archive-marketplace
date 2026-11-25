@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.99.5 — 국가기록원 API 오류 사유 표시·골든 정비 (2026-11-25)
+- archives_search(Node·Python): 0건도 결과도 아닌 응답이면 data.go.kr 게이트웨이 사유(returnAuthMsg·returnReasonCode·errMsg·resultMsg)를, 없으면 원문 앞부분(인증키 *** 가림)을 표시 — 운영에서 '한국전쟁'·'흥남철수'가 '결과 없음'으로만 나와 원인 불명이던 장애.
+- 골든 경고 3건 정비: ledger-kept(v2.26 안내 문구), ledger-subject-search(원장에 없던 기록을 기대 → 주제어에만 있는 '한국전쟁'으로 USIS 기록), ledger-derived-hierarchy(Commons 기관 범주 계층으로 개선된 결과 반영).
+
 ## v2.99.4 — IA 프로파일에 시대별 실측 규칙 (2026-11-25)
 - source_profile('ia') 쿼리문법(Node·Python 사본 동일): 개항기~대한제국기는 'Corea AND year:<연도>' 필드 필터(1876 홍콩 신문·조약 서신, 1894 'Corea, the hermit nation', 1895 'Corea or Cho-sen'), 연도 문자열 방식의 혼입. 골든 profile-ia-era-rule.
 
