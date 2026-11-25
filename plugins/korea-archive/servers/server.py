@@ -1865,7 +1865,7 @@ _UA_KO = "KoreaArchiveMCP/2.36 (+https://github.com/changgi/korea-archive-mcp; a
 _UA_REFUSED = {}  # v2.37 비움 — 규장각 403은 UA가 아니라 사이트 개편(POST CSRF)이었고 GET으로 복구, KTV는 e영상역사관 자체 목록 검색으로 복구(2026-11-24 실측). 새 거부가 확인되면 여기에 추가(위장하지 않음)
 
 
-def _coverage_hint(q, chans):
+def _coverage_hint(q, chans, zeros=(), variants=False):
     """v3.52 조회 범위 등록부 — 실패 채널이 같은 질의로 과거에 결과를 낸 적이 있으면 그 관측(Node coverageHint 패리티)."""
     try:
         C = json.loads(_cached_text("qb:cov", 3600, lambda: _http_text("https://changgi.github.io/korea-archive-mcp/data/coverage.json", 3), '"by_source"'))
@@ -1875,16 +1875,20 @@ def _coverage_hint(q, chans):
     if not S:
         return ""
     hit = [f"{c} 결과 최대 {S[c]['max']}건(마지막 결과 {str(S[c].get('last_hit', ''))[:10]})" for c in chans if S.get(c) and S[c].get("hit", 0) > 0]
-    return (f"\n※ 같은 질의의 과거 관측(조회 범위 등록부): {' · '.join(hit)} — 이번 실패는 기록 부재가 아닌 일시 조회 실패일 가능성이 큽니다." if hit else "")
+    hk, mk, lk = ("hit", "max", "last_hit") if variants else ("hit_plain", "max_plain", "last_hit_plain")  # v3.53 같은 조건(표기 변형 여부)끼리만 비교 — Node 패리티
+    chg = [f"{c} 과거 결과 최대 {S[c].get(mk, 0)}건(마지막 결과 {str(S[c].get(lk, ''))[:10]})" for c in zeros if S.get(c) and S[c].get(hk, 0) > 0]  # v3.53 변화 신호
+    return ((f"\n※ 같은 질의의 과거 관측(조회 범위 등록부): {' · '.join(hit)} — 이번 실패는 기록 부재가 아닌 일시 조회 실패일 가능성이 큽니다." if hit else "")
+            + (f"\n※ 변화 신호(조회 범위 등록부): 이번 0건인데 같은 질의로 {' · '.join(chg)} — 기관의 기록 이동·비공개 전환·검색 개편 가능성. 부재로 단정하지 말고 원 기관에서 확인하십시오." if chg else ""))
 
 
-def _fail_note(stats, q=None):
+def _fail_note(stats, q=None, variants=False):
     """v2.48 조회 실패(—) 채널은 '그 기관에 없음'이 아님 — 확정 0건과 구분해 명시(Node 패리티). v3.52 q가 있으면 과거 관측 동봉."""
     failed = list(dict.fromkeys(x.split(":")[0].split("·")[0] for x in stats if re.match(r"^[a-z0-9_]+(?:·[^:]+)?:—", x)))
+    zeros = list(dict.fromkeys(x.split(":")[0].split("·")[0] for x in stats if re.match(r"^[a-z0-9_]+(?:·[^:]+)?:0(?!\d)", x)))  # v3.53 확정 0 채널
     if not failed:
-        return ""
+        return _coverage_hint(q, [], zeros, variants) if (q and zeros) else ""
     return (f"\n※ 조회 실패 채널 {len(failed)}곳({', '.join(failed)}) — 이번 응답에 없을 뿐 그 기관에 기록이 없다는 뜻이 아닙니다(시간 초과·차단·응답 끊김). "
-            f"해당 수집처만 다시: sources='{','.join(failed)}'" + (_coverage_hint(q, failed) if q else ""))
+            f"해당 수집처만 다시: sources='{','.join(failed)}'" + (_coverage_hint(q, failed, zeros, variants) if q else ""))
 
 
 def _ua_refused_note(k, q=""):
@@ -5941,7 +5945,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
         csv_body = "node,sources,title,date,id,url,partOf,media,sameAs\n" + "\n".join(rows)
         head = f"교차수집 '{query}' CSV — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (45건 상한):\n"
         ua_note = "".join(f"\n※ {_ua_refused_note(k, query)}" for k in _UA_REFUSED if any(x.startswith(k + ":") and "⛔" in x for x in stats))  # v2.36
-        ua_note = _fail_note(stats, query) + ua_note
+        ua_note = _fail_note(stats, query, variants) + ua_note
         tail = "\n※ 그대로 스프레드시트·KARDA 온톨로지(nodes/edges)·통계 분석에 투입 가능. 권리 초판정: judge_rights." + ua_note
         # v2.4: 파일로 받기 — 링크 안에 CSV를 압축 봉인(서버 저장 없음, Node /export/csv/{token}.csv 패리티). 24KB·URL 12,000자 넘으면 생략
         c = _z.compressobj(9, _z.DEFLATED, -15)
@@ -5957,7 +5961,7 @@ def cross_search(query: str, sources: str = "all", max_per_source: int = 8, vari
              for it in items[:45]]
     return (f"교차수집 '{query}' — 채널별 [{' · '.join(stats)}] → 병합 {len(items)}건 (복수출처 우선 정렬):\n"
             + ("\n".join(lines) or "(0)")
-            + _fail_note(stats, query)
+            + _fail_note(stats, query, variants)
             + "".join(f"\n※ {_ua_refused_note(k, query)}" for k in _UA_REFUSED if any(x.startswith(k + ":") and "⛔" in x for x in stats))
             + "\n※ [출처] 복수 표기 = 교차확인된 record. 국내(nara·archives·nlk)는 서버 키, nedb는 "
             "NEDB_INDEX_URL(공식 개방파일) 설정 시 포함. open.go.kr 본체(브라우저 전용)는 foia_search 전용 도구로.\n※ 발굴 우선 — 권리는 표시: 게재 전 judge_rights(참조코드·KOGL·naid)로 초판정. variants=True로 당대 표기(Corea·Chosen·Keijo…) 자동 팬아웃.\n※ 심층 판독 이어가기: [i815]→nedb_search(mode=i815, 상세URL) · [gonghun]→mode=gonghun(mngNo) · [ktv]→mode=ktv(view URL) · [earchive]→mode=earchive('키워드|순번') · [jacar]→mode=jacar(레퍼런스코드) · [seoul]→seoul_archives_search(상세URL) · [koreanwar]→koreanwar_item(ref_code) · [okchf]→mode=okchf(상세URL·'보고서:') · [nrich]→mode=nrich(ov:·rep:·'보고서:') · [nara]→judge_rights(naid).")
