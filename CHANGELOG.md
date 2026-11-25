@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.2 — IIIF Change Discovery 활동 스트림 (2026-11-25)
+- IIIF 변경 발견(v3.2): `activity/collection.json` + `page-N.json`(IIIF Change Discovery API 1.0 — Activity Streams OrderedCollection, 500건/페이지, 시간 순). Create = 원장 첫 발견(first_seen)의 매니페스트, Update = 원 기관 응답 지문 변경(fixity 이력, '첫 지문' 제외). 활동마다 원장 기록 JSON(r/<slug>.json)을 seeAlso로. 원장에서 매번 결정적으로 다시 만들며(원장을 지우지 않으므로 활동도 줄지 않음) DCAT 배포·원장 첫 화면·source_profile(ledger)에 노출. 오프라인 시험이 총계·페이지 연결·시간 순·Create 누락을 검사. 2026-11-25 실측: 활동 917건(Create 892·Update 25).
+
 ## v3.1 — 원장: 기록 봉투 ← 같은 기록 다른 소장처 실물 이미지 (2026-11-25)
 - 같은 기록 실물 이미지(v3.1): 실물 이미지가 없는 기록 봉투(iiif_kind '기록 봉투')가 같은 기록(다른 소장처, `same_keys`)의 실물 이미지 매니페스트를 갖고 있으면 `iiif_same`(manifest·상대 key·종류·근거 '…의 실물 이미지(이 기록 소장처의 이미지 아님)')으로 잇는다 — 이 기록 자체의 `iiif`·`iiif_built`·`iiif_kind`는 바꾸지 않는다. 기록 페이지 '같은 기록 실물 이미지' 칸, 품질 지표 'IIIF(실물 이미지 — 같은 기록 다른 소장처 포함)', 오프라인 시험(상대·근거 검사). 2026-11-25 실측: 6·25전쟁 아카이브센터 미국 재수집본 11건 ← NARA 원본 이미지(실물 이미지 52.2%→53.5%).
 
